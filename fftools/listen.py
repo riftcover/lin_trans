@@ -5,14 +5,21 @@ import subprocess
 import os
 
 
-
 class SrtWriter:
 
-    def __init__(self,input_file):
+    def __init__(self, input_file: str, ln: str):
+        """
+
+        Args:
+            input_file: 需要提取文本的音频文件
+            ln: 音频文件语言
+        """
         self.input_file = input_file
         self.cwd = os.getcwd()
         self.srt_name = input_file.split('.')[-2]
-    def whisperPt_to_srt(self,model_name='small'):
+        self.ln = ln
+
+    def whisperPt_to_srt(self, model_name: str = 'small') -> None:
         """
         如果有CUDA走这个
         :param model_name:
@@ -21,18 +28,16 @@ class SrtWriter:
         audio_rel_path = f"data/{self.input_file}"
         os.path.join(self.cwd, audio_rel_path)
         audio_path = os.path.join(self.cwd, audio_rel_path)
-        model = whisper.load_model(
+
+        # todo:添加语言参数
+        model: whisper.Whisper = whisper.load_model(
             name=model_name,
             download_root='models')
         result = model.transcribe(audio_path)
         writer = get_writer("srt", './result')  # get srt writer for the current directory
-        writer(result, f"{self.srt_name}.srt",{})  # add empty dictionary for 'options'
+        writer(result, f"{self.srt_name}.srt", {})  # add empty dictionary for 'options'
 
-
-
-
-
-    def whisperBin_to_srt(self, model_name='ggml-medium.en.bin'):
+    def whisperBin_to_srt(self, model_name: str = 'ggml-medium.en.bin') -> None:
         """
         如果mac系统或者没有CUDA走这个
         :param model_name:
@@ -43,16 +48,14 @@ class SrtWriter:
         whisper_name = 'whisper.cpp'
         model_rel_path = f'whisper.cpp/models/{model_name}'
         audio_rel_path = f"data/{self.input_file}"
-        audio_srt_path = os.path.join(self.cwd,f"result/{self.srt_name}")
-        print(audio_srt_path)
-
+        audio_srt_path = os.path.join(self.cwd, f"result/{self.srt_name}")
         model_path = os.path.join(self.cwd, model_rel_path)
         audio_path = os.path.join(self.cwd, audio_rel_path)
         cwd_path = os.path.join(self.cwd, whisper_name)
 
         # 运行 whisper.cpp 的命令
         result = subprocess.run(
-            ["./main", "-m", model_path, "-f", audio_path, "-l", "en","-osrt","-of", audio_srt_path],
+            ["./main", "-m", model_path, "-f", audio_path, "-l", self.ln, "-osrt", "-of", audio_srt_path],
             capture_output=True,
             text=True,
             cwd=cwd_path
@@ -61,4 +64,4 @@ class SrtWriter:
 
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
-    a = SrtWriter('tt1.wav').whisperBin_to_srt()
+    a = SrtWriter('tt1.wav', 'en').whisperBin_to_srt()
