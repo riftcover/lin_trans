@@ -2,3 +2,5 @@ better-ffmpeg-progress==2.1.5
 ffmpeg-python==0.2.0
 numpy==1.26.4
 torch==2.3.0
+
+loguru~=0.5.3
