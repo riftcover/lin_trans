@@ -1,5 +1,5 @@
-import ffmpeg
 from better_ffmpeg_progress import FfmpegProcess
+
 
 def compress_video(input_file, output_file, bitrate='4000k', audio_bitrate='200k'):
     """

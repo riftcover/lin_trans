@@ -77,5 +77,5 @@ class SrtWriter:
 
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
-    a = SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    # a = SrtWriter('lfasr_涉政.wav', 'en').whisperPt_to_srt()
+    SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
+    # SrtWriter('lfasr_涉政.wav', 'en').whisperPt_to_srt()
