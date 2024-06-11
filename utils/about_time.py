@@ -1,6 +1,7 @@
 import time
 from functools import wraps
-from tools.log import Logings
+
+from utils.log import Logings
 
 logger = Logings().logger
 

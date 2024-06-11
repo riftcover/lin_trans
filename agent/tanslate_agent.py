@@ -3,8 +3,8 @@ import time
 from zhipuai import ZhipuAI
 
 from agent_prompt import Rule
-from tools.log import Logings
-from tools.read_config import load_api_key_from_config
+from utils.log import Logings
+from utils.read_config import load_api_key_from_config
 
 logger = Logings().logger
 
@@ -65,4 +65,4 @@ def translate_document(in_document:str, out_document:str, chunk_size:int=99):
 
 
 if __name__ == '__main__':
-    translate_document('../result/Ski Pole Use 101.srt', '../result/Ski Pole Use 101_cn.srt')
+    translate_document('../result/Ski Pole Use 101_base.srt', '../result/Ski Pole Use 101_cn.srt')

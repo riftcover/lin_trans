@@ -7,7 +7,6 @@ def load_api_key_from_config(key: str) -> str:
 
     with open(f'{home_path}/config.json', 'r') as file:
         config = json.load(file)
-        print(type(config))
     if key not in config:
         raise KeyError(f"Key '{key}' not found in the configuration file.")
     return config.get(key)

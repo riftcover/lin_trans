@@ -4,8 +4,8 @@ import subprocess
 import whisper
 from whisper.utils import get_writer
 
-from tools.about_time import timeit
-from tools.log import Logings
+from utils.about_time import timeit
+from utils.log import Logings
 
 logger = Logings().logger
 
@@ -77,5 +77,5 @@ class SrtWriter:
 
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
-    SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    # SrtWriter('lfasr_涉政.wav', 'en').whisperPt_to_srt()
+    # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
+    SrtWriter('Ski Pole Use 101.wav', 'en').whisperPt_to_srt()

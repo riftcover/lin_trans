@@ -34,7 +34,7 @@ def convert_mp4_to_war(input_file, output_file):
 if __name__ == '__main__':
     # Example usage
     home_path = '/Users/locodol/Movies/ski/别人的教学视频/big picture/基本姿势'
-    input_file = f'{home_path}/Ski Pole Use 101.mp4'
+    input_file = f'{home_path}/How To Use Your Ski Poles - Make Your Skiing Look And Feel Better.webm'
     output_file = '../data/Ski Pole Use 101.wav'
 
     convert_mp4_to_war(input_file, output_file)
