@@ -6,4 +6,4 @@ loguru>=0.6.0
 zhipuai~=2.1.0.20240521
 pyqt5~=5.15.10
 fastapi>=0.109.2
-nicegui>=1.4.26
+streamlit>=1.35.0
