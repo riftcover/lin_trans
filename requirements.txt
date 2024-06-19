@@ -1,9 +1,9 @@
 better-ffmpeg-progress==2.1.5
 ffmpeg-python==0.2.0
-numpy==1.26.4
-torch==2.3.0
-loguru>=0.6.0
-zhipuai~=2.1.0.20240521
-pyqt5~=5.15.10
+numpy
+torch
+loguru
+zhipuai
 fastapi>=0.109.2
 streamlit>=1.35.0
+PySide6==6.7.0
