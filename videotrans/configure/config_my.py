@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 import datetime
 import json
 import os
 import locale
-
+import logging
 import re
 import sys
 from queue import Queue
 from pathlib import Path
-from utils.log import Logings
+
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
@@ -20,9 +21,7 @@ def get_executable_path():
 
 # root dir
 rootdir = get_executable_path()
-root_path = Path(__file__).parent.parent.parent  # 项目目录
-
-
+root_path = Path(rootdir)
 
 # cache tmp
 temp_path = root_path / "tmp"
@@ -39,12 +38,20 @@ TEMP_HOME = homedir + "/tmp"
 Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 # logs
-logger = Logings().logger
+
+logs_path = root_path / "logs"
+logs_path.mkdir(parents=True, exist_ok=True)
+LOGS_DIR = logs_path.as_posix()
+
+logging.basicConfig(
+    level=logging.INFO,
+    filename=f'{rootdir}/logs/video-{datetime.datetime.now().strftime("%Y%m%d")}.log',
+    encoding="utf-8",
+    filemode="a")
+logger = logging.getLogger('VideoTrans')
 
 
-defaulelang = locale.getdefaultlocale()[0][:2].lower()  # 获取本地语言
 def parse_init():
-    # 加载init
     settings = {
         "lang": defaulelang,
         "dubbing_thread": 3,
@@ -116,6 +123,7 @@ def parse_init():
                     else:
                         settings[key] = str(value.lower()) if value else ""
         except Exception as e:
+            print(e)
             logger.error(f'set.ini 中有语法错误:{str(e)}')
         if isinstance(settings['fontsize'], str) and settings['fontsize'].find('px') > 0:
             settings['fontsize'] = int(settings['fontsize'].replace('px', ''))
@@ -348,7 +356,3 @@ video_codec = None
 
 # 视频慢速时最小间隔毫秒，默认50ms，小于这个值的视频片段将舍弃，避免出错
 video_min_ms = 50
-
-if __name__ == '__main__':
-    logger.info(lang_path)
-    logger.info(obj)

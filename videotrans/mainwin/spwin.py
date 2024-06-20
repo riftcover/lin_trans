@@ -250,6 +250,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_get_video.clicked.connect(self.util.get_mp4)
         self.btn_save_dir.clicked.connect(self.util.get_save_dir)
 
+
         self.target_language.currentTextChanged.connect(self.util.set_voice_role)
         self.voice_role.currentTextChanged.connect(self.util.show_listen_btn)
         self.listen_btn.clicked.connect(self.util.listen_voice_fun)
