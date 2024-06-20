@@ -170,13 +170,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.label_4)
 
-        self.source_language_3 = QComboBox(self.layoutWidget)
-        self.source_language_3.setObjectName(u"source_language_3")
-        sizePolicy3.setHeightForWidth(self.source_language_3.sizePolicy().hasHeightForWidth())
-        self.source_language_3.setSizePolicy(sizePolicy3)
-        self.source_language_3.setMinimumSize(QSize(0, 0))
+        self.target_language = QComboBox(self.layoutWidget)
+        self.target_language.setObjectName(u"target_language")
+        sizePolicy3.setHeightForWidth(self.target_language.sizePolicy().hasHeightForWidth())
+        self.target_language.setSizePolicy(sizePolicy3)
+        self.target_language.setMinimumSize(QSize(0, 0))
 
-        self.horizontalLayout_2.addWidget(self.source_language_3)
+        self.horizontalLayout_2.addWidget(self.target_language)
 
 
         self.gridLayout.addLayout(self.horizontalLayout_2, 0, 2, 1, 1)
@@ -684,7 +684,7 @@ class Ui_MainWindow(object):
         self.enable_cuda.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
 #if QT_CONFIG(tooltip)
-        self.source_language_3.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.target_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"新建列", None));

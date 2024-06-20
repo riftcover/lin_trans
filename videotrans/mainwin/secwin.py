@@ -12,8 +12,8 @@ import warnings
 warnings.filterwarnings('ignore')
 from videotrans import configure
 # from videotrans.task.job import start_thread
-# from videotrans.util import tools
-# from videotrans import translator
+from videotrans.util import tools
+from videotrans import translator
 from videotrans.configure import config
 from pathlib import Path
 
@@ -890,59 +890,60 @@ class SecWindow():
         self.main.listen_btn.setDisabled(False)
 
     # 目标语言改变时设置配音角色
-    # def set_voice_role(self, t):
-    #     role = self.main.voice_role.currentText()
-    #     # 如果tts类型是 openaiTTS，则角色不变
-    #     # 是edgeTTS时需要改变
-    #     code = translator.get_code(show_text=t)
-    #     if code and code != '-' and config.params['tts_type'] == 'GPT-SoVITS' and code[:2] not in ['zh', 'ja', 'en']:
-    #         # 除此指望不支持
-    #         config.params['tts_type'] = 'edgeTTS'
-    #         self.main.tts_type.setCurrentText('edgeTTS')
-    #         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
-    #     if code and code != '-' and config.params['tts_type'] == 'ChatTTS' and code[:2] not in ['zh', 'en']:
-    #         # 除此指望不支持
-    #         config.params['tts_type'] = 'edgeTTS'
-    #         self.main.tts_type.setCurrentText('edgeTTS')
-    #         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
-    #
-    #     # 除 edgeTTS外，其他的角色不会随语言变化
-    #     if config.params['tts_type'] not in ['edgeTTS', 'AzureTTS']:
-    #         if role != 'No':
-    #             self.main.listen_btn.show()
-    #             self.main.listen_btn.setDisabled(False)
-    #         else:
-    #             self.main.listen_btn.setDisabled(True)
-    #         return
-    #
-    #     self.main.listen_btn.hide()
-    #     self.main.voice_role.clear()
-    #     # 未设置目标语言，则清空 edgeTTS角色
-    #     if t == '-':
-    #         self.main.voice_role.addItems(['No'])
-    #         return
-    #     show_rolelist = tools.get_edge_rolelist() if config.params[
-    #                                                      'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
-    #
-    #     if not show_rolelist:
-    #         show_rolelist = tools.get_edge_rolelist()
-    #     if not show_rolelist:
-    #         self.main.target_language.setCurrentText('-')
-    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
-    #         return
-    #     try:
-    #         vt = code.split('-')[0]
-    #         if vt not in show_rolelist:
-    #             self.main.voice_role.addItems(['No'])
-    #             return
-    #         if len(show_rolelist[vt]) < 2:
-    #             self.main.target_language.setCurrentText('-')
-    #             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
-    #             return
-    #         self.main.current_rolelist = show_rolelist[vt]
-    #         self.main.voice_role.addItems(show_rolelist[vt])
-    #     except:
-    #         self.main.voice_role.addItems(['No'])
+    def set_voice_role(self, t):
+        # todo: 目标语言改变时设置配音角色暂时未添加
+        role = self.main.voice_role.currentText()
+        # 如果tts类型是 openaiTTS，则角色不变
+        # 是edgeTTS时需要改变
+        code = translator.get_code(show_text=t)
+        if code and code != '-' and config.params['tts_type'] == 'GPT-SoVITS' and code[:2] not in ['zh', 'ja', 'en']:
+            # 除此指望不支持
+            config.params['tts_type'] = 'edgeTTS'
+            self.main.tts_type.setCurrentText('edgeTTS')
+            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
+        if code and code != '-' and config.params['tts_type'] == 'ChatTTS' and code[:2] not in ['zh', 'en']:
+            # 除此指望不支持
+            config.params['tts_type'] = 'edgeTTS'
+            self.main.tts_type.setCurrentText('edgeTTS')
+            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+
+        # 除 edgeTTS外，其他的角色不会随语言变化
+        if config.params['tts_type'] not in ['edgeTTS', 'AzureTTS']:
+            if role != 'No':
+                self.main.listen_btn.show()
+                self.main.listen_btn.setDisabled(False)
+            else:
+                self.main.listen_btn.setDisabled(True)
+            return
+
+        self.main.listen_btn.hide()
+        self.main.voice_role.clear()
+        # 未设置目标语言，则清空 edgeTTS角色
+        if t == '-':
+            self.main.voice_role.addItems(['No'])
+            return
+        show_rolelist = tools.get_edge_rolelist() if config.params[
+                                                         'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
+
+        if not show_rolelist:
+            show_rolelist = tools.get_edge_rolelist()
+        if not show_rolelist:
+            self.main.target_language.setCurrentText('-')
+            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+            return
+        try:
+            vt = code.split('-')[0]
+            if vt not in show_rolelist:
+                self.main.voice_role.addItems(['No'])
+                return
+            if len(show_rolelist[vt]) < 2:
+                self.main.target_language.setCurrentText('-')
+                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+                return
+            self.main.current_rolelist = show_rolelist[vt]
+            self.main.voice_role.addItems(show_rolelist[vt])
+        except:
+            self.main.voice_role.addItems(['No'])
 
     # get video filter mp4
     def get_mp4(self):

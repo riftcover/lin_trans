@@ -106,8 +106,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.source_language.setCurrentIndex(2)
 
-        # # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
-        # self.target_language.addItems(["-"] + self.languagename)
+        # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
+        self.target_language.addItems(["-"] + self.languagename)
         #
         # # 目标语言改变
         # self.listen_btn.setCursor(Qt.PointingHandCursor)
@@ -221,15 +221,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.tts_type.addItems(config.params['tts_type_list'])
         # self.tts_type.setCurrentText(config.params['tts_type'])
         #
-        # if config.params['target_language'] and config.params['target_language'] in self.languagename:
-        #     self.target_language.setCurrentText(config.params['target_language'])
-        #     # 根据目标语言更新角色列表
-        #     self.util.set_voice_role(config.params['target_language'])
-        #     # 设置默认角色列表
-        #     if config.params['voice_role'] and config.params['voice_role'] != 'No' and self.current_rolelist and \
-        #             config.params['voice_role'] in self.current_rolelist:
-        #         self.voice_role.setCurrentText(config.params['voice_role'])
-        #         self.util.show_listen_btn(config.params['voice_role'])
+        if config.params['target_language'] and config.params['target_language'] in self.languagename:
+            self.target_language.setCurrentText(config.params['target_language'])
+            #根据目标语言更新角色列表
+            self.util.set_voice_role(config.params['target_language'])
+            # 设置默认角色列表
+            # 这里是配音
+            # if config.params['voice_role'] and config.params['voice_role'] != 'No' and self.current_rolelist and \
+            #         config.params['voice_role'] in self.current_rolelist:
+            #     self.voice_role.setCurrentText(config.params['voice_role'])
+            #     self.util.show_listen_btn(config.params['voice_role'])
         #
         # self.proxy.textChanged.connect(self.util.change_proxy)
         #
@@ -255,7 +256,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # self.btn_save_dir.clicked.connect(self.util.get_save_dir)
         #
-        # self.target_language.currentTextChanged.connect(self.util.set_voice_role)
+        self.target_language.currentTextChanged.connect(self.util.set_voice_role)
         # self.voice_role.currentTextChanged.connect(self.util.show_listen_btn)
         # self.listen_btn.clicked.connect(self.util.listen_voice_fun)
         # self.translate_type.currentTextChanged.connect(self.util.set_translate_type)
