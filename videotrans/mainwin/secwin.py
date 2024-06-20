@@ -11,9 +11,9 @@ import warnings
 
 warnings.filterwarnings('ignore')
 from videotrans import configure
-from videotrans.task.job import start_thread
-from videotrans.util import tools
-from videotrans import translator
+# from videotrans.task.job import start_thread
+# from videotrans.util import tools
+# from videotrans import translator
 from videotrans.configure import config
 from pathlib import Path
 
@@ -97,222 +97,222 @@ class SecWindow():
         config.params['voice_rate'] = f'+{text}%' if text >= 0 else f'{text}%'
 
     # 简单新手模式
-    def set_xinshoujandann(self):
-        self.main.action_xinshoujandan.setChecked(True)
-        self.main.app_mode = 'biaozhun_jd'
-        self.main.show_tips.setText(config.transobj['xinshoumoshitips'])
-        self.main.startbtn.setText(config.transobj['kaishichuli'])
-        self.main.action_xinshoujandan.setChecked(True)
-        self.main.action_biaozhun.setChecked(False)
-        self.main.action_tiquzimu.setChecked(False)
-        self.main.action_zimu_video.setChecked(False)
-        self.main.action_zimu_peiyin.setChecked(False)
-
-        # 选择视频
-        self.hide_show_element(self.main.layout_source_mp4, True)
-        # 保存目标
-        self.hide_show_element(self.main.layout_target_dir, False)
-
-        # 翻译渠道
-        self.main.translate_type.setCurrentText('FreeGoogle' if config.defaulelang == 'zh' else 'Google')
-        self.hide_show_element(self.main.layout_translate_type, False)
-        # 代理
-        self.hide_show_element(self.main.layout_proxy, False)
-        # 原始语言
-        self.hide_show_element(self.main.layout_source_language, True)
-        # 目标语言
-        self.hide_show_element(self.main.layout_target_language, True)
-        # 配音角色
-        self.main.tts_type.setCurrentText('edgeTTS')
-        # tts类型
-        self.hide_show_element(self.main.layout_tts_type, False)
-        # 试听按钮
-
-        self.main.listen_btn.show()
-        # 语音模型
-        self.main.whisper_type.setCurrentIndex(0)
-        self.main.whisper_model.setCurrentIndex(0)
-        self.main.subtitle_type.setCurrentIndex(1)
-
-        self.hide_show_element(self.main.layout_whisper_model, False)
-        # 字幕类型
-        self.hide_show_element(self.main.layout_subtitle_type, False)
-
-        # 隐藏音量 音调变化
-        self.hide_show_element(self.main.edge_volume_layout, False)
-
-        # 配音语速
-
-        self.hide_show_element(self.main.layout_voice_rate, False)
-        # 静音片段
-        # 配音自动加速
-        self.main.voice_autorate.setChecked(True)
-        self.main.voice_autorate.hide()
-        self.main.video_autorate.setChecked(True)
-        self.main.video_autorate.hide()
-        self.main.append_video.setChecked(True)
-        self.main.append_video.hide()
-
-        self.main.splitter.setSizes([self.main.width, 0])
-        # self.hide_show_element(self.main.subtitle_layout, False)
-
-        # 视频自动降速
-        self.main.is_separate.setDisabled(True)
-        self.main.addbackbtn.setDisabled(True)
-        self.main.only_video.setDisabled(True)
-        self.main.back_audio.setReadOnly(True)
-        self.main.auto_ajust.setDisabled(True)
-
-        self.main.is_separate.hide()
-        self.main.addbackbtn.hide()
-        self.main.back_audio.hide()
-        self.main.only_video.hide()
-        self.main.auto_ajust.hide()
-
-        # cuda
-        self.main.enable_cuda.setChecked(False)
-        self.main.enable_cuda.hide()
+    # def set_xinshoujandann(self):
+    #     self.main.action_xinshoujandan.setChecked(True)
+    #     self.main.app_mode = 'biaozhun_jd'
+    #     self.main.show_tips.setText(config.transobj['xinshoumoshitips'])
+    #     self.main.startbtn.setText(config.transobj['kaishichuli'])
+    #     self.main.action_xinshoujandan.setChecked(True)
+    #     self.main.action_biaozhun.setChecked(False)
+    #     self.main.action_tiquzimu.setChecked(False)
+    #     self.main.action_zimu_video.setChecked(False)
+    #     self.main.action_zimu_peiyin.setChecked(False)
+    #
+    #     # 选择视频
+    #     self.hide_show_element(self.main.layout_source_mp4, True)
+    #     # 保存目标
+    #     self.hide_show_element(self.main.layout_target_dir, False)
+    #
+    #     # 翻译渠道
+    #     self.main.translate_type.setCurrentText('FreeGoogle' if config.defaulelang == 'zh' else 'Google')
+    #     self.hide_show_element(self.main.layout_translate_type, False)
+    #     # 代理
+    #     self.hide_show_element(self.main.layout_proxy, False)
+    #     # 原始语言
+    #     self.hide_show_element(self.main.layout_source_language, True)
+    #     # 目标语言
+    #     self.hide_show_element(self.main.layout_target_language, True)
+    #     # 配音角色
+    #     self.main.tts_type.setCurrentText('edgeTTS')
+    #     # tts类型
+    #     self.hide_show_element(self.main.layout_tts_type, False)
+    #     # 试听按钮
+    #
+    #     self.main.listen_btn.show()
+    #     # 语音模型
+    #     self.main.whisper_type.setCurrentIndex(0)
+    #     self.main.whisper_model.setCurrentIndex(0)
+    #     self.main.subtitle_type.setCurrentIndex(1)
+    #
+    #     self.hide_show_element(self.main.layout_whisper_model, False)
+    #     # 字幕类型
+    #     self.hide_show_element(self.main.layout_subtitle_type, False)
+    #
+    #     # 隐藏音量 音调变化
+    #     self.hide_show_element(self.main.edge_volume_layout, False)
+    #
+    #     # 配音语速
+    #
+    #     self.hide_show_element(self.main.layout_voice_rate, False)
+    #     # 静音片段
+    #     # 配音自动加速
+    #     self.main.voice_autorate.setChecked(True)
+    #     self.main.voice_autorate.hide()
+    #     self.main.video_autorate.setChecked(True)
+    #     self.main.video_autorate.hide()
+    #     self.main.append_video.setChecked(True)
+    #     self.main.append_video.hide()
+    #
+    #     self.main.splitter.setSizes([self.main.width, 0])
+    #     # self.hide_show_element(self.main.subtitle_layout, False)
+    #
+    #     # 视频自动降速
+    #     self.main.is_separate.setDisabled(True)
+    #     self.main.addbackbtn.setDisabled(True)
+    #     self.main.only_video.setDisabled(True)
+    #     self.main.back_audio.setReadOnly(True)
+    #     self.main.auto_ajust.setDisabled(True)
+    #
+    #     self.main.is_separate.hide()
+    #     self.main.addbackbtn.hide()
+    #     self.main.back_audio.hide()
+    #     self.main.only_video.hide()
+    #     self.main.auto_ajust.hide()
+    #
+    #     # cuda
+    #     self.main.enable_cuda.setChecked(False)
+    #     self.main.enable_cuda.hide()
 
     # 启用标准模式
-    def set_biaozhun(self):
-        self.main.action_biaozhun.setChecked(True)
-        self.main.app_mode = 'biaozhun'
-        self.main.show_tips.setText("")
-        self.main.startbtn.setText(config.transobj['kaishichuli'])
-        self.main.action_biaozhun.setChecked(True)
-        self.main.action_xinshoujandan.setChecked(False)
-        self.main.action_tiquzimu.setChecked(False)
-        self.main.action_zimu_video.setChecked(False)
-        self.main.action_zimu_peiyin.setChecked(False)
-
-        # 选择视频
-        self.hide_show_element(self.main.layout_source_mp4, True)
-        # 保存目标
-        self.hide_show_element(self.main.layout_target_dir, True)
-
-        # 翻译渠道
-        self.hide_show_element(self.main.layout_translate_type, True)
-        # 代理
-        self.hide_show_element(self.main.layout_proxy, True)
-        # 原始语言
-        self.hide_show_element(self.main.layout_source_language, True)
-        # 目标语言
-        self.hide_show_element(self.main.layout_target_language, True)
-        # tts类型
-        self.hide_show_element(self.main.layout_tts_type, True)
-        # 配音角色
-        self.hide_show_element(self.main.layout_voice_role, True)
-        # 试听按钮
-
-        # 显示音量 音调变化
-        self.hide_show_element(self.main.edge_volume_layout, True)
-
-        self.main.listen_btn.show()
-        # 语音模型
-        self.hide_show_element(self.main.layout_whisper_model, True)
-        # 字幕类型
-        self.hide_show_element(self.main.layout_subtitle_type, True)
-
-        # 配音语速
-        self.hide_show_element(self.main.layout_voice_rate, True)
-        # 配音自动加速
-        # 视频自动降速
-        self.main.is_separate.setDisabled(False)
-        self.main.is_separate.show()
-
-        self.main.addbackbtn.setDisabled(False)
-        self.main.only_video.setDisabled(False)
-        self.main.back_audio.setReadOnly(False)
-        self.main.auto_ajust.setDisabled(False)
-        self.main.auto_ajust.show()
-
-        self.main.video_autorate.setDisabled(False)
-        self.main.voice_autorate.setDisabled(False)
-        self.main.voice_autorate.show()
-
-        self.main.append_video.setDisabled(False)
-        self.main.append_video.setDisabled(False)
-
-        # self.hide_show_element(self.main.subtitle_layout, True)
-        self.main.splitter.setSizes([self.main.width - 400, 400])
-
-        self.main.addbackbtn.show()
-        self.main.back_audio.show()
-        self.main.only_video.show()
-        self.main.video_autorate.show()
-        self.main.append_video.show()
-
-        # cuda
-        self.main.enable_cuda.show()
+    # def set_biaozhun(self):
+    #     self.main.action_biaozhun.setChecked(True)
+    #     self.main.app_mode = 'biaozhun'
+    #     self.main.show_tips.setText("")
+    #     self.main.startbtn.setText(config.transobj['kaishichuli'])
+    #     self.main.action_biaozhun.setChecked(True)
+    #     self.main.action_xinshoujandan.setChecked(False)
+    #     self.main.action_tiquzimu.setChecked(False)
+    #     self.main.action_zimu_video.setChecked(False)
+    #     self.main.action_zimu_peiyin.setChecked(False)
+    #
+    #     # 选择视频
+    #     self.hide_show_element(self.main.layout_source_mp4, True)
+    #     # 保存目标
+    #     self.hide_show_element(self.main.layout_target_dir, True)
+    #
+    #     # 翻译渠道
+    #     self.hide_show_element(self.main.layout_translate_type, True)
+    #     # 代理
+    #     self.hide_show_element(self.main.layout_proxy, True)
+    #     # 原始语言
+    #     self.hide_show_element(self.main.layout_source_language, True)
+    #     # 目标语言
+    #     self.hide_show_element(self.main.layout_target_language, True)
+    #     # tts类型
+    #     self.hide_show_element(self.main.layout_tts_type, True)
+    #     # 配音角色
+    #     self.hide_show_element(self.main.layout_voice_role, True)
+    #     # 试听按钮
+    #
+    #     # 显示音量 音调变化
+    #     self.hide_show_element(self.main.edge_volume_layout, True)
+    #
+    #     self.main.listen_btn.show()
+    #     # 语音模型
+    #     self.hide_show_element(self.main.layout_whisper_model, True)
+    #     # 字幕类型
+    #     self.hide_show_element(self.main.layout_subtitle_type, True)
+    #
+    #     # 配音语速
+    #     self.hide_show_element(self.main.layout_voice_rate, True)
+    #     # 配音自动加速
+    #     # 视频自动降速
+    #     self.main.is_separate.setDisabled(False)
+    #     self.main.is_separate.show()
+    #
+    #     self.main.addbackbtn.setDisabled(False)
+    #     self.main.only_video.setDisabled(False)
+    #     self.main.back_audio.setReadOnly(False)
+    #     self.main.auto_ajust.setDisabled(False)
+    #     self.main.auto_ajust.show()
+    #
+    #     self.main.video_autorate.setDisabled(False)
+    #     self.main.voice_autorate.setDisabled(False)
+    #     self.main.voice_autorate.show()
+    #
+    #     self.main.append_video.setDisabled(False)
+    #     self.main.append_video.setDisabled(False)
+    #
+    #     # self.hide_show_element(self.main.subtitle_layout, True)
+    #     self.main.splitter.setSizes([self.main.width - 400, 400])
+    #
+    #     self.main.addbackbtn.show()
+    #     self.main.back_audio.show()
+    #     self.main.only_video.show()
+    #     self.main.video_autorate.show()
+    #     self.main.append_video.show()
+    #
+    #     # cuda
+    #     self.main.enable_cuda.show()
 
     # 视频提取字幕并翻译，无需配音
-    def set_tiquzimu(self):
-        self.main.action_tiquzimu.setChecked(True)
-        self.main.app_mode = 'tiqu'
-        self.main.show_tips.setText(config.transobj['tiquzimu'])
-        self.main.startbtn.setText(config.transobj['kaishitiquhefanyi'])
-        self.main.action_tiquzimu.setChecked(True)
-        self.main.action_xinshoujandan.setChecked(False)
-        self.main.action_biaozhun.setChecked(False)
-        self.main.action_zimu_video.setChecked(False)
-        self.main.action_zimu_peiyin.setChecked(False)
-
-        # self.hide_show_element(self.main.subtitle_layout, True)
-        self.main.splitter.setSizes([self.main.width - 400, 400])
-        # 选择视频
-        self.hide_show_element(self.main.layout_source_mp4, True)
-        # 保存目标
-        self.hide_show_element(self.main.layout_target_dir, True)
-
-        # 隐藏音量 音调变化
-        self.hide_show_element(self.main.edge_volume_layout, False)
-
-        # 翻译渠道
-        self.hide_show_element(self.main.layout_translate_type, True)
-        # 代理
-        self.hide_show_element(self.main.layout_proxy, True)
-        # 原始语言
-        self.hide_show_element(self.main.layout_source_language, True)
-        # 目标语言
-        self.hide_show_element(self.main.layout_target_language, True)
-        # tts类型
-        self.hide_show_element(self.main.layout_tts_type, False)
-        # 配音角色
-        self.hide_show_element(self.main.layout_voice_role, False)
-
-        # 试听按钮
-
-        self.main.listen_btn.hide()
-        # 语音模型
-        self.hide_show_element(self.main.layout_whisper_model, True)
-        # 字幕类型
-        self.hide_show_element(self.main.layout_subtitle_type, False)
-
-        # 配音语速
-        self.hide_show_element(self.main.layout_voice_rate, False)
-
-        # 配音自动加速
-        # 视频自动降速
-        self.main.is_separate.setDisabled(True)
-        self.main.addbackbtn.setDisabled(True)
-        self.main.only_video.setDisabled(True)
-        self.main.back_audio.setReadOnly(True)
-        self.main.auto_ajust.setDisabled(True)
-        self.main.video_autorate.setDisabled(True)
-        self.main.voice_autorate.setDisabled(True)
-        self.main.append_video.setDisabled(True)
-
-        self.main.append_video.hide()
-        self.main.voice_autorate.hide()
-        self.main.is_separate.hide()
-        self.main.addbackbtn.hide()
-        self.main.back_audio.hide()
-        self.main.only_video.hide()
-        self.main.auto_ajust.hide()
-        self.main.video_autorate.hide()
-
-        # cuda
-        self.main.enable_cuda.show()
+    # def set_tiquzimu(self):
+    #     self.main.action_tiquzimu.setChecked(True)
+    #     self.main.app_mode = 'tiqu'
+    #     self.main.show_tips.setText(config.transobj['tiquzimu'])
+    #     self.main.startbtn.setText(config.transobj['kaishitiquhefanyi'])
+    #     self.main.action_tiquzimu.setChecked(True)
+    #     self.main.action_xinshoujandan.setChecked(False)
+    #     self.main.action_biaozhun.setChecked(False)
+    #     self.main.action_zimu_video.setChecked(False)
+    #     self.main.action_zimu_peiyin.setChecked(False)
+    #
+    #     # self.hide_show_element(self.main.subtitle_layout, True)
+    #     self.main.splitter.setSizes([self.main.width - 400, 400])
+    #     # 选择视频
+    #     self.hide_show_element(self.main.layout_source_mp4, True)
+    #     # 保存目标
+    #     self.hide_show_element(self.main.layout_target_dir, True)
+    #
+    #     # 隐藏音量 音调变化
+    #     self.hide_show_element(self.main.edge_volume_layout, False)
+    #
+    #     # 翻译渠道
+    #     self.hide_show_element(self.main.layout_translate_type, True)
+    #     # 代理
+    #     self.hide_show_element(self.main.layout_proxy, True)
+    #     # 原始语言
+    #     self.hide_show_element(self.main.layout_source_language, True)
+    #     # 目标语言
+    #     self.hide_show_element(self.main.layout_target_language, True)
+    #     # tts类型
+    #     self.hide_show_element(self.main.layout_tts_type, False)
+    #     # 配音角色
+    #     self.hide_show_element(self.main.layout_voice_role, False)
+    #
+    #     # 试听按钮
+    #
+    #     self.main.listen_btn.hide()
+    #     # 语音模型
+    #     self.hide_show_element(self.main.layout_whisper_model, True)
+    #     # 字幕类型
+    #     self.hide_show_element(self.main.layout_subtitle_type, False)
+    #
+    #     # 配音语速
+    #     self.hide_show_element(self.main.layout_voice_rate, False)
+    #
+    #     # 配音自动加速
+    #     # 视频自动降速
+    #     self.main.is_separate.setDisabled(True)
+    #     self.main.addbackbtn.setDisabled(True)
+    #     self.main.only_video.setDisabled(True)
+    #     self.main.back_audio.setReadOnly(True)
+    #     self.main.auto_ajust.setDisabled(True)
+    #     self.main.video_autorate.setDisabled(True)
+    #     self.main.voice_autorate.setDisabled(True)
+    #     self.main.append_video.setDisabled(True)
+    #
+    #     self.main.append_video.hide()
+    #     self.main.voice_autorate.hide()
+    #     self.main.is_separate.hide()
+    #     self.main.addbackbtn.hide()
+    #     self.main.back_audio.hide()
+    #     self.main.only_video.hide()
+    #     self.main.auto_ajust.hide()
+    #     self.main.video_autorate.hide()
+    #
+    #     # cuda
+    #     self.main.enable_cuda.show()
 
     # 启用字幕合并模式, 仅显示 选择视频、保存目录、字幕类型、 cuda
     # 不配音、不识别，
@@ -386,80 +386,80 @@ class SecWindow():
 
     # 仅仅对已有字幕配音，
     # 不翻译不识别
-    def set_zimu_peiyin(self):
-        self.main.action_zimu_peiyin.setChecked(True)
-        self.main.show_tips.setText(config.transobj['zimu_peiyin'])
-        self.main.startbtn.setText(config.transobj['kaishipeiyin'])
-        self.main.action_zimu_peiyin.setChecked(True)
-        self.main.action_xinshoujandan.setChecked(False)
-        self.main.action_biaozhun.setChecked(False)
-        self.main.action_tiquzimu.setChecked(False)
-        self.main.action_zimu_video.setChecked(False)
-        self.main.app_mode = 'peiyin'
-
-        # self.hide_show_element(self.main.subtitle_layout, True)
-        self.main.splitter.setSizes([self.main.width - 400, 400])
-        # 选择视频
-        self.hide_show_element(self.main.layout_source_mp4, False)
-        # 保存目标
-        self.hide_show_element(self.main.layout_target_dir, True)
-
-        # 显示音量 音调变化
-        self.hide_show_element(self.main.edge_volume_layout, True)
-
-        # 翻译渠道
-        self.hide_show_element(self.main.layout_translate_type, False)
-        # 代理 openaitts
-        self.hide_show_element(self.main.layout_proxy, True)
-
-        # 原始语言
-        self.hide_show_element(self.main.layout_source_language, False)
-        # 目标语言
-        self.hide_show_element(self.main.layout_target_language, True)
-        # tts类型
-        self.hide_show_element(self.main.layout_tts_type, True)
-        # 配音角色
-        self.hide_show_element(self.main.layout_voice_role, True)
-        # 试听按钮
-
-        self.main.listen_btn.show()
-        # 语音模型
-        self.hide_show_element(self.main.layout_whisper_model, False)
-        # 字幕类型
-        self.hide_show_element(self.main.layout_subtitle_type, False)
-
-        # 配音语速
-        self.hide_show_element(self.main.layout_voice_rate, True)
-        # 静音片段
-
-        # 配音自动加速
-        # 视频自动降速
-        self.main.is_separate.setDisabled(True)
-        self.main.only_video.setDisabled(True)
-        self.main.video_autorate.setDisabled(True)
-        self.main.append_video.setDisabled(True)
-        self.main.voice_autorate.setDisabled(False)
-        self.main.auto_ajust.setDisabled(False)
-        self.main.back_audio.setReadOnly(False)
-        self.main.addbackbtn.setDisabled(False)
-
-        self.main.voice_autorate.show()
-        self.main.is_separate.hide()
-        self.main.video_autorate.hide()
-        self.main.append_video.hide()
-        self.main.only_video.hide()
-        self.main.auto_ajust.show()
-        self.main.back_audio.show()
-        self.main.addbackbtn.show()
-
-        # cuda
-        self.main.enable_cuda.show()
+    # def set_zimu_peiyin(self):
+    #     self.main.action_zimu_peiyin.setChecked(True)
+    #     self.main.show_tips.setText(config.transobj['zimu_peiyin'])
+    #     self.main.startbtn.setText(config.transobj['kaishipeiyin'])
+    #     self.main.action_zimu_peiyin.setChecked(True)
+    #     self.main.action_xinshoujandan.setChecked(False)
+    #     self.main.action_biaozhun.setChecked(False)
+    #     self.main.action_tiquzimu.setChecked(False)
+    #     self.main.action_zimu_video.setChecked(False)
+    #     self.main.app_mode = 'peiyin'
+    #
+    #     # self.hide_show_element(self.main.subtitle_layout, True)
+    #     self.main.splitter.setSizes([self.main.width - 400, 400])
+    #     # 选择视频
+    #     self.hide_show_element(self.main.layout_source_mp4, False)
+    #     # 保存目标
+    #     self.hide_show_element(self.main.layout_target_dir, True)
+    #
+    #     # 显示音量 音调变化
+    #     self.hide_show_element(self.main.edge_volume_layout, True)
+    #
+    #     # 翻译渠道
+    #     self.hide_show_element(self.main.layout_translate_type, False)
+    #     # 代理 openaitts
+    #     self.hide_show_element(self.main.layout_proxy, True)
+    #
+    #     # 原始语言
+    #     self.hide_show_element(self.main.layout_source_language, False)
+    #     # 目标语言
+    #     self.hide_show_element(self.main.layout_target_language, True)
+    #     # tts类型
+    #     self.hide_show_element(self.main.layout_tts_type, True)
+    #     # 配音角色
+    #     self.hide_show_element(self.main.layout_voice_role, True)
+    #     # 试听按钮
+    #
+    #     self.main.listen_btn.show()
+    #     # 语音模型
+    #     self.hide_show_element(self.main.layout_whisper_model, False)
+    #     # 字幕类型
+    #     self.hide_show_element(self.main.layout_subtitle_type, False)
+    #
+    #     # 配音语速
+    #     self.hide_show_element(self.main.layout_voice_rate, True)
+    #     # 静音片段
+    #
+    #     # 配音自动加速
+    #     # 视频自动降速
+    #     self.main.is_separate.setDisabled(True)
+    #     self.main.only_video.setDisabled(True)
+    #     self.main.video_autorate.setDisabled(True)
+    #     self.main.append_video.setDisabled(True)
+    #     self.main.voice_autorate.setDisabled(False)
+    #     self.main.auto_ajust.setDisabled(False)
+    #     self.main.back_audio.setReadOnly(False)
+    #     self.main.addbackbtn.setDisabled(False)
+    #
+    #     self.main.voice_autorate.show()
+    #     self.main.is_separate.hide()
+    #     self.main.video_autorate.hide()
+    #     self.main.append_video.hide()
+    #     self.main.only_video.hide()
+    #     self.main.auto_ajust.show()
+    #     self.main.back_audio.show()
+    #     self.main.addbackbtn.show()
+    #
+    #     # cuda
+    #     self.main.enable_cuda.show()
 
     # 关于页面
-    def about(self):
-        from videotrans.component import InfoForm
-        self.main.infofrom = InfoForm()
-        self.main.infofrom.show()
+    # def about(self):
+    #     from videotrans.component import InfoForm
+    #     self.main.infofrom = InfoForm()
+    #     self.main.infofrom.show()
 
     # voice_autorate  变化
     def autorate_changed(self, state, name):
@@ -639,35 +639,35 @@ class SecWindow():
         self.main.continue_compos.setText(config.transobj['nextstep'])
 
     # 翻译渠道变化时，检测条件
-    def set_translate_type(self, name):
-        try:
-            rs = translator.is_allow_translate(translate_type=name, only_key=True)
-            if rs is not True:
-                QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-                if name == translator.TRANSAPI_NAME:
-                    self.main.subform.set_transapi()
-                elif name == translator.CHATGPT_NAME:
-                    self.main.subform.set_chatgpt_key()
-                elif name == translator.LOCALLLM_NAME:
-                    self.main.subform.set_localllm_key()
-                elif name == translator.GEMINI_NAME:
-                    self.main.subform.set_gemini_key()
-                elif name == translator.AZUREGPT_NAME:
-                    self.main.subform.set_azure_key()
-                elif name == translator.BAIDU_NAME:
-                    self.main.subform.set_transapi()
-                elif name == translator.TENCENT_NAME:
-                    self.main.subform.set_transapi()
-                elif name == translator.DEEPL_NAME:
-                    self.main.subform.set_transapi()
-                elif name == translator.DEEPLX_NAME:
-                    self.main.subform.set_transapi()
-                elif name == translator.OTT_NAME:
-                    self.main.subform.set_transapi()
-                return
-            config.params['translate_type'] = name
-        except Exception as e:
-            QMessageBox.critical(self.main, config.transobj['anerror'], str(e))
+    # def set_translate_type(self, name):
+    #     try:
+    #         rs = translator.is_allow_translate(translate_type=name, only_key=True)
+    #         if rs is not True:
+    #             QMessageBox.critical(self.main, config.transobj['anerror'], rs)
+    #             if name == translator.TRANSAPI_NAME:
+    #                 self.main.subform.set_transapi()
+    #             elif name == translator.CHATGPT_NAME:
+    #                 self.main.subform.set_chatgpt_key()
+    #             elif name == translator.LOCALLLM_NAME:
+    #                 self.main.subform.set_localllm_key()
+    #             elif name == translator.GEMINI_NAME:
+    #                 self.main.subform.set_gemini_key()
+    #             elif name == translator.AZUREGPT_NAME:
+    #                 self.main.subform.set_azure_key()
+    #             elif name == translator.BAIDU_NAME:
+    #                 self.main.subform.set_transapi()
+    #             elif name == translator.TENCENT_NAME:
+    #                 self.main.subform.set_transapi()
+    #             elif name == translator.DEEPL_NAME:
+    #                 self.main.subform.set_transapi()
+    #             elif name == translator.DEEPLX_NAME:
+    #                 self.main.subform.set_transapi()
+    #             elif name == translator.OTT_NAME:
+    #                 self.main.subform.set_transapi()
+    #             return
+    #         config.params['translate_type'] = name
+    #     except Exception as e:
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], str(e))
 
     # 0=整体识别模型
     # 1=预先分割模式
@@ -680,205 +680,205 @@ class SecWindow():
             config.params['whisper_type'] = 'avg'
 
     # 设定模型类型
-    def model_type_change(self):
-        if self.main.model_type.currentIndex() == 1:
-            config.params['model_type'] = 'openai'
-            self.main.whisper_model.setDisabled(False)
-            self.main.whisper_type.setDisabled(False)
-            self.check_whisper_model(self.main.whisper_model.currentText())
-        elif self.main.model_type.currentIndex() == 2:
-            config.params['model_type'] = 'GoogleSpeech'
-            self.main.whisper_model.setDisabled(True)
-            self.main.whisper_type.setDisabled(True)
-        elif self.main.model_type.currentIndex() == 3:
-            lang = self.main.source_language.currentText()
-            if translator.get_code(show_text=lang) not in ['zh-cn', 'zh-tw']:
-                self.main.model_type.setCurrentIndex(0)
-                return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                            'zh_recogn 仅支持中文语音识别' if config.defaulelang == 'zh' else 'zh_recogn Supports Chinese speech recognition only')
-
-            config.params['model_type'] = 'zh_recogn'
-            self.main.whisper_model.setDisabled(True)
-            self.main.whisper_type.setDisabled(True)
-            if not config.params['zh_recogn_api']:
-                self.main.subform.set_zh_recogn()
-        else:
-            self.main.whisper_type.setDisabled(False)
-            self.main.whisper_model.setDisabled(False)
-            config.params['model_type'] = 'faster'
-            self.check_whisper_model(self.main.whisper_model.currentText())
+    # def model_type_change(self):
+    #     if self.main.model_type.currentIndex() == 1:
+    #         config.params['model_type'] = 'openai'
+    #         self.main.whisper_model.setDisabled(False)
+    #         self.main.whisper_type.setDisabled(False)
+    #         self.check_whisper_model(self.main.whisper_model.currentText())
+    #     elif self.main.model_type.currentIndex() == 2:
+    #         config.params['model_type'] = 'GoogleSpeech'
+    #         self.main.whisper_model.setDisabled(True)
+    #         self.main.whisper_type.setDisabled(True)
+    #     elif self.main.model_type.currentIndex() == 3:
+    #         lang = self.main.source_language.currentText()
+    #         if translator.get_code(show_text=lang) not in ['zh-cn', 'zh-tw']:
+    #             self.main.model_type.setCurrentIndex(0)
+    #             return QMessageBox.critical(self.main, config.transobj['anerror'],
+    #                                         'zh_recogn 仅支持中文语音识别' if config.defaulelang == 'zh' else 'zh_recogn Supports Chinese speech recognition only')
+    #
+    #         config.params['model_type'] = 'zh_recogn'
+    #         self.main.whisper_model.setDisabled(True)
+    #         self.main.whisper_type.setDisabled(True)
+    #         if not config.params['zh_recogn_api']:
+    #             self.main.subform.set_zh_recogn()
+    #     else:
+    #         self.main.whisper_type.setDisabled(False)
+    #         self.main.whisper_model.setDisabled(False)
+    #         config.params['model_type'] = 'faster'
+    #         self.check_whisper_model(self.main.whisper_model.currentText())
 
     # 判断模型是否存在
-    def check_whisper_model(self, name):
-        if self.main.model_type.currentIndex() in [2, 3]:
-            return True
-        if name.find('/') > 0:
-            return True
-        slang = self.main.source_language.currentText()
-        if name.endswith('.en') and translator.get_code(show_text=slang) != 'en':
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['enmodelerror'])
-            return False
-        if config.params['model_type'] == 'openai':
-            if name.startswith('distil'):
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['openaimodelerror'])
-                return False
-            if not Path(config.rootdir + f"/models/{name}.pt").exists():
-                QMessageBox.critical(self.main, config.transobj['anerror'],
-                                     config.transobj['openaimodelnot'].replace('{name}', name))
-                return False
-            return True
-        file = f'{config.rootdir}/models/models--Systran--faster-whisper-{name}/snapshots'
-        if name.startswith('distil'):
-            file = f'{config.rootdir}/models/models--Systran--faster-{name}/snapshots'
+    # def check_whisper_model(self, name):
+    #     if self.main.model_type.currentIndex() in [2, 3]:
+    #         return True
+    #     if name.find('/') > 0:
+    #         return True
+    #     slang = self.main.source_language.currentText()
+    #     if name.endswith('.en') and translator.get_code(show_text=slang) != 'en':
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['enmodelerror'])
+    #         return False
+    #     if config.params['model_type'] == 'openai':
+    #         if name.startswith('distil'):
+    #             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['openaimodelerror'])
+    #             return False
+    #         if not Path(config.rootdir + f"/models/{name}.pt").exists():
+    #             QMessageBox.critical(self.main, config.transobj['anerror'],
+    #                                  config.transobj['openaimodelnot'].replace('{name}', name))
+    #             return False
+    #         return True
+    #     file = f'{config.rootdir}/models/models--Systran--faster-whisper-{name}/snapshots'
+    #     if name.startswith('distil'):
+    #         file = f'{config.rootdir}/models/models--Systran--faster-{name}/snapshots'
+    #
+    #     if not Path(file).exists():
+    #         QMessageBox.critical(self.main, config.transobj['anerror'],
+    #                              config.transobj['downloadmodel'].replace('{name}', name))
+    #         return False
+    #
+    #     return True
 
-        if not Path(file).exists():
-            QMessageBox.critical(self.main, config.transobj['anerror'],
-                                 config.transobj['downloadmodel'].replace('{name}', name))
-            return False
-
-        return True
-
-    def clearcache(self):
-        if config.defaulelang == 'zh':
-            question = tools.show_popup('清理后需要重启软件', '确认进行清理？')
-
-        else:
-            question = tools.show_popup('The software needs to be restarted after cleaning', 'Confirm cleanup?')
-
-        if question == QMessageBox.Yes:
-            shutil.rmtree(config.TEMP_DIR, ignore_errors=True)
-            shutil.rmtree(config.homedir + "/tmp", ignore_errors=True)
-            tools.remove_qsettings_data()
-            QMessageBox.information(self.main,
-                                    'Please restart the software' if config.defaulelang != 'zh' else '请重启软件',
-                                    'Please restart the software' if config.defaulelang != 'zh' else '软件将自动关闭，请重新启动')
-            self.main.close()
+    # def clearcache(self):
+    #     if config.defaulelang == 'zh':
+    #         question = tools.show_popup('清理后需要重启软件', '确认进行清理？')
+    #
+    #     else:
+    #         question = tools.show_popup('The software needs to be restarted after cleaning', 'Confirm cleanup?')
+    #
+    #     if question == QMessageBox.Yes:
+    #         shutil.rmtree(config.TEMP_DIR, ignore_errors=True)
+    #         shutil.rmtree(config.homedir + "/tmp", ignore_errors=True)
+    #         tools.remove_qsettings_data()
+    #         QMessageBox.information(self.main,
+    #                                 'Please restart the software' if config.defaulelang != 'zh' else '请重启软件',
+    #                                 'Please restart the software' if config.defaulelang != 'zh' else '软件将自动关闭，请重新启动')
+    #         self.main.close()
 
     # tts类型改变
-    def tts_type_change(self, type):
-        self.hide_show_element(self.main.edge_volume_layout, True if type in ['edgeTTS', 'AzureTTS'] else False)
-        if self.main.app_mode == 'peiyin' and type == 'clone-voice' and config.params['voice_role'] == 'clone':
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
-                'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            self.main.subform.set_clone_address()
-            return
-        if type == 'TTS-API' and not config.params['ttsapi_url']:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['ttsapi_nourl'])
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            self.main.subform.set_ttsapi()
-            return
-        if type == 'GPT-SoVITS' and not config.params['gptsovits_url']:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitsurl'])
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            self.main.subform.set_gptsovits()
-            return
-        if type == 'ChatTTS' and not config.params['chattts_api']:
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            self.main.subform.set_chattts_address()
-            return
-
-        lang = translator.get_code(show_text=self.main.target_language.currentText())
-        if lang and lang != '-' and type == 'GPT-SoVITS' and lang[:2] not in ['zh', 'ja', 'en']:
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
-            return
-        if lang and lang != '-' and type == 'ChatTTS' and lang[:2] not in ['zh', 'en']:
-            self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
-            return
-
-        config.params['tts_type'] = type
-        config.params['line_roles'] = {}
-        if type == 'gtts':
-            self.main.voice_role.clear()
-            self.main.current_rolelist = ["gtts"]
-            self.main.voice_role.addItems(self.main.current_rolelist)
-        elif type == "openaiTTS":
-            self.main.voice_role.clear()
-            self.main.current_rolelist = config.params['openaitts_role'].split(',')
-            self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
-        elif type == 'elevenlabsTTS':
-            self.main.voice_role.clear()
-            self.main.current_rolelist = config.params['elevenlabstts_role']
-            if len(self.main.current_rolelist) < 1:
-                self.main.current_rolelist = tools.get_elevenlabs_role()
-            self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
-        elif type in ['edgeTTS', 'AzureTTS']:
-            if type == "AzureTTS" and (
-                    not config.params['azure_speech_key'] or not config.params['azure_speech_region']):
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['azureinfo'])
-                self.main.subform.set_auzuretts_key()
-                return
-            self.set_voice_role(self.main.target_language.currentText())
-        elif type == 'clone-voice':
-            self.main.voice_role.clear()
-            self.main.current_rolelist = config.clone_voicelist
-            self.main.voice_role.addItems(self.main.current_rolelist)
-            threading.Thread(target=tools.get_clone_role).start()
-        elif type == 'ChatTTS':
-            self.main.voice_role.clear()
-            self.main.current_rolelist = list(config.ChatTTS_voicelist)
-            self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
-        elif type == 'TTS-API':
-            self.main.voice_role.clear()
-            self.main.current_rolelist = config.params['ttsapi_voice_role'].strip().split(',')
-            self.main.voice_role.addItems(self.main.current_rolelist)
-        elif type == 'GPT-SoVITS':
-            rolelist = tools.get_gptsovits_role()
-            self.main.voice_role.clear()
-            self.main.current_rolelist = list(rolelist.keys()) if rolelist else ['GPT-SoVITS']
-            self.main.voice_role.addItems(self.main.current_rolelist)
+    # def tts_type_change(self, type):
+    #     self.hide_show_element(self.main.edge_volume_layout, True if type in ['edgeTTS', 'AzureTTS'] else False)
+    #     if self.main.app_mode == 'peiyin' and type == 'clone-voice' and config.params['voice_role'] == 'clone':
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
+    #             'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         self.main.subform.set_clone_address()
+    #         return
+    #     if type == 'TTS-API' and not config.params['ttsapi_url']:
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['ttsapi_nourl'])
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         self.main.subform.set_ttsapi()
+    #         return
+    #     if type == 'GPT-SoVITS' and not config.params['gptsovits_url']:
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitsurl'])
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         self.main.subform.set_gptsovits()
+    #         return
+    #     if type == 'ChatTTS' and not config.params['chattts_api']:
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         self.main.subform.set_chattts_address()
+    #         return
+    #
+    #     lang = translator.get_code(show_text=self.main.target_language.currentText())
+    #     if lang and lang != '-' and type == 'GPT-SoVITS' and lang[:2] not in ['zh', 'ja', 'en']:
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
+    #         return
+    #     if lang and lang != '-' and type == 'ChatTTS' and lang[:2] not in ['zh', 'en']:
+    #         self.main.tts_type.setCurrentText(config.params['tts_type_list'][0])
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+    #         return
+    #
+    #     config.params['tts_type'] = type
+    #     config.params['line_roles'] = {}
+    #     if type == 'gtts':
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = ["gtts"]
+    #         self.main.voice_role.addItems(self.main.current_rolelist)
+    #     elif type == "openaiTTS":
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = config.params['openaitts_role'].split(',')
+    #         self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
+    #     elif type == 'elevenlabsTTS':
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = config.params['elevenlabstts_role']
+    #         if len(self.main.current_rolelist) < 1:
+    #             self.main.current_rolelist = tools.get_elevenlabs_role()
+    #         self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
+    #     elif type in ['edgeTTS', 'AzureTTS']:
+    #         if type == "AzureTTS" and (
+    #                 not config.params['azure_speech_key'] or not config.params['azure_speech_region']):
+    #             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['azureinfo'])
+    #             self.main.subform.set_auzuretts_key()
+    #             return
+    #         self.set_voice_role(self.main.target_language.currentText())
+    #     elif type == 'clone-voice':
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = config.clone_voicelist
+    #         self.main.voice_role.addItems(self.main.current_rolelist)
+    #         threading.Thread(target=tools.get_clone_role).start()
+    #     elif type == 'ChatTTS':
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = list(config.ChatTTS_voicelist)
+    #         self.main.voice_role.addItems(['No'] + self.main.current_rolelist)
+    #     elif type == 'TTS-API':
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = config.params['ttsapi_voice_role'].strip().split(',')
+    #         self.main.voice_role.addItems(self.main.current_rolelist)
+    #     elif type == 'GPT-SoVITS':
+    #         rolelist = tools.get_gptsovits_role()
+    #         self.main.voice_role.clear()
+    #         self.main.current_rolelist = list(rolelist.keys()) if rolelist else ['GPT-SoVITS']
+    #         self.main.voice_role.addItems(self.main.current_rolelist)
 
     # 试听配音
-    def listen_voice_fun(self):
-        lang = translator.get_code(show_text=self.main.target_language.currentText())
-        text = config.params[f'listen_text_{lang}']
-        role = self.main.voice_role.currentText()
-        if not role or role == 'No':
-            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['mustberole'])
-        voice_dir = os.environ.get('APPDATA') or os.environ.get('appdata')
-        if not voice_dir or not Path(voice_dir).exists():
-            voice_dir = config.rootdir + "/tmp/voice_tmp"
-        else:
-            voice_dir = voice_dir.replace('\\', '/') + "/pyvideotrans"
-        if not Path(voice_dir).exists():
-            Path(voice_dir).mkdir(parents=True, exist_ok=True)
-        lujing_role = role.replace('/', '-')
-        volume = int(self.main.volume_rate.value())
-        pitch = int(self.main.pitch_rate.value())
-        voice_file = f"{voice_dir}/{config.params['tts_type']}-{lang}-{lujing_role}-{volume}-{pitch}.mp3"
-        if config.params['tts_type'] in ['GPT-SoVITS', 'ChatTTS']:
-            voice_file += '.wav'
-
-        obj = {
-            "text": text,
-            "rate": "+0%",
-            "role": role,
-            "voice_file": voice_file,
-            "tts_type": config.params['tts_type'],
-            "language": lang,
-            "volume": f'+{volume}%' if volume > 0 else f'{volume}%',
-            "pitch": f'+{pitch}Hz' if pitch > 0 else f'{pitch}Hz',
-        }
-        if config.params['tts_type'] == 'clone-voice' and role == 'clone':
-            return
-        # 测试能否连接clone
-        if config.params['tts_type'] == 'clone-voice':
-            try:
-                tools.get_clone_role(set_p=True)
-            except:
-                QMessageBox.critical(self.main, config.transobj['anerror'],
-                                     config.transobj['You must deploy and start the clone-voice service'])
-                return
-
-        def feed(d):
-            QMessageBox.critical(self.main, config.transobj['anerror'], d)
-
-        from videotrans.task.play_audio import PlayMp3
-        t = PlayMp3(obj, self.main)
-        t.mp3_ui.connect(feed)
-        t.start()
+    # def listen_voice_fun(self):
+    #     lang = translator.get_code(show_text=self.main.target_language.currentText())
+    #     text = config.params[f'listen_text_{lang}']
+    #     role = self.main.voice_role.currentText()
+    #     if not role or role == 'No':
+    #         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['mustberole'])
+    #     voice_dir = os.environ.get('APPDATA') or os.environ.get('appdata')
+    #     if not voice_dir or not Path(voice_dir).exists():
+    #         voice_dir = config.rootdir + "/tmp/voice_tmp"
+    #     else:
+    #         voice_dir = voice_dir.replace('\\', '/') + "/pyvideotrans"
+    #     if not Path(voice_dir).exists():
+    #         Path(voice_dir).mkdir(parents=True, exist_ok=True)
+    #     lujing_role = role.replace('/', '-')
+    #     volume = int(self.main.volume_rate.value())
+    #     pitch = int(self.main.pitch_rate.value())
+    #     voice_file = f"{voice_dir}/{config.params['tts_type']}-{lang}-{lujing_role}-{volume}-{pitch}.mp3"
+    #     if config.params['tts_type'] in ['GPT-SoVITS', 'ChatTTS']:
+    #         voice_file += '.wav'
+    #
+    #     obj = {
+    #         "text": text,
+    #         "rate": "+0%",
+    #         "role": role,
+    #         "voice_file": voice_file,
+    #         "tts_type": config.params['tts_type'],
+    #         "language": lang,
+    #         "volume": f'+{volume}%' if volume > 0 else f'{volume}%',
+    #         "pitch": f'+{pitch}Hz' if pitch > 0 else f'{pitch}Hz',
+    #     }
+    #     if config.params['tts_type'] == 'clone-voice' and role == 'clone':
+    #         return
+    #     # 测试能否连接clone
+    #     if config.params['tts_type'] == 'clone-voice':
+    #         try:
+    #             tools.get_clone_role(set_p=True)
+    #         except:
+    #             QMessageBox.critical(self.main, config.transobj['anerror'],
+    #                                  config.transobj['You must deploy and start the clone-voice service'])
+    #             return
+    #
+    #     def feed(d):
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], d)
+    #
+    #     from videotrans.task.play_audio import PlayMp3
+    #     t = PlayMp3(obj, self.main)
+    #     t.mp3_ui.connect(feed)
+    #     t.start()
 
     # 角色改变时 显示试听按钮
     def show_listen_btn(self, role):
@@ -890,59 +890,59 @@ class SecWindow():
         self.main.listen_btn.setDisabled(False)
 
     # 目标语言改变时设置配音角色
-    def set_voice_role(self, t):
-        role = self.main.voice_role.currentText()
-        # 如果tts类型是 openaiTTS，则角色不变
-        # 是edgeTTS时需要改变
-        code = translator.get_code(show_text=t)
-        if code and code != '-' and config.params['tts_type'] == 'GPT-SoVITS' and code[:2] not in ['zh', 'ja', 'en']:
-            # 除此指望不支持
-            config.params['tts_type'] = 'edgeTTS'
-            self.main.tts_type.setCurrentText('edgeTTS')
-            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
-        if code and code != '-' and config.params['tts_type'] == 'ChatTTS' and code[:2] not in ['zh', 'en']:
-            # 除此指望不支持
-            config.params['tts_type'] = 'edgeTTS'
-            self.main.tts_type.setCurrentText('edgeTTS')
-            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
-
-        # 除 edgeTTS外，其他的角色不会随语言变化
-        if config.params['tts_type'] not in ['edgeTTS', 'AzureTTS']:
-            if role != 'No':
-                self.main.listen_btn.show()
-                self.main.listen_btn.setDisabled(False)
-            else:
-                self.main.listen_btn.setDisabled(True)
-            return
-
-        self.main.listen_btn.hide()
-        self.main.voice_role.clear()
-        # 未设置目标语言，则清空 edgeTTS角色
-        if t == '-':
-            self.main.voice_role.addItems(['No'])
-            return
-        show_rolelist = tools.get_edge_rolelist() if config.params[
-                                                         'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
-
-        if not show_rolelist:
-            show_rolelist = tools.get_edge_rolelist()
-        if not show_rolelist:
-            self.main.target_language.setCurrentText('-')
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
-            return
-        try:
-            vt = code.split('-')[0]
-            if vt not in show_rolelist:
-                self.main.voice_role.addItems(['No'])
-                return
-            if len(show_rolelist[vt]) < 2:
-                self.main.target_language.setCurrentText('-')
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
-                return
-            self.main.current_rolelist = show_rolelist[vt]
-            self.main.voice_role.addItems(show_rolelist[vt])
-        except:
-            self.main.voice_role.addItems(['No'])
+    # def set_voice_role(self, t):
+    #     role = self.main.voice_role.currentText()
+    #     # 如果tts类型是 openaiTTS，则角色不变
+    #     # 是edgeTTS时需要改变
+    #     code = translator.get_code(show_text=t)
+    #     if code and code != '-' and config.params['tts_type'] == 'GPT-SoVITS' and code[:2] not in ['zh', 'ja', 'en']:
+    #         # 除此指望不支持
+    #         config.params['tts_type'] = 'edgeTTS'
+    #         self.main.tts_type.setCurrentText('edgeTTS')
+    #         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
+    #     if code and code != '-' and config.params['tts_type'] == 'ChatTTS' and code[:2] not in ['zh', 'en']:
+    #         # 除此指望不支持
+    #         config.params['tts_type'] = 'edgeTTS'
+    #         self.main.tts_type.setCurrentText('edgeTTS')
+    #         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+    #
+    #     # 除 edgeTTS外，其他的角色不会随语言变化
+    #     if config.params['tts_type'] not in ['edgeTTS', 'AzureTTS']:
+    #         if role != 'No':
+    #             self.main.listen_btn.show()
+    #             self.main.listen_btn.setDisabled(False)
+    #         else:
+    #             self.main.listen_btn.setDisabled(True)
+    #         return
+    #
+    #     self.main.listen_btn.hide()
+    #     self.main.voice_role.clear()
+    #     # 未设置目标语言，则清空 edgeTTS角色
+    #     if t == '-':
+    #         self.main.voice_role.addItems(['No'])
+    #         return
+    #     show_rolelist = tools.get_edge_rolelist() if config.params[
+    #                                                      'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
+    #
+    #     if not show_rolelist:
+    #         show_rolelist = tools.get_edge_rolelist()
+    #     if not show_rolelist:
+    #         self.main.target_language.setCurrentText('-')
+    #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+    #         return
+    #     try:
+    #         vt = code.split('-')[0]
+    #         if vt not in show_rolelist:
+    #             self.main.voice_role.addItems(['No'])
+    #             return
+    #         if len(show_rolelist[vt]) < 2:
+    #             self.main.target_language.setCurrentText('-')
+    #             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+    #             return
+    #         self.main.current_rolelist = show_rolelist[vt]
+    #         self.main.voice_role.addItems(show_rolelist[vt])
+    #     except:
+    #         self.main.voice_role.addItems(['No'])
 
     # get video filter mp4
     def get_mp4(self):
@@ -1085,236 +1085,236 @@ class SecWindow():
             return True
         return False
 
-    def change_proxy(self, p):
-        # 设置或删除代理
-        config.proxy = p.strip()
-        try:
-            if not config.proxy:
-                # 删除代理
-                tools.set_proxy('del')
-            self.main.settings.setValue('proxy', config.proxy)
-        except Exception:
-            pass
+    # def change_proxy(self, p):
+    #     # 设置或删除代理
+    #     config.proxy = p.strip()
+    #     try:
+    #         if not config.proxy:
+    #             # 删除代理
+    #             tools.set_proxy('del')
+    #         self.main.settings.setValue('proxy', config.proxy)
+    #     except Exception:
+    #         pass
 
     # 检测开始状态并启动
-    def check_start(self):
-        if config.current_status == 'ing':
-            # 停止
-            question = tools.show_popup(config.transobj['exit'], config.transobj['confirmstop'])
-            if question == QMessageBox.Yes:
-                self.update_status('stop')
-                return
-        proxy = self.main.proxy.text().strip().replace('：', ':')
-        if proxy:
-            if not re.match(r'^(http|sock)', proxy, re.I):
-                proxy = f'http://{proxy}'
-            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup(
-                    '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-一般代理/vpn格式为 http://127.0.0.1:数字端口号 
-如果不知道什么是代理请勿随意填写
-ChatGPT等api地址请填写在菜单-设置-对应配置内。
-如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
-
-        config.task_countdown = config.settings['countdown_sec']
-        config.settings = config.parse_init()
-        # 清理日志
-
-        # 目标文件夹
-        target_dir = self.main.target_dir.text().strip().replace('\\', '/')
-        if target_dir:
-            config.params['target_dir'] = target_dir
-        else:
-            config.params['target_dir'] = ''
-
-        # 设置或删除代理
-        config.proxy = proxy
-        try:
-            if config.proxy:
-                # 设置代理
-                tools.set_proxy(config.proxy)
-            else:
-                # 删除代理
-                tools.set_proxy('del')
-        except Exception:
-            pass
-
-        # 原始语言
-        config.params['source_language'] = self.main.source_language.currentText()
-        if self.main.model_type.currentIndex == 3 and translator.get_code(
-                show_text=config.params['source_language']) not in ['zh-cn', 'zh-tw']:
-            self.update_status('stop')
-            return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                        'zh_recogn 仅支持中文语音识别' if config.defaulelang == 'zh' else 'zh_recogn Supports Chinese speech recognition only')
-        if self.main.model_type.currentIndex == 3 and not config.params['zh_recogn_api']:
-            return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                        'zh_recogn 必须在设置-zh_recogn中填写http接口地址' if config.defaulelang == 'zh' else 'The http interface address must be filled in the settings-zh_recogn')
-
-        # 目标语言
-        target_language = self.main.target_language.currentText()
-        config.params['target_language'] = target_language
-
-        # 配音角色
-        config.params['voice_role'] = self.main.voice_role.currentText()
-
-        # 配音自动加速
-        config.params['voice_autorate'] = self.main.voice_autorate.isChecked()
-        config.params['video_autorate'] = self.main.video_autorate.isChecked()
-        config.params['append_video'] = self.main.append_video.isChecked()
-
-        # 视频自动减速
-        # 语音模型
-        config.params['whisper_model'] = self.main.whisper_model.currentText()
-        model_index = self.main.model_type.currentIndex()
-        if model_index == 1:
-            config.params['model_type'] = 'openai'
-        elif model_index == 2:
-            config.params['model_type'] = 'GoogleSpeech'
-        elif model_index == 3:
-            config.params['model_type'] = 'zh_recogn'
-        else:
-            config.params['model_type'] = 'faster'
-        # 字幕嵌入类型
-        config.params['subtitle_type'] = int(self.main.subtitle_type.currentIndex())
-
-        try:
-            voice_rate = int(self.main.voice_rate.value())
-            config.params['voice_rate'] = f"+{voice_rate}%" if voice_rate >= 0 else f"{voice_rate}%"
-        except Exception:
-            config.params['voice_rate'] = '+0%'
-
-        try:
-            volume = int(self.main.volume_rate.value())
-            pitch = int(self.main.pitch_rate.value())
-            config.params['volume'] = f'+{volume}%' if volume > 0 else f'{volume}%'
-            config.params['pitch'] = f'+{pitch}Hz' if pitch > 0 else f'{pitch}Hz'
-        except Exception:
-            config.params['volume'] = '+0%'
-            config.params['pitch'] = '+0Hz'
-        config.params['back_audio'] = self.main.back_audio.text().strip()
-        # 字幕区文字
-        txt = self.main.subtitle_area.toPlainText().strip()
-        if txt and not re.search(r'\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?\s*?-->\s*?\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?', txt):
-            txt = ""
-            self.main.subtitle_area.clear()
-
-        # 综合判断
-        if len(config.queue_mp4) < 1 and not txt:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
-            return False
-
-        # tts类型
-        if config.params['tts_type'] == 'openaiTTS' and not config.params["chatgpt_key"]:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['chatgptkeymust'])
-            return False
-        if config.params['tts_type'] == 'clone-voice' and not config.params["clone_api"]:
-            config.logger.error(f"不存在clone-api:{config.params['tts_type']=},{config.params['clone_api']=}")
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bixutianxiecloneapi'])
-            return False
-        if config.params['tts_type'] == 'elevenlabsTTS' and not config.params["elevenlabstts_key"]:
-            QMessageBox.critical(self.main, config.transobj['anerror'], "no elevenlabs  key")
-            return False
-        # 如果没有选择目标语言，但是选择了配音角色，无法配音
-        if config.params['target_language'] == '-' and config.params['voice_role'] != 'No':
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['wufapeiyin'])
-            return False
-
-        # 未主动选择模式，则判断设置情况应该属于什么模式
-        if self.main.app_mode.startswith('biaozhun'):
-            # tiqu 如果 存在视频但 无配音 无嵌入字幕，则视为提取
-            if len(config.queue_mp4) > 0 and config.params['subtitle_type'] < 1 and config.params['voice_role'] == 'No':
-                self.main.app_mode = 'tiqu'
-                config.params['is_separate'] = False
-            elif len(config.queue_mp4) > 0 and txt and config.params['subtitle_type'] > 0 and config.params[
-                'voice_role'] == 'No':
-                # hebing 存在视频，存在字幕，字幕嵌入，不配音
-                self.main.app_mode = 'hebing'
-                config.params['is_separate'] = False
-            elif len(config.queue_mp4) < 1 and txt:
-                # peiyin
-                self.main.app_mode = 'peiyin'
-                config.params['is_separate'] = False
-
-        if not self.check_mode(txt=txt):
-            return False
-        # 除了 peiyin  hebing模式，其他均需要检测模型是否存在
-        if self.main.app_mode not in ['hebing', 'peiyin'] and not self.check_whisper_model(
-                config.params['whisper_model']):
-            return False
-
-        if config.params["cuda"]:
-            import torch
-            if not torch.cuda.is_available():
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocuda"])
-                return
-            if config.params['model_type'] == 'faster':
-                allow = True
-                try:
-                    from torch.backends import cudnn
-                    if not cudnn.is_available() or not cudnn.is_acceptable(torch.tensor(1.).cuda()):
-                        allow = False
-                except:
-                    allow = False
-                finally:
-                    if not allow:
-                        self.main.enable_cuda.setChecked(False)
-                        config.params['cuda'] = False
-                        return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
-
-        config.params['translate_type'] = self.main.translate_type.currentText()
-        # 如果需要翻译，再判断是否符合翻译规则
-        if not self.dont_translate():
-            rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
-                                               show_target=config.params['target_language'])
-            if rs is not True:
-                # 不是True，有错误
-                QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-                return False
-
-        if self.main.app_mode != 'hebing' and config.params['target_language'] != '-':
-            code = translator.get_code(show_text=config.params['target_language'])
-            if code not in ['zh-cn', 'zh-tw', 'en'] and config.params['tts_type'] == 'ChatTTS' and config.params[
-                'voice_role'] != 'No':
-                return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
-
-        # 存在视频
-        config.params['only_video'] = False
-        if config.params['voice_role'] == 'No':
-            config.params['is_separate'] = False
-        config.params['clear_cache'] = False
-        if self.main.clear_cache.isChecked():
-            config.params['clear_cache'] = True
-        if len(config.queue_mp4) > 0:
-            self.main.show_tips.setText("")
-            if self.main.app_mode not in ['tiqu', 'peiyin',
-                                          'biaozhun_jd'] and self.main.only_video.isChecked():
-                config.params['only_video'] = True
-            start_thread(self.main)
-        elif txt:
-            self.main.source_mp4.setText(config.transobj["No select videos"])
-            self.main.app_mode = 'peiyin'
-            config.params['is_separate'] = False
-            if config.params['tts_type'] == 'clone-voice' and config.params['voice_role'] == 'clone':
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
-                    'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
-                return
-
-        self.main.save_setting()
-        self.update_status('ing')
-        self.delete_process()
-        # return
-        config.settings = config.parse_init()
-        from videotrans.task.main_worker import Worker
-
-        self.main.task = Worker(parent=self.main, app_mode=self.main.app_mode, txt=txt)
-        self.main.task.start()
-
-        for k, v in self.main.moshis.items():
-            if k != self.main.app_mode:
-                v.setDisabled(True)
+#     def check_start(self):
+#         if config.current_status == 'ing':
+#             # 停止
+#             question = tools.show_popup(config.transobj['exit'], config.transobj['confirmstop'])
+#             if question == QMessageBox.Yes:
+#                 self.update_status('stop')
+#                 return
+#         proxy = self.main.proxy.text().strip().replace('：', ':')
+#         if proxy:
+#             if not re.match(r'^(http|sock)', proxy, re.I):
+#                 proxy = f'http://{proxy}'
+#             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
+#                 question = tools.show_popup(
+#                     '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
+# 一般代理/vpn格式为 http://127.0.0.1:数字端口号
+# 如果不知道什么是代理请勿随意填写
+# ChatGPT等api地址请填写在菜单-设置-对应配置内。
+# 如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+#                 if question != QMessageBox.Yes:
+#                     self.update_status('stop')
+#                     return
+#
+#         config.task_countdown = config.settings['countdown_sec']
+#         config.settings = config.parse_init()
+#         # 清理日志
+#
+#         # 目标文件夹
+#         target_dir = self.main.target_dir.text().strip().replace('\\', '/')
+#         if target_dir:
+#             config.params['target_dir'] = target_dir
+#         else:
+#             config.params['target_dir'] = ''
+#
+#         # 设置或删除代理
+#         config.proxy = proxy
+#         try:
+#             if config.proxy:
+#                 # 设置代理
+#                 tools.set_proxy(config.proxy)
+#             else:
+#                 # 删除代理
+#                 tools.set_proxy('del')
+#         except Exception:
+#             pass
+#
+#         # 原始语言
+#         config.params['source_language'] = self.main.source_language.currentText()
+#         if self.main.model_type.currentIndex == 3 and translator.get_code(
+#                 show_text=config.params['source_language']) not in ['zh-cn', 'zh-tw']:
+#             self.update_status('stop')
+#             return QMessageBox.critical(self.main, config.transobj['anerror'],
+#                                         'zh_recogn 仅支持中文语音识别' if config.defaulelang == 'zh' else 'zh_recogn Supports Chinese speech recognition only')
+#         if self.main.model_type.currentIndex == 3 and not config.params['zh_recogn_api']:
+#             return QMessageBox.critical(self.main, config.transobj['anerror'],
+#                                         'zh_recogn 必须在设置-zh_recogn中填写http接口地址' if config.defaulelang == 'zh' else 'The http interface address must be filled in the settings-zh_recogn')
+#
+#         # 目标语言
+#         target_language = self.main.target_language.currentText()
+#         config.params['target_language'] = target_language
+#
+#         # 配音角色
+#         config.params['voice_role'] = self.main.voice_role.currentText()
+#
+#         # 配音自动加速
+#         config.params['voice_autorate'] = self.main.voice_autorate.isChecked()
+#         config.params['video_autorate'] = self.main.video_autorate.isChecked()
+#         config.params['append_video'] = self.main.append_video.isChecked()
+#
+#         # 视频自动减速
+#         # 语音模型
+#         config.params['whisper_model'] = self.main.whisper_model.currentText()
+#         model_index = self.main.model_type.currentIndex()
+#         if model_index == 1:
+#             config.params['model_type'] = 'openai'
+#         elif model_index == 2:
+#             config.params['model_type'] = 'GoogleSpeech'
+#         elif model_index == 3:
+#             config.params['model_type'] = 'zh_recogn'
+#         else:
+#             config.params['model_type'] = 'faster'
+#         # 字幕嵌入类型
+#         config.params['subtitle_type'] = int(self.main.subtitle_type.currentIndex())
+#
+#         try:
+#             voice_rate = int(self.main.voice_rate.value())
+#             config.params['voice_rate'] = f"+{voice_rate}%" if voice_rate >= 0 else f"{voice_rate}%"
+#         except Exception:
+#             config.params['voice_rate'] = '+0%'
+#
+#         try:
+#             volume = int(self.main.volume_rate.value())
+#             pitch = int(self.main.pitch_rate.value())
+#             config.params['volume'] = f'+{volume}%' if volume > 0 else f'{volume}%'
+#             config.params['pitch'] = f'+{pitch}Hz' if pitch > 0 else f'{pitch}Hz'
+#         except Exception:
+#             config.params['volume'] = '+0%'
+#             config.params['pitch'] = '+0Hz'
+#         config.params['back_audio'] = self.main.back_audio.text().strip()
+#         # 字幕区文字
+#         txt = self.main.subtitle_area.toPlainText().strip()
+#         if txt and not re.search(r'\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?\s*?-->\s*?\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?', txt):
+#             txt = ""
+#             self.main.subtitle_area.clear()
+#
+#         # 综合判断
+#         if len(config.queue_mp4) < 1 and not txt:
+#             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+#             return False
+#
+#         # tts类型
+#         if config.params['tts_type'] == 'openaiTTS' and not config.params["chatgpt_key"]:
+#             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['chatgptkeymust'])
+#             return False
+#         if config.params['tts_type'] == 'clone-voice' and not config.params["clone_api"]:
+#             config.logger.error(f"不存在clone-api:{config.params['tts_type']=},{config.params['clone_api']=}")
+#             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bixutianxiecloneapi'])
+#             return False
+#         if config.params['tts_type'] == 'elevenlabsTTS' and not config.params["elevenlabstts_key"]:
+#             QMessageBox.critical(self.main, config.transobj['anerror'], "no elevenlabs  key")
+#             return False
+#         # 如果没有选择目标语言，但是选择了配音角色，无法配音
+#         if config.params['target_language'] == '-' and config.params['voice_role'] != 'No':
+#             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['wufapeiyin'])
+#             return False
+#
+#         # 未主动选择模式，则判断设置情况应该属于什么模式
+#         if self.main.app_mode.startswith('biaozhun'):
+#             # tiqu 如果 存在视频但 无配音 无嵌入字幕，则视为提取
+#             if len(config.queue_mp4) > 0 and config.params['subtitle_type'] < 1 and config.params['voice_role'] == 'No':
+#                 self.main.app_mode = 'tiqu'
+#                 config.params['is_separate'] = False
+#             elif len(config.queue_mp4) > 0 and txt and config.params['subtitle_type'] > 0 and config.params[
+#                 'voice_role'] == 'No':
+#                 # hebing 存在视频，存在字幕，字幕嵌入，不配音
+#                 self.main.app_mode = 'hebing'
+#                 config.params['is_separate'] = False
+#             elif len(config.queue_mp4) < 1 and txt:
+#                 # peiyin
+#                 self.main.app_mode = 'peiyin'
+#                 config.params['is_separate'] = False
+#
+#         if not self.check_mode(txt=txt):
+#             return False
+#         # 除了 peiyin  hebing模式，其他均需要检测模型是否存在
+#         if self.main.app_mode not in ['hebing', 'peiyin'] and not self.check_whisper_model(
+#                 config.params['whisper_model']):
+#             return False
+#
+#         if config.params["cuda"]:
+#             import torch
+#             if not torch.cuda.is_available():
+#                 QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocuda"])
+#                 return
+#             if config.params['model_type'] == 'faster':
+#                 allow = True
+#                 try:
+#                     from torch.backends import cudnn
+#                     if not cudnn.is_available() or not cudnn.is_acceptable(torch.tensor(1.).cuda()):
+#                         allow = False
+#                 except:
+#                     allow = False
+#                 finally:
+#                     if not allow:
+#                         self.main.enable_cuda.setChecked(False)
+#                         config.params['cuda'] = False
+#                         return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
+#
+#         config.params['translate_type'] = self.main.translate_type.currentText()
+#         # 如果需要翻译，再判断是否符合翻译规则
+#         if not self.dont_translate():
+#             rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
+#                                                show_target=config.params['target_language'])
+#             if rs is not True:
+#                 # 不是True，有错误
+#                 QMessageBox.critical(self.main, config.transobj['anerror'], rs)
+#                 return False
+#
+#         if self.main.app_mode != 'hebing' and config.params['target_language'] != '-':
+#             code = translator.get_code(show_text=config.params['target_language'])
+#             if code not in ['zh-cn', 'zh-tw', 'en'] and config.params['tts_type'] == 'ChatTTS' and config.params[
+#                 'voice_role'] != 'No':
+#                 return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+#
+#         # 存在视频
+#         config.params['only_video'] = False
+#         if config.params['voice_role'] == 'No':
+#             config.params['is_separate'] = False
+#         config.params['clear_cache'] = False
+#         if self.main.clear_cache.isChecked():
+#             config.params['clear_cache'] = True
+#         if len(config.queue_mp4) > 0:
+#             self.main.show_tips.setText("")
+#             if self.main.app_mode not in ['tiqu', 'peiyin',
+#                                           'biaozhun_jd'] and self.main.only_video.isChecked():
+#                 config.params['only_video'] = True
+#             start_thread(self.main)
+#         elif txt:
+#             self.main.source_mp4.setText(config.transobj["No select videos"])
+#             self.main.app_mode = 'peiyin'
+#             config.params['is_separate'] = False
+#             if config.params['tts_type'] == 'clone-voice' and config.params['voice_role'] == 'clone':
+#                 QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
+#                     'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
+#                 return
+#
+#         self.main.save_setting()
+#         self.update_status('ing')
+#         self.delete_process()
+#         # return
+#         config.settings = config.parse_init()
+#         from videotrans.task.main_worker import Worker
+#
+#         self.main.task = Worker(parent=self.main, app_mode=self.main.app_mode, txt=txt)
+#         self.main.task.start()
+#
+#         for k, v in self.main.moshis.items():
+#             if k != self.main.app_mode:
+#                 v.setDisabled(True)
 
     # 设置按钮上的日志信息
     def set_process_btn_text(self, text, btnkey="", type="logs"):

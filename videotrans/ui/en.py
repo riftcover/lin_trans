@@ -27,9 +27,9 @@ from videotrans.configure import config
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        if not MainWindow.objectName():
-            MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1244, 644)
+        # if not MainWindow.objectName():
+        MainWindow.setObjectName(u"MainWindow")
+        # MainWindow.resize(1240, 640)
         self.action_tiquzimu_no = QAction(MainWindow)
         self.action_tiquzimu_no.setObjectName(u"action_tiquzimu_no")
         icon = QIcon(QIcon.fromTheme(u"从本地视频中提取出原始语言的srt字幕"))
