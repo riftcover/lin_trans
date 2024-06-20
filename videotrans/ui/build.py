@@ -1,7 +1,7 @@
 def convert_encoding(py_file):
     # 将ui生成的ui文件进行Unicode解码
     # 读取生成的 .py 文件并解码 Unicode 字符
-    with open(py_file, 'r', encoding='utf-16') as f:
+    with open(py_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
     # 将 Unicode 字符转换为正常的中文字符
