@@ -960,6 +960,26 @@ class SecWindow():
             self.main.settings.setValue("last_dir", config.last_opendir)
             config.queue_mp4 = fnames
 
+    def select_files(self):
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
+                                                 "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
+        self.file_paths = file_paths
+        self.main.label_tt.setText("\n".join(self.file_paths))
+
+    def drag_enter_event(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def drop_event(self, event):
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            self.file_paths.append(file_path)
+        self.main.label_tt.setText("\n".join(self.file_paths))
+
     # 导入背景声音
     def get_background(self):
         fname, _ = QFileDialog.getOpenFileName(self.main, 'Background music', config.last_opendir,

@@ -30,7 +30,7 @@ class StartWindow(QtWidgets.QWidget):
 
         st = time.time()
         from videotrans.mainwin.spwin import MainWindow
-        MainWindow(width=self.width, height=self.height)
+        MainWindow()
         Path(Path.cwd() / "tmp").mkdir(parents=True, exist_ok=True)
         et = time.time()
         print(f'启动用时：{et - st}')

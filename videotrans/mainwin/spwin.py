@@ -31,7 +31,19 @@ import platform
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None,width=1240,height=640):
+    """
+    The main window of the application.
+    Args:
+        parent (QWidget, optional): The parent widget. Defaults to None.
+        width (int, optional): The width of the window. Defaults to 1240.
+        height (int, optional): The height of the window. Defaults to 640.
+    """
+    def __init__(self, parent=None):
+        """
+        Initializes the main window.
+        Args:
+            parent (QWidget, optional): The parent widget. Defaults to None.
+        """
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
         self.resize(1240, 640)
@@ -60,11 +72,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # QTimer.singleShot(500, self.start_box)
 
 
-    # def start_box(self):
-    #     # 打开工具箱
-    #     configure.TOOLBOX = win.MainWindow(self)
-    #     configure.TOOLBOX.resize(self.bwidth, self.bheight)
-    #     configure.TOOLBOX.move(QPoint(self.lefttopx,self.lefttopy))
+
 
     def initUI(self):
         self.settings = QSettings("Jameson", "VideoTranslate")
@@ -243,7 +251,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.startbtn.clicked.connect(self.util.check_start)
         # self.stop_djs.clicked.connect(self.util.reset_timeid)
         # self.continue_compos.clicked.connect(self.util.set_djs_timeout)
-        self.btn_get_video.clicked.connect(self.util.get_mp4)
+        self.act_btn_get_video()
+
         # self.btn_save_dir.clicked.connect(self.util.get_save_dir)
         #
         # self.target_language.currentTextChanged.connect(self.util.set_voice_role)
@@ -387,27 +396,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # except Exception as e:
         #     print('threaqd-----' + str(e))
 
+    def act_btn_get_video(self):
+        # 选择文件,并显示路径
+        self.btn_get_video.clicked.connect(self.util.select_files)
+        self.btn_get_video.setAcceptDrops(True)
+        self.btn_get_video.dragEnterEvent = self.util.drag_enter_event
+        self.btn_get_video.dropEvent = self.util.drop_event
 
-    def closeEvent(self, event):
-        # 在关闭窗口前执行的操作
-        config.exit_soft = True
-        config.current_status = 'end'
-        self.hide()
 
-        if configure.TOOLBOX is not None:
-            configure.TOOLBOX.close()
-        try:
-            shutil.rmtree(config.rootdir + "/tmp", ignore_errors=True)
-            shutil.rmtree(config.homedir + "/tmp", ignore_errors=True)
-        except Exception:
-            pass
-        try:
-            tools.kill_ffmpeg_processes()
-        except Exception:
-            pass
-        print('等待所有进程退出...')
-        time.sleep(2)
-        event.accept()
+    # def closeEvent(self, event):
+    #     # 在关闭窗口前执行的操作
+    #     config.exit_soft = True
+    #     config.current_status = 'end'
+    #     self.hide()
+    #
+    #     if configure.TOOLBOX is not None:
+    #         configure.TOOLBOX.close()
+    #     try:
+    #         shutil.rmtree(config.rootdir + "/tmp", ignore_errors=True)
+    #         shutil.rmtree(config.homedir + "/tmp", ignore_errors=True)
+    #     except Exception:
+    #         pass
+    #     try:
+    #         tools.kill_ffmpeg_processes()
+    #     except Exception:
+    #         pass
+    #     print('等待所有进程退出...')
+    #     time.sleep(2)
+    #     event.accept()
 
     def get_setting(self):
         self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")

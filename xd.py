@@ -1,65 +1,49 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QFormLayout, QListWidget, QLineEdit, QLabel, QRadioButton, QCheckBox, QStackedWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QLabel, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
 
-class StackedExample(QWidget):
+class FileSelector(QMainWindow):
     def __init__(self):
-        super(StackedExample, self).__init__()
-        self.setGeometry(300, 50, 400, 300)
-        self.setWindowTitle('StackedWidget 例子')
+        super().__init__()
 
-        self.leftlist = QListWidget()
-        self.leftlist.insertItem(0, '联系方式')
-        self.leftlist.insertItem(1, '个人信息')
-        self.leftlist.insertItem(2, '教育程度')
+        self.setWindowTitle("File Selector")
+        self.setGeometry(100, 100, 400, 200)
 
-        self.stack1 = QWidget()
-        self.stack2 = QWidget()
-        self.stack3 = QWidget()
+        self.button = QPushButton("Select Files", self)
+        self.button.clicked.connect(self.select_files)
+        self.button.setGeometry(150, 50, 100, 50)
 
-        self.stack1UI()
-        self.stack2UI()
-        self.stack3UI()
+        self.label = QLabel("No files selected", self)
+        self.label.setGeometry(50, 120, 300, 20)
 
-        self.Stack = QStackedWidget(self)
-        self.Stack.addWidget(self.stack1)
-        self.Stack.addWidget(self.stack2)
-        self.Stack.addWidget(self.stack3)
+        self.button.setAcceptDrops(True)
+        self.button.dragEnterEvent = self.drag_enter_event
+        self.button.dropEvent = self.drop_event
 
-        hbox = QHBoxLayout(self)
-        hbox.addWidget(self.leftlist)
-        hbox.addWidget(self.Stack)
-        self.setLayout(hbox)
+        self.file_paths = []
 
-        self.leftlist.currentRowChanged.connect(self.display)
+    def select_files(self):
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+        file_dialog.setNameFilter("*.mp4 *.avi *.mov *.mpg *.mkv")
+        file_paths, _ = file_dialog.getOpenFileNames(self, "Select files")
+        self.file_paths = file_paths
+        self.label.setText("\n".join(self.file_paths))
 
-    def stack1UI(self):
-        layout = QFormLayout()
-        layout.addRow("姓名", QLineEdit())
-        layout.addRow("地址", QLineEdit())
-        self.stack1.setLayout(layout)
+    def drag_enter_event(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
 
-    def stack2UI(self):
-        layout = QFormLayout()
-        sex = QHBoxLayout()
-        sex.addWidget(QRadioButton("男"))
-        sex.addWidget(QRadioButton("女"))
-        layout.addRow(QLabel("性别"), sex)
-        layout.addRow("生日", QLineEdit())
-        self.stack2.setLayout(layout)
+    def drop_event(self, event):
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            self.file_paths.append(file_path)
+        self.label.setText("\n".join(self.file_paths))
 
-    def stack3UI(self):
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("科目"))
-        layout.addWidget(QCheckBox("物理"))
-        layout.addWidget(QCheckBox("高数"))
-        self.stack3.setLayout(layout)
-
-    def display(self, i):
-        self.Stack.setCurrentIndex(i)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = StackedExample()
+    window = FileSelector()
     window.show()
     sys.exit(app.exec())

@@ -75,6 +75,24 @@ class Ui_MainWindow(object):
         self.verticalLayout_1.setContentsMargins(0, 10, 0, 0)
         self.btn_get_video = QPushButton(self.layoutWidget)
         self.btn_get_video.setObjectName(u"btn_get_video")
+        self.file_path = ""
+        ##################
+        # self.btn_save_dir = QPushButton(self.layoutWidget)
+        # self.btn_save_dir.setMinimumSize(QSize(120, 30))
+        # self.btn_save_dir.setObjectName("btn_save_dir")
+        # self.target_dir = QLineEdit(self.layoutWidget)
+        # self.target_dir.setMinimumSize(QSize(0, 30))
+        # self.target_dir.setReadOnly(False)
+        # self.target_dir.setDisabled(True)
+        # self.target_dir.setObjectName("target_dir")
+        ##################
+
+        self.label_tt = QLineEdit(self.layoutWidget)
+        self.label_tt.setReadOnly(False)
+        self.label_tt.setDisabled(True)
+        self.label_tt.setGeometry(50, 120, 300, 20)
+        ##################
+
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
@@ -616,6 +634,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        # self.btn_save_dir.setToolTip(config.uilanglist.get("Select where to save the processed output resources"))
+        # self.btn_save_dir.setText(config.uilanglist.get("Save to.."))
+
         self.action_tiquzimu_no.setText(QCoreApplication.translate("MainWindow", u"音视频转字幕", None))
 
         self.action_tiquzimu_no.setToolTip(QCoreApplication.translate("MainWindow", u"音视频转字幕", None))
