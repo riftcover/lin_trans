@@ -5,9 +5,10 @@ import shutil
 import subprocess
 import threading
 from PySide6 import QtCore
-from PySide6.QtGui import QTextCursor, QDesktopServices
+from PySide6.QtGui import QTextCursor, QDesktopServices, QDragEnterEvent, QDropEvent
 from PySide6.QtCore import QUrl, Qt, Slot
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar, QTableWidgetItem
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar, \
+    QTableWidgetItem, QTableWidget
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -1543,7 +1544,7 @@ class SecWindow():
 class TableWindow(SecWindow):
     # 列表的操作
     @Slot()
-    def select_files(self, ui_table):
+    def select_files(self, ui_table: QTableWidget):
         # 选择文件
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
@@ -1555,7 +1556,7 @@ class TableWindow(SecWindow):
                 file_name = os.path.basename(file_path)
                 self.add_file_to_table(ui_table, file_name,file_path)
 
-    def add_file_to_table(self, ui_table, file_name: str,file_path: str):
+    def add_file_to_table(self, ui_table: QTableWidget, file_name: str,file_path: str):
         # 添加文件到表格
 
         row_position = ui_table.rowCount()
@@ -1573,20 +1574,20 @@ class TableWindow(SecWindow):
         delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
 
     @Slot()
-    def delete_file(self, ui_table, row):
+    def delete_file(self, ui_table: QTableWidget, row: int):
         # Confirm delete action
 
         ui_table.removeRow(row)
         # Update the delete buttons' connections
         self.update_delete_buttons(ui_table)
 
-    def update_delete_buttons(self, ui_table):
+    def update_delete_buttons(self, ui_table: QTableWidget):
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
             delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
 
-    def get_video_duration(self, file):
+    def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
         cmd = f"ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\""
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -1595,14 +1596,14 @@ class TableWindow(SecWindow):
         minutes, seconds = divmod(remainder, 60)
         return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
-    def drag_enter_event(self, event):
+    def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入
         if event.mimeData().hasUrls():
             event.accept()
         else:
             event.ignore()
 
-    def drop_event(self, event):
+    def drop_event(self, event: QDropEvent):
         # 拖出
         for url in event.mimeData().urls():
             file_path = url.toLocalFile()
