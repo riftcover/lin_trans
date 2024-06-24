@@ -151,6 +151,11 @@ langlist: dict = obj["language_code_list"]
 rev_langlist = {code_alias: code for code, code_alias in langlist.items()}
 # 语言显示名称 list
 langnamelist = list(langlist.values())
+
+# 模型列表
+model_list: dict = obj["model_code_list"]
+model_code_list = list(model_list.values())
+
 # 工具箱语言
 box_lang = obj['toolbox_lang']
 

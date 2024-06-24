@@ -23,7 +23,7 @@ from videotrans.ui.en import Ui_MainWindow
 
 from videotrans import configure
 from pathlib import Path
-from videotrans.mainwin.secwin import SecWindow
+from videotrans.mainwin.secwin import SecWindow, TableWindow
 # from videotrans.mainwin.subform import Subform
 import platform
 # from videotrans.task.check_update import CheckUpdateWorker
@@ -45,6 +45,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             parent (QWidget, optional): The parent widget. Defaults to None.
         """
         super(MainWindow, self).__init__(parent)
+        self.model_name = None
+        self.languagename = None
         self.setupUi(self)
         self.resize(1240, 640)
         self.show()
@@ -65,8 +67,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(self.rawtitle)
         # 检查窗口是否打开
         self.util = SecWindow(self)
+        self.table = TableWindow(self)
         # self.subform = Subform(self)
         self.initUI()
+
 
         self.bind_action()
         # QTimer.singleShot(500, self.start_box)
@@ -76,11 +80,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def initUI(self):
         self.settings = QSettings("Jameson", "VideoTranslate")
-        print(self.settings)
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         # language code
         self.languagename = config.langnamelist
+        self.model_name = config.model_code_list
         self.get_setting_cache()
         # self.splitter.setSizes([self.width - 400, 400])
 
@@ -107,8 +111,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.source_language.setCurrentIndex(2)
 
+
         # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
         self.target_language.addItems(["-"] + self.languagename)
+
+        # 模型下拉菜单内容
+        self.source_model.addItems(self.model_name)
+
         #
         # # 目标语言改变
         # self.listen_btn.setCursor(Qt.PointingHandCursor)
@@ -400,10 +409,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(self.util.select_files)
+        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
         self.btn_get_video.setAcceptDrops(True)
-        self.btn_get_video.dragEnterEvent = self.util.drag_enter_event
-        self.btn_get_video.dropEvent = self.util.drop_event
+        self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
+        self.btn_get_video.dropEvent = self.table.drop_event
 
 
     # def closeEvent(self, event):
@@ -428,8 +437,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     event.accept()
 
     def get_setting_cache(self):
-        print("config.params")
-        print(config.params)
         self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")
         # 从缓存获取默认配置
         config.params["baidu_appid"] = self.settings.value("baidu_appid", "")

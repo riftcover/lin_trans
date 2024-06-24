@@ -5,8 +5,8 @@ import shutil
 import threading
 from PySide6 import QtCore
 from PySide6.QtGui import QTextCursor, QDesktopServices
-from PySide6.QtCore import QUrl, Qt
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
+from PySide6.QtCore import QUrl, Qt,Slot
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar,QTableWidgetItem
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -961,25 +961,7 @@ class SecWindow():
             self.main.settings.setValue("last_dir", config.last_opendir)
             config.queue_mp4 = fnames
 
-    def select_files(self):
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                                 "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
-        self.file_paths = file_paths
-        self.main.label_tt.setText("\n".join(self.file_paths))
 
-    def drag_enter_event(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
-
-    def drop_event(self, event):
-        for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            self.file_paths.append(file_path)
-        self.main.label_tt.setText("\n".join(self.file_paths))
 
     # 导入背景声音
     def get_background(self):
@@ -1557,3 +1539,61 @@ class SecWindow():
         if step == 'translate_start':
             self.main.subtitle_area.clear()
         return True
+
+
+class TableWindow(SecWindow):
+    # 列表的操作
+    @Slot()
+    def select_files(self,ui_table  ):
+        # 选择文件
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
+                                                 "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
+
+        if file_paths:
+            for file_path in file_paths:
+                file_name = os.path.basename(file_path)
+                self.add_file_to_table(ui_table, file_name)
+    def add_file_to_table(self, ui_table, file_name):
+        # 添加文件到表格
+        row_position = ui_table.rowCount()
+
+        ui_table.insertRow(row_position)
+        file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
+        delete_button = QPushButton("删除")
+
+        ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
+        ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
+        ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+        ui_table.setCellWidget(row_position, 3, delete_button)
+
+        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table,row))
+
+    @Slot()
+    def delete_file(self, ui_table,row):
+        # Confirm delete action
+
+        ui_table.removeRow(row)
+        # Update the delete buttons' connections
+        self.update_delete_buttons(ui_table)
+
+    def update_delete_buttons(self,ui_table):
+        for row in range(ui_table.rowCount()):
+            delete_button = ui_table.cellWidget(row, 3)
+            delete_button.clicked.disconnect()
+            delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table,r))
+
+    def drag_enter_event(self, event):
+        # 接受拖入
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def drop_event(self, event):
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            self.file_paths.append(file_path)
+        self.main.label_tt.setText("\n".join(self.file_paths))
+
