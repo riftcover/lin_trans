@@ -423,5 +423,12 @@
     "ms": "马来语",
     "kk": "哈萨克语",
 	"cs":"捷克语"
+  },
+  "model_code_list": {
+    "en_easy":"英语小模型",
+    "en_medium":"英语中",
+    "en_hard":"英语精",
+    "en_extreme":"英语极",
+    "cloud_en_easy": "云-英语小模型"
   }
 }

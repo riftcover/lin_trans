@@ -917,11 +917,11 @@ class SecWindow():
             return
 
         self.main.listen_btn.hide()
-        self.main.voice_role.clear()
+        # self.main.voice_role.clear()
         # 未设置目标语言，则清空 edgeTTS角色
-        if t == '-':
-            self.main.voice_role.addItems(['No'])
-            return
+        # if t == '-':
+        #     self.main.voice_role.addItems(['No'])
+        #     return
         show_rolelist = tools.get_edge_rolelist() if config.params[
                                                          'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
 

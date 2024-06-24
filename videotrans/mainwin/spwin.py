@@ -76,11 +76,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def initUI(self):
         self.settings = QSettings("Jameson", "VideoTranslate")
+        print(self.settings)
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         # language code
         self.languagename = config.langnamelist
-        self.get_setting()
+        self.get_setting_cache()
         # self.splitter.setSizes([self.width - 400, 400])
 
         # 隐藏倒计时
@@ -224,7 +225,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if config.params['target_language'] and config.params['target_language'] in self.languagename:
             self.target_language.setCurrentText(config.params['target_language'])
             #根据目标语言更新角色列表
-            self.util.set_voice_role(config.params['target_language'])
+            # self.util.set_voice_role(config.params['target_language'])
             # 设置默认角色列表
             # 这里是配音
             # if config.params['voice_role'] and config.params['voice_role'] != 'No' and self.current_rolelist and \
@@ -426,7 +427,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     time.sleep(2)
     #     event.accept()
 
-    def get_setting(self):
+    def get_setting_cache(self):
+        print("config.params")
+        print(config.params)
         self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")
         # 从缓存获取默认配置
         config.params["baidu_appid"] = self.settings.value("baidu_appid", "")
