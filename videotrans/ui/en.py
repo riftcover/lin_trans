@@ -138,16 +138,16 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.label_3)
 
-        self.source_language_2 = QComboBox(self.layoutWidget)
-        self.source_language_2.setObjectName(u"source_language_2")
+        self.source_model = QComboBox(self.layoutWidget)
+        self.source_model.setObjectName(u"source_language_2")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.source_language_2.sizePolicy().hasHeightForWidth())
-        self.source_language_2.setSizePolicy(sizePolicy3)
-        self.source_language_2.setMinimumSize(QSize(0, 35))
+        sizePolicy3.setHeightForWidth(self.source_model.sizePolicy().hasHeightForWidth())
+        self.source_model.setSizePolicy(sizePolicy3)
+        self.source_model.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_3.addWidget(self.source_language_2)
+        self.horizontalLayout_3.addWidget(self.source_model)
 
         self.enable_cuda = QCheckBox(self.layoutWidget)
         self.enable_cuda.setObjectName(u"enable_cuda")
@@ -184,26 +184,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_1.addLayout(self.gridLayout)
 
-        self.tableWidget = QTableWidget(self.layoutWidget)
-        if (self.tableWidget.columnCount() < 4):
-            self.tableWidget.setColumnCount(4)
-        __qtablewidgetitem = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        self.tableWidget.setObjectName(u"tableWidget")
+        self.media_table = QTableWidget(0,4)
+        self.media_table.setObjectName(u"tableWidget")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.tableWidget.sizePolicy().hasHeightForWidth())
-        self.tableWidget.setSizePolicy(sizePolicy4)
-        self.tableWidget.setMinimumSize(QSize(0, 300))
+        sizePolicy4.setHeightForWidth(self.media_table.sizePolicy().hasHeightForWidth())
+        self.media_table.setSizePolicy(sizePolicy4)
+        self.media_table.setMinimumSize(QSize(0, 300))
 
-        self.verticalLayout_1.addWidget(self.tableWidget)
+        self.verticalLayout_1.addWidget(self.media_table)
 
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -315,23 +305,13 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addLayout(self.gridLayout_2)
 
-        self.tableWidget_2 = QTableWidget(self.layoutWidget1)
-        if (self.tableWidget_2.columnCount() < 4):
-            self.tableWidget_2.setColumnCount(4)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(0, __qtablewidgetitem4)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(1, __qtablewidgetitem5)
-        __qtablewidgetitem6 = QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(2, __qtablewidgetitem6)
-        __qtablewidgetitem7 = QTableWidgetItem()
-        self.tableWidget_2.setHorizontalHeaderItem(3, __qtablewidgetitem7)
-        self.tableWidget_2.setObjectName(u"tableWidget_2")
-        sizePolicy4.setHeightForWidth(self.tableWidget_2.sizePolicy().hasHeightForWidth())
-        self.tableWidget_2.setSizePolicy(sizePolicy4)
-        self.tableWidget_2.setMinimumSize(QSize(0, 300))
+        self.srt_table = QTableWidget(0, 4)
+        self.srt_table.setObjectName(u"srt_table")
+        sizePolicy4.setHeightForWidth(self.srt_table.sizePolicy().hasHeightForWidth())
+        self.srt_table.setSizePolicy(sizePolicy4)
+        self.srt_table.setMinimumSize(QSize(0, 300))
 
-        self.verticalLayout_2.addWidget(self.tableWidget_2)
+        self.verticalLayout_2.addWidget(self.srt_table)
 
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
@@ -676,7 +656,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
-        self.source_language_2.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.enable_cuda.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
@@ -685,15 +665,13 @@ class Ui_MainWindow(object):
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
 #if QT_CONFIG(tooltip)
         self.target_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
-        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
-        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
-        ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"时长", None));
-        ___qtablewidgetitem3 = self.tableWidget.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+
+        self.media_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
+        self.media_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.media_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.media_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.media_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+
         self.startbtn_2.setText(QCoreApplication.translate("MainWindow", u"开始", None))
         self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"导入字幕文件", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
@@ -712,14 +690,11 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.source_language_6.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        ___qtablewidgetitem4 = self.tableWidget_2.horizontalHeaderItem(0)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
-        ___qtablewidgetitem5 = self.tableWidget_2.horizontalHeaderItem(1)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
-        ___qtablewidgetitem6 = self.tableWidget_2.horizontalHeaderItem(2)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"时长", None));
-        ___qtablewidgetitem7 = self.tableWidget_2.horizontalHeaderItem(3)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+        self.srt_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
+        self.srt_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.srt_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.srt_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.srt_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.startbtn_3.setText(QCoreApplication.translate("MainWindow", u"开始", None))
         ___qtablewidgetitem8 = self.eduit_zimu.horizontalHeaderItem(0)
         ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"操作", None));

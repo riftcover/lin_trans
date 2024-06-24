@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1244</width>
-    <height>644</height>
+    <width>1240</width>
+    <height>639</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -71,7 +71,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="page">
      <widget class="QWidget" name="layoutWidget">
@@ -80,7 +80,7 @@
         <x>10</x>
         <y>10</y>
         <width>1071</width>
-        <height>531</height>
+        <height>642</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_1">
@@ -175,7 +175,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="source_language_2">
+            <widget class="QComboBox" name="source_model">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -330,7 +330,7 @@
         <x>10</x>
         <y>10</y>
         <width>1111</width>
-        <height>531</height>
+        <height>642</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1014,7 +1014,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1244</width>
+     <width>1240</width>
      <height>33</height>
     </rect>
    </property>
