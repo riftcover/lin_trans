@@ -26,15 +26,6 @@ from videotrans.configure import config
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(u"MainWindow")
-        self.action_tiquzimu_no = QAction(MainWindow)
-        self.action_tiquzimu_no.setObjectName(u"action_tiquzimu_no")
-        icon = QIcon(QIcon.fromTheme(u"从本地视频中提取出原始语言的srt字幕"))
-        self.action_tiquzimu_no.setIcon(icon)
-        self.action_tiquzimu_no.setMenuRole(QAction.MenuRole.TextHeuristicRole)
-        # self.action_fanyi = CheckBox('字幕翻译',self)
-        self.action_eduit = QAction(MainWindow)
-        self.action_eduit.setObjectName(u"action_eduit")
-        self.action_eduit.setMenuRole(QAction.MenuRole.TextHeuristicRole)
         self.action = QAction(MainWindow)
         self.action.setObjectName(u"action")
         self.action_2 = QAction(MainWindow)
@@ -147,13 +138,27 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.label_4)
 
-        self.target_language = ComboBox(self.layoutWidget)
-        self.target_language.setObjectName(u"target_language")
-        sizePolicy3.setHeightForWidth(self.target_language.sizePolicy().hasHeightForWidth())
-        self.target_language.setSizePolicy(sizePolicy3)
-        self.target_language.setMinimumSize(QSize(0, 0))
-
-        self.horizontalLayout_2.addWidget(self.target_language)
+        self.translate_language = ComboBox(self.layoutWidget)
+        self.translate_language.setObjectName(u"target_language")
+        sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
+        self.translate_language.setSizePolicy(sizePolicy3)
+        self.translate_language.setMinimumSize(QSize(150, 30))
+        self.horizontalLayout_2.addWidget(self.translate_language)
+        self.gridLayout.addLayout(self.horizontalLayout_2, 0, 3, 1, 1)
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.label_4 = QLabel(self.layoutWidget)
+        self.label_4.setObjectName(u"label_4")
+        sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
+        self.label_4.setSizePolicy(sizePolicy2)
+        self.label_4.setMinimumSize(QSize(0, 35))
+        self.horizontalLayout_2.addWidget(self.label_4)
+        self.translate_language = ComboBox(self.layoutWidget)
+        self.translate_language.setObjectName(u"target_language")
+        sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
+        self.translate_language.setSizePolicy(sizePolicy3)
+        self.translate_language.setMinimumSize(QSize(150, 30))
+        self.horizontalLayout_2.addWidget(self.translate_language)
 
 
         self.gridLayout.addLayout(self.horizontalLayout_2, 0, 2, 1, 1)
@@ -577,13 +582,7 @@ class Ui_MainWindow(object):
         # self.btn_save_dir.setToolTip(config.uilanglist.get("Select where to save the processed output resources"))
         # self.btn_save_dir.setText(config.uilanglist.get("Save to.."))
 
-        self.action_tiquzimu_no.setText(QCoreApplication.translate("MainWindow", u"音视频转字幕", None))
 
-        self.action_tiquzimu_no.setToolTip(QCoreApplication.translate("MainWindow", u"音视频转字幕", None))
-
-        self.action_eduit.setText(QCoreApplication.translate("MainWindow", u"编辑字幕", None))
-
-        self.action_eduit.setToolTip(QCoreApplication.translate("MainWindow", u"编辑srt字幕文件", None))
 
         self.action.setText(QCoreApplication.translate("MainWindow", u"充值算力", None))
         self.action_2.setText(QCoreApplication.translate("MainWindow", u"兑换码", None))
@@ -614,7 +613,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-        self.target_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 
         self.media_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
         self.media_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
