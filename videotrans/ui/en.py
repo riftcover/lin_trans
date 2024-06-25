@@ -8,36 +8,30 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
-    QCursor, QFont, QFontDatabase, QGradient,
-    QIcon, QImage, QKeySequence, QLinearGradient,
-    QPainter, QPalette, QPixmap, QRadialGradient,
-    QTransform)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
+                            QSize, Qt)
+from PySide6.QtGui import (QAction, QIcon)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
-    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QMainWindow, QMenu,
-    QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
-    QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QCheckBox, QGridLayout,
+                               QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                               QListWidget, QListWidgetItem, QMenu,
+                               QMenuBar, QSizePolicy, QStackedWidget,
+                               QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
+                               QWidget)
+from qfluentwidgets import ComboBox, PushButton, CheckBox
+
 from videotrans.configure import config
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        # if not MainWindow.objectName():
         MainWindow.setObjectName(u"MainWindow")
-        # MainWindow.resize(1240, 640)
         self.action_tiquzimu_no = QAction(MainWindow)
         self.action_tiquzimu_no.setObjectName(u"action_tiquzimu_no")
         icon = QIcon(QIcon.fromTheme(u"从本地视频中提取出原始语言的srt字幕"))
         self.action_tiquzimu_no.setIcon(icon)
         self.action_tiquzimu_no.setMenuRole(QAction.MenuRole.TextHeuristicRole)
-        self.action_fanyi = QAction(MainWindow)
-        self.action_fanyi.setObjectName(u"action_fanyi")
-        self.action_fanyi.setMenuRole(QAction.MenuRole.TextHeuristicRole)
+        # self.action_fanyi = CheckBox('字幕翻译',self)
         self.action_eduit = QAction(MainWindow)
         self.action_eduit.setObjectName(u"action_eduit")
         self.action_eduit.setMenuRole(QAction.MenuRole.TextHeuristicRole)
@@ -73,26 +67,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_1.setSpacing(30)
         self.verticalLayout_1.setObjectName(u"verticalLayout_1")
         self.verticalLayout_1.setContentsMargins(0, 10, 0, 0)
-        self.btn_get_video = QPushButton(self.layoutWidget)
+        self.btn_get_video = PushButton(self.layoutWidget)
         self.btn_get_video.setObjectName(u"btn_get_video")
         self.file_path = ""
-        ##################
-        # self.btn_save_dir = QPushButton(self.layoutWidget)
-        # self.btn_save_dir.setMinimumSize(QSize(120, 30))
-        # self.btn_save_dir.setObjectName("btn_save_dir")
-        # self.target_dir = QLineEdit(self.layoutWidget)
-        # self.target_dir.setMinimumSize(QSize(0, 30))
-        # self.target_dir.setReadOnly(False)
-        # self.target_dir.setDisabled(True)
-        # self.target_dir.setObjectName("target_dir")
-        ##################
-
-        self.label_tt = QLineEdit(self.layoutWidget)
-        self.label_tt.setReadOnly(False)
-        self.label_tt.setDisabled(True)
-        self.label_tt.setGeometry(50, 120, 300, 20)
-        ##################
-
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
@@ -117,7 +94,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.label_2)
 
-        self.source_language = QComboBox(self.layoutWidget)
+        self.source_language = ComboBox(self.layoutWidget)
         self.source_language.setObjectName(u"source_language")
         sizePolicy1.setHeightForWidth(self.source_language.sizePolicy().hasHeightForWidth())
         self.source_language.setSizePolicy(sizePolicy1)
@@ -138,7 +115,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.label_3)
 
-        self.source_model = QComboBox(self.layoutWidget)
+        self.source_model = ComboBox(self.layoutWidget)
         self.source_model.setObjectName(u"source_language_2")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
@@ -149,13 +126,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.source_model)
 
-        self.enable_cuda = QCheckBox(self.layoutWidget)
-        self.enable_cuda.setObjectName(u"enable_cuda")
-        sizePolicy3.setHeightForWidth(self.enable_cuda.sizePolicy().hasHeightForWidth())
-        self.enable_cuda.setSizePolicy(sizePolicy3)
-        self.enable_cuda.setMinimumSize(QSize(0, 35))
+        self.check_fanyi = CheckBox('字幕翻译',self)
 
-        self.horizontalLayout_3.addWidget(self.enable_cuda)
+        sizePolicy3.setHeightForWidth(self.check_fanyi.sizePolicy().hasHeightForWidth())
+        self.check_fanyi.setSizePolicy(sizePolicy3)
+        self.check_fanyi.setMinimumSize(QSize(0, 35))
+
+        self.horizontalLayout_3.addWidget(self.check_fanyi)
 
 
         self.gridLayout.addLayout(self.horizontalLayout_3, 0, 1, 1, 1)
@@ -170,7 +147,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.label_4)
 
-        self.target_language = QComboBox(self.layoutWidget)
+        self.target_language = ComboBox(self.layoutWidget)
         self.target_language.setObjectName(u"target_language")
         sizePolicy3.setHeightForWidth(self.target_language.sizePolicy().hasHeightForWidth())
         self.target_language.setSizePolicy(sizePolicy3)
@@ -192,26 +169,21 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.media_table.sizePolicy().hasHeightForWidth())
         self.media_table.setSizePolicy(sizePolicy4)
         self.media_table.setMinimumSize(QSize(0, 300))
-
         self.verticalLayout_1.addWidget(self.media_table)
-
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.startbtn_2 = QPushButton(self.layoutWidget)
-        self.startbtn_2.setObjectName(u"startbtn_2")
+        self.startbtn = PushButton(self.layoutWidget)
+        self.startbtn.setObjectName(u"startbtn")
         sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy5.setHorizontalStretch(0)
         sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.startbtn_2.sizePolicy().hasHeightForWidth())
-        self.startbtn_2.setSizePolicy(sizePolicy5)
-        self.startbtn_2.setMinimumSize(QSize(200, 50))
-
-        self.verticalLayout.addWidget(self.startbtn_2, 0, Qt.AlignmentFlag.AlignHCenter)
-
-
+        sizePolicy5.setHeightForWidth(self.startbtn.sizePolicy().hasHeightForWidth())
+        self.startbtn.setSizePolicy(sizePolicy5)
+        self.startbtn.setMinimumSize(QSize(200, 50))
+        self.verticalLayout.addWidget(self.startbtn, 0, Qt.AlignmentFlag.AlignHCenter)
         self.verticalLayout_1.addLayout(self.verticalLayout)
-
         self.stackedWidget.addWidget(self.page)
+
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
         self.layoutWidget1 = QWidget(self.page_2)
@@ -221,7 +193,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setSpacing(30)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 10, 0, 0)
-        self.btn_get_srt = QPushButton(self.layoutWidget1)
+        self.btn_get_srt = PushButton(self.layoutWidget1)
         self.btn_get_srt.setObjectName(u"btn_get_srt")
         sizePolicy1.setHeightForWidth(self.btn_get_srt.sizePolicy().hasHeightForWidth())
         self.btn_get_srt.setSizePolicy(sizePolicy1)
@@ -241,7 +213,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_5.addWidget(self.label_5)
 
-        self.source_language_4 = QComboBox(self.layoutWidget1)
+        self.source_language_4 = ComboBox(self.layoutWidget1)
         self.source_language_4.setObjectName(u"source_language_4")
         sizePolicy1.setHeightForWidth(self.source_language_4.sizePolicy().hasHeightForWidth())
         self.source_language_4.setSizePolicy(sizePolicy1)
@@ -262,25 +234,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_6.addWidget(self.label_6)
 
-        self.source_language_5 = QComboBox(self.layoutWidget1)
+        self.source_language_5 = ComboBox(self.layoutWidget1)
         self.source_language_5.setObjectName(u"source_language_5")
         sizePolicy3.setHeightForWidth(self.source_language_5.sizePolicy().hasHeightForWidth())
         self.source_language_5.setSizePolicy(sizePolicy3)
         self.source_language_5.setMinimumSize(QSize(0, 35))
-
         self.horizontalLayout_6.addWidget(self.source_language_5)
-
-        self.enable_cuda_2 = QCheckBox(self.layoutWidget1)
-        self.enable_cuda_2.setObjectName(u"enable_cuda_2")
-        sizePolicy3.setHeightForWidth(self.enable_cuda_2.sizePolicy().hasHeightForWidth())
-        self.enable_cuda_2.setSizePolicy(sizePolicy3)
-        self.enable_cuda_2.setMinimumSize(QSize(0, 35))
-
-        self.horizontalLayout_6.addWidget(self.enable_cuda_2)
-
-
         self.gridLayout_2.addLayout(self.horizontalLayout_6, 0, 1, 1, 1)
-
         self.horizontalLayout_7 = QHBoxLayout()
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.label_7 = QLabel(self.layoutWidget1)
@@ -291,7 +251,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_7.addWidget(self.label_7)
 
-        self.source_language_6 = QComboBox(self.layoutWidget1)
+        self.source_language_6 = ComboBox(self.layoutWidget1)
         self.source_language_6.setObjectName(u"source_language_6")
         sizePolicy3.setHeightForWidth(self.source_language_6.sizePolicy().hasHeightForWidth())
         self.source_language_6.setSizePolicy(sizePolicy3)
@@ -315,7 +275,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.startbtn_3 = QPushButton(self.layoutWidget1)
+        self.startbtn_3 = PushButton(self.layoutWidget1)
         self.startbtn_3.setObjectName(u"startbtn_3")
         sizePolicy5.setHeightForWidth(self.startbtn_3.sizePolicy().hasHeightForWidth())
         self.startbtn_3.setSizePolicy(sizePolicy5)
@@ -375,7 +335,7 @@ class Ui_MainWindow(object):
         self.model_type = QHBoxLayout(self.layoutWidget_4)
         self.model_type.setObjectName(u"model_type")
         self.model_type.setContentsMargins(0, 0, 0, 0)
-        self.mac_fast = QPushButton(self.layoutWidget_4)
+        self.mac_fast = PushButton(self.layoutWidget_4)
         self.mac_fast.setObjectName(u"mac_fast")
         sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy6.setHorizontalStretch(0)
@@ -385,7 +345,7 @@ class Ui_MainWindow(object):
 
         self.model_type.addWidget(self.mac_fast)
 
-        self.cuda_fust = QPushButton(self.layoutWidget_4)
+        self.cuda_fust = PushButton(self.layoutWidget_4)
         self.cuda_fust.setObjectName(u"cuda_fust")
         sizePolicy6.setHeightForWidth(self.cuda_fust.sizePolicy().hasHeightForWidth())
         self.cuda_fust.setSizePolicy(sizePolicy6)
@@ -403,7 +363,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_12.addWidget(self.model_save_path)
 
-        self.setting_model_change_dir = QPushButton(self.layoutWidget_5)
+        self.setting_model_change_dir = PushButton(self.layoutWidget_5)
         self.setting_model_change_dir.setObjectName(u"setting_model_change_dir")
 
         self.horizontalLayout_12.addWidget(self.setting_model_change_dir)
@@ -430,7 +390,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_13.addWidget(self.save_dir_openai)
 
-        self.change_dir_9 = QPushButton(self.layoutWidget_6)
+        self.change_dir_9 = PushButton(self.layoutWidget_6)
         self.change_dir_9.setObjectName(u"change_dir_9")
 
         self.horizontalLayout_13.addWidget(self.change_dir_9)
@@ -450,7 +410,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_14.addWidget(self.save_dir_zhipuai)
 
-        self.change_dir_10 = QPushButton(self.layoutWidget_6)
+        self.change_dir_10 = PushButton(self.layoutWidget_6)
         self.change_dir_10.setObjectName(u"change_dir_10")
 
         self.horizontalLayout_14.addWidget(self.change_dir_10)
@@ -480,7 +440,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_15.addWidget(self.save_dir_baidu)
 
-        self.change_dir_11 = QPushButton(self.layoutWidget_7)
+        self.change_dir_11 = PushButton(self.layoutWidget_7)
         self.change_dir_11.setObjectName(u"change_dir_11")
 
         self.horizontalLayout_15.addWidget(self.change_dir_11)
@@ -500,7 +460,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_16.addWidget(self.save_dir_tengxun)
 
-        self.change_dir_12 = QPushButton(self.layoutWidget_7)
+        self.change_dir_12 = PushButton(self.layoutWidget_7)
         self.change_dir_12.setObjectName(u"change_dir_12")
 
         self.horizontalLayout_16.addWidget(self.change_dir_12)
@@ -520,7 +480,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_17.addWidget(self.save_dir_deel)
 
-        self.change_dir_13 = QPushButton(self.layoutWidget_7)
+        self.change_dir_13 = PushButton(self.layoutWidget_7)
         self.change_dir_13.setObjectName(u"change_dir_13")
 
         self.horizontalLayout_17.addWidget(self.change_dir_13)
@@ -566,7 +526,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_18.addWidget(self.save_dir_proxy)
 
-        self.change_dir_14 = QPushButton(self.layoutWidget_8)
+        self.change_dir_14 = PushButton(self.layoutWidget_8)
         self.change_dir_14.setObjectName(u"change_dir_14")
 
         self.horizontalLayout_18.addWidget(self.change_dir_14)
@@ -621,10 +581,6 @@ class Ui_MainWindow(object):
 
         self.action_tiquzimu_no.setToolTip(QCoreApplication.translate("MainWindow", u"音视频转字幕", None))
 
-        self.action_fanyi.setText(QCoreApplication.translate("MainWindow", u"文本字幕翻译", None))
-
-        self.action_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
-
         self.action_eduit.setText(QCoreApplication.translate("MainWindow", u"编辑字幕", None))
 
         self.action_eduit.setToolTip(QCoreApplication.translate("MainWindow", u"编辑srt字幕文件", None))
@@ -657,13 +613,7 @@ class Ui_MainWindow(object):
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
         self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
-        self.enable_cuda.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-#endif // QT_CONFIG(tooltip)
-        self.enable_cuda.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-#if QT_CONFIG(tooltip)
         self.target_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 
         self.media_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
@@ -672,7 +622,7 @@ class Ui_MainWindow(object):
         self.media_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.media_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
 
-        self.startbtn_2.setText(QCoreApplication.translate("MainWindow", u"开始", None))
+        self.startbtn.setText(QCoreApplication.translate("MainWindow", u"开始", None))
         self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"导入字幕文件", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
 #if QT_CONFIG(tooltip)
@@ -681,11 +631,6 @@ class Ui_MainWindow(object):
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
         self.source_language_5.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
-        self.enable_cuda_2.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-#endif // QT_CONFIG(tooltip)
-        self.enable_cuda_2.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
 #if QT_CONFIG(tooltip)
         self.source_language_6.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))

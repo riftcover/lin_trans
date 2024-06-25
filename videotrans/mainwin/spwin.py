@@ -1,13 +1,9 @@
 import os
-import shutil
-import threading
-import time
-
-from PySide6 import QtWidgets, QtCore
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import QSettings, Qt, QSize, QTimer, QPoint
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QLabel, QPushButton, QToolBar, QWidget, QVBoxLayout
 import warnings
+
+from PySide6.QtCore import QSettings, Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 warnings.filterwarnings('ignore')
 
@@ -21,11 +17,9 @@ from videotrans import VERSION
 from videotrans.ui.en import Ui_MainWindow
 # from videotrans.box import win
 
-from videotrans import configure
 from pathlib import Path
 from videotrans.mainwin.secwin import SecWindow, TableWindow
 # from videotrans.mainwin.subform import Subform
-import platform
 # from videotrans.task.check_update import CheckUpdateWorker
 # from videotrans.task.logs_worker import LogsWorker
 
@@ -259,7 +253,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.set_line_role.clicked.connect(self.subform.set_line_role_fun)
         # self.set_line_role.setCursor(Qt.PointingHandCursor)
         # self.set_line_role.setToolTip(config.transobj['Set up separate dubbing roles for each subtitle to be used'])
-        # self.startbtn.clicked.connect(self.util.check_start)
+        self.startbtn.clicked.connect(self.util.check_start)
         # self.stop_djs.clicked.connect(self.util.reset_timeid)
         # self.continue_compos.clicked.connect(self.util.set_djs_timeout)
         self.act_btn_get_video()
@@ -286,8 +280,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.addbackbtn.clicked.connect(self.util.get_background)
         #
         # self.is_separate.toggled.connect(self.util.is_separate_fun)
-        self.enable_cuda.toggled.connect(self.util.check_cuda)
-
+        self.action_page1()
+        self.action_page2()
 
         # # 设置QAction的大小
         # self.toolBar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -373,7 +367,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #
         # self.action_hun.triggered.connect(lambda: self.util.open_toolbox(5, False))
 
-        self.action_fanyi.triggered.connect(lambda: self.util.open_toolbox(2, False))
+        # self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
 
         # self.action_clearcache.triggered.connect(self.util.clearcache)
 
@@ -406,6 +400,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     self.check_update.start()
         # except Exception as e:
         #     print('threaqd-----' + str(e))
+
+    def action_page1(self):
+        self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
