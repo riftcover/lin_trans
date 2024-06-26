@@ -789,7 +789,7 @@
           <height>51</height>
          </rect>
         </property>
-        <layout class="QHBoxLayout" name="model_type">
+        <layout class="QHBoxLayout" name="model_func">
          <item>
           <widget class="QPushButton" name="mac_fast">
            <property name="sizePolicy">

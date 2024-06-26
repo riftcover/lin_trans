@@ -46,7 +46,7 @@ class SrtWriter:
         writer(result, f"{self.srt_name}.srt", {})
 
     @timeit
-    def whisperBin_to_srt(
+    def whisper_bin_to_srt(
             self,
             model_name: str = 'ggml-medium.en.bin') -> None:
         """

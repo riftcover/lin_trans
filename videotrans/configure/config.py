@@ -7,6 +7,7 @@ from pathlib import Path
 from queue import Queue
 
 from utils.log import Logings
+from videotrans.configure import ModelDict
 
 
 def get_executable_path():
@@ -21,8 +22,6 @@ def get_executable_path():
 # root dir
 rootdir = get_executable_path()
 root_path = Path(__file__).parent.parent.parent  # 项目目录
-
-
 
 # cache tmp
 temp_path = root_path / "tmp"
@@ -42,8 +41,9 @@ result_path = root_path / "result"
 # logs
 logger = Logings().logger
 
-
 defaulelang = locale.getdefaultlocale()[0][:2].lower()  # 获取本地语言
+
+
 def parse_init():
     # 加载init
     settings = {
@@ -154,8 +154,17 @@ rev_langlist = {code_alias: code for code, code_alias in langlist.items()}
 langnamelist = list(langlist.values())
 
 # 模型列表
-model_list: dict = obj["model_code_list"]
-model_code_list = list(model_list.values())
+model_list: ModelDict = obj["model_code_list"]
+
+
+def init_model_code_key() ->list:
+    # 模型列表
+    # todo：应该先读取本地安装的模型，然后修改model_list的值
+    code = [key.split('.')[0] for key in model_list.keys()]
+
+    return code
+
+model_code_list = init_model_code_key()
 
 # 工具箱语言
 box_lang = obj['toolbox_lang']
@@ -356,5 +365,6 @@ video_codec = None
 video_min_ms = 50
 
 if __name__ == '__main__':
-    logger.info(lang_path)
-    logger.info(obj)
+    # logger.info(lang_path)
+    # logger.info(obj)
+    logger.info(model_code_list)
