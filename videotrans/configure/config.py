@@ -209,8 +209,10 @@ params = {
     "target_dir": "",
 
     "source_language": "en",
+    "source_module_status":4,
     "detect_language": "en",
 
+    "translate_status": False,
     "target_language": "zh-cn",
     "subtitle_language": "chi",
 

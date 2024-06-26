@@ -27,9 +27,9 @@ class StartTools:
 
     @staticmethod
     def match_source_model(source_model) -> ModelInfo:
-        config.logger.info(config.model_list[source_model])
-        config.logger.info(config.model_list[source_model])
         return config.model_list[source_model]
+
+
 
 
 # 获取代理，如果已设置os.environ代理，则返回该代理值,否则获取系统代理

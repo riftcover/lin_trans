@@ -907,12 +907,16 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # 原始语言
         config.params['source_language'] = self.main.source_language.currentText()
         config.logger.debug(config.params['source_language'])
-        config.logger.debug(self.main.source_model.currentText())
 
+        # 语音模型
+        config.logger.debug(self.main.source_model.currentText())
         config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText()).keys()
         config.logger.debug(config.params['source_module_status'])
-        config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
+        config.params['model_type'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
         config.logger.debug(config.params['source_module_name'])
+
+        # 是否翻译
+        config.params['translate_status']:bool = self.main.check_fanyi.isChecked()
         # 目标语言
         target_language = self.main.translate_language.currentText()
         config.params['target_language'] = target_language
@@ -924,23 +928,13 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # config.params['voice_autorate'] = self.main.voice_autorate.isChecked()
         # config.params['video_autorate'] = self.main.video_autorate.isChecked()
         # config.params['append_video'] = self.main.append_video.isChecked()
+        # config.params['append_audio'] = self.main.append_audio.isChecked()
+        # config.params['append_subtitle'] = self.main.append_subtitle.isChecked()
 
-        ## 视频自动减速
-        # 语音模型
-        # todo: 配置语音模型
-        config.params['whisper_model'] = self.main.whisper_model.currentText()
-        model_index = self.main.model_type.currentIndex()
-        print(model_index)
-        if model_index == 1:
-            config.params['model_type'] = 'openai'
-        elif model_index == 2:
-            config.params['model_type'] = 'GoogleSpeech'
-        elif model_index == 3:
-            config.params['model_type'] = 'zh_recogn'
-        else:
-            config.params['model_type'] = 'faster'
+
         # 字幕嵌入类型
-        config.params['subtitle_type'] = int(self.main.subtitle_type.currentIndex())
+        # todo：添加是否嵌入字幕
+        # config.params['subtitle_type'] = int(self.main.subtitle_type.currentIndex())
 
         # 配音语速
         # try:
@@ -961,10 +955,10 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # config.params['back_audio'] = self.main.back_audio.text().strip()
 
         # 字幕区文字
-        txt = self.main.subtitle_area.toPlainText().strip()
-        if txt and not re.search(r'\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?\s*?-->\s*?\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?', txt):
-            txt = ""
-            self.main.subtitle_area.clear()
+        # txt = self.main.subtitle_area.toPlainText().strip()
+        # if txt and not re.search(r'\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?\s*?-->\s*?\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?', txt):
+        #     txt = ""
+        #     self.main.subtitle_area.clear()
 
         # 综合判断
         if len(config.queue_mp4) < 1:
@@ -989,23 +983,22 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 未主动选择模式，则判断设置情况应该属于什么模式
         # todo： 任务模式判断
-        if self.main.app_mode.startswith('biaozhun'):
-            # tiqu 如果 存在视频但 无配音 无嵌入字幕，则视为提取
-            if len(config.queue_mp4) > 0 and config.params['subtitle_type'] < 1 and config.params['voice_role'] == 'No':
-                self.main.app_mode = 'tiqu'
-                config.params['is_separate'] = False
-            elif len(config.queue_mp4) > 0 and txt and config.params['subtitle_type'] > 0 and config.params[
-                'voice_role'] == 'No':
-                # hebing 存在视频，存在字幕，字幕嵌入，不配音
-                self.main.app_mode = 'hebing'
-                config.params['is_separate'] = False
-            elif len(config.queue_mp4) < 1 and txt:
-                # peiyin
-                self.main.app_mode = 'peiyin'
-                config.params['is_separate'] = False
+        # if self.main.app_mode.startswith('biaozhun'):
+        #     # tiqu 如果 存在视频但 无配音 无嵌入字幕，则视为提取
+        #     if len(config.queue_mp4) > 0 and config.params['subtitle_type'] < 1 and config.params['voice_role'] == 'No':
+        #         self.main.app_mode = 'tiqu'
+        #         config.params['is_separate'] = False
+        #     elif len(config.queue_mp4) > 0 and txt and config.params['subtitle_type'] > 0 and config.params[
+        #         'voice_role'] == 'No':
+        #         # hebing 存在视频，存在字幕，字幕嵌入，不配音
+        #         self.main.app_mode = 'hebing'
+        #         config.params['is_separate'] = False
+        #     elif len(config.queue_mp4) < 1 and txt:
+        #         # peiyin
+        #         self.main.app_mode = 'peiyin'
+        #         config.params['is_separate'] = False
 
-        if not self.check_mode(txt=txt):
-            return False
+
 
         # cuda检测
         if config.params["cuda"]:
