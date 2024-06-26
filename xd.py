@@ -1,84 +1,51 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QListWidget, QStackedWidget
-from PySide6.QtCore import Qt
+import sys
+
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QLabel
 
 
-class MainWindow(QMainWindow):
+class FileSelector(QMainWindow):
     def __init__(self):
-        """
-        帮我创建一个页面，要求如下：
-1、左侧是一个侧边栏，侧边栏中有选项：音视频转字幕，字幕翻译，编辑字幕，我的设置
-2、点击侧边栏中的选项，右侧可以显示不同的页面内容
-3、我的设置在侧边栏最下方
-        """
-        super(MainWindow, self).__init__()
-        self.setWindowTitle("Sidebar Example")
-        self.setGeometry(300, 100, 800, 600)
+        super().__init__()
 
-        # 创建主窗口的中央小部件
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
+        self.setWindowTitle("File Selector")
+        self.setGeometry(100, 100, 400, 200)
 
-        # 创建侧边栏
-        self.sidebar = QListWidget()
-        self.sidebar.insertItem(0, "音视频转字幕")
-        self.sidebar.insertItem(1, "字幕翻译")
-        self.sidebar.insertItem(2, "编辑字幕")
-        self.sidebar.setFixedWidth(150)
+        self.button = QPushButton("Select Files", self)
+        self.button.clicked.connect(self.select_files)
+        self.button.setGeometry(150, 50, 100, 50)
 
-        # 创建 QStackedWidget 来显示不同页面
-        self.stack = QStackedWidget()
-        self.stack.setFixedWidth(650)
+        self.label = QLabel("No files selected", self)
+        self.label.setGeometry(50, 120, 300, 20)
 
-        # 创建每个页面的内容
-        self.page1 = QWidget()
-        self.page2 = QWidget()
-        self.page3 = QWidget()
-        self.page4 = QWidget()
-        self.setup_pages()
+        self.button.setAcceptDrops(True)
+        self.button.dragEnterEvent = self.drag_enter_event
+        self.button.dropEvent = self.drop_event
 
-        # 添加页面到 QStackedWidget
-        self.stack.addWidget(self.page1)
-        self.stack.addWidget(self.page2)
-        self.stack.addWidget(self.page3)
-        self.stack.addWidget(self.page4)
+        self.file_paths = []
 
-        # 布局
-        main_layout = QHBoxLayout(self.central_widget)
-        main_layout.addWidget(self.sidebar)
-        main_layout.addWidget(self.stack)
+    def select_files(self):
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+        file_dialog.setNameFilter("*.mp4 *.avi *.mov *.mpg *.mkv")
+        file_paths, _ = file_dialog.getOpenFileNames(self, "Select files")
+        self.file_paths = file_paths
+        self.label.setText("\n".join(self.file_paths))
 
-        # 连接信号
-        self.sidebar.currentRowChanged.connect(self.display_page)
+    def drag_enter_event(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
 
-        # 将 "我的设置" 移动到侧边栏最下方
-        self.sidebar.setLayout(QVBoxLayout())
-        self.sidebar.layout().addStretch()
-        self.sidebar.layout().addWidget(QPushButton("我的设置"))
-
-    def setup_pages(self):
-        # 页面1: 音视频转字幕
-        layout1 = QVBoxLayout()
-        layout1.addWidget(QLabel("这里是音视频转字幕页面"))
-        self.page1.setLayout(layout1)
-
-        # 页面2: 字幕翻译
-        layout2 = QVBoxLayout()
-        layout2.addWidget(QLabel("这里是字幕翻译页面"))
-        self.page2.setLayout(layout2)
-
-        # 页面3: 编辑字幕
-        layout3 = QVBoxLayout()
-        layout3.addWidget(QLabel("这里是编辑字幕页面"))
-        self.page3.setLayout(layout3)
-
-
-    def display_page(self, index):
-        self.stack.setCurrentIndex(index)
+    def drop_event(self, event):
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            self.file_paths.append(file_path)
+        self.label.setText("\n".join(self.file_paths))
 
 
 if __name__ == "__main__":
-    app = QApplication([])
-    window = MainWindow()
+    app = QApplication(sys.argv)
+    window = FileSelector()
     window.show()
     app.exec()

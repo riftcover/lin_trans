@@ -42,7 +42,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.model_name = None
         self.languagename = None
         self.setupUi(self)
-        self.resize(1240, 640)
+        # self.resize(1000, 650)
         self.show()
         self.task = None
         self.shitingobj = None

@@ -20,7 +20,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     demo = MyWindow()
     demo.show()
-    sys.exit(app.exec_())
-    ################################################################
-    # 写一个读取文件
+    sys.exit(app.exec())
+
 

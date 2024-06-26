@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1246</width>
-    <height>781</height>
+    <width>930</width>
+    <height>674</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -66,7 +66,7 @@
      <rect>
       <x>90</x>
       <y>0</y>
-      <width>1041</width>
+      <width>831</width>
       <height>601</height>
      </rect>
     </property>
@@ -74,12 +74,12 @@
      <number>0</number>
     </property>
     <widget class="QWidget" name="page">
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>12</x>
         <y>16</y>
-        <width>755</width>
+        <width>777</width>
         <height>578</height>
        </rect>
       </property>
@@ -378,7 +378,7 @@
             </size>
            </property>
            <property name="text">
-            <string>开始</string>
+            <string>开始111</string>
            </property>
           </widget>
          </item>
@@ -388,7 +388,7 @@
      </widget>
     </widget>
     <widget class="QWidget" name="page_2">
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -751,7 +751,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_10">
        <widget class="QLabel" name="label_16">
@@ -759,7 +759,7 @@
          <rect>
           <x>20</x>
           <y>70</y>
-          <width>72</width>
+          <width>121</width>
           <height>16</height>
          </rect>
         </property>
@@ -1048,7 +1048,7 @@
             <number>15</number>
            </property>
            <item>
-            <widget class="QLineEdit" name="save_dir_proxy"/>
+            <widget class="QLineEdit" name="proxy"/>
            </item>
            <item>
             <widget class="QPushButton" name="change_dir_14">
@@ -1114,7 +1114,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1246</width>
+     <width>930</width>
      <height>24</height>
     </rect>
    </property>

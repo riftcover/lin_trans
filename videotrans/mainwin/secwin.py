@@ -10,9 +10,10 @@ from PySide6.QtGui import QTextCursor, QDesktopServices, QDragEnterEvent, QDropE
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar, \
     QTableWidgetItem, QTableWidget
 
+from videotrans.configure.config import result_path
+
 warnings.filterwarnings('ignore')
-from videotrans import configure
-# from videotrans.task.job import start_thread
+from videotrans.task.job import start_thread
 from videotrans.util import tools
 from videotrans import translator
 from videotrans.configure import config
@@ -319,9 +320,6 @@ class SecWindow():
     # 启用字幕合并模式, 仅显示 选择视频、保存目录、字幕类型、 cuda
     # 不配音、不识别，
 
-
-
-
     # 关于页面
     # def about(self):
     #     from videotrans.component import InfoForm
@@ -340,7 +338,6 @@ class SecWindow():
             config.params['append_video'] = state
 
     # 隐藏布局及其元素
-
 
     # 删除proce里的元素
     def delete_process(self):
@@ -460,7 +457,6 @@ class SecWindow():
             """)
 
     # 工具箱
-
 
     # 将倒计时设为立即超时
     def set_djs_timeout(self):
@@ -966,7 +962,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # 清理日志
 
         # 目标文件夹
-        target_dir = self.main.target_dir.text().strip().replace('\\', '/')
+        target_dir = result_path
         if target_dir:
             config.params['target_dir'] = target_dir
         else:
@@ -1048,7 +1044,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
             self.main.subtitle_area.clear()
 
         # 综合判断
-        if len(config.queue_mp4) < 1 :
+        if len(config.queue_mp4) < 1:
             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
             return False
 
@@ -1087,7 +1083,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         if not self.check_mode(txt=txt):
             return False
-
 
         # cuda检测
         if config.params["cuda"]:
@@ -1132,12 +1127,14 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         config.params['clear_cache'] = False
         if self.main.clear_cache.isChecked():
             config.params['clear_cache'] = True
+
         if len(config.queue_mp4) > 0:
             self.main.show_tips.setText("")
             if self.main.app_mode not in ['tiqu', 'peiyin',
                                           'biaozhun_jd'] and self.main.only_video.isChecked():
                 config.params['only_video'] = True
-            start_thread(self.main)
+            start_thread(self.main)  # todo: 起线程
+        # todo：？？干嘛要判断txt
         elif txt:
             self.main.source_mp4.setText(config.transobj["No select videos"])
             self.main.app_mode = 'peiyin'
@@ -1149,7 +1146,8 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         self.main.save_setting()
         self.update_status('ing')
-        self.delete_process()
+
+        # self.delete_process() # 删除上一次的进程
         # return
         config.settings = config.parse_init()
         from videotrans.task.main_worker import Worker
@@ -1396,9 +1394,9 @@ class TableWindow(SecWindow):
         if file_paths:
             for file_path in file_paths:
                 file_name = os.path.basename(file_path)
-                self.add_file_to_table(ui_table, file_name,file_path)
+                self.add_file_to_table(ui_table, file_name, file_path)
 
-    def add_file_to_table(self, ui_table: QTableWidget, file_name: str,file_path: str):
+    def add_file_to_table(self, ui_table: QTableWidget, file_name: str, file_path: str):
         # 添加文件到表格
 
         row_position = ui_table.rowCount()

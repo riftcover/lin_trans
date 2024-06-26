@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
-import sys, os
-from pathlib import Path
+import os
+import sys
 import time
+from pathlib import Path
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import Qt, QTimer, QPoint
-from PySide6.QtGui import QPixmap, QPalette, QBrush, QIcon, QGuiApplication
-from videotrans import VERSION
-
-
-
+from PySide6.QtCore import QTimer, QPoint
+from PySide6.QtGui import QGuiApplication
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+extra = {
 
+    # Button colors
+    'danger': '#dc3545',
+    'warning': '#ffc107',
+    'success': '#17a2b8',
+
+    # Font
+    'font_family': 'monoespace',
+    'font_size': '13px',
+    'line_height': '13px',
+}
 
 class StartWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -23,11 +31,11 @@ class StartWindow(QtWidgets.QWidget):
         # 创建并显示窗口B
         # try:
 
-        if not Path("./nostyle.txt").exists():
-            import videotrans.ui.dark.darkstyle_rc
-            with open('./videotrans/styles/style.qss', 'r', encoding='utf-8') as f:
-                app.setStyleSheet(f.read())
-
+        # if not Path("./nostyle.txt").exists():
+        #
+        #     with open('./videotrans/styles/style.qss', 'r', encoding='utf-8') as f:
+        #         app.setStyleSheet(f.read())
+        # apply_stylesheet(app, theme='light_blue.xml', extra=extra)
         st = time.time()
         from videotrans.mainwin.spwin import MainWindow
         MainWindow()

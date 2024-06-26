@@ -38,6 +38,7 @@ homedir = homepath.as_posix()
 TEMP_HOME = homedir + "/tmp"
 Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
+result_path = root_path / "result"
 # logs
 logger = Logings().logger
 

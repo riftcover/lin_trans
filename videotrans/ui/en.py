@@ -8,22 +8,27 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
-                            QSize, Qt)
-from PySide6.QtGui import (QAction)
+from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+    QMetaObject, QObject, QPoint, QRect,
+    QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
+    QCursor, QFont, QFontDatabase, QGradient,
+    QIcon, QImage, QKeySequence, QLinearGradient,
+    QPainter, QPalette, QPixmap, QRadialGradient,
+    QTransform)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
-                               QHBoxLayout, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMenu,
-                               QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
-                               QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QMainWindow, QMenu,
+    QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
+    QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1246, 781)
+        MainWindow.resize(930, 674)
         self.action = QAction(MainWindow)
         self.action.setObjectName(u"action")
         self.action_2 = QAction(MainWindow)
@@ -46,16 +51,16 @@ class Ui_MainWindow(object):
         self.listWidget.setMaximumSize(QSize(90, 16777215))
         self.stackedWidget = QStackedWidget(self.centralwidget)
         self.stackedWidget.setObjectName(u"stackedWidget")
-        self.stackedWidget.setGeometry(QRect(90, 0, 1041, 601))
+        self.stackedWidget.setGeometry(QRect(90, 0, 831, 601))
         self.page = QWidget()
         self.page.setObjectName(u"page")
-        self.widget = QWidget(self.page)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(12, 16, 755, 578))
-        self.verticalLayout_4 = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(self.page)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(12, 16, 777, 578))
+        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.btn_get_video = QPushButton(self.widget)
+        self.btn_get_video = QPushButton(self.layoutWidget)
         self.btn_get_video.setObjectName(u"btn_get_video")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
@@ -71,7 +76,7 @@ class Ui_MainWindow(object):
         self.formLayout = QFormLayout()
         self.formLayout.setObjectName(u"formLayout")
         self.formLayout.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_2 = QLabel(self.widget)
+        self.label_2 = QLabel(self.layoutWidget)
         self.label_2.setObjectName(u"label_2")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy2.setHorizontalStretch(0)
@@ -82,7 +87,7 @@ class Ui_MainWindow(object):
 
         self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_2)
 
-        self.source_language = QComboBox(self.widget)
+        self.source_language = QComboBox(self.layoutWidget)
         self.source_language.setObjectName(u"source_language")
         sizePolicy1.setHeightForWidth(self.source_language.sizePolicy().hasHeightForWidth())
         self.source_language.setSizePolicy(sizePolicy1)
@@ -96,7 +101,7 @@ class Ui_MainWindow(object):
         self.formLayout_2 = QFormLayout()
         self.formLayout_2.setObjectName(u"formLayout_2")
         self.formLayout_2.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_3 = QLabel(self.widget)
+        self.label_3 = QLabel(self.layoutWidget)
         self.label_3.setObjectName(u"label_3")
         sizePolicy2.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
         self.label_3.setSizePolicy(sizePolicy2)
@@ -104,7 +109,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_3)
 
-        self.source_model = QComboBox(self.widget)
+        self.source_model = QComboBox(self.layoutWidget)
         self.source_model.setObjectName(u"source_model")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
@@ -118,7 +123,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addLayout(self.formLayout_2)
 
-        self.check_fanyi = QCheckBox(self.widget)
+        self.check_fanyi = QCheckBox(self.layoutWidget)
         self.check_fanyi.setObjectName(u"check_fanyi")
         sizePolicy3.setHeightForWidth(self.check_fanyi.sizePolicy().hasHeightForWidth())
         self.check_fanyi.setSizePolicy(sizePolicy3)
@@ -129,7 +134,7 @@ class Ui_MainWindow(object):
         self.formLayout_3 = QFormLayout()
         self.formLayout_3.setObjectName(u"formLayout_3")
         self.formLayout_3.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_8 = QLabel(self.widget)
+        self.label_8 = QLabel(self.layoutWidget)
         self.label_8.setObjectName(u"label_8")
         sizePolicy2.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
         self.label_8.setSizePolicy(sizePolicy2)
@@ -137,7 +142,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_8)
 
-        self.translate_type = QComboBox(self.widget)
+        self.translate_type = QComboBox(self.layoutWidget)
         self.translate_type.setObjectName(u"translate_type")
         sizePolicy3.setHeightForWidth(self.translate_type.sizePolicy().hasHeightForWidth())
         self.translate_type.setSizePolicy(sizePolicy3)
@@ -151,7 +156,7 @@ class Ui_MainWindow(object):
         self.formLayout_4 = QFormLayout()
         self.formLayout_4.setObjectName(u"formLayout_4")
         self.formLayout_4.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_4 = QLabel(self.widget)
+        self.label_4 = QLabel(self.layoutWidget)
         self.label_4.setObjectName(u"label_4")
         sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
         self.label_4.setSizePolicy(sizePolicy2)
@@ -159,7 +164,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_4)
 
-        self.translate_language = QComboBox(self.widget)
+        self.translate_language = QComboBox(self.layoutWidget)
         self.translate_language.setObjectName(u"translate_language")
         sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
         self.translate_language.setSizePolicy(sizePolicy3)
@@ -176,7 +181,7 @@ class Ui_MainWindow(object):
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(80, -1, 80, -1)
-        self.media_table = QTableWidget(self.widget)
+        self.media_table = QTableWidget(self.layoutWidget)
         if (self.media_table.columnCount() < 4):
             self.media_table.setColumnCount(4)
         __qtablewidgetitem = QTableWidgetItem()
@@ -204,7 +209,7 @@ class Ui_MainWindow(object):
         self.formLayout_5.setObjectName(u"formLayout_5")
         self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
-        self.startbtn_1 = QPushButton(self.widget)
+        self.startbtn_1 = QPushButton(self.layoutWidget)
         self.startbtn_1.setObjectName(u"startbtn_1")
         sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy5.setHorizontalStretch(0)
@@ -221,13 +226,13 @@ class Ui_MainWindow(object):
         self.stackedWidget.addWidget(self.page)
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
-        self.widget1 = QWidget(self.page_2)
-        self.widget1.setObjectName(u"widget1")
-        self.widget1.setGeometry(QRect(12, 16, 678, 564))
-        self.verticalLayout_5 = QVBoxLayout(self.widget1)
+        self.layoutWidget1 = QWidget(self.page_2)
+        self.layoutWidget1.setObjectName(u"layoutWidget1")
+        self.layoutWidget1.setGeometry(QRect(12, 16, 678, 564))
+        self.verticalLayout_5 = QVBoxLayout(self.layoutWidget1)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.btn_get_srt = QPushButton(self.widget1)
+        self.btn_get_srt = QPushButton(self.layoutWidget1)
         self.btn_get_srt.setObjectName(u"btn_get_srt")
         sizePolicy1.setHeightForWidth(self.btn_get_srt.sizePolicy().hasHeightForWidth())
         self.btn_get_srt.setSizePolicy(sizePolicy1)
@@ -240,7 +245,7 @@ class Ui_MainWindow(object):
         self.formLayout_6 = QFormLayout()
         self.formLayout_6.setObjectName(u"formLayout_6")
         self.formLayout_6.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_5 = QLabel(self.widget1)
+        self.label_5 = QLabel(self.layoutWidget1)
         self.label_5.setObjectName(u"label_5")
         sizePolicy2.setHeightForWidth(self.label_5.sizePolicy().hasHeightForWidth())
         self.label_5.setSizePolicy(sizePolicy2)
@@ -248,7 +253,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_6.setWidget(0, QFormLayout.LabelRole, self.label_5)
 
-        self.source_language_srt = QComboBox(self.widget1)
+        self.source_language_srt = QComboBox(self.layoutWidget1)
         self.source_language_srt.setObjectName(u"source_language_srt")
         sizePolicy1.setHeightForWidth(self.source_language_srt.sizePolicy().hasHeightForWidth())
         self.source_language_srt.setSizePolicy(sizePolicy1)
@@ -262,7 +267,7 @@ class Ui_MainWindow(object):
         self.formLayout_7 = QFormLayout()
         self.formLayout_7.setObjectName(u"formLayout_7")
         self.formLayout_7.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_6 = QLabel(self.widget1)
+        self.label_6 = QLabel(self.layoutWidget1)
         self.label_6.setObjectName(u"label_6")
         sizePolicy2.setHeightForWidth(self.label_6.sizePolicy().hasHeightForWidth())
         self.label_6.setSizePolicy(sizePolicy2)
@@ -270,7 +275,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_7.setWidget(0, QFormLayout.LabelRole, self.label_6)
 
-        self.source_model_srt = QComboBox(self.widget1)
+        self.source_model_srt = QComboBox(self.layoutWidget1)
         self.source_model_srt.setObjectName(u"source_model_srt")
         sizePolicy3.setHeightForWidth(self.source_model_srt.sizePolicy().hasHeightForWidth())
         self.source_model_srt.setSizePolicy(sizePolicy3)
@@ -284,7 +289,7 @@ class Ui_MainWindow(object):
         self.formLayout_8 = QFormLayout()
         self.formLayout_8.setObjectName(u"formLayout_8")
         self.formLayout_8.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_9 = QLabel(self.widget1)
+        self.label_9 = QLabel(self.layoutWidget1)
         self.label_9.setObjectName(u"label_9")
         sizePolicy2.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
         self.label_9.setSizePolicy(sizePolicy2)
@@ -292,7 +297,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_8.setWidget(0, QFormLayout.LabelRole, self.label_9)
 
-        self.translate_type_srt = QComboBox(self.widget1)
+        self.translate_type_srt = QComboBox(self.layoutWidget1)
         self.translate_type_srt.setObjectName(u"translate_type_srt")
         sizePolicy3.setHeightForWidth(self.translate_type_srt.sizePolicy().hasHeightForWidth())
         self.translate_type_srt.setSizePolicy(sizePolicy3)
@@ -306,7 +311,7 @@ class Ui_MainWindow(object):
         self.formLayout_9 = QFormLayout()
         self.formLayout_9.setObjectName(u"formLayout_9")
         self.formLayout_9.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-        self.label_7 = QLabel(self.widget1)
+        self.label_7 = QLabel(self.layoutWidget1)
         self.label_7.setObjectName(u"label_7")
         sizePolicy2.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
         self.label_7.setSizePolicy(sizePolicy2)
@@ -314,7 +319,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_9.setWidget(0, QFormLayout.LabelRole, self.label_7)
 
-        self.translate_language_srt = QComboBox(self.widget1)
+        self.translate_language_srt = QComboBox(self.layoutWidget1)
         self.translate_language_srt.setObjectName(u"translate_language_srt")
         sizePolicy3.setHeightForWidth(self.translate_language_srt.sizePolicy().hasHeightForWidth())
         self.translate_language_srt.setSizePolicy(sizePolicy3)
@@ -331,7 +336,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2 = QVBoxLayout()
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(80, -1, 80, -1)
-        self.srt_table = QTableWidget(self.widget1)
+        self.srt_table = QTableWidget(self.layoutWidget1)
         if (self.srt_table.columnCount() < 4):
             self.srt_table.setColumnCount(4)
         __qtablewidgetitem4 = QTableWidgetItem()
@@ -354,7 +359,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.startbtn_srt = QPushButton(self.widget1)
+        self.startbtn_srt = QPushButton(self.layoutWidget1)
         self.startbtn_srt.setObjectName(u"startbtn_srt")
         sizePolicy5.setHeightForWidth(self.startbtn_srt.sizePolicy().hasHeightForWidth())
         self.startbtn_srt.setSizePolicy(sizePolicy5)
@@ -404,7 +409,7 @@ class Ui_MainWindow(object):
         self.page_10.setObjectName(u"page_10")
         self.label_16 = QLabel(self.page_10)
         self.label_16.setObjectName(u"label_16")
-        self.label_16.setGeometry(QRect(20, 70, 72, 16))
+        self.label_16.setGeometry(QRect(20, 70, 121, 16))
         self.label_17 = QLabel(self.page_10)
         self.label_17.setObjectName(u"label_17")
         self.label_17.setGeometry(QRect(9, 184, 90, 20))
@@ -600,10 +605,10 @@ class Ui_MainWindow(object):
         self.horizontalLayout_18 = QHBoxLayout()
         self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
         self.horizontalLayout_18.setContentsMargins(15, -1, -1, -1)
-        self.save_dir_proxy = QLineEdit(self.layoutWidget_8)
-        self.save_dir_proxy.setObjectName(u"save_dir_proxy")
+        self.proxy = QLineEdit(self.layoutWidget_8)
+        self.proxy.setObjectName(u"proxy")
 
-        self.horizontalLayout_18.addWidget(self.save_dir_proxy)
+        self.horizontalLayout_18.addWidget(self.proxy)
 
         self.change_dir_14 = QPushButton(self.layoutWidget_8)
         self.change_dir_14.setObjectName(u"change_dir_14")
@@ -631,7 +636,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1246, 24))
+        self.menubar.setGeometry(QRect(0, 0, 930, 24))
         self.menu_2 = QMenu(self.menubar)
         self.menu_2.setObjectName(u"menu_2")
         MainWindow.setMenuBar(self.menubar)
@@ -645,7 +650,7 @@ class Ui_MainWindow(object):
         self.memu_settling.currentRowChanged.connect(self.stackedWidget_2.setCurrentIndex)
 
         self.stackedWidget.setCurrentIndex(0)
-        self.stackedWidget_2.setCurrentIndex(3)
+        self.stackedWidget_2.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -699,7 +704,7 @@ class Ui_MainWindow(object):
         ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"\u7b97\u529b\u6d88\u8017", None));
         ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
-        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb", None))
+        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb111", None))
         self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u5b57\u5e55\u6587\u4ef6", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u" \u539f\u59cb\u8bed\u79cd", None))
 #if QT_CONFIG(tooltip)

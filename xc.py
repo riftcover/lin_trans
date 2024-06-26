@@ -64,32 +64,32 @@ class MainWindow(QMainWindow):
         minutes, seconds = divmod(remainder, 60)
         return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
-    def get_2(self):
-        import subprocess
-        import json
-
-        def get_video_duration_ffprobe(filename):
-
-            cmd = f"ffprobe -v error -show_format -print_format json {filename}"
-
-            try:
-
-                result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-
-                result_json = json.loads(result.stdout)
-
-                duration = float(result_json['format']['duration'])
-
-                return duration
-
-
-            except subprocess.CalledProcessError:
-
-                return "Error: ffprobe command fAIled."
-
-        video_duration_ffprobe = get_video_duration_ffprobe('your_video.mp4')
-
-        print(f"The duration of the video is: {video_duration_ffprobe} seconds.")
+    # def get_2(self):
+    #     import subprocess
+    #     import json
+    #
+    #     def get_video_duration_ffprobe(filename):
+    #
+    #         cmd = f"ffprobe -v error -show_format -print_format json {filename}"
+    #
+    #         try:
+    #
+    #             result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    #
+    #             result_json = json.loads(result.stdout)
+    #
+    #             duration = float(result_json['format']['duration'])
+    #
+    #             return duration
+    #
+    #
+    #         except subprocess.CalledProcessError:
+    #
+    #             return "Error: ffprobe command fAIled."
+    #
+    #     video_duration_ffprobe = get_video_duration_ffprobe('your_video.mp4')
+    #
+    #     print(f"The duration of the video is: {video_duration_ffprobe} seconds.")
 
     @Slot()
     def delete_file(self, row):
