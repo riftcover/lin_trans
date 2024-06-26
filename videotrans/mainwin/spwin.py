@@ -433,7 +433,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     event.accept()
 
     def get_setting_cache(self):
-        self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")
+        # self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")
         # 从缓存获取默认配置
         config.params["baidu_appid"] = self.settings.value("baidu_appid", "")
         config.params["source_language"] = self.settings.value("source_language", "")
