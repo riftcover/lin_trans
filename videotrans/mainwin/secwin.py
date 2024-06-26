@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import re
@@ -17,10 +18,10 @@ from videotrans.task.job import start_thread
 from videotrans.util import tools
 from videotrans import translator
 from videotrans.configure import config
-
+from videotrans.util.tools import StartTools
 from qfluentwidgets import PrimaryPushButton
 
-
+start_tools = StartTools()
 class ClickableProgressBar(QLabel):
     def __init__(self, parent=None):
         super().__init__()
@@ -69,6 +70,9 @@ class ClickableProgressBar(QLabel):
 
 
 # primary ui
+
+
+
 class SecWindow():
     def __init__(self, main=None):
         self.main = main
@@ -248,74 +252,7 @@ class SecWindow():
     #     # cuda
     #     self.main.enable_cuda.show()
 
-    # 视频提取字幕并翻译，无需配音
-    # def set_tiquzimu(self):
-    #     self.main.action_tiquzimu.setChecked(True)
-    #     self.main.app_mode = 'tiqu'
-    #     self.main.show_tips.setText(config.transobj['tiquzimu'])
-    #     self.main.startbtn.setText(config.transobj['kaishitiquhefanyi'])
-    #     self.main.action_tiquzimu.setChecked(True)
-    #     self.main.action_xinshoujandan.setChecked(False)
-    #     self.main.action_biaozhun.setChecked(False)
-    #     self.main.action_zimu_video.setChecked(False)
-    #     self.main.action_zimu_peiyin.setChecked(False)
-    #
-    #     # self.hide_show_element(self.main.subtitle_layout, True)
-    #     self.main.splitter.setSizes([self.main.width - 400, 400])
-    #     # 选择视频
-    #     self.hide_show_element(self.main.layout_source_mp4, True)
-    #     # 保存目标
-    #     self.hide_show_element(self.main.layout_target_dir, True)
-    #
-    #     # 隐藏音量 音调变化
-    #     self.hide_show_element(self.main.edge_volume_layout, False)
-    #
-    #     # 翻译渠道
-    #     self.hide_show_element(self.main.layout_translate_type, True)
-    #     # 代理
-    #     self.hide_show_element(self.main.layout_proxy, True)
-    #     # 原始语言
-    #     self.hide_show_element(self.main.layout_source_language, True)
-    #     # 目标语言
-    #     self.hide_show_element(self.main.layout_target_language, True)
-    #     # tts类型
-    #     self.hide_show_element(self.main.layout_tts_type, False)
-    #     # 配音角色
-    #     self.hide_show_element(self.main.layout_voice_role, False)
-    #
-    #     # 试听按钮
-    #
-    #     self.main.listen_btn.hide()
-    #     # 语音模型
-    #     self.hide_show_element(self.main.layout_whisper_model, True)
-    #     # 字幕类型
-    #     self.hide_show_element(self.main.layout_subtitle_type, False)
-    #
-    #     # 配音语速
-    #     self.hide_show_element(self.main.layout_voice_rate, False)
-    #
-    #     # 配音自动加速
-    #     # 视频自动降速
-    #     self.main.is_separate.setDisabled(True)
-    #     self.main.addbackbtn.setDisabled(True)
-    #     self.main.only_video.setDisabled(True)
-    #     self.main.back_audio.setReadOnly(True)
-    #     self.main.auto_ajust.setDisabled(True)
-    #     self.main.video_autorate.setDisabled(True)
-    #     self.main.voice_autorate.setDisabled(True)
-    #     self.main.append_video.setDisabled(True)
-    #
-    #     self.main.append_video.hide()
-    #     self.main.voice_autorate.hide()
-    #     self.main.is_separate.hide()
-    #     self.main.addbackbtn.hide()
-    #     self.main.back_audio.hide()
-    #     self.main.only_video.hide()
-    #     self.main.auto_ajust.hide()
-    #     self.main.video_autorate.hide()
-    #
-    #     # cuda
-    #     self.main.enable_cuda.show()
+    
 
     # 启用字幕合并模式, 仅显示 选择视频、保存目录、字幕类型、 cuda
     # 不配音、不识别，
@@ -348,31 +285,31 @@ class SecWindow():
         self.main.processbtns = {}
 
     # 开启执行后，禁用按钮，停止或结束后，启用按钮
-    def disabled_widget(self, type):
-        self.main.clear_cache.setDisabled(type)
-        self.main.import_sub.setDisabled(type)
-        self.main.btn_get_video.setDisabled(type)
-        self.main.btn_save_dir.setDisabled(type)
-        self.main.translate_type.setDisabled(type)
-        self.main.proxy.setDisabled(type)
-        self.main.source_language.setDisabled(type)
-        self.main.translate_language.setDisabled(type)
-        self.main.tts_type.setDisabled(type)
-        self.main.whisper_model.setDisabled(type)
-        self.main.whisper_type.setDisabled(type)
-        self.main.subtitle_type.setDisabled(type)
-        self.main.check_fanyi.setDisabled(type)
-        self.main.model_type.setDisabled(type)
-        self.main.voice_autorate.setDisabled(type)
-        self.main.video_autorate.setDisabled(type)
-        self.main.append_video.setDisabled(type)
-        self.main.voice_role.setDisabled(type)
-        self.main.voice_rate.setDisabled(type)
-        self.main.only_video.setDisabled(True if self.main.app_mode in ['tiqu', 'peiyin'] else type)
-        self.main.is_separate.setDisabled(True if self.main.app_mode in ['tiqu', 'peiyin'] else type)
-        self.main.addbackbtn.setDisabled(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
-        self.main.back_audio.setReadOnly(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
-        self.main.auto_ajust.setDisabled(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
+    # def disabled_widget(self, type):
+    #     self.main.clear_cache.setDisabled(type)
+    #     self.main.import_sub.setDisabled(type)
+    #     self.main.btn_get_video.setDisabled(type)
+    #     self.main.btn_save_dir.setDisabled(type)
+    #     self.main.translate_type.setDisabled(type)
+    #     self.main.proxy.setDisabled(type)
+    #     self.main.source_language.setDisabled(type)
+    #     self.main.translate_language.setDisabled(type)
+    #     self.main.tts_type.setDisabled(type)
+    #     self.main.whisper_model.setDisabled(type)
+    #     self.main.whisper_type.setDisabled(type)
+    #     self.main.subtitle_type.setDisabled(type)
+    #     self.main.check_fanyi.setDisabled(type)
+    #     self.main.model_type.setDisabled(type)
+    #     self.main.voice_autorate.setDisabled(type)
+    #     self.main.video_autorate.setDisabled(type)
+    #     self.main.append_video.setDisabled(type)
+    #     self.main.voice_role.setDisabled(type)
+    #     self.main.voice_rate.setDisabled(type)
+    #     self.main.only_video.setDisabled(True if self.main.app_mode in ['tiqu', 'peiyin'] else type)
+    #     self.main.is_separate.setDisabled(True if self.main.app_mode in ['tiqu', 'peiyin'] else type)
+    #     self.main.addbackbtn.setDisabled(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
+    #     self.main.back_audio.setReadOnly(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
+    #     self.main.auto_ajust.setDisabled(True if self.main.app_mode in ['tiqu', 'hebing'] else type)
 
     def export_sub_fun(self):
         srttxt = self.main.subtitle_area.toPlainText().strip()
@@ -918,9 +855,7 @@ class SecWindow():
             return True
         if self.main.translate_language.currentText() == self.main.source_language.currentText():
             return True
-        if self.main.subtitle_area.toPlainText().strip():
-            return True
-        return False
+        return bool(self.main.subtitle_area.toPlainText().strip())
 
     # def change_proxy(self, p):
     #     # 设置或删除代理
@@ -959,38 +894,25 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # 倒计时
         config.task_countdown = config.settings['countdown_sec']
         config.settings = config.parse_init()
-        # 清理日志
-
-        # 目标文件夹
-        target_dir = result_path
-        if target_dir:
-            config.params['target_dir'] = target_dir
-        else:
-            config.params['target_dir'] = ''
-
+        config.params['target_dir'] = target_dir if (target_dir := result_path) else ''
         # 设置或删除代理
         config.proxy = proxy
-        try:
+        with contextlib.suppress(Exception):
             if config.proxy:
                 # 设置代理
                 tools.set_proxy(config.proxy)
             else:
                 # 删除代理
                 tools.set_proxy('del')
-        except Exception:
-            pass
-
         # 原始语言
         config.params['source_language'] = self.main.source_language.currentText()
-        if self.main.model_type.currentIndex == 3 and translator.get_code(
-                show_text=config.params['source_language']) not in ['zh-cn', 'zh-tw']:
-            self.update_status('stop')
-            return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                        'zh_recogn 仅支持中文语音识别' if config.defaulelang == 'zh' else 'zh_recogn Supports Chinese speech recognition only')
-        if self.main.model_type.currentIndex == 3 and not config.params['zh_recogn_api']:
-            return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                        'zh_recogn 必须在设置-zh_recogn中填写http接口地址' if config.defaulelang == 'zh' else 'The http interface address must be filled in the settings-zh_recogn')
+        config.logger.debug(config.params['source_language'])
+        config.logger.debug(self.main.source_model.currentText())
 
+        config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText()).keys()
+        config.logger.debug(config.params['source_module_status'])
+        config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
+        config.logger.debug(config.params['source_module_name'])
         # 目标语言
         target_language = self.main.translate_language.currentText()
         config.params['target_language'] = target_language
@@ -1008,6 +930,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # todo: 配置语音模型
         config.params['whisper_model'] = self.main.whisper_model.currentText()
         model_index = self.main.model_type.currentIndex()
+        print(model_index)
         if model_index == 1:
             config.params['model_type'] = 'openai'
         elif model_index == 2:
@@ -1098,6 +1021,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
                         allow = False
                 except:
                     allow = False
+                    raise ValueError("Something went wrong")
                 finally:
                     if not allow:
                         self.main.enable_cuda.setChecked(False)
@@ -1166,7 +1090,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         if not self.main.task:
             return
         if btnkey == 'srt2wav':
-            if not self.main.task or not self.main.task.video:
+            if not (self.main.task and self.main.task.video):
                 return
             if type == 'succeed':
                 text, basename = text.split('##')

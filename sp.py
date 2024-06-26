@@ -7,6 +7,7 @@ from pathlib import Path
 from PySide6 import QtWidgets
 from PySide6.QtCore import QTimer, QPoint
 from PySide6.QtGui import QGuiApplication
+from qt_material import apply_stylesheet
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 extra = {
@@ -35,7 +36,7 @@ class StartWindow(QtWidgets.QWidget):
         #
         #     with open('./videotrans/styles/style.qss', 'r', encoding='utf-8') as f:
         #         app.setStyleSheet(f.read())
-        # apply_stylesheet(app, theme='light_blue.xml', extra=extra)
+        apply_stylesheet(app, theme='light_blue.xml', extra=extra)
         st = time.time()
         from videotrans.mainwin.spwin import MainWindow
         MainWindow()

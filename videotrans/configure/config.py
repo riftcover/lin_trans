@@ -184,8 +184,6 @@ queue_logs = Queue(1000)
 # box窗口
 queuebox_logs = Queue(1000)
 
-model_list = re.split('\,|，', settings['model_list'])
-
 # 开始按钮状态
 current_status = "stop"
 # video toolbox 状态
