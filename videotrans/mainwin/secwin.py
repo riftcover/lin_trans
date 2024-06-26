@@ -22,6 +22,8 @@ from videotrans.util.tools import StartTools
 from qfluentwidgets import PrimaryPushButton
 
 start_tools = StartTools()
+
+
 class ClickableProgressBar(QLabel):
     def __init__(self, parent=None):
         super().__init__()
@@ -70,7 +72,6 @@ class ClickableProgressBar(QLabel):
 
 
 # primary ui
-
 
 
 class SecWindow():
@@ -251,8 +252,6 @@ class SecWindow():
     #
     #     # cuda
     #     self.main.enable_cuda.show()
-
-    
 
     # 启用字幕合并模式, 仅显示 选择视频、保存目录、字幕类型、 cuda
     # 不配音、不识别，
@@ -910,13 +909,14 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 语音模型
         config.logger.debug(self.main.source_model.currentText())
-        config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText()).keys()
+        config.params['source_module_status'] = start_tools.match_source_model(
+        self.main.source_model.currentText()).keys()
         config.logger.debug(config.params['source_module_status'])
         config.params['model_type'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
         config.logger.debug(config.params['source_module_name'])
 
         # 是否翻译
-        config.params['translate_status']:bool = self.main.check_fanyi.isChecked()
+        config.params['translate_status']: bool = self.main.check_fanyi.isChecked()
         # 目标语言
         target_language = self.main.translate_language.currentText()
         config.params['target_language'] = target_language
@@ -930,7 +930,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # config.params['append_video'] = self.main.append_video.isChecked()
         # config.params['append_audio'] = self.main.append_audio.isChecked()
         # config.params['append_subtitle'] = self.main.append_subtitle.isChecked()
-
 
         # 字幕嵌入类型
         # todo：添加是否嵌入字幕
@@ -998,29 +997,27 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         #         self.main.app_mode = 'peiyin'
         #         config.params['is_separate'] = False
 
-
-
         # cuda检测
-        if config.params["cuda"]:
+        if 100 < config.params["source_module_status"] < 200:
             import torch
             if not torch.cuda.is_available():
                 QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocuda"])
                 return
-            if config.params['model_type'] == 'FasterWhisper':
+            else:
                 allow = True
                 try:
                     from torch.backends import cudnn
                     if not cudnn.is_available() or not cudnn.is_acceptable(torch.tensor(1.).cuda()):
                         allow = False
-                except:
+                except Exception:
                     allow = False
-                    raise ValueError("Something went wrong")
-                finally:
-                    if not allow:
-                        self.main.enable_cuda.setChecked(False)
-                        config.params['cuda'] = False
-                        return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
 
+                if not allow:
+                    self.main.enable_cuda.setChecked(False)
+                    # config.params['cuda'] = False # todo 我没有cuda设置看是否需要
+                    return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
+
+        # 翻译渠道
         config.params['translate_type'] = self.main.translate_type.currentText()
         # 如果需要翻译，再判断是否符合翻译规则
         if not self.dont_translate():
