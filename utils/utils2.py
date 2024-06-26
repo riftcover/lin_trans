@@ -1,11 +1,12 @@
+import math
 import os
 import re
-import math
-import time
 import subprocess
-from openai import OpenAI
-from faster_whisper import WhisperModel
+import time
+
 import pandas as pd
+from faster_whisper import WhisperModel
+from openai import OpenAI
 
 
 def cache(cache):  # 缓存检测
@@ -52,25 +53,27 @@ def file_to_mp3(log, file_name, path):
         raise EOFError("错误！可能是 FFmpeg 未被正确配置 或 上传文件格式不受支持！")
 
 
+
 def faster_whisper_result_dict(segments):  # faster-whisper中生成器转换dict
     segments = list(segments)
-    segments_dict = {
+    return {
         'text': ' '.join([segment.text for segment in segments]),
-        'segments': [{
-            'id': segment.id,
-            'seek': segment.seek,
-            'start': segment.start,
-            'end': segment.end,
-            'text': segment.text,
-            'tokens': segment.tokens,
-            'temperature': segment.temperature,
-            'avg_logprob': segment.avg_logprob,
-            'compression_ratio': segment.compression_ratio,
-            'no_speech_prob': segment.no_speech_prob}
+        'segments': [
+            {
+                'id': segment.id,
+                'seek': segment.seek,
+                'start': segment.start,
+                'end': segment.end,
+                'text': segment.text,
+                'tokens': segment.tokens,
+                'temperature': segment.temperature,
+                'avg_logprob': segment.avg_logprob,
+                'compression_ratio': segment.compression_ratio,
+                'no_speech_prob': segment.no_speech_prob,
+            }
             for segment in segments
-        ]
+        ],
     }
-    return segments_dict
 
 
 def openai_whisper_result(key, base, path, prompt, temperature):
@@ -142,12 +145,12 @@ def faster_whisper_result(file_path, device, model_name, prompt, temp, vad, lang
 
 
 def translate(api_key, base_url, model, result, language1, language2, wait_time):
+    segment_id = 0
     if "gpt" in model:
         if base_url != "https://api.openai.com/v1":
             print(f"- 代理地址：{base_url}")
         print("- 翻译内容：\n")
         client = OpenAI(api_key=api_key, base_url=base_url)
-        segment_id = 0
         segments = result['segments']
         for segment in segments:
             text = segment['text']
@@ -165,14 +168,9 @@ def translate(api_key, base_url, model, result, language1, language2, wait_time)
 
     else:
         print("- 翻译内容：\n")
-        if "moonshot" in model:
-            client = OpenAI(api_key=api_key, base_url=base_url)
-        elif "glm" in model:
-            client = OpenAI(api_key=api_key, base_url=base_url)
-        elif "deepseek" in model:
+        if model in ("moonshot", "glm", "deepseek"):
             client = OpenAI(api_key=api_key, base_url=base_url)
 
-        segment_id = 0
         segments = result['segments']
         for segment in segments:
             text = segment['text']
@@ -213,12 +211,9 @@ def translate_srt(api_key, base_url, model, srt_content, language1, language2, w
 
     else:
         print("- 翻译内容：\n")
-        if "moonshot" in model:
+        if model in ("moonshot", "glm","deepseek"):
             client = OpenAI(api_key=api_key, base_url=base_url)
-        elif "glm" in model:
-            client = OpenAI(api_key=api_key, base_url=base_url)
-        elif "deepseek" in model:
-            client = OpenAI(api_key=api_key, base_url=base_url)
+
 
         segment_id = 0
         for segment in srt_content:
@@ -329,8 +324,8 @@ def check_cuda_support():
     try:
         result = subprocess.run(["ffmpeg", "-hwaccels"], capture_output=True, text=True)
         return "cuda" in result.stdout
-    except Exception as e:
-        print(f" 未检测到 CUDA 状态，本地合并为 CPU 模式，若要使用 GPU 请检查 CUDA 是否配置成功")
+    except Exception:
+        print(" 未检测到 CUDA 状态，本地合并为 CPU 模式，若要使用 GPU 请检查 CUDA 是否配置成功")
         return False
 
 
