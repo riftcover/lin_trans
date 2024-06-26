@@ -165,3 +165,7 @@ cython_debug/
 .idea/
 
 !/logs/
+!/run.py
+!/xc.py
+
+!/xd.py
