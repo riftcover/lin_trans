@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1240</width>
-    <height>639</height>
+    <width>1246</width>
+    <height>781</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>0</x>
       <y>0</y>
       <width>90</width>
-      <height>571</height>
+      <height>601</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -66,30 +66,24 @@
      <rect>
       <x>90</x>
       <y>0</y>
-      <width>1131</width>
-      <height>571</height>
+      <width>1041</width>
+      <height>601</height>
      </rect>
     </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
     <widget class="QWidget" name="page">
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1071</width>
-        <height>642</height>
+        <x>12</x>
+        <y>16</y>
+        <width>755</width>
+        <height>578</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_1">
-       <property name="spacing">
-        <number>30</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <widget class="QPushButton" name="btn_get_video">
          <property name="sizePolicy">
@@ -110,10 +104,13 @@
         </widget>
        </item>
        <item>
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <layout class="QFormLayout" name="formLayout">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_2">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -132,7 +129,7 @@
              </property>
             </widget>
            </item>
-           <item>
+           <item row="0" column="1">
             <widget class="QComboBox" name="source_language">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -153,9 +150,12 @@
            </item>
           </layout>
          </item>
-         <item row="0" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_2">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -174,7 +174,7 @@
              </property>
             </widget>
            </item>
-           <item>
+           <item row="0" column="1">
             <widget class="QComboBox" name="source_model">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -193,8 +193,56 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QCheckBox" name="enable_cuda">
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="check_fanyi">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选</string>
+           </property>
+           <property name="text">
+            <string>字幕翻译</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_3">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_8">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>翻译引擎</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="translate_type">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -208,18 +256,18 @@
               </size>
              </property>
              <property name="toolTip">
-              <string>必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选</string>
-             </property>
-             <property name="text">
-              <string>字幕翻译</string>
+              <string>原视频发音所用语言</string>
              </property>
             </widget>
            </item>
           </layout>
          </item>
-         <item row="0" column="2">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_4">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_4">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -238,8 +286,8 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="source_language_3">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="translate_language">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -262,45 +310,61 @@
         </layout>
        </item>
        <item>
-        <widget class="QTableWidget" name="tableWidget">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="leftMargin">
+          <number>80</number>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>300</height>
-          </size>
+         <property name="rightMargin">
+          <number>80</number>
          </property>
-         <column>
-          <property name="text">
-           <string>新建列</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>文件名</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>时长</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>操作</string>
-          </property>
-         </column>
-        </widget>
+         <item>
+          <widget class="QTableWidget" name="media_table">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>300</height>
+            </size>
+           </property>
+           <column>
+            <property name="text">
+             <string>文件名</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>时长</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>算力消耗</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>操作</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item alignment="Qt::AlignmentFlag::AlignHCenter">
-          <widget class="QPushButton" name="startbtn_2">
+        <layout class="QFormLayout" name="formLayout_5">
+         <property name="formAlignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+         <property name="bottomMargin">
+          <number>20</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="startbtn_1">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -324,22 +388,16 @@
      </widget>
     </widget>
     <widget class="QWidget" name="page_2">
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1111</width>
-        <height>642</height>
+        <x>12</x>
+        <y>16</y>
+        <width>678</width>
+        <height>564</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>30</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <widget class="QPushButton" name="btn_get_srt">
          <property name="sizePolicy">
@@ -360,10 +418,13 @@
         </widget>
        </item>
        <item>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <layout class="QFormLayout" name="formLayout_6">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_5">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -382,8 +443,8 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="source_language_4">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="source_language_srt">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -403,9 +464,12 @@
            </item>
           </layout>
          </item>
-         <item row="0" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_6">
-           <item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_7">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_6">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -424,8 +488,8 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="source_language_5">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="source_model_srt">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -443,8 +507,34 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QCheckBox" name="enable_cuda_2">
+          </layout>
+         </item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_8">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_9">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>翻译引擎</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="translate_type_srt">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -458,18 +548,18 @@
               </size>
              </property>
              <property name="toolTip">
-              <string>必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选</string>
-             </property>
-             <property name="text">
-              <string>字幕翻译</string>
+              <string>原视频发音所用语言</string>
              </property>
             </widget>
            </item>
           </layout>
          </item>
-         <item row="0" column="2">
-          <layout class="QHBoxLayout" name="horizontalLayout_7">
-           <item>
+         <item>
+          <layout class="QFormLayout" name="formLayout_9">
+           <property name="formAlignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_7">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -488,8 +578,8 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="source_language_6">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="translate_language_srt">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -512,45 +602,55 @@
         </layout>
        </item>
        <item>
-        <widget class="QTableWidget" name="tableWidget_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="leftMargin">
+          <number>80</number>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>300</height>
-          </size>
+         <property name="rightMargin">
+          <number>80</number>
          </property>
-         <column>
-          <property name="text">
-           <string>新建列</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>文件名</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>时长</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>操作</string>
-          </property>
-         </column>
-        </widget>
+         <item>
+          <widget class="QTableWidget" name="srt_table">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>300</height>
+            </size>
+           </property>
+           <column>
+            <property name="text">
+             <string>文件名</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>时长</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>算力消耗</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>操作</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item alignment="Qt::AlignmentFlag::AlignHCenter">
-          <widget class="QPushButton" name="startbtn_3">
+          <widget class="QPushButton" name="startbtn_srt">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -589,8 +689,8 @@
        <rect>
         <x>350</x>
         <y>20</y>
-        <width>781</width>
-        <height>371</height>
+        <width>661</width>
+        <height>351</height>
        </rect>
       </property>
       <column>
@@ -724,7 +824,7 @@
           <x>10</x>
           <y>220</y>
           <width>301</width>
-          <height>26</height>
+          <height>33</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -748,7 +848,7 @@
           <x>20</x>
           <y>20</y>
           <width>319</width>
-          <height>74</height>
+          <height>88</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -807,7 +907,7 @@
           <x>20</x>
           <y>20</y>
           <width>341</width>
-          <height>120</height>
+          <height>141</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -887,7 +987,7 @@
           <x>20</x>
           <y>20</y>
           <width>301</width>
-          <height>132</height>
+          <height>135</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -1014,8 +1114,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1240</width>
-     <height>33</height>
+     <width>1246</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_2">
@@ -1027,42 +1127,6 @@
    </widget>
    <addaction name="menu_2"/>
   </widget>
-  <action name="action_tiquzimu_no">
-   <property name="icon">
-    <iconset theme="从本地视频中提取出原始语言的srt字幕"/>
-   </property>
-   <property name="text">
-    <string>音视频转字幕</string>
-   </property>
-   <property name="toolTip">
-    <string>音视频转字幕</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::TextHeuristicRole</enum>
-   </property>
-  </action>
-  <action name="action_fanyi">
-   <property name="text">
-    <string>文本字幕翻译</string>
-   </property>
-   <property name="toolTip">
-    <string>字幕翻译</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::TextHeuristicRole</enum>
-   </property>
-  </action>
-  <action name="action_eduit">
-   <property name="text">
-    <string>编辑字幕</string>
-   </property>
-   <property name="toolTip">
-    <string>编辑srt字幕文件</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::TextHeuristicRole</enum>
-   </property>
-  </action>
   <action name="action">
    <property name="text">
     <string>充值算力</string>

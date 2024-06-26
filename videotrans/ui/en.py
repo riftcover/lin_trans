@@ -10,22 +10,20 @@
 
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
                             QSize, Qt)
-from PySide6.QtGui import (QAction, QIcon)
+from PySide6.QtGui import (QAction)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import (QCheckBox, QGridLayout,
-                               QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
+                               QHBoxLayout, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMenu,
-                               QMenuBar, QSizePolicy, QStackedWidget,
+                               QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
                                QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
                                QWidget)
-from qfluentwidgets import ComboBox, PushButton, CheckBox
-
-from videotrans.configure import config
-
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(u"MainWindow")
+        if not MainWindow.objectName():
+            MainWindow.setObjectName(u"MainWindow")
+        MainWindow.resize(1246, 781)
         self.action = QAction(MainWindow)
         self.action.setObjectName(u"action")
         self.action_2 = QAction(MainWindow)
@@ -39,7 +37,7 @@ class Ui_MainWindow(object):
         QListWidgetItem(self.listWidget)
         QListWidgetItem(self.listWidget)
         self.listWidget.setObjectName(u"listWidget")
-        self.listWidget.setGeometry(QRect(0, 0, 90, 571))
+        self.listWidget.setGeometry(QRect(0, 0, 90, 601))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -48,19 +46,17 @@ class Ui_MainWindow(object):
         self.listWidget.setMaximumSize(QSize(90, 16777215))
         self.stackedWidget = QStackedWidget(self.centralwidget)
         self.stackedWidget.setObjectName(u"stackedWidget")
-        self.stackedWidget.setGeometry(QRect(90, 0, 1131, 571))
+        self.stackedWidget.setGeometry(QRect(90, 0, 1041, 601))
         self.page = QWidget()
         self.page.setObjectName(u"page")
-        self.layoutWidget = QWidget(self.page)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 10, 1071, 531))
-        self.verticalLayout_1 = QVBoxLayout(self.layoutWidget)
-        self.verticalLayout_1.setSpacing(30)
-        self.verticalLayout_1.setObjectName(u"verticalLayout_1")
-        self.verticalLayout_1.setContentsMargins(0, 10, 0, 0)
-        self.btn_get_video = PushButton(self.layoutWidget)
+        self.widget = QWidget(self.page)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(12, 16, 755, 578))
+        self.verticalLayout_4 = QVBoxLayout(self.widget)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.btn_get_video = QPushButton(self.widget)
         self.btn_get_video.setObjectName(u"btn_get_video")
-        self.file_path = ""
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
@@ -68,13 +64,14 @@ class Ui_MainWindow(object):
         self.btn_get_video.setSizePolicy(sizePolicy1)
         self.btn_get_video.setMinimumSize(QSize(300, 150))
 
-        self.verticalLayout_1.addWidget(self.btn_get_video)
+        self.verticalLayout_4.addWidget(self.btn_get_video)
 
-        self.gridLayout = QGridLayout()
-        self.gridLayout.setObjectName(u"gridLayout")
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.label_2 = QLabel(self.layoutWidget)
+        self.formLayout = QFormLayout()
+        self.formLayout.setObjectName(u"formLayout")
+        self.formLayout.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_2 = QLabel(self.widget)
         self.label_2.setObjectName(u"label_2")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy2.setHorizontalStretch(0)
@@ -83,31 +80,32 @@ class Ui_MainWindow(object):
         self.label_2.setSizePolicy(sizePolicy2)
         self.label_2.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout.addWidget(self.label_2)
+        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_2)
 
-        self.source_language = ComboBox(self.layoutWidget)
+        self.source_language = QComboBox(self.widget)
         self.source_language.setObjectName(u"source_language")
         sizePolicy1.setHeightForWidth(self.source_language.sizePolicy().hasHeightForWidth())
         self.source_language.setSizePolicy(sizePolicy1)
         self.source_language.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout.addWidget(self.source_language)
+        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.source_language)
 
 
-        self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+        self.horizontalLayout.addLayout(self.formLayout)
 
-        self.horizontalLayout_3 = QHBoxLayout()
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.label_3 = QLabel(self.layoutWidget)
+        self.formLayout_2 = QFormLayout()
+        self.formLayout_2.setObjectName(u"formLayout_2")
+        self.formLayout_2.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_3 = QLabel(self.widget)
         self.label_3.setObjectName(u"label_3")
         sizePolicy2.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
         self.label_3.setSizePolicy(sizePolicy2)
         self.label_3.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_3.addWidget(self.label_3)
+        self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_3)
 
-        self.source_model = ComboBox(self.layoutWidget)
-        self.source_model.setObjectName(u"source_language_2")
+        self.source_model = QComboBox(self.widget)
+        self.source_model.setObjectName(u"source_model")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
@@ -115,162 +113,235 @@ class Ui_MainWindow(object):
         self.source_model.setSizePolicy(sizePolicy3)
         self.source_model.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_3.addWidget(self.source_model)
+        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.source_model)
 
-        self.check_fanyi = CheckBox('字幕翻译',self)
 
+        self.horizontalLayout.addLayout(self.formLayout_2)
+
+        self.check_fanyi = QCheckBox(self.widget)
+        self.check_fanyi.setObjectName(u"check_fanyi")
         sizePolicy3.setHeightForWidth(self.check_fanyi.sizePolicy().hasHeightForWidth())
         self.check_fanyi.setSizePolicy(sizePolicy3)
         self.check_fanyi.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_3.addWidget(self.check_fanyi)
+        self.horizontalLayout.addWidget(self.check_fanyi)
+
+        self.formLayout_3 = QFormLayout()
+        self.formLayout_3.setObjectName(u"formLayout_3")
+        self.formLayout_3.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_8 = QLabel(self.widget)
+        self.label_8.setObjectName(u"label_8")
+        sizePolicy2.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
+        self.label_8.setSizePolicy(sizePolicy2)
+        self.label_8.setMinimumSize(QSize(0, 35))
+
+        self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_8)
+
+        self.translate_type = QComboBox(self.widget)
+        self.translate_type.setObjectName(u"translate_type")
+        sizePolicy3.setHeightForWidth(self.translate_type.sizePolicy().hasHeightForWidth())
+        self.translate_type.setSizePolicy(sizePolicy3)
+        self.translate_type.setMinimumSize(QSize(0, 35))
+
+        self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.translate_type)
 
 
-        self.gridLayout.addLayout(self.horizontalLayout_3, 0, 1, 1, 1)
+        self.horizontalLayout.addLayout(self.formLayout_3)
 
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_4 = QLabel(self.layoutWidget)
+        self.formLayout_4 = QFormLayout()
+        self.formLayout_4.setObjectName(u"formLayout_4")
+        self.formLayout_4.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_4 = QLabel(self.widget)
         self.label_4.setObjectName(u"label_4")
         sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
         self.label_4.setSizePolicy(sizePolicy2)
         self.label_4.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_2.addWidget(self.label_4)
+        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_4)
 
-        self.translate_language = ComboBox(self.layoutWidget)
-        self.translate_language.setObjectName(u"target_language")
+        self.translate_language = QComboBox(self.widget)
+        self.translate_language.setObjectName(u"translate_language")
         sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
         self.translate_language.setSizePolicy(sizePolicy3)
-        self.translate_language.setMinimumSize(QSize(150, 30))
-        self.horizontalLayout_2.addWidget(self.translate_language)
-        self.gridLayout.addLayout(self.horizontalLayout_2, 0, 3, 1, 1)
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_4 = QLabel(self.layoutWidget)
-        self.label_4.setObjectName(u"label_4")
-        sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
-        self.label_4.setSizePolicy(sizePolicy2)
-        self.label_4.setMinimumSize(QSize(0, 35))
-        self.horizontalLayout_2.addWidget(self.label_4)
-        self.translate_language = ComboBox(self.layoutWidget)
-        self.translate_language.setObjectName(u"target_language")
-        sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
-        self.translate_language.setSizePolicy(sizePolicy3)
-        self.translate_language.setMinimumSize(QSize(150, 30))
-        self.horizontalLayout_2.addWidget(self.translate_language)
+        self.translate_language.setMinimumSize(QSize(0, 0))
+
+        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.translate_language)
 
 
-        self.gridLayout.addLayout(self.horizontalLayout_2, 0, 2, 1, 1)
+        self.horizontalLayout.addLayout(self.formLayout_4)
 
 
-        self.verticalLayout_1.addLayout(self.gridLayout)
+        self.verticalLayout_4.addLayout(self.horizontalLayout)
 
-        self.media_table = QTableWidget(0,4)
-        self.media_table.setObjectName(u"tableWidget")
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(80, -1, 80, -1)
+        self.media_table = QTableWidget(self.widget)
+        if (self.media_table.columnCount() < 4):
+            self.media_table.setColumnCount(4)
+        __qtablewidgetitem = QTableWidgetItem()
+        self.media_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem1 = QTableWidgetItem()
+        self.media_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.media_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        self.media_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        self.media_table.setObjectName(u"media_table")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
         sizePolicy4.setHeightForWidth(self.media_table.sizePolicy().hasHeightForWidth())
         self.media_table.setSizePolicy(sizePolicy4)
         self.media_table.setMinimumSize(QSize(0, 300))
-        self.verticalLayout_1.addWidget(self.media_table)
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.startbtn = PushButton(self.layoutWidget)
-        self.startbtn.setObjectName(u"startbtn")
+
+        self.verticalLayout.addWidget(self.media_table)
+
+
+        self.verticalLayout_4.addLayout(self.verticalLayout)
+
+        self.formLayout_5 = QFormLayout()
+        self.formLayout_5.setObjectName(u"formLayout_5")
+        self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
+        self.startbtn_1 = QPushButton(self.widget)
+        self.startbtn_1.setObjectName(u"startbtn_1")
         sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy5.setHorizontalStretch(0)
         sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.startbtn.sizePolicy().hasHeightForWidth())
-        self.startbtn.setSizePolicy(sizePolicy5)
-        self.startbtn.setMinimumSize(QSize(200, 50))
-        self.verticalLayout.addWidget(self.startbtn, 0, Qt.AlignmentFlag.AlignHCenter)
-        self.verticalLayout_1.addLayout(self.verticalLayout)
-        self.stackedWidget.addWidget(self.page)
+        sizePolicy5.setHeightForWidth(self.startbtn_1.sizePolicy().hasHeightForWidth())
+        self.startbtn_1.setSizePolicy(sizePolicy5)
+        self.startbtn_1.setMinimumSize(QSize(200, 50))
 
+        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.startbtn_1)
+
+
+        self.verticalLayout_4.addLayout(self.formLayout_5)
+
+        self.stackedWidget.addWidget(self.page)
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
-        self.layoutWidget1 = QWidget(self.page_2)
-        self.layoutWidget1.setObjectName(u"layoutWidget1")
-        self.layoutWidget1.setGeometry(QRect(10, 10, 1111, 531))
-        self.verticalLayout_2 = QVBoxLayout(self.layoutWidget1)
-        self.verticalLayout_2.setSpacing(30)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 10, 0, 0)
-        self.btn_get_srt = PushButton(self.layoutWidget1)
+        self.widget1 = QWidget(self.page_2)
+        self.widget1.setObjectName(u"widget1")
+        self.widget1.setGeometry(QRect(12, 16, 678, 564))
+        self.verticalLayout_5 = QVBoxLayout(self.widget1)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.btn_get_srt = QPushButton(self.widget1)
         self.btn_get_srt.setObjectName(u"btn_get_srt")
         sizePolicy1.setHeightForWidth(self.btn_get_srt.sizePolicy().hasHeightForWidth())
         self.btn_get_srt.setSizePolicy(sizePolicy1)
         self.btn_get_srt.setMinimumSize(QSize(300, 150))
 
-        self.verticalLayout_2.addWidget(self.btn_get_srt)
+        self.verticalLayout_5.addWidget(self.btn_get_srt)
 
-        self.gridLayout_2 = QGridLayout()
-        self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.horizontalLayout_5 = QHBoxLayout()
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.label_5 = QLabel(self.layoutWidget1)
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.formLayout_6 = QFormLayout()
+        self.formLayout_6.setObjectName(u"formLayout_6")
+        self.formLayout_6.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_5 = QLabel(self.widget1)
         self.label_5.setObjectName(u"label_5")
         sizePolicy2.setHeightForWidth(self.label_5.sizePolicy().hasHeightForWidth())
         self.label_5.setSizePolicy(sizePolicy2)
         self.label_5.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_5.addWidget(self.label_5)
+        self.formLayout_6.setWidget(0, QFormLayout.LabelRole, self.label_5)
 
-        self.source_language_4 = ComboBox(self.layoutWidget1)
-        self.source_language_4.setObjectName(u"source_language_4")
-        sizePolicy1.setHeightForWidth(self.source_language_4.sizePolicy().hasHeightForWidth())
-        self.source_language_4.setSizePolicy(sizePolicy1)
-        self.source_language_4.setMinimumSize(QSize(0, 35))
+        self.source_language_srt = QComboBox(self.widget1)
+        self.source_language_srt.setObjectName(u"source_language_srt")
+        sizePolicy1.setHeightForWidth(self.source_language_srt.sizePolicy().hasHeightForWidth())
+        self.source_language_srt.setSizePolicy(sizePolicy1)
+        self.source_language_srt.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_5.addWidget(self.source_language_4)
+        self.formLayout_6.setWidget(0, QFormLayout.FieldRole, self.source_language_srt)
 
 
-        self.gridLayout_2.addLayout(self.horizontalLayout_5, 0, 0, 1, 1)
+        self.horizontalLayout_2.addLayout(self.formLayout_6)
 
-        self.horizontalLayout_6 = QHBoxLayout()
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.label_6 = QLabel(self.layoutWidget1)
+        self.formLayout_7 = QFormLayout()
+        self.formLayout_7.setObjectName(u"formLayout_7")
+        self.formLayout_7.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_6 = QLabel(self.widget1)
         self.label_6.setObjectName(u"label_6")
         sizePolicy2.setHeightForWidth(self.label_6.sizePolicy().hasHeightForWidth())
         self.label_6.setSizePolicy(sizePolicy2)
         self.label_6.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_6.addWidget(self.label_6)
+        self.formLayout_7.setWidget(0, QFormLayout.LabelRole, self.label_6)
 
-        self.source_language_5 = ComboBox(self.layoutWidget1)
-        self.source_language_5.setObjectName(u"source_language_5")
-        sizePolicy3.setHeightForWidth(self.source_language_5.sizePolicy().hasHeightForWidth())
-        self.source_language_5.setSizePolicy(sizePolicy3)
-        self.source_language_5.setMinimumSize(QSize(0, 35))
-        self.horizontalLayout_6.addWidget(self.source_language_5)
-        self.gridLayout_2.addLayout(self.horizontalLayout_6, 0, 1, 1, 1)
-        self.horizontalLayout_7 = QHBoxLayout()
-        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.label_7 = QLabel(self.layoutWidget1)
+        self.source_model_srt = QComboBox(self.widget1)
+        self.source_model_srt.setObjectName(u"source_model_srt")
+        sizePolicy3.setHeightForWidth(self.source_model_srt.sizePolicy().hasHeightForWidth())
+        self.source_model_srt.setSizePolicy(sizePolicy3)
+        self.source_model_srt.setMinimumSize(QSize(0, 35))
+
+        self.formLayout_7.setWidget(0, QFormLayout.FieldRole, self.source_model_srt)
+
+
+        self.horizontalLayout_2.addLayout(self.formLayout_7)
+
+        self.formLayout_8 = QFormLayout()
+        self.formLayout_8.setObjectName(u"formLayout_8")
+        self.formLayout_8.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_9 = QLabel(self.widget1)
+        self.label_9.setObjectName(u"label_9")
+        sizePolicy2.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
+        self.label_9.setSizePolicy(sizePolicy2)
+        self.label_9.setMinimumSize(QSize(0, 35))
+
+        self.formLayout_8.setWidget(0, QFormLayout.LabelRole, self.label_9)
+
+        self.translate_type_srt = QComboBox(self.widget1)
+        self.translate_type_srt.setObjectName(u"translate_type_srt")
+        sizePolicy3.setHeightForWidth(self.translate_type_srt.sizePolicy().hasHeightForWidth())
+        self.translate_type_srt.setSizePolicy(sizePolicy3)
+        self.translate_type_srt.setMinimumSize(QSize(0, 35))
+
+        self.formLayout_8.setWidget(0, QFormLayout.FieldRole, self.translate_type_srt)
+
+
+        self.horizontalLayout_2.addLayout(self.formLayout_8)
+
+        self.formLayout_9 = QFormLayout()
+        self.formLayout_9.setObjectName(u"formLayout_9")
+        self.formLayout_9.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.label_7 = QLabel(self.widget1)
         self.label_7.setObjectName(u"label_7")
         sizePolicy2.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
         self.label_7.setSizePolicy(sizePolicy2)
         self.label_7.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout_7.addWidget(self.label_7)
+        self.formLayout_9.setWidget(0, QFormLayout.LabelRole, self.label_7)
 
-        self.source_language_6 = ComboBox(self.layoutWidget1)
-        self.source_language_6.setObjectName(u"source_language_6")
-        sizePolicy3.setHeightForWidth(self.source_language_6.sizePolicy().hasHeightForWidth())
-        self.source_language_6.setSizePolicy(sizePolicy3)
-        self.source_language_6.setMinimumSize(QSize(0, 0))
+        self.translate_language_srt = QComboBox(self.widget1)
+        self.translate_language_srt.setObjectName(u"translate_language_srt")
+        sizePolicy3.setHeightForWidth(self.translate_language_srt.sizePolicy().hasHeightForWidth())
+        self.translate_language_srt.setSizePolicy(sizePolicy3)
+        self.translate_language_srt.setMinimumSize(QSize(0, 0))
 
-        self.horizontalLayout_7.addWidget(self.source_language_6)
-
-
-        self.gridLayout_2.addLayout(self.horizontalLayout_7, 0, 2, 1, 1)
+        self.formLayout_9.setWidget(0, QFormLayout.FieldRole, self.translate_language_srt)
 
 
-        self.verticalLayout_2.addLayout(self.gridLayout_2)
+        self.horizontalLayout_2.addLayout(self.formLayout_9)
 
-        self.srt_table = QTableWidget(0, 4)
+
+        self.verticalLayout_5.addLayout(self.horizontalLayout_2)
+
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(80, -1, 80, -1)
+        self.srt_table = QTableWidget(self.widget1)
+        if (self.srt_table.columnCount() < 4):
+            self.srt_table.setColumnCount(4)
+        __qtablewidgetitem4 = QTableWidgetItem()
+        self.srt_table.setHorizontalHeaderItem(0, __qtablewidgetitem4)
+        __qtablewidgetitem5 = QTableWidgetItem()
+        self.srt_table.setHorizontalHeaderItem(1, __qtablewidgetitem5)
+        __qtablewidgetitem6 = QTableWidgetItem()
+        self.srt_table.setHorizontalHeaderItem(2, __qtablewidgetitem6)
+        __qtablewidgetitem7 = QTableWidgetItem()
+        self.srt_table.setHorizontalHeaderItem(3, __qtablewidgetitem7)
         self.srt_table.setObjectName(u"srt_table")
         sizePolicy4.setHeightForWidth(self.srt_table.sizePolicy().hasHeightForWidth())
         self.srt_table.setSizePolicy(sizePolicy4)
@@ -278,18 +349,21 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.srt_table)
 
+
+        self.verticalLayout_5.addLayout(self.verticalLayout_2)
+
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.startbtn_3 = PushButton(self.layoutWidget1)
-        self.startbtn_3.setObjectName(u"startbtn_3")
-        sizePolicy5.setHeightForWidth(self.startbtn_3.sizePolicy().hasHeightForWidth())
-        self.startbtn_3.setSizePolicy(sizePolicy5)
-        self.startbtn_3.setMinimumSize(QSize(200, 50))
+        self.startbtn_srt = QPushButton(self.widget1)
+        self.startbtn_srt.setObjectName(u"startbtn_srt")
+        sizePolicy5.setHeightForWidth(self.startbtn_srt.sizePolicy().hasHeightForWidth())
+        self.startbtn_srt.setSizePolicy(sizePolicy5)
+        self.startbtn_srt.setMinimumSize(QSize(200, 50))
 
-        self.verticalLayout_3.addWidget(self.startbtn_3, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.verticalLayout_3.addWidget(self.startbtn_srt, 0, Qt.AlignmentFlag.AlignHCenter)
 
 
-        self.verticalLayout_2.addLayout(self.verticalLayout_3)
+        self.verticalLayout_5.addLayout(self.verticalLayout_3)
 
         self.stackedWidget.addWidget(self.page_2)
         self.page_3 = QWidget()
@@ -313,7 +387,7 @@ class Ui_MainWindow(object):
         __qtablewidgetitem13 = QTableWidgetItem()
         self.eduit_zimu.setHorizontalHeaderItem(5, __qtablewidgetitem13)
         self.eduit_zimu.setObjectName(u"eduit_zimu")
-        self.eduit_zimu.setGeometry(QRect(350, 20, 781, 371))
+        self.eduit_zimu.setGeometry(QRect(350, 20, 661, 351))
         self.stackedWidget.addWidget(self.page_3)
         self.page_4 = QWidget()
         self.page_4.setObjectName(u"page_4")
@@ -340,7 +414,7 @@ class Ui_MainWindow(object):
         self.model_type = QHBoxLayout(self.layoutWidget_4)
         self.model_type.setObjectName(u"model_type")
         self.model_type.setContentsMargins(0, 0, 0, 0)
-        self.mac_fast = PushButton(self.layoutWidget_4)
+        self.mac_fast = QPushButton(self.layoutWidget_4)
         self.mac_fast.setObjectName(u"mac_fast")
         sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy6.setHorizontalStretch(0)
@@ -350,7 +424,7 @@ class Ui_MainWindow(object):
 
         self.model_type.addWidget(self.mac_fast)
 
-        self.cuda_fust = PushButton(self.layoutWidget_4)
+        self.cuda_fust = QPushButton(self.layoutWidget_4)
         self.cuda_fust.setObjectName(u"cuda_fust")
         sizePolicy6.setHeightForWidth(self.cuda_fust.sizePolicy().hasHeightForWidth())
         self.cuda_fust.setSizePolicy(sizePolicy6)
@@ -359,7 +433,7 @@ class Ui_MainWindow(object):
 
         self.layoutWidget_5 = QWidget(self.page_10)
         self.layoutWidget_5.setObjectName(u"layoutWidget_5")
-        self.layoutWidget_5.setGeometry(QRect(10, 220, 301, 26))
+        self.layoutWidget_5.setGeometry(QRect(10, 220, 301, 33))
         self.horizontalLayout_12 = QHBoxLayout(self.layoutWidget_5)
         self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
         self.horizontalLayout_12.setContentsMargins(0, 0, 0, 0)
@@ -368,7 +442,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_12.addWidget(self.model_save_path)
 
-        self.setting_model_change_dir = PushButton(self.layoutWidget_5)
+        self.setting_model_change_dir = QPushButton(self.layoutWidget_5)
         self.setting_model_change_dir.setObjectName(u"setting_model_change_dir")
 
         self.horizontalLayout_12.addWidget(self.setting_model_change_dir)
@@ -378,7 +452,7 @@ class Ui_MainWindow(object):
         self.page_11.setObjectName(u"page_11")
         self.layoutWidget_6 = QWidget(self.page_11)
         self.layoutWidget_6.setObjectName(u"layoutWidget_6")
-        self.layoutWidget_6.setGeometry(QRect(20, 20, 319, 74))
+        self.layoutWidget_6.setGeometry(QRect(20, 20, 319, 88))
         self.verticalLayout_6 = QVBoxLayout(self.layoutWidget_6)
         self.verticalLayout_6.setSpacing(20)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
@@ -395,7 +469,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_13.addWidget(self.save_dir_openai)
 
-        self.change_dir_9 = PushButton(self.layoutWidget_6)
+        self.change_dir_9 = QPushButton(self.layoutWidget_6)
         self.change_dir_9.setObjectName(u"change_dir_9")
 
         self.horizontalLayout_13.addWidget(self.change_dir_9)
@@ -415,7 +489,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_14.addWidget(self.save_dir_zhipuai)
 
-        self.change_dir_10 = PushButton(self.layoutWidget_6)
+        self.change_dir_10 = QPushButton(self.layoutWidget_6)
         self.change_dir_10.setObjectName(u"change_dir_10")
 
         self.horizontalLayout_14.addWidget(self.change_dir_10)
@@ -428,7 +502,7 @@ class Ui_MainWindow(object):
         self.page_12.setObjectName(u"page_12")
         self.layoutWidget_7 = QWidget(self.page_12)
         self.layoutWidget_7.setObjectName(u"layoutWidget_7")
-        self.layoutWidget_7.setGeometry(QRect(20, 20, 341, 120))
+        self.layoutWidget_7.setGeometry(QRect(20, 20, 341, 141))
         self.verticalLayout_7 = QVBoxLayout(self.layoutWidget_7)
         self.verticalLayout_7.setSpacing(20)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
@@ -445,7 +519,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_15.addWidget(self.save_dir_baidu)
 
-        self.change_dir_11 = PushButton(self.layoutWidget_7)
+        self.change_dir_11 = QPushButton(self.layoutWidget_7)
         self.change_dir_11.setObjectName(u"change_dir_11")
 
         self.horizontalLayout_15.addWidget(self.change_dir_11)
@@ -465,7 +539,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_16.addWidget(self.save_dir_tengxun)
 
-        self.change_dir_12 = PushButton(self.layoutWidget_7)
+        self.change_dir_12 = QPushButton(self.layoutWidget_7)
         self.change_dir_12.setObjectName(u"change_dir_12")
 
         self.horizontalLayout_16.addWidget(self.change_dir_12)
@@ -485,7 +559,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_17.addWidget(self.save_dir_deel)
 
-        self.change_dir_13 = PushButton(self.layoutWidget_7)
+        self.change_dir_13 = QPushButton(self.layoutWidget_7)
         self.change_dir_13.setObjectName(u"change_dir_13")
 
         self.horizontalLayout_17.addWidget(self.change_dir_13)
@@ -498,7 +572,7 @@ class Ui_MainWindow(object):
         self.page_13.setObjectName(u"page_13")
         self.layoutWidget_8 = QWidget(self.page_13)
         self.layoutWidget_8.setObjectName(u"layoutWidget_8")
-        self.layoutWidget_8.setGeometry(QRect(20, 20, 301, 132))
+        self.layoutWidget_8.setGeometry(QRect(20, 20, 301, 135))
         self.verticalLayout_8 = QVBoxLayout(self.layoutWidget_8)
         self.verticalLayout_8.setObjectName(u"verticalLayout_8")
         self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
@@ -531,7 +605,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_18.addWidget(self.save_dir_proxy)
 
-        self.change_dir_14 = PushButton(self.layoutWidget_8)
+        self.change_dir_14 = QPushButton(self.layoutWidget_8)
         self.change_dir_14.setObjectName(u"change_dir_14")
 
         self.horizontalLayout_18.addWidget(self.change_dir_14)
@@ -557,7 +631,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1244, 33))
+        self.menubar.setGeometry(QRect(0, 0, 1246, 24))
         self.menu_2 = QMenu(self.menubar)
         self.menu_2.setObjectName(u"menu_2")
         MainWindow.setMenuBar(self.menubar)
@@ -570,7 +644,7 @@ class Ui_MainWindow(object):
         self.listWidget.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
         self.memu_settling.currentRowChanged.connect(self.stackedWidget_2.setCurrentIndex)
 
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
         self.stackedWidget_2.setCurrentIndex(3)
 
 
@@ -579,118 +653,130 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        # self.btn_save_dir.setToolTip(config.uilanglist.get("Select where to save the processed output resources"))
-        # self.btn_save_dir.setText(config.uilanglist.get("Save to.."))
-
-
-
-        self.action.setText(QCoreApplication.translate("MainWindow", u"充值算力", None))
-        self.action_2.setText(QCoreApplication.translate("MainWindow", u"兑换码", None))
+        self.action.setText(QCoreApplication.translate("MainWindow", u"\u5145\u503c\u7b97\u529b", None))
+        self.action_2.setText(QCoreApplication.translate("MainWindow", u"\u5151\u6362\u7801", None))
 
         __sortingEnabled = self.listWidget.isSortingEnabled()
         self.listWidget.setSortingEnabled(False)
         ___qlistwidgetitem = self.listWidget.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"音视频转字幕", None));
+        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"\u97f3\u89c6\u9891\u8f6c\u5b57\u5e55", None));
         ___qlistwidgetitem1 = self.listWidget.item(1)
-        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None));
+        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"\u5b57\u5e55\u7ffb\u8bd1", None));
         ___qlistwidgetitem2 = self.listWidget.item(2)
-        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"编辑字幕", None));
+        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"\u7f16\u8f91\u5b57\u5e55", None));
         ___qlistwidgetitem3 = self.listWidget.item(3)
-        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"我的创作", None));
+        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u521b\u4f5c", None));
         ___qlistwidgetitem4 = self.listWidget.item(4)
-        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"我的设置", None));
+        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u8bbe\u7f6e", None));
         self.listWidget.setSortingEnabled(__sortingEnabled)
 
-        self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
-        self.btn_get_video.setToolTip(config.uilanglist.get("Multiple MP4 videos can be selected and automatically queued for processing"))
-        # self.btn_get_video.setText(config.uilanglist.get("Select video.."))
-
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
+        self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u97f3\u89c6\u9891\u6587\u4ef6", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u" \u539f\u59cb\u8bed\u79cd", None))
 #if QT_CONFIG(tooltip)
-        self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u8bc6\u522b\u5f15\u64ce", None))
 #if QT_CONFIG(tooltip)
-        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-
-        self.media_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
-        self.media_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.media_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.media_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.media_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-
-        self.startbtn.setText(QCoreApplication.translate("MainWindow", u"开始", None))
-        self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"导入字幕文件", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
-#if QT_CONFIG(tooltip)
-        self.source_language_4.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_6.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
-        self.source_language_5.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        self.label_7.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-#if QT_CONFIG(tooltip)
-        self.source_language_6.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+        self.check_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
 #endif // QT_CONFIG(tooltip)
-        self.srt_table.setHorizontalHeaderLabels(["文件名", "时长", "消耗算力", "操作"])
-        self.srt_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.srt_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.srt_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.srt_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.startbtn_3.setText(QCoreApplication.translate("MainWindow", u"开始", None))
+        self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"\u5b57\u5e55\u7ffb\u8bd1", None))
+        self.label_8.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u5f15\u64ce", None))
+#if QT_CONFIG(tooltip)
+        self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bed\u79cd", None))
+#if QT_CONFIG(tooltip)
+        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"\u6587\u4ef6\u540d", None));
+        ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
+        ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"\u7b97\u529b\u6d88\u8017", None));
+        ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
+        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb", None))
+        self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u5b57\u5e55\u6587\u4ef6", None))
+        self.label_5.setText(QCoreApplication.translate("MainWindow", u" \u539f\u59cb\u8bed\u79cd", None))
+#if QT_CONFIG(tooltip)
+        self.source_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        self.label_6.setText(QCoreApplication.translate("MainWindow", u"\u8bc6\u522b\u5f15\u64ce", None))
+#if QT_CONFIG(tooltip)
+        self.source_model_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        self.label_9.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u5f15\u64ce", None))
+#if QT_CONFIG(tooltip)
+        self.translate_type_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        self.label_7.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bed\u79cd", None))
+#if QT_CONFIG(tooltip)
+        self.translate_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+#endif // QT_CONFIG(tooltip)
+        ___qtablewidgetitem4 = self.srt_table.horizontalHeaderItem(0)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"\u6587\u4ef6\u540d", None));
+        ___qtablewidgetitem5 = self.srt_table.horizontalHeaderItem(1)
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
+        ___qtablewidgetitem6 = self.srt_table.horizontalHeaderItem(2)
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"\u7b97\u529b\u6d88\u8017", None));
+        ___qtablewidgetitem7 = self.srt_table.horizontalHeaderItem(3)
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
+        self.startbtn_srt.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb", None))
         ___qtablewidgetitem8 = self.eduit_zimu.horizontalHeaderItem(0)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
         ___qtablewidgetitem9 = self.eduit_zimu.horizontalHeaderItem(1)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5217", None));
         ___qtablewidgetitem10 = self.eduit_zimu.horizontalHeaderItem(2)
-        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"时长", None));
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
         ___qtablewidgetitem11 = self.eduit_zimu.horizontalHeaderItem(3)
-        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
+        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5217", None));
         ___qtablewidgetitem12 = self.eduit_zimu.horizontalHeaderItem(4)
-        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"原文", None));
+        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"\u539f\u6587", None));
         ___qtablewidgetitem13 = self.eduit_zimu.horizontalHeaderItem(5)
-        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"编辑", None));
-        self.label.setText(QCoreApplication.translate("MainWindow", u"我的创作页", None))
-        self.label_16.setText(QCoreApplication.translate("MainWindow", u"使用本地模型", None))
-        self.label_17.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">模型存放路径</span></p></body></html>", None))
-        self.mac_fast.setText(QCoreApplication.translate("MainWindow", u"mac加速", None))
-        self.cuda_fust.setText(QCoreApplication.translate("MainWindow", u"cuda加速", None))
-        self.setting_model_change_dir.setText(QCoreApplication.translate("MainWindow", u"更换路径", None))
+        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"\u7f16\u8f91", None));
+        self.label.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u521b\u4f5c\u9875", None))
+        self.label_16.setText(QCoreApplication.translate("MainWindow", u"\u4f7f\u7528\u672c\u5730\u6a21\u578b", None))
+        self.label_17.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">\u6a21\u578b\u5b58\u653e\u8def\u5f84</span></p></body></html>", None))
+        self.mac_fast.setText(QCoreApplication.translate("MainWindow", u"mac\u52a0\u901f", None))
+        self.cuda_fust.setText(QCoreApplication.translate("MainWindow", u"cuda\u52a0\u901f", None))
+        self.setting_model_change_dir.setText(QCoreApplication.translate("MainWindow", u"\u66f4\u6362\u8def\u5f84", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">OpenAI APi Key</span></p></body></html>", None))
-        self.change_dir_9.setText(QCoreApplication.translate("MainWindow", u"保存", None))
-        self.label_19.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">智谱AI APi Key</span></p></body></html>", None))
-        self.change_dir_10.setText(QCoreApplication.translate("MainWindow", u"保存", None))
-        self.label_20.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">百度翻译</span></p></body></html>", None))
-        self.change_dir_11.setText(QCoreApplication.translate("MainWindow", u"保存", None))
-        self.label_21.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">腾讯翻译</span></p></body></html>", None))
-        self.change_dir_12.setText(QCoreApplication.translate("MainWindow", u"保存", None))
-        self.label_22.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">Deepl翻译</span></p></body></html>", None))
-        self.change_dir_13.setText(QCoreApplication.translate("MainWindow", u"保存", None))
-        self.label_23.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">代理设置</span></p></body></html>", None))
+        self.change_dir_9.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.label_19.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u667a\u8c31AI APi Key</span></p></body></html>", None))
+        self.change_dir_10.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.label_20.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u767e\u5ea6\u7ffb\u8bd1</span></p></body></html>", None))
+        self.change_dir_11.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.label_21.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u817e\u8baf\u7ffb\u8bd1</span></p></body></html>", None))
+        self.change_dir_12.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.label_22.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">Deepl\u7ffb\u8bd1</span></p></body></html>", None))
+        self.change_dir_13.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.label_23.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u4ee3\u7406\u8bbe\u7f6e</span></p></body></html>", None))
 #if QT_CONFIG(tooltip)
-        self.proxy_no.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
+        self.proxy_no.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
 #endif // QT_CONFIG(tooltip)
-        self.proxy_no.setText(QCoreApplication.translate("MainWindow", u"无代理", None))
+        self.proxy_no.setText(QCoreApplication.translate("MainWindow", u"\u65e0\u4ee3\u7406", None))
 #if QT_CONFIG(tooltip)
-        self.proxy_use.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
+        self.proxy_use.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
 #endif // QT_CONFIG(tooltip)
-        self.proxy_use.setText(QCoreApplication.translate("MainWindow", u"使用代理", None))
-        self.change_dir_14.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.proxy_use.setText(QCoreApplication.translate("MainWindow", u"\u4f7f\u7528\u4ee3\u7406", None))
+        self.change_dir_14.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
 
         __sortingEnabled1 = self.memu_settling.isSortingEnabled()
         self.memu_settling.setSortingEnabled(False)
         ___qlistwidgetitem5 = self.memu_settling.item(0)
-        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"本地模型", None));
+        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"\u672c\u5730\u6a21\u578b", None));
         ___qlistwidgetitem6 = self.memu_settling.item(1)
-        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"LLM配置", None));
+        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"LLM\u914d\u7f6e", None));
         ___qlistwidgetitem7 = self.memu_settling.item(2)
-        ___qlistwidgetitem7.setText(QCoreApplication.translate("MainWindow", u"翻译设置", None));
+        ___qlistwidgetitem7.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bbe\u7f6e", None));
         ___qlistwidgetitem8 = self.memu_settling.item(3)
-        ___qlistwidgetitem8.setText(QCoreApplication.translate("MainWindow", u"代理设置", None));
+        ___qlistwidgetitem8.setText(QCoreApplication.translate("MainWindow", u"\u4ee3\u7406\u8bbe\u7f6e", None));
         self.memu_settling.setSortingEnabled(__sortingEnabled1)
 
-        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"登陆", None))
+        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"\u767b\u9646", None))
     # retranslateUi
 

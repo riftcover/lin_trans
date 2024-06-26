@@ -1,13 +1,13 @@
-import datetime
 import json
-import os
 import locale
-
+import os
 import re
 import sys
-from queue import Queue
 from pathlib import Path
+from queue import Queue
+
 from utils.log import Logings
+
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
@@ -236,7 +236,7 @@ params = {
 
     "whisper_type": "all",
     "whisper_model": "tiny",
-    "model_type": "faster",
+    "model_type": "FasterWhisper",
     "only_video": False,
     "translate_type": "google",
     "subtitle_type": 0,  # embed soft
