@@ -10,8 +10,7 @@ logger = Logings().logger
 
 
 class AgentClient:
-    # def __init__(self,):
-    #     self.api_key =  load_api_key_from_config('config.json')
+
 
     def zhipuai_client(self, text: str) -> str:
 
@@ -40,8 +39,7 @@ class AgentClient:
             tools=[{"type": "web_search", "web_search": {"search_result": True}}]
         )
 
-        # print(response.choices[0].message)
-        # print(response.choices[0].message.content)
+
         return response.choices[0].message.content
 
 
@@ -56,7 +54,6 @@ def translate_document(in_document:str, out_document:str, chunk_size:int=99):
             logger.info(paragraph)
             translated_paragraph = chat_client.zhipuai_client(paragraph)
             logger.info(translated_paragraph)
-            # translated_paragraph = paragraph
             output_content.writelines(translated_paragraph)
             time.sleep(32)
 

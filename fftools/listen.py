@@ -25,7 +25,7 @@ class SrtWriter:
         self.ln = ln
 
     @timeit
-    def whisperPt_to_srt(self, model_name: str = 'small') -> None:
+    def whisper_pt_to_srt(self, model_name: str = 'small') -> None:
         """
         如果有CUDA走这个
         :param model_name:
@@ -67,7 +67,7 @@ class SrtWriter:
         # 运行 whisper.cpp 的命令
         command = ["./main", "-m", model_path, "-f", audio_path, "-l", self.ln, "-osrt", "-of", audio_srt_path, "-pp"]
         logger.debug("Running command:", " ".join(command))
-        result = subprocess.run(
+        subprocess.run(
             command,
             capture_output=True,
             text=True,
@@ -78,4 +78,4 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    SrtWriter('Ski Pole Use 101.wav', 'en').whisperPt_to_srt()
+    SrtWriter('Ski Pole Use 101.wav', 'en').whisper_pt_to_srt()

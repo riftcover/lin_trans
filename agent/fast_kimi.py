@@ -1,4 +1,5 @@
 import time
+
 from openai import OpenAI
 
 client = OpenAI(
@@ -36,7 +37,6 @@ def translate_document(in_document,out_document, chunk_size=30):
             print(paragraph)
             translated_paragraph = chat_translate(paragraph)
             print(translated_paragraph)
-            # translated_paragraph = paragraph
             output_content.writelines(translated_paragraph)
             time.sleep(32)
 
