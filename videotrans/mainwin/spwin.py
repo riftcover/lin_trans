@@ -107,7 +107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
         # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
-        self.target_language.addItems(["-"] + self.languagename)
+        self.translate_language.addItems(["-"] + self.languagename)
 
         # 模型下拉菜单内容
         self.source_model.addItems(self.model_name)
@@ -226,7 +226,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.tts_type.setCurrentText(config.params['tts_type'])
         #
         if config.params['target_language'] and config.params['target_language'] in self.languagename:
-            self.target_language.setCurrentText(config.params['target_language'])
+            self.translate_language.setCurrentText(config.params['target_language'])
             #根据目标语言更新角色列表
             # self.util.set_voice_role(config.params['target_language'])
             # 设置默认角色列表
@@ -253,14 +253,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.set_line_role.clicked.connect(self.subform.set_line_role_fun)
         # self.set_line_role.setCursor(Qt.PointingHandCursor)
         # self.set_line_role.setToolTip(config.transobj['Set up separate dubbing roles for each subtitle to be used'])
-        self.startbtn.clicked.connect(self.util.check_start)
+        self.startbtn_1.clicked.connect(self.util.check_start)
         # self.stop_djs.clicked.connect(self.util.reset_timeid)
         # self.continue_compos.clicked.connect(self.util.set_djs_timeout)
         self.act_btn_get_video()
 
         # self.btn_save_dir.clicked.connect(self.util.get_save_dir)
         #
-        self.target_language.currentTextChanged.connect(self.util.set_voice_role)
+        self.translate_language.currentTextChanged.connect(self.util.set_voice_role)
         # self.voice_role.currentTextChanged.connect(self.util.show_listen_btn)
         # self.listen_btn.clicked.connect(self.util.listen_voice_fun)
         # self.translate_type.currentTextChanged.connect(self.util.set_translate_type)
@@ -281,7 +281,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #
         # self.is_separate.toggled.connect(self.util.is_separate_fun)
         self.action_page1()
-        self.action_page2()
 
         # # 设置QAction的大小
         # self.toolBar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
