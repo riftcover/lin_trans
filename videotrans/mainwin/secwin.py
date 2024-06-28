@@ -1019,43 +1019,33 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # 翻译渠道
         config.params['translate_type'] = self.main.translate_type.currentText()
         # 如果需要翻译，再判断是否符合翻译规则
-        if not self.dont_translate():
-            rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
-                                               show_target=config.params['target_language'])
-            if rs is not True:
-                # 不是True，有错误
-                QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-                return False
-
-        if self.main.app_mode != 'hebing' and config.params['target_language'] != '-':
-            code = translator.get_code(show_text=config.params['target_language'])
-            if code not in ['zh-cn', 'zh-tw', 'en'] and config.params['tts_type'] == 'ChatTTS' and config.params[
-                'voice_role'] != 'No':
-                return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+        if target_language:
+            if not self.dont_translate():
+                rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
+                                                   show_target=config.params['target_language'])
+                if rs is not True:
+                    # 不是True，有错误
+                    QMessageBox.critical(self.main, config.transobj['anerror'], rs)
+                    return False
 
         # 存在视频
         config.params['only_video'] = False
-        if config.params['voice_role'] == 'No':
-            config.params['is_separate'] = False
-        config.params['clear_cache'] = False
-        if self.main.clear_cache.isChecked():
-            config.params['clear_cache'] = True
+        # if config.params['voice_role'] == 'No':
+        #     config.params['is_separate'] = False
+
 
         if len(config.queue_mp4) > 0:
-            self.main.show_tips.setText("")
-            if self.main.app_mode not in ['tiqu', 'peiyin',
-                                          'biaozhun_jd'] and self.main.only_video.isChecked():
-                config.params['only_video'] = True
+            config.params['only_video'] = True
             start_thread(self.main)  # todo: 起线程
         # todo：？？干嘛要判断txt
-        elif txt:
-            self.main.source_mp4.setText(config.transobj["No select videos"])
-            self.main.app_mode = 'peiyin'
-            config.params['is_separate'] = False
-            if config.params['tts_type'] == 'clone-voice' and config.params['voice_role'] == 'clone':
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
-                    'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
-                return
+        # elif txt:
+        #     self.main.source_mp4.setText(config.transobj["No select videos"])
+        #     self.main.app_mode = 'peiyin'
+        #     config.params['is_separate'] = False
+        #     if config.params['tts_type'] == 'clone-voice' and config.params['voice_role'] == 'clone':
+        #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj[
+        #             'Clone voice cannot be used in subtitle dubbing mode as there are no replicable voices'])
+        #         return
 
         self.main.save_setting()
         self.update_status('ing')
