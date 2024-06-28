@@ -211,10 +211,12 @@ params = {
 
     "source_language": "en",
     "source_module_status": 4,
+    "source_module_name":"small",
     "detect_language": "en",
 
     "translate_status": False,
     "target_language": "zh-cn",
+    "translate_type": "google",
     "subtitle_language": "chi",
 
     "cuda": False,
@@ -245,11 +247,7 @@ params = {
     "tts_type_list": ["edgeTTS", "ChatTTS", "gtts", "AzureTTS", "GPT-SoVITS", "clone-voice", "openaiTTS",
                       "elevenlabsTTS", "TTS-API"],
 
-    "whisper_type": "all",
-    "whisper_model": "tiny",
-    "model_type": "FasterWhisper",
     "only_video": False,
-    "translate_type": "google",
     "subtitle_type": 0,  # embed soft
     "voice_autorate": False,
     "auto_ajust": True,
