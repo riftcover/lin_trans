@@ -73,7 +73,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def initUI(self):
-        self.settings = QSettings("Jameson", "VideoTranslate")
+        self.settings = QSettings("Locodol", "LinLInTrans")
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         # language code
@@ -166,22 +166,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     ])
         # self.subtitle_type.setCurrentIndex(config.params['subtitle_type'])
 
-        # # 字幕编辑
-        # self.subtitle_area = TextGetdir(self)
-        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(0)
-        # self.subtitle_area.setSizePolicy(sizePolicy)
-        # self.subtitle_area.setMinimumSize(300, 0)
-        # self.subtitle_area.setPlaceholderText(
-        #     f"{config.transobj['subtitle_tips']}\n\n{config.transobj['meitiaozimugeshi']}")
-        #
-        # self.subtitle_tips = QLabel(config.transobj['zimubianjitishi'])
-        # self.subtitle_tips.setFixedHeight(30)
-        # self.subtitle_tips.setToolTip(config.transobj['meitiaozimugeshi'])
-
-        # self.subtitle_layout.insertWidget(0, self.subtitle_tips)
-        # self.subtitle_layout.insertWidget(1, self.subtitle_area)
 
         # # 底部状态栏
         # self.statusLabel = QPushButton(config.transobj["Open Documents"])
@@ -253,14 +237,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.set_line_role.clicked.connect(self.subform.set_line_role_fun)
         # self.set_line_role.setCursor(Qt.PointingHandCursor)
         # self.set_line_role.setToolTip(config.transobj['Set up separate dubbing roles for each subtitle to be used'])
-        self.startbtn_1.clicked.connect(self.util.check_start)
-        # self.stop_djs.clicked.connect(self.util.reset_timeid)
+
         # self.continue_compos.clicked.connect(self.util.set_djs_timeout)
-        self.act_btn_get_video()
+
 
         # self.btn_save_dir.clicked.connect(self.util.get_save_dir)
         #
-        self.translate_language.currentTextChanged.connect(self.util.set_voice_role)
+
         # self.voice_role.currentTextChanged.connect(self.util.show_listen_btn)
         # self.listen_btn.clicked.connect(self.util.listen_voice_fun)
         # self.translate_type.currentTextChanged.connect(self.util.set_translate_type)
@@ -401,7 +384,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     print('threaqd-----' + str(e))
 
     def action_page1(self):
+        self.translate_language.currentTextChanged.connect(self.util.set_voice_role)
         self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
+        self.startbtn_1.clicked.connect(self.util.check_start)
+        self.act_btn_get_video()
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
@@ -433,34 +419,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     event.accept()
 
     def get_setting_cache(self):
-        # self.app_mode = self.settings.value("init_model_functional", "biaozhun_jd")
+        for k in config.params.keys():
+            config.params[k] = self.settings.value(k,"")
+
         # 从缓存获取默认配置
-        config.params["baidu_appid"] = self.settings.value("baidu_appid", "")
-        config.params["source_language"] = self.settings.value("source_language", "")
-        config.params["target_language"] = self.settings.value("target_language", "")
-        config.params["voice_role"] = self.settings.value("voice_role", "")
         config.params["voice_autorate"] = self.settings.value("voice_autorate", False, bool)
         config.params["video_autorate"] = self.settings.value("video_autorate", False, bool)
         config.params["append_video"] = self.settings.value("append_video", False, bool)
         config.params["auto_ajust"] = self.settings.value("auto_ajust", True, bool)
 
-        config.params["baidu_miyue"] = self.settings.value("baidu_miyue", "")
-        config.params["deepl_authkey"] = self.settings.value("deepl_authkey", "")
-        config.params["deepl_api"] = self.settings.value("deepl_api", "")
-        config.params["deeplx_address"] = self.settings.value("deeplx_address", "")
-        config.params["ott_address"] = self.settings.value("ott_address", "")
-        config.params["clone_api"] = self.settings.value("clone_api", "")
-        config.params["chattts_api"] = self.settings.value("chattts_api", "")
-        config.params["tencent_SecretId"] = self.settings.value("tencent_SecretId", "")
-        config.params["tencent_SecretKey"] = self.settings.value("tencent_SecretKey", "")
-
-        config.params["chatgpt_api"] = self.settings.value("chatgpt_api", "")
-        config.params["chatgpt_key"] = self.settings.value("chatgpt_key", "")
-        config.params["localllm_api"] = self.settings.value("localllm_api", "")
-        config.params["localllm_key"] = self.settings.value("localllm_key", "")
-        config.params["zijiehuoshan_key"] = self.settings.value("zijiehuoshan_key", "")
-        config.params["azure_speech_key"] = self.settings.value("azure_speech_key", "")
-        config.params["azure_speech_region"] = self.settings.value("azure_speech_region", "")
 
         if self.settings.value("clone_voicelist", ""):
             config.clone_voicelist = self.settings.value("clone_voicelist", "").split(',')
@@ -474,21 +441,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.params["ttsapi_extra"] = self.settings.value("ttsapi_extra", "pyvideotrans")
         config.params["ttsapi_voice_role"] = self.settings.value("ttsapi_voice_role", "")
 
-        config.params["trans_api_url"] = self.settings.value("trans_api_url", "")
-        config.params["trans_secret"] = self.settings.value("trans_secret", "")
 
-        config.params["gptsovits_url"] = self.settings.value("gptsovits_url", "")
+
+
         config.params["gptsovits_extra"] = self.settings.value("gptsovits_extra", "pyvideotrans")
-        config.params["gptsovits_role"] = self.settings.value("gptsovits_role", "")
-
-        config.params["gemini_key"] = self.settings.value("gemini_key", "")
-        config.params["zh_recogn_api"] = self.settings.value("zh_recogn_api", "")
-
-        config.params["azure_api"] = self.settings.value("azure_api", "")
-        config.params["azure_key"] = self.settings.value("azure_key", "")
         config.params["azure_model"] = self.settings.value("azure_model", config.params['azure_model'])
 
-        config.params["elevenlabstts_key"] = self.settings.value("elevenlabstts_key", "")
 
         config.params['translate_type'] = self.settings.value("translate_type", config.params['translate_type'])
         if config.params['translate_type']=='FreeChatGPT':
@@ -498,36 +456,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.params['voice_rate'] = self.settings.value("voice_rate", config.params['voice_rate'].replace('%','').replace('+',''), str)
         config.params['cuda'] = self.settings.value("cuda", False, bool)
         config.params['only_video'] = self.settings.value("only_video", False, bool)
-        config.params['whisper_model'] = self.settings.value("whisper_model", config.params['whisper_model'], str)
-        config.params['whisper_type'] = self.settings.value("whisper_type", config.params['whisper_type'], str)
-        config.params['model_type'] = self.settings.value("model_type", config.params['model_type'], str)
-        config.params['tts_type'] = self.settings.value("tts_type", config.params['tts_type'], str)
-        if not config.params['tts_type']:
-            config.params['tts_type'] = 'edgeTTS'
+        config.params['tts_type'] = self.settings.value("tts_type", config.params['tts_type'], str) or 'edgeTTS'
 
     # 存储本地数据
     def save_setting(self):
-        self.settings.setValue("init_model_functional", self.app_mode)
-        self.settings.setValue("target_dir", config.params['target_dir'])
-        self.settings.setValue("source_language", config.params['source_language'])
-        self.settings.setValue("target_language", config.params['target_language'])
+        for k,v in config.params.items():
+            self.settings.setValue(k, v)
         self.settings.setValue("proxy", config.proxy)
-        self.settings.setValue("whisper_model", config.params['whisper_model'])
-        self.settings.setValue("whisper_type", config.params['whisper_type'])
-        self.settings.setValue("model_type", config.params['model_type'])
         self.settings.setValue("voice_rate", config.params['voice_rate'].replace('%','').replace('+',''))
-        self.settings.setValue("voice_role", config.params['voice_role'])
-        self.settings.setValue("zh_recogn_api", config.params['zh_recogn_api'])
-
-        self.settings.setValue("voice_autorate", config.params['voice_autorate'])
-        self.settings.setValue("auto_ajust", config.params['auto_ajust'])
-        self.settings.setValue("subtitle_type", config.params['subtitle_type'])
-        self.settings.setValue("translate_type", config.params['translate_type'])
-        self.settings.setValue("cuda", config.params['cuda'])
-        self.settings.setValue("only_video", config.params['only_video'])
-        self.settings.setValue("tts_type", config.params['tts_type'])
-        self.settings.setValue("clone_api", config.params['clone_api'])
-        self.settings.setValue("chattts_api", config.params['chattts_api'])
-        self.settings.setValue("video_autorate", config.params['video_autorate'])
-        self.settings.setValue("append_video", config.params['append_video'])
         self.settings.setValue("clone_voicelist", ','.join(config.clone_voicelist))
