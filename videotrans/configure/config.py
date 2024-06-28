@@ -38,6 +38,7 @@ TEMP_HOME = homedir + "/tmp"
 Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
+
 # logs
 logger = Logings().logger
 
@@ -173,10 +174,10 @@ box_lang = obj['toolbox_lang']
 # ffmpeg
 if sys.platform == 'win32':
     PWD = rootdir.replace('/', '\\')
-    os.environ['PATH'] = PWD + f';{PWD}\\ffmpeg;' + os.environ['PATH']
+    os.environ['PATH'] = f'{PWD};{PWD}\\ffmpeg;' + os.environ['PATH']
 
 else:
-    os.environ['PATH'] = rootdir + f':{rootdir}/ffmpeg:' + os.environ['PATH']
+    os.environ['PATH'] = f'{rootdir}:{rootdir}/ffmpeg:' + os.environ['PATH']
 
 os.environ['QT_API'] = 'pyside6'
 os.environ['SOFT_NAME'] = 'pyvideotrans'
@@ -207,7 +208,9 @@ proxy = None
 # 配置
 params = {
     "source_mp4": "",
-    "target_dir": "",
+    "task_path": "", # 需要进行处理的文件
+    "target_dir": root_path / "result", # 结果缓存文件夹
+    "output_dir": "", # 导出文件夹
 
     "source_language": "en",
     "source_module_status": 4,
@@ -333,10 +336,7 @@ video_cache = {}
 canceldown = False
 # 工具箱翻译进行状态,ing进行中，其他停止
 box_trans = "stop"
-# 工具箱tts状态
-box_tts = "stop"
-# 工具箱识别状态
-box_recogn = 'stop'
+
 # 中断win背景分离
 separate_status = 'stop'
 # 最后一次打开的目录
@@ -344,6 +344,10 @@ last_opendir = homedir
 # 软件退出
 exit_soft = False
 
+# 视频转音频队列
+mp4_queue = []
+# 音频转文本队列
+tts_queue = []
 # 翻译队列
 trans_queue = []
 # 配音队列

@@ -23,7 +23,7 @@ def convert_mp4_to_war(input_file, output_file):
         '-loglevel', 'warning',
         '-ar', '16000',
         '-ac','2',
-        # '-c:a','pcm_s16le',
+        '-c:a','pcm_s16le',
         '-f', 'wav',
         output_file
     ]

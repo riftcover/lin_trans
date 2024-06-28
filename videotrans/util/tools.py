@@ -1168,8 +1168,64 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
         pass
 
 
+def detect_media_type(file_path):
+    # 判断媒体文件是音频还是视频
+    try:
+        # 使用ffprobe获取文件信息
+        command = [
+            'ffprobe',
+            '-v', 'quiet',
+            '-print_format', 'json',
+            '-show_streams',
+            file_path
+        ]
+        result = subprocess.run(command, capture_output=True, text=True,)
+
+
+        # 解析JSON输出
+        file_info = json.loads(result.stdout)
+
+        # 检查流信息
+        for stream in file_info.get('streams', []):
+            if stream['codec_type'] == 'video':
+                return 'video'
+            elif stream['codec_type'] == 'audio':
+                return 'audio'
+
+        # 如果没有找到视频或音频流
+        return 'unknown'
+
+    except Exception as e:
+        print(f"Error detecting media type: {e}")
+        return 'unknown'
+
+
 # 格式化视频信息
-def format_video(name, out=None):
+def format_video(name, out=None) -> dict:
+    """
+    格式化视频信息
+
+    Args:
+        name: 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4'
+        out:
+
+    Returns:
+    {
+  'raw_name': 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4',
+  'raw_dirname': 'C:/Users/gaosh/Videos/pyvideotrans/rename',
+  'raw_basename': 'BetterCarvedTurnsUsingTheSwordsDrill.mp4',
+  'raw_noextname': 'BetterCarvedTurnsUsingTheSwordsDrill',
+  'raw_ext': 'mp4',
+  'dirname': 'C:/Users/gaosh/Videos/pyvideotrans/rename',
+  'basename': 'BetterCarvedTurnsUsingTheSwordsDrill.mp4',
+  'noextname': 'BetterCarvedTurnsUsingTheSwordsDrill',
+  'ext': 'mp4',
+  'output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill',
+  'unid': '6b482fd0a2a53df000bb5b30333a79bb',
+  'source_mp4': 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4',
+  'linshi_output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill'
+    }
+    """
     from pathlib import Path
     raw_pathlib = Path(name)
     raw_basename = raw_pathlib.name
@@ -1179,6 +1235,8 @@ def format_video(name, out=None):
 
     output_path = Path(f'{out}/{raw_noextname}' if out else f'{raw_dirname}/_video_out/{raw_noextname}')
     output_path.mkdir(parents=True, exist_ok=True)
+    # 判断文件是视频还是音频
+
     obj = {
         "raw_name": name,
         # 原始视频所在原始目录
@@ -1197,6 +1255,7 @@ def format_video(name, out=None):
         "noextname": "",
         # 扩展名
         "ext": ext[1:],
+        "codec_type":detect_media_type(name),
         # 最终存放目标位置，直接存到这里
         "output": output_path.as_posix(),
         "unid": "",
@@ -1398,3 +1457,9 @@ def format_result(source_list, target_list, target_lang="zh"):
 # 删除翻译结果的特殊字符
 def cleartext(text):
     return text.replace('"', '').replace("'", '').replace('&#39;', '').replace('&quot;', "").strip()
+
+if __name__ == '__main__':
+    job_video =['C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4']
+    for it in job_video:
+        print(format_video(it.replace('\\', '/'), config.params['target_dir']))
+        # print(detect_media_type(it))

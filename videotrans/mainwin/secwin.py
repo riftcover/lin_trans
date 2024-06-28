@@ -52,8 +52,7 @@ class ClickableProgressBar(QLabel):
         layout = QHBoxLayout(self)
         layout.addWidget(self.progress_bar)  # 将进度条添加到布局
 
-    def setTarget(self, url):
-        self.target_dir = url
+
 
     def setMsg(self, text):
         if text and config.defaulelang == 'zh':
@@ -764,9 +763,10 @@ class SecWindow():
 
     # 保存目录
     def get_save_dir(self):
+        # todo:修改为导出文件夹,需要在导出页添加按钮后调整
         dirname = QFileDialog.getExistingDirectory(self.main, config.transobj['selectsavedir'], config.last_opendir)
         dirname = dirname.replace('\\', '/')
-        self.main.target_dir.setText(dirname)
+        self.main.output_dir.setText(dirname)
 
     # 添加进度条
     def add_process_btn(self):
@@ -893,7 +893,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # 倒计时
         config.task_countdown = config.settings['countdown_sec']
         config.settings = config.parse_init()
-        config.params['target_dir'] = target_dir if (target_dir := result_path) else ''
         # 设置或删除代理
         config.proxy = proxy
         with contextlib.suppress(Exception):
@@ -1033,8 +1032,8 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 存在视频
         config.params['only_video'] = False
-        # if config.params['voice_role'] == 'No':
-        #     config.params['is_separate'] = False
+        config.params['clear_cache']=False
+
 
 
         if len(config.queue_mp4) > 0:
@@ -1051,19 +1050,27 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         #         return
 
         self.main.save_setting()
-        self.update_status('ing')
 
+        config.logger.info(config.queue_mp4)
+        self.update_status('ing')
+        config.logger.info(f'update later:{config.queue_mp4}')
         # self.delete_process() # 删除上一次的进程
         # return
         config.settings = config.parse_init()
+        config.logger.info("====config.settings====")
+        config.logger.info(config.settings)
+        config.logger.info("====config.params====")
+        config.logger.info(config.params)
+
+
         from videotrans.task.main_worker import Worker
 
-        self.main.task = Worker(parent=self.main, app_mode=self.main.app_mode, txt=txt)
+        self.main.task = Worker(parent=self.main, app_mode=self.main.app_mode)
         self.main.task.start()
-
-        for k, v in self.main.moshis.items():
-            if k != self.main.app_mode:
-                v.setDisabled(True)
+        #
+        # for k, v in self.main.moshis.items():
+        #     if k != self.main.app_mode:
+        #         v.setDisabled(True)
 
     # 设置按钮上的日志信息
     def set_process_btn_text(self, text, btnkey="", type="logs"):
@@ -1131,6 +1138,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
             #     config.queue_mp4) < 1 else f'{len(config.queue_mp4)} videos')
             TableWindow().clearTable(self.main.media_table)
             QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
+            config.queue_mp4 = []
 
 
     # 更新 UI
