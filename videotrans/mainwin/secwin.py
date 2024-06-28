@@ -19,7 +19,7 @@ from videotrans.util import tools
 from videotrans import translator
 from videotrans.configure import config
 from videotrans.util.tools import StartTools
-from qfluentwidgets import PrimaryPushButton
+# from qfluentwidgets import PrimaryPushButton
 
 start_tools = StartTools()
 
@@ -909,9 +909,9 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 语音模型
         config.logger.debug(self.main.source_model.currentText())
-        config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText()).keys()
+        config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText())['status']
         config.logger.debug(config.params['source_module_status'])
-        config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
+        config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
         config.logger.debug(config.params['source_module_name'])
 
         # 是否翻译
@@ -1346,9 +1346,16 @@ class TableWindow(SecWindow):
         else:
             event.ignore()
 
-    def drop_event(self, event: QDropEvent):
+    def drop_event(self,ui_table, event: QDropEvent):
         # 拖出
-        for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            self.file_paths.append(file_path)
-        self.main.label_tt.setText("\n".join(self.file_paths))
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                file_name = os.path.basename(file_path)
+                self.add_file_to_table(ui_table, file_name)
+        event.accept()
+        # ui_table.setText("\n".join(self.file_paths))
+
+    def clearTable(self,ui_table: QTableWidget):
+        # 清空表格
+        ui_table.setRowCount(0)

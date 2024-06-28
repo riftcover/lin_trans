@@ -394,7 +394,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
         self.btn_get_video.setAcceptDrops(True)
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_video.dropEvent = self.table.drop_event
+        self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
 
     # def closeEvent(self, event):
