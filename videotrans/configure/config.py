@@ -157,12 +157,13 @@ langnamelist = list(langlist.values())
 model_list: ModelDict = obj["model_code_list"]
 
 
-def init_model_code_key() ->list:
+def init_model_code_key() -> list:
     # 模型列表
     # todo：应该先读取本地安装的模型，然后修改model_list的值
     code = [key.split('.')[0] for key in model_list.keys()]
 
     return code
+
 
 model_code_list = init_model_code_key()
 
@@ -209,7 +210,7 @@ params = {
     "target_dir": "",
 
     "source_language": "en",
-    "source_module_status":4,
+    "source_module_status": 4,
     "detect_language": "en",
 
     "translate_status": False,

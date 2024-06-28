@@ -909,10 +909,9 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 语音模型
         config.logger.debug(self.main.source_model.currentText())
-        config.params['source_module_status'] = start_tools.match_source_model(
-        self.main.source_model.currentText()).keys()
+        config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText()).keys()
         config.logger.debug(config.params['source_module_status'])
-        config.params['model_type'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
+        config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText()).values()
         config.logger.debug(config.params['source_module_name'])
 
         # 是否翻译

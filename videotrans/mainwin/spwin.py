@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore')
 # from videotrans.task.get_role_list import GetRoleWorker
 # from videotrans.util import tools
 
-# from videotrans.translator import TRANSNAMES
+from videotrans.translator import TRANSNAMES
 from videotrans.configure import config
 from videotrans import VERSION
 # from videotrans.component.controlobj import TextGetdir
@@ -116,11 +116,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # # 目标语言改变
         # self.listen_btn.setCursor(Qt.PointingHandCursor)
         #
-        # #  translation type
-        # self.translate_type.addItems(TRANSNAMES)
-        # translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
-        #
-        # self.translate_type.setCurrentText(translate_name)
+        #  translation type
+        self.translate_type.addItems(TRANSNAMES)
+        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
+
+        self.translate_type.setCurrentText(translate_name)
         #
         # #         model
         # self.whisper_type.addItems([config.transobj['whisper_type_all'], config.transobj['whisper_type_split'],
