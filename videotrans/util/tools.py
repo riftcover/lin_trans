@@ -29,6 +29,10 @@ class StartTools:
     def match_source_model(source_model) -> ModelInfo:
         return config.model_list[source_model]
 
+    def check_file(self):
+        pass
+
+
 
 
 

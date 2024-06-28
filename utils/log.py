@@ -15,7 +15,7 @@ class Logings:
         # 判断目录是否存在，不存在则创建新的目录
         if not os.path.isdir(log_path): os.makedirs(log_path)
         self.logger.remove()  # 删去import logger之后自动产生的handler，不删除的话会出现重复输出的现象
-        self.logger.add(sys.stderr, level="INFO")  # 控制台日志级别
+        self.logger.add(sys.stderr, level="DEBUG")  # 控制台日志级别
         self.logger.add(
             f'{log_path}/{DATE}.log',
             encoding='utf-8',

@@ -1,8 +1,7 @@
-import os
 import subprocess
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QPushButton, QTableWidget, QTableWidgetItem, QHBoxLayout,
-                               QFileDialog, QAbstractItemView, QMessageBox, QHeaderView)
+                               QFileDialog, QAbstractItemView, QMessageBox, QHeaderView, QListWidget)
 from PySide6.QtCore import Qt, Slot
 
 
@@ -11,6 +10,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle("File Selection Example")
         self.setGeometry(300, 100, 800, 600)
+
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)

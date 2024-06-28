@@ -914,11 +914,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
         config.logger.debug(config.params['source_module_name'])
 
-        # 是否翻译
-        config.params['translate_status']: bool = self.main.check_fanyi.isChecked()
-        # 目标语言
-        target_language = self.main.translate_language.currentText()
-        config.params['target_language'] = target_language
+
 
         # # 配音角色
         # config.params['voice_role'] = self.main.voice_role.currentText()
@@ -1015,6 +1011,13 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
                     self.main.enable_cuda.setChecked(False)
                     # config.params['cuda'] = False # todo 我没有cuda设置看是否需要
                     return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
+
+        # 是否翻译
+        translate_status = self.main.check_fanyi.isChecked()
+        config.params['translate_status']: bool = translate_status
+        # 目标语言
+        target_language = self.main.translate_language.currentText()
+        config.params['target_language'] = target_language
 
         # 翻译渠道
         config.params['translate_type'] = self.main.translate_type.currentText()
@@ -1121,41 +1124,14 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
     # 更新执行状态
     def update_status(self, type):
         config.current_status = type
-        self.main.continue_compos.hide()
-        self.main.stop_djs.hide()
-        if type != 'ing':
-            # 结束或停止
-            self.main.subtitle_area.setReadOnly(False)
-            self.main.subtitle_area.clear()
-            self.main.startbtn.setText(config.transobj[type])
-            # 启用
-            self.disabled_widget(False)
-            for k, v in self.main.moshis.items():
-                v.setDisabled(False)
-            if type == 'end':
-                # 成功完成
-                self.main.source_mp4.setText(config.transobj["No select videos"])
-            else:
-                # 停止
-                self.main.continue_compos.hide()
-                self.main.target_dir.clear()
-                self.main.source_mp4.setText(config.transobj["No select videos"] if len(
-                    config.queue_mp4) < 1 else f'{len(config.queue_mp4)} videos')
-                # 清理输入
-            if self.main.task:
-                self.main.task.requestInterruption()
-                self.main.task.quit()
-                self.main.task = None
-            if self.main.app_mode == 'tiqu':
-                self.set_tiquzimu()
-            elif self.main.app_mode == 'hebing':
-                self.set_zimu_video()
-            elif self.main.app_mode == 'peiyin':
-                self.set_zimu_peiyin()
-        else:
-            # 重设为开始状态
-            self.disabled_widget(True)
-            self.main.startbtn.setText(config.transobj["starting..."])
+        # 当type为ing时将列表media_table中的内容清空
+        if type == 'ing':
+            config.queue_mp4 = []
+            # self.main.source_mp4.setText(config.transobj["No select videos"] if len(
+            #     config.queue_mp4) < 1 else f'{len(config.queue_mp4)} videos')
+            TableWindow().clearTable(self.main.media_table)
+            QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
+
 
     # 更新 UI
     def update_data(self, json_data):
@@ -1297,9 +1273,12 @@ class TableWindow(SecWindow):
         if file_paths:
             for file_path in file_paths:
                 file_name = os.path.basename(file_path)
-                self.add_file_to_table(ui_table, file_name, file_path)
+                self.add_file_to_table(ui_table, file_name)
+            config.last_opendir = os.path.dirname(file_paths[0])
+            self.main.settings.setValue("last_dir", config.last_opendir)
+            config.queue_mp4 = file_paths
 
-    def add_file_to_table(self, ui_table: QTableWidget, file_name: str, file_path: str):
+    def add_file_to_table(self, ui_table: QTableWidget, file_name: str):
         # 添加文件到表格
 
         row_position = ui_table.rowCount()
@@ -1307,7 +1286,7 @@ class TableWindow(SecWindow):
         ui_table.insertRow(row_position)
         file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
         # file_duration = self.get_video_duration(file_path)
-        delete_button = PrimaryPushButton("删除")
+        delete_button = QPushButton("删除")
         delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
         ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
         ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
