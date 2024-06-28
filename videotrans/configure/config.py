@@ -18,7 +18,6 @@ def get_executable_path():
     else:
         return str(Path.cwd()).replace('\\', '/')
 
-
 # root dir
 rootdir = get_executable_path()
 root_path = Path(__file__).parent.parent.parent  # 项目目录
@@ -208,13 +207,13 @@ proxy = None
 # 配置
 params = {
     "source_mp4": "",
-    "task_path": "", # 需要进行处理的文件
-    "target_dir": root_path / "result", # 结果缓存文件夹
-    "output_dir": "", # 导出文件夹
+    "task_path": "",  # 需要进行处理的文件
+    "target_dir": root_path / "result",  # 结果缓存文件夹
+    "output_dir": "",  # 导出文件夹
 
     "source_language": "en",
     "source_module_status": 4,
-    "source_module_name":"small",
+    "source_module_name": "small",
     "detect_language": "en",
 
     "translate_status": False,
