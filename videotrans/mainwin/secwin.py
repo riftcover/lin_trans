@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import json
 import os
 import re
@@ -559,7 +560,8 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         # config.logger.info("====config.params====")
         config.logger.info(config.params)
         config.logger.info("add_queue_thread")
-        self.add_queue_thread()
+        queue_mp4_copy = copy.deepcopy(config.queue_mp4)
+        self.add_queue_thread(queue_mp4_copy)
 
         self.update_status('ing')
 
@@ -568,11 +570,11 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         #     if k != self.main.app_mode:
         #         v.setDisabled(True)
 
-    def add_queue_thread(self):
+    def add_queue_thread(self,data_copy):
         # 添加需处理文件到队列的线程
 
         self.worker_thread = QThread()
-        self.worker = Worker()
+        self.worker = Worker(data_copy)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.started.connect(self.worker.do_work)
         self.worker.finished.connect(self.worker_thread.quit)

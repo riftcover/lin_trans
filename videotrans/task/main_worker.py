@@ -20,11 +20,13 @@ class Worker(QObject):
     error = Signal(str)
     queue_ready = Signal()  # 新信号，用于通知队列准备就绪
 
+    def __init__(self, queue_mp4_copy):
+        super().__init__()
+        self.queue_mp4_copy = queue_mp4_copy
 
     def do_work(self):
         config.logger.debug('线程开始工作')
-
-        for it in config.queue_mp4:
+        for it in self.queue_mp4_copy:
             config.logger.debug('线程工作中')
             # 格式化每个视频信息
             obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
