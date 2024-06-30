@@ -13,18 +13,15 @@ from videotrans.util.tools import set_process, send_notification
 from pathlib import Path
 import re
 
-
+work_queue =LinQueue()
 class Worker(QObject):
     finished = Signal()
     error = Signal(str)
+    queue_ready = Signal()  # 新信号，用于通知队列准备就绪
     def __init__(self):
         super().__init__()
-        self.work_queue = LinQueue()
     def do_work(self):
         config.logger.debug('线程开始工作')
-
-        config.queue_mp4 = ['C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4']
-
         # 重新初始化全局unid表
         config.unidlist = []
         # 全局错误信息初始化
@@ -52,16 +49,34 @@ class Worker(QObject):
                 self.stop()
                 return
             # 添加到工作队列
-            self.work_queue.add_queue(obj_format['codec_type'], it)
+            work_queue.add_queue(obj_format['codec_type'], it)
             # 添加进度按钮 unid
             set_process(obj_format['unid'], 'add_process', btnkey=obj_format['unid'])
-            self.finished.emit()
+        self.queue_ready.emit()
+        self.finished.emit()
 
     def stop(self):
         set_process("", 'stop')
         config.queue_mp4 = []
         self.finished.emit()
-
         # self._unlink_tmp()
+
+
+class QueueConsumer(QObject):
+    finished = Signal()
+    error = Signal(str)
+
+
+
+    def process_queue(self):
+        config.logger.debug('消费线程开始工作')
+        config.is_consuming = True
+        # while not self.queue.empty():
+        while not config.mp4_to_war_queue.empty():
+            work_queue.consume_mp4_queue()
+        config.is_consuming = False
+        self.finished.emit()
+
+
 if __name__ == '__main__':
     Worker().do_work()

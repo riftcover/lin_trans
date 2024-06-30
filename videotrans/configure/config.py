@@ -185,8 +185,6 @@ queue_logs = Queue(1000)
 # box窗口
 queuebox_logs = Queue(1000)
 
-# 开始按钮状态
-current_status = "stop"
 # video toolbox 状态
 box_status = "stop"
 # 工具箱 需格式化的文件数量
@@ -343,12 +341,17 @@ last_opendir = homedir
 # 软件退出
 exit_soft = False
 
+mp4_to_war_queue = Queue()  # 视频转音频队列
+tts_queue = Queue()  # 音频转文本队列
+trans_queue = Queue()
+is_consuming = False
+
 # 视频转音频队列
 mp4_queue = []
-# 音频转文本队列
-tts_queue = []
-# 翻译队列
-trans_queue = []
+# # 音频转文本队列
+# tts_queue = []
+# # 翻译队列
+# trans_queue = []
 # 配音队列
 dubb_queue = []
 # 识别队列

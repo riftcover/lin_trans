@@ -12,8 +12,10 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
     QTableWidgetItem, QTableWidget
 
 from videotrans.configure.config import result_path
+from videotrans.task.main_worker import QueueConsumer
 
 warnings.filterwarnings('ignore')
+from videotrans.task.main_worker import Worker
 from videotrans.task.job import start_thread
 from videotrans.util import tools
 from videotrans import translator
@@ -452,12 +454,6 @@ class SecWindow():
 
     # 检测开始状态并启动
     def check_start(self):
-        if config.current_status == 'ing':
-            # 停止
-            question = tools.show_popup(config.transobj['exit'], config.transobj['confirmstop'])
-            if question == QMessageBox.Yes:
-                self.update_status('stop')
-                return
         proxy = self.main.proxy.text().strip().replace('：', ':')
         if proxy:
             if not re.match(r'^(http|sock)', proxy, re.I):
@@ -487,14 +483,14 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
                 tools.set_proxy('del')
         # 原始语言
         config.params['source_language'] = self.main.source_language.currentText()
-        config.logger.debug(config.params['source_language'])
+        # config.logger.debug(config.params['source_language'])
 
         # 语音模型
-        config.logger.debug(self.main.source_model.currentText())
+        # config.logger.debug(self.main.source_model.currentText())
         config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText())['status']
         config.logger.debug(config.params['source_module_status'])
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
-        config.logger.debug(config.params['source_module_name'])
+        # config.logger.debug(config.params['source_module_name'])
 
 
 
@@ -606,7 +602,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         if len(config.queue_mp4) > 0:
             config.params['only_video'] = True
-            start_thread(self.main)  # todo: 起线程
+            # start_thread(self.main)  # todo: 起线程
 
 
         self.main.save_setting()
@@ -615,21 +611,21 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
 
         config.settings = config.parse_init()
-        config.logger.info("====config.settings====")
+        # config.logger.info("====config.settings====")
         config.logger.info(config.settings)
-        config.logger.info("====config.params====")
+        # config.logger.info("====config.params====")
         config.logger.info(config.params)
         config.logger.info("add_queue_thread")
         self.add_queue_thread()
 
-        #
+
         # for k, v in self.main.moshis.items():
         #     if k != self.main.app_mode:
         #         v.setDisabled(True)
 
     def add_queue_thread(self):
         # 添加需处理文件到队列的线程
-        from videotrans.task.main_worker import Worker
+
         self.worker_thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.worker_thread)
@@ -638,7 +634,24 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker.error.connect(self.handle_error)
+        self.worker.queue_ready.connect(self.start_queue_consumer)  # 连接新信号
         self.worker_thread.start()
+
+
+    def start_queue_consumer(self):
+        if not config.is_consuming:
+            config.logger.debug('开始消费队列')
+            self.queue_consumer_thread = QThread()
+            self.queue_consumer = QueueConsumer()
+            self.queue_consumer.moveToThread(self.queue_consumer_thread)
+            self.queue_consumer_thread.started.connect(self.queue_consumer.process_queue)
+            self.queue_consumer.finished.connect(self.queue_consumer_thread.quit)
+            self.queue_consumer.finished.connect(self.queue_consumer.deleteLater)
+            self.queue_consumer_thread.finished.connect(self.queue_consumer_thread.deleteLater)
+            self.queue_consumer.error.connect(self.handle_error)
+            self.queue_consumer_thread.start()
+        else:
+            config.logger.debug("消费队列正在工作")
 
     def handle_error(self, error_msg):
         config.logger.error(f"Error: {error_msg}")
@@ -833,6 +846,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         if step == 'translate_start':
             self.main.subtitle_area.clear()
         return True
+
 
 
 class TableWindow(SecWindow):
