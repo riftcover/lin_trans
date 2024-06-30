@@ -1168,11 +1168,14 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
 
 
 def detect_media_type(file_path):
+    config.logger.info(f"detect_media_type: {file_path}")
+    config.logger.debug(f"OS PATH:{os.environ['PATH']}")
     # 判断媒体文件是音频还是视频
     try:
         # 使用ffprobe获取文件信息
         command = [
             'ffprobe',
+            # ff_path,
             '-v', 'quiet',
             '-print_format', 'json',
             '-show_streams',
@@ -1218,12 +1221,14 @@ def format_video(name, out=None) -> dict:
   'basename': 'BetterCarvedTurnsUsingTheSwordsDrill.mp4',
   'noextname': 'BetterCarvedTurnsUsingTheSwordsDrill',
   'ext': 'mp4',
+  'codec_type': 'video',
   'output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill',
   'unid': '6b482fd0a2a53df000bb5b30333a79bb',
   'source_mp4': 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4',
   'linshi_output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill'
     }
     """
+    config.logger.info(f'format_video {name}')
     from pathlib import Path
     raw_pathlib = Path(name)
     raw_basename = raw_pathlib.name
@@ -1234,7 +1239,8 @@ def format_video(name, out=None) -> dict:
     output_path = Path(f'{out}/{raw_noextname}' if out else f'{raw_dirname}/_video_out/{raw_noextname}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
-
+    media_type =detect_media_type(name)
+    config.logger.info(f'media_type: {media_type}')
     obj = {
         "raw_name": name,
         # 原始视频所在原始目录
@@ -1253,7 +1259,7 @@ def format_video(name, out=None) -> dict:
         "noextname": "",
         # 扩展名
         "ext": ext[1:],
-        "codec_type": detect_media_type(name),
+        "codec_type": media_type,
         # 最终存放目标位置，直接存到这里
         "output": output_path.as_posix(),
         "unid": "",
@@ -1457,5 +1463,6 @@ def cleartext(text):
 if __name__ == '__main__':
     job_video = ['C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4']
     for it in job_video:
-        print(format_video(it.replace('\\', '/'), config.params['target_dir']))
-        # print(detect_media_type(it))
+        # print(format_video(it.replace('\\', '/'), config.params['target_dir']))
+        print(detect_media_type(it))
+

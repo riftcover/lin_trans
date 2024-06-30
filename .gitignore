@@ -169,3 +169,4 @@ cython_debug/
 !/xc.py
 
 !/xd.py
+!/videotrans/util/ffmpeg/

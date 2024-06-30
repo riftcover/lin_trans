@@ -8,7 +8,8 @@ from queue import Queue
 
 from utils.log import Logings
 from videotrans.configure import ModelDict
-
+# logs
+logger = Logings().logger
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
@@ -38,8 +39,7 @@ Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
 
-# logs
-logger = Logings().logger
+
 
 defaulelang = locale.getdefaultlocale()[0][:2].lower()  # 获取本地语言
 
@@ -173,13 +173,13 @@ box_lang = obj['toolbox_lang']
 # ffmpeg
 if sys.platform == 'win32':
     PWD = rootdir.replace('/', '\\')
-    os.environ['PATH'] = f'{PWD};{PWD}\\ffmpeg;' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg;' + os.environ['PATH']
 
 else:
-    os.environ['PATH'] = f'{rootdir}:{rootdir}/ffmpeg:' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg:' + os.environ['PATH']
 
 os.environ['QT_API'] = 'pyside6'
-os.environ['SOFT_NAME'] = 'pyvideotrans'
+os.environ['SOFT_NAME'] = 'linlintrans'
 # spwin主窗口
 queue_logs = Queue(1000)
 # box窗口
