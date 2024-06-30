@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import warnings
+from pathlib import Path
 
 from PySide6 import QtCore
 from PySide6.QtCore import QUrl, Qt, Slot, QThread
@@ -490,70 +491,12 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText())['status']
         config.logger.debug(config.params['source_module_status'])
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
-        # config.logger.debug(config.params['source_module_name'])
 
-
-
-        # # 配音角色
-        # config.params['voice_role'] = self.main.voice_role.currentText()
-        #
-        # # 配音自动加速
-        # config.params['voice_autorate'] = self.main.voice_autorate.isChecked()
-        # config.params['video_autorate'] = self.main.video_autorate.isChecked()
-        # config.params['append_video'] = self.main.append_video.isChecked()
-        # config.params['append_audio'] = self.main.append_audio.isChecked()
-        # config.params['append_subtitle'] = self.main.append_subtitle.isChecked()
-
-        # 字幕嵌入类型
-        # todo：添加是否嵌入字幕
-        # config.params['subtitle_type'] = int(self.main.subtitle_type.currentIndex())
-
-        # 配音语速
-        # try:
-        #     voice_rate = int(self.main.voice_rate.value())
-        #     config.params['voice_rate'] = f"+{voice_rate}%" if voice_rate >= 0 else f"{voice_rate}%"
-        # except Exception:
-        #     config.params['voice_rate'] = '+0%'
-
-        # 音调，声音大小乱七八糟的
-        # try:
-        #     volume = int(self.main.volume_rate.value())
-        #     pitch = int(self.main.pitch_rate.value())
-        #     config.params['volume'] = f'+{volume}%' if volume > 0 else f'{volume}%'
-        #     config.params['pitch'] = f'+{pitch}Hz' if pitch > 0 else f'{pitch}Hz'
-        # except Exception:
-        #     config.params['volume'] = '+0%'
-        #     config.params['pitch'] = '+0Hz'
-        # config.params['back_audio'] = self.main.back_audio.text().strip()
-
-        # 字幕区文字
-        # txt = self.main.subtitle_area.toPlainText().strip()
-        # if txt and not re.search(r'\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?\s*?-->\s*?\d{1,2}:\d{1,2}:\d{1,2}(,\d+)?', txt):
-        #     txt = ""
-        #     self.main.subtitle_area.clear()
 
         # 综合判断
         if len(config.queue_mp4) < 1:
             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
             return False
-
-        # # tts类型
-        # if config.params['tts_type'] == 'openaiTTS' and not config.params["chatgpt_key"]:
-        #     QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['chatgptkeymust'])
-        #     return False
-        # if config.params['tts_type'] == 'clone-voice' and not config.params["clone_api"]:
-        #     config.logger.error(f"不存在clone-api:{config.params['tts_type']=},{config.params['clone_api']=}")
-        #     QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bixutianxiecloneapi'])
-        #     return False
-        # if config.params['tts_type'] == 'elevenlabsTTS' and not config.params["elevenlabstts_key"]:
-        #     QMessageBox.critical(self.main, config.transobj['anerror'], "no elevenlabs  key")
-        #     return False
-        # # 如果没有选择目标语言，但是选择了配音角色，无法配音
-        # if config.params['target_language'] == '-' and config.params['voice_role'] != 'No':
-        #     QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['wufapeiyin'])
-        #     return False
-
-
 
         # cuda检测
         if 100 < config.params["source_module_status"] < 200:
@@ -606,7 +549,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
 
         self.main.save_setting()
-        self.update_status('ing')
+
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
 
 
@@ -617,6 +560,8 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         config.logger.info(config.params)
         config.logger.info("add_queue_thread")
         self.add_queue_thread()
+
+        self.update_status('ing')
 
 
         # for k, v in self.main.moshis.items():
@@ -715,9 +660,10 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
     # 更新执行状态
     def update_status(self, type):
         config.current_status = type
-        # 当type为ing时将列表media_table中的内容清空
+        # 当type为ing时将列表media_table中的内容清空,queue_mp4清空
         if type == 'ing':
             TableWindow().clearTable(self.main.media_table)
+            config.queue_mp4 = []
             # QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
 
 
@@ -898,7 +844,7 @@ class TableWindow(SecWindow):
             delete_button.clicked.disconnect()
             delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
 
-    def get_video_duration(self, file: str):
+    def get_video_duration(self, file: Path):
         # Use ffprobe to get video duration
         cmd = f"ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\""
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -914,13 +860,20 @@ class TableWindow(SecWindow):
         else:
             event.ignore()
 
-    def drop_event(self,ui_table, event: QDropEvent):
+    def drop_event(self,ui_table: QTableWidget, event: QDropEvent):
         # 拖出
-        if event.mimeData().hasUrls():
+        file_urls = event.mimeData().urls()
+        config.logger.info(f'file_urls: {file_urls}')
+        file_paths = []
+        if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
+                file_paths.append(file_path)
+                config.logger.info(f'file_path: {file_path}')
                 file_name = os.path.basename(file_path)
+                config.logger.info(f'file_name: {file_name}')
                 self.add_file_to_table(ui_table, file_name)
+            config.queue_mp4 = file_paths
         event.accept()
         # ui_table.setText("\n".join(self.file_paths))
 

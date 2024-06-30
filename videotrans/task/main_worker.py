@@ -1,9 +1,8 @@
-
 import copy
 import os
 import shutil
 import time
-from PySide6.QtCore import QObject,Signal
+from PySide6.QtCore import QObject, Signal
 
 from videotrans.configure import config
 from videotrans.task.queue_worker import LinQueue
@@ -13,26 +12,20 @@ from videotrans.util.tools import set_process, send_notification
 from pathlib import Path
 import re
 
-work_queue =LinQueue()
+work_queue = LinQueue()
+
+
 class Worker(QObject):
     finished = Signal()
     error = Signal(str)
     queue_ready = Signal()  # 新信号，用于通知队列准备就绪
-    def __init__(self):
-        super().__init__()
+
+
     def do_work(self):
         config.logger.debug('线程开始工作')
-        # 重新初始化全局unid表
-        config.unidlist = []
-        # 全局错误信息初始化
-        config.errorlist = {}
-        # 初始化本地 unidlist 表
-        self.unidlist = []
+
         for it in config.queue_mp4:
-            # if config.exit_soft or config.current_status != 'ing':
-            if config.exit_soft:
-                config.logger.info(f'config.exit_soft:{config.exit_soft}')
-                return self.stop()
+            config.logger.debug('线程工作中')
             # 格式化每个视频信息
             obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
             target_dir_mp4 = obj_format['output'] + f"/{obj_format['raw_noextname']}.mp4"
@@ -59,14 +52,11 @@ class Worker(QObject):
         set_process("", 'stop')
         config.queue_mp4 = []
         self.finished.emit()
-        # self._unlink_tmp()
 
 
 class QueueConsumer(QObject):
     finished = Signal()
     error = Signal(str)
-
-
 
     def process_queue(self):
         config.logger.debug('消费线程开始工作')

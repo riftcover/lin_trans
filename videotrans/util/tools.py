@@ -20,7 +20,6 @@ import requests
 from videotrans.configure import config
 from videotrans.configure.custom_exceptions import VideoProcessingError
 
-
 class ModelInfo(TypedDict):
     status: int
     model_name: str
@@ -1167,7 +1166,7 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
             shutil.rmtree(config_dir, ignore_errors=True)
 
 
-def detect_media_type(file_path):
+def detect_media_type(file_path:Path):
     config.logger.info(f"detect_media_type: {file_path}")
     config.logger.debug(f"OS PATH:{os.environ['PATH']}")
     # 判断媒体文件是音频还是视频
@@ -1202,7 +1201,7 @@ def detect_media_type(file_path):
 
 
 # 格式化视频信息
-def format_video(name, out=None) -> dict:
+def format_video(name:Path, out=None) -> dict:
     """
     格式化视频信息
 
@@ -1229,7 +1228,7 @@ def format_video(name, out=None) -> dict:
     }
     """
     config.logger.info(f'format_video {name}')
-    from pathlib import Path
+
     raw_pathlib = Path(name)
     raw_basename = raw_pathlib.name
     raw_noextname = raw_pathlib.stem

@@ -354,10 +354,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.action_clearcache.triggered.connect(self.util.clearcache)
 
 
-        # 禁止随意移动sp.exe
-        if not Path(config.rootdir+'/videotrans').exists() or not Path(config.rootdir+ '/models').exists():
-            QMessageBox.critical(self, config.transobj['anerror'], config.transobj['sp.exeerror'])
-            return False
+        # # 禁止随意移动sp.exe
+        # if not Path(config.rootdir+'/videotrans').exists() or not Path(config.rootdir+ '/models').exists():
+        #     QMessageBox.critical(self, config.transobj['anerror'], config.transobj['sp.exeerror'])
+        #     return False
 
         #
         # if platform.system().lower() == 'windows' and (
