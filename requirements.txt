@@ -1,7 +1,7 @@
 better-ffmpeg-progress==2.1.5
 ffmpeg-python==0.2.0
 numpy
-torch
+torch==2.3.1+cu121
 loguru
 zhipuai
 fastapi>=0.109.2

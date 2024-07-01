@@ -25,6 +25,9 @@ class Worker(QObject):
         self.queue_mp4_copy = queue_mp4_copy
 
     def do_work(self):
+        """
+        点击开始按钮完成后,将需处理的文件放入队列中
+        """
         config.logger.debug('线程开始工作')
         for it in self.queue_mp4_copy:
             config.logger.debug('线程工作中')
@@ -44,7 +47,7 @@ class Worker(QObject):
                 self.stop()
                 return
             # 添加到工作队列
-            work_queue.add_queue(obj_format['codec_type'], it)
+            work_queue.to_war_queue_put(obj_format)
             # 添加进度按钮 unid
             set_process(obj_format['unid'], 'add_process', btnkey=obj_format['unid'])
         self.queue_ready.emit()
@@ -57,6 +60,9 @@ class Worker(QObject):
 
 
 class QueueConsumer(QObject):
+    """
+    点击开始按钮完成后,开始对队列内消息进行消费
+    """
     finished = Signal()
     error = Signal(str)
 
@@ -71,4 +77,4 @@ class QueueConsumer(QObject):
 
 
 if __name__ == '__main__':
-    Worker().do_work()
+        Worker().do_work()

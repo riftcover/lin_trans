@@ -170,13 +170,16 @@ model_code_list = init_model_code_key()
 # 工具箱语言
 box_lang = obj['toolbox_lang']
 
-# ffmpeg
+# ffmpeg,whisper.cpp
 if sys.platform == 'win32':
     PWD = rootdir.replace('/', '\\')
     os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg;' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/whisper.cpp;' + os.environ['PATH']
 
 else:
     os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg:' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/whisper.cpp:' + os.environ['PATH']
+
 
 os.environ['QT_API'] = 'pyside6'
 os.environ['SOFT_NAME'] = 'linlintrans'

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
 
 from videotrans.configure.config import result_path
 from videotrans.task.main_worker import QueueConsumer
+from videotrans.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
 from videotrans.task.main_worker import Worker
@@ -23,6 +24,7 @@ from videotrans.util import tools
 from videotrans import translator
 from videotrans.configure import config
 from videotrans.util.tools import StartTools
+
 # from qfluentwidgets import PrimaryPushButton
 
 start_tools = StartTools()
@@ -55,8 +57,6 @@ class ClickableProgressBar(QLabel):
         """)
         layout = QHBoxLayout(self)
         layout.addWidget(self.progress_bar)  # 将进度条添加到布局
-
-
 
     def setMsg(self, text):
         if text and config.defaulelang == 'zh':
@@ -107,7 +107,6 @@ class SecWindow():
         # text = f'+{text}%' if text >= 0 else f'{text}%'
         config.params['voice_rate'] = f'+{text}%' if text >= 0 else f'{text}%'
 
-
     def autorate_changed(self, state, name):
         if name == 'voice':
             config.params['voice_autorate'] = state
@@ -127,8 +126,6 @@ class SecWindow():
             if item.widget():
                 item.widget().deleteLater()
         self.main.processbtns = {}
-
-
 
     def export_sub_fun(self):
         srttxt = self.main.subtitle_area.toPlainText().strip()
@@ -229,7 +226,6 @@ class SecWindow():
         config.task_countdown = 86400
         self.main.continue_compos.setDisabled(False)
         self.main.continue_compos.setText(config.transobj['nextstep'])
-
 
     def check_whisper_type(self, index):
         if index == 0:
@@ -484,7 +480,9 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
                 # 删除代理
                 tools.set_proxy('del')
         # 原始语言
-        config.params['source_language'] = self.main.source_language.currentText()
+        language_name = self.main.source_language.currentText()
+        config.params['source_language'] = language_name
+        config.params['source_language_code'] = language_code(language_name)
         # config.logger.debug(config.params['source_language'])
 
         # 语音模型
@@ -540,37 +538,28 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
 
         # 存在视频
         config.params['only_video'] = False
-        config.params['clear_cache']=False
-
-
+        config.params['clear_cache'] = False
 
         if len(config.queue_mp4) > 0:
             config.params['only_video'] = True
             # start_thread(self.main)  # todo: 起线程
 
-
         self.main.save_setting()
 
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
-
 
         config.settings = config.parse_init()
         # config.logger.info("====config.settings====")
         config.logger.info(config.settings)
         # config.logger.info("====config.params====")
         config.logger.info(config.params)
-        config.logger.info("add_queue_thread")
+        config.logger.debug("add_queue_thread")
         queue_mp4_copy = copy.deepcopy(config.queue_mp4)
         self.add_queue_thread(queue_mp4_copy)
 
         self.update_status('ing')
 
-
-        # for k, v in self.main.moshis.items():
-        #     if k != self.main.app_mode:
-        #         v.setDisabled(True)
-
-    def add_queue_thread(self,data_copy):
+    def add_queue_thread(self, data_copy):
         # 添加需处理文件到队列的线程
 
         self.worker_thread = QThread()
@@ -583,7 +572,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         self.worker.error.connect(self.handle_error)
         self.worker.queue_ready.connect(self.start_queue_consumer)  # 连接新信号
         self.worker_thread.start()
-
 
     def start_queue_consumer(self):
         if not config.is_consuming:
@@ -667,7 +655,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
             TableWindow().clearTable(self.main.media_table)
             config.queue_mp4 = []
             # QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
-
 
     # 更新 UI
     def update_data(self, json_data):
@@ -796,7 +783,6 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         return True
 
 
-
 class TableWindow(SecWindow):
     # 列表的操作
     @Slot()
@@ -862,7 +848,7 @@ class TableWindow(SecWindow):
         else:
             event.ignore()
 
-    def drop_event(self,ui_table: QTableWidget, event: QDropEvent):
+    def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
         # 拖出
         file_urls = event.mimeData().urls()
         config.logger.info(f'file_urls: {file_urls}')
@@ -879,6 +865,6 @@ class TableWindow(SecWindow):
         event.accept()
         # ui_table.setText("\n".join(self.file_paths))
 
-    def clearTable(self,ui_table: QTableWidget):
+    def clearTable(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
