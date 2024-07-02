@@ -37,6 +37,7 @@ class FFmpegJobs:
             '-ac', '2',  # 声道
             '-c:a', 'pcm_s16le', # 音频格式
             '-f', 'wav',
+            '-y', # 覆盖输出
             output_file
         ]
         ffmpeg_process = FfmpegProcess(command)

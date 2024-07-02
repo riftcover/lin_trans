@@ -37,14 +37,12 @@ class SrtWriter:
         :return:
         """
 
-
-
-        #
         # # todo:添加语言参数
+        logger.debug(f'download_root:{config.root_path}/models')
+        logger.debug(f'name:{model_name}')
         model: whisper.Whisper = whisper.load_model(name=model_name, download_root=f'{config.root_path}/models')
         translate_options = dict(task="translate", **dict(language=self.ln, beam_size=5, best_of=5))
-        result: dict = model.transcribe(self.input_path, **translate_options, fp16=False, verbose=False)
-
+        result: dict = model.transcribe(self.input_file, **translate_options, fp16=False, verbose=False)
         # get srt writer for the current directory
         writer = get_writer("srt", self.input_dirname)
         # add empty dictionary for 'options'
@@ -88,4 +86,6 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    SrtWriter('tt1.wav', 'en').whisper_pt_to_srt()
+    output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe'
+    raw_basename = 'Top 10 Affordable Ski Resorts in Europe.wav'
+    SrtWriter(output,raw_basename, 'en').whisper_pt_to_srt()
