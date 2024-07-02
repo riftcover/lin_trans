@@ -5,12 +5,59 @@ from pathlib import Path
 import whisper
 from whisper.utils import get_writer
 
-from utils.about_time import timeit
 from utils.log import Logings
 from videotrans.configure import config
 
 logger = Logings().logger
 
+import functools
+import sys
+
+
+def capture_whisper_variables(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        captured_data = {
+            "content_frames": None,
+            "seek": None,
+            "previous_seek": None
+        }
+
+        def trace(frame, event, arg):
+            if event == 'current_segments':
+                local_vars = frame.f_locals
+                if 'content_frames' in local_vars:
+                    captured_data['content_frames'] = local_vars['content_frames']
+                if 'seek' in local_vars:
+                    captured_data['seek'] = local_vars['seek']
+                if 'previous_seek' in local_vars:
+                    captured_data['previous_seek'] = local_vars['previous_seek']
+
+                # Check if we're at the start of the while loop
+                if (frame.f_lineno == frame.f_code.co_firstlineno + 66 and  # Adjust this line number
+                        captured_data['content_frames'] is not None and
+                        captured_data['seek'] is not None and
+                        captured_data['previous_seek'] is not None):
+                    print(f"content_frames: {captured_data['content_frames']}, "
+                          f"seek: {captured_data['seek']}, "
+                          f"previous_seek: {captured_data['previous_seek']}")
+            return trace
+
+        sys.settrace(trace)
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            sys.settrace(None)
+
+        return result
+
+    return wrapper
+
+
+@capture_whisper_variables
+def your_transcribe_function(*args, **kwargs):
+    from whisper.transcribe import transcribe
+    return transcribe(*args, **kwargs)
 
 class SrtWriter:
 
@@ -30,6 +77,8 @@ class SrtWriter:
         self.input_file = audio_path   #文件名带上全路径
         self.ln = ln
 
+    # @log_whisper_progress
+
     def whisper_pt_to_srt(self, model_name: str = 'small') -> None:
         """
         如果有CUDA走这个
@@ -40,15 +89,18 @@ class SrtWriter:
         # # todo:添加语言参数
         logger.debug(f'download_root:{config.root_path}/models')
         logger.debug(f'name:{model_name}')
-        model: whisper.Whisper = whisper.load_model(name=model_name, download_root=f'{config.root_path}/models')
+        model = whisper.load_model(name=model_name, download_root=f'{config.root_path}/models')
         translate_options = dict(task="translate", **dict(language=self.ln, beam_size=5, best_of=5))
-        result: dict = model.transcribe(self.input_file, **translate_options, fp16=False, verbose=False)
+
+        result: dict = your_transcribe_function(model,self.input_file, **translate_options, fp16=False, verbose=False)
+
         # get srt writer for the current directory
         writer = get_writer("srt", self.input_dirname)
         # add empty dictionary for 'options'
         writer(result, f"{self.srt_name}.srt", {})
 
     # @timeit
+
     def whisper_bin_to_srt(
             self,
             model_name: str = 'ggml-medium.en.bin') -> None:
@@ -88,4 +140,7 @@ if __name__ == '__main__':
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
     output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe'
     raw_basename = 'Top 10 Affordable Ski Resorts in Europe.wav'
+    # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    # models = 'D:\dcode\lin_trans\models\small.pt'
+
     SrtWriter(output,raw_basename, 'en').whisper_pt_to_srt()

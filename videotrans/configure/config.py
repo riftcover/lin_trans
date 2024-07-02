@@ -173,11 +173,11 @@ box_lang = obj['toolbox_lang']
 # ffmpeg,whisper.cpp
 if sys.platform == 'win32':
     PWD = rootdir.replace('/', '\\')
-    os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg;' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/plugin/ffmpeg;' + os.environ['PATH']
     os.environ['PATH'] = f'{root_path}/whisper.cpp;' + os.environ['PATH']
 
 else:
-    os.environ['PATH'] = f'{root_path}/videotrans/util/ffmpeg:' + os.environ['PATH']
+    os.environ['PATH'] = f'{root_path}/plugin/ffmpeg:' + os.environ['PATH']
     os.environ['PATH'] = f'{root_path}/whisper.cpp:' + os.environ['PATH']
 
 
