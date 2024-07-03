@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine, BOOLEAN
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import sessionmaker
 
 # 使用sqlalchemy创建一个sqlite3数据库
-engine = create_engine('sqlite:///test.db')
+
 Base = declarative_base()
 
 #创建数据表的映射类,表的作用是存储导入文件的数据
@@ -38,7 +38,7 @@ class ToSrt(Base):
         return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',target_language='{self.target_language}',translate_type='{self.translate_type}',cuda='{self.cuda}')>"
 
 # 创建数据库引擎
-engine = create_engine('sqlite:///example.db')
+engine = create_engine('sqlite:///linlin.db')
 
 # 创建所有表
 Base.metadata.create_all(engine)

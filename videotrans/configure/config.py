@@ -23,6 +23,8 @@ def get_executable_path():
 rootdir = get_executable_path()
 root_path = Path(__file__).parent.parent.parent  # 项目目录
 
+sys_platform=sys.platform #操作系统类型:win32、linux、darwin
+
 # cache tmp
 temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
