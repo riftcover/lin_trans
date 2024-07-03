@@ -31,8 +31,11 @@ class Worker(QObject):
         config.logger.debug('线程开始工作')
         for it in self.queue_mp4_copy:
             config.logger.debug('线程工作中')
+            config.logger.debug(f'it:{it}')
             # 格式化每个视频信息
             obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
+            config.logger.debug(f'target_dir:{config.params["target_dir"]}')
+            config.logger.debug(f'obj_format:{obj_format}')
             target_dir_mp4 = obj_format['output'] + f"/{obj_format['raw_noextname']}.mp4"
 
             if len(target_dir_mp4) >= 250:

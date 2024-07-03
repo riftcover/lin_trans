@@ -1167,8 +1167,6 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
 
 
 def detect_media_type(file_path:Path):
-    config.logger.info(f"detect_media_type: {file_path}")
-    config.logger.debug(f"OS PATH:{os.environ['PATH']}")
     # 判断媒体文件是音频还是视频
     try:
         # 使用ffprobe获取文件信息
@@ -1206,26 +1204,27 @@ def format_video(name:Path, out=None) -> dict:
     格式化视频信息
 
     Args:
-        name: 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4'
+        name: #需要处理的文件路径，如'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4'
         out:
 
     Returns:
     {
-  'raw_name': 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4',
-  'raw_dirname': 'C:/Users/gaosh/Videos/pyvideotrans/rename',
-  'raw_basename': 'BetterCarvedTurnsUsingTheSwordsDrill.mp4',
-  'raw_noextname': 'BetterCarvedTurnsUsingTheSwordsDrill',
+  'raw_name': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_dirname': 'F:/ski/国外教学翻译',
+  'raw_basename': 'Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_noextname': 'Top 10 Affordable Ski Resorts in Europe',
   'raw_ext': 'mp4',
-  'dirname': 'C:/Users/gaosh/Videos/pyvideotrans/rename',
-  'basename': 'BetterCarvedTurnsUsingTheSwordsDrill.mp4',
-  'noextname': 'BetterCarvedTurnsUsingTheSwordsDrill',
+  'dirname': 'D:/dcode/lin_trans/tmp/f1f54d3c61d87f77344a132e0fac69b8',
+  'basename': 'f1f54d3c61d87f77344a132e0fac69b8.mp4',
+  'noextname': 'f1f54d3c61d87f77344a132e0fac69b8',
   'ext': 'mp4',
   'codec_type': 'video',
-  'output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill',
-  'unid': '6b482fd0a2a53df000bb5b30333a79bb',
-  'source_mp4': 'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4',
-  'linshi_output': 'D:/dcode/lin_trans/result/BetterCarvedTurnsUsingTheSwordsDrill'
-    }
+  'output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8',
+  'unid': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'source_mp4': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'linshi_output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8'
+}
+
     """
     config.logger.info(f'format_video {name}')
 
@@ -1235,12 +1234,19 @@ def format_video(name:Path, out=None) -> dict:
     ext = raw_pathlib.suffix
     raw_dirname = raw_pathlib.parent.resolve().as_posix()
 
-    output_path = Path(f'{out}/{raw_noextname}' if out else f'{raw_dirname}/_video_out/{raw_noextname}')
+    h = hashlib.md5()
+    h.update(name.encode('utf-8'))
+    h.update(config.params.get('source_module_name').encode('utf-8'))
+    unid = h.hexdigest()
+    config.logger.info(f'out: {out}')
+    output_path = Path(f'{out}/{unid}')
+    config.logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type =detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
     obj = {
+        # 原始视频路径
         "raw_name": name,
         # 原始视频所在原始目录
         "raw_dirname": raw_dirname,
@@ -1258,18 +1264,17 @@ def format_video(name:Path, out=None) -> dict:
         "noextname": "",
         # 扩展名
         "ext": ext[1:],
+        # 视频或音频
         "codec_type": media_type,
         # 最终存放目标位置，直接存到这里
         "output": output_path.as_posix(),
-        "unid": "",
+        "unid": unid,
         "source_mp4": name,
         # 临时存放，当名字符合规范时，和output相同
         "linshi_output": ""
     }
     obj['linshi_output'] = obj['output']
-    h = hashlib.md5()
-    h.update(obj['raw_name'].encode('utf-8'))
-    obj['unid'] = h.hexdigest()
+
 
     if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
         # 符合规则，原始和目标相同
@@ -1282,10 +1287,7 @@ def format_video(name:Path, out=None) -> dict:
         obj['basename'] = f'{obj["noextname"]}.{obj["raw_ext"]}'
         obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
         obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
-        obj['source_mp4'] = f'{obj["dirname"]}/{obj["basename"]}'
-        # 目标存放位置，完成后再复制
-        obj['linshi_output'] = config.TEMP_DIR + f'/{obj["noextname"]}/_video_out'
-        Path(obj['linshi_output']).mkdir(parents=True, exist_ok=True)
+        # Path(obj['linshi_output']).mkdir(parents=True, exist_ok=True)
     return obj
 
 

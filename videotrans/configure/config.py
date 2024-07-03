@@ -22,16 +22,15 @@ def get_executable_path():
 # root dir
 rootdir = get_executable_path()
 root_path = Path(__file__).parent.parent.parent  # 项目目录
+sys_platform = sys.platform
 
-sys_platform=sys.platform #操作系统类型:win32、linux、darwin
 
-# cache tmp
 temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
 
 # home
-homepath = Path.home() / 'Videos/pyvideotrans'
+homepath = Path.home() / 'Videos/linlin'
 homepath.mkdir(parents=True, exist_ok=True)
 homedir = homepath.as_posix()
 
@@ -53,7 +52,7 @@ def parse_init():
         "dubbing_thread": 3,
         "trans_thread": 15,
         "countdown_sec": 30,
-        "cuda_com_type": "float32",
+        "cuda_com_type": "float16",
         "whisper_threads": 4,
         "whisper_worker": 1,
         "beam_size": 1,
@@ -209,8 +208,9 @@ AzureTTS_rolelist = None
 proxy = None
 # 配置
 params = {
+     #操作系统类型:win32、linux、darwin
     "source_mp4": "", # 需要进行处理的文件
-    "target_dir": root_path / "result",  # 结果缓存文件夹
+    "target_dir": "",  # 结果缓存文件夹
     "output_dir": "",  # 导出文件夹
 
     "source_language": "en",
@@ -297,7 +297,7 @@ params = {
 
     "ttsapi_url": "",
     "ttsapi_voice_role": "",
-    "ttsapi_extra": "pyvideotrans",
+    "ttsapi_extra": "linlin",
 
     "trans_api_url": "",
     "trans_secret": "",
@@ -307,7 +307,7 @@ params = {
 
     "gptsovits_url": "",
     "gptsovits_role": "",
-    "gptsovits_extra": "pyvideotrans"
+    "gptsovits_extra": "linlin"
 
 }
 

@@ -43,6 +43,7 @@ class FFmpegJobs:
         ffmpeg_process = FfmpegProcess(command)
         # 执行 FFmpeg 命令并监控进度
         ffmpeg_process.run()
+        logger.info(f"转码完成")
 
 
 
