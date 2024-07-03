@@ -5,12 +5,13 @@ from pathlib import Path
 import whisper
 from whisper.utils import get_writer, format_timestamp, make_safe
 from faster_whisper import WhisperModel
+
+from utils.file_utils import write_srt_file
 from utils.log import Logings
 from videotrans.configure import config
 
 import functools
 import sys
-
 logger = Logings().logger
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -154,6 +155,7 @@ class SrtWriter:
 
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
         # 使用faster-whisper进行识别
+        # todo: cuda判断
         if cuda_status:
             model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
                                  device="cuda", local_files_only=True, compute_type="float16")
@@ -164,6 +166,7 @@ class SrtWriter:
         segments = list(segments_generator)
         # 获取总段数
         total_segments = len(segments)
+
         for i, segment in enumerate(segments, 1):
             # 输出当前任务进度
             progress = (i / total_segments) * 100
@@ -171,11 +174,20 @@ class SrtWriter:
             # 输出每个段的信息
             print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
+        # get srt writer for the current directory
+        srt_file_path = os.path.splitext(self.input_file)[0] + ".srt"
+
+        # 调用写入SRT文件的函数
+        write_srt_file(segments, srt_file_path)
+
+
+
     def factory_whisper(self,model_name, system_type: str, cuda_status: bool):
-        if system_type == 'darwin':
-            self.whisper_cpp_to_srt(model_name)
+        if system_type != 'darwin':
+            self.whisper_faster_to_srt(model_name, cuda_status)
+
         else:
-            self.whisper_faster_to_srt(model_name,cuda_status)
+            self.whisper_cpp_to_srt(model_name)
 
 
 if __name__ == '__main__':

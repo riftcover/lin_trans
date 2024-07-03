@@ -1238,7 +1238,7 @@ def format_video(name:Path, out=None) -> dict:
     h.update(name.encode('utf-8'))
     h.update(config.params.get('source_module_name').encode('utf-8'))
     unid = h.hexdigest()
-    config.logger.info(f'out: {out}')
+
     output_path = Path(f'{out}/{unid}')
     config.logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
