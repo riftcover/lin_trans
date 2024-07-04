@@ -170,3 +170,5 @@ cython_debug/
 
 !/xd.py
 !/videotrans/util/ffmpeg/
+!/result/
+!/ffmpeg_output/

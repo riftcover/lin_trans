@@ -5,6 +5,8 @@ from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
+from nice_ui.ui.SingalBridge import get_setting_cache
+
 warnings.filterwarnings('ignore')
 
 # from videotrans.task.get_role_list import GetRoleWorker
@@ -18,7 +20,7 @@ from videotrans.ui.en import Ui_MainWindow
 # from videotrans.box import win
 
 from pathlib import Path
-from videotrans.mainwin.secwin import SecWindow, TableWindow
+from videotrans.mainwin.secwin import SecWindow
 # from videotrans.mainwin.subform import Subform
 # from videotrans.task.check_update import CheckUpdateWorker
 # from videotrans.task.logs_worker import LogsWorker
@@ -62,12 +64,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(self.rawtitle)
         # 检查窗口是否打开
         self.util = SecWindow(self)
-        self.table = TableWindow(self)
         # self.subform = Subform(self)
         self.initUI()
 
 
-        self.bind_action()
+        # self.bind_action()
         # QTimer.singleShot(500, self.start_box)
 
 
@@ -80,7 +81,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # language code
         self.languagename = config.langnamelist
         self.model_name = config.model_code_list
-        self.get_setting_cache()
+        get_setting_cache(self.settings)
         # self.splitter.setSizes([self.width - 400, 400])
 
         # 隐藏倒计时
@@ -93,36 +94,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.stop_djs.setCursor(Qt.PointingHandCursor)
         # self.continue_compos.setCursor(Qt.PointingHandCursor)
         # self.startbtn.setCursor(Qt.PointingHandCursor)
-        self.btn_get_video.setCursor(Qt.PointingHandCursor)
-        # self.btn_save_dir.setCursor(Qt.PointingHandCursor)
-
-        # self.source_mp4.setAcceptDrops(True)
-        # self.target_dir.setAcceptDrops(True)
-        # self.proxy.setText(config.proxy)
-        # language
-        self.source_language.addItems(self.languagename)
-        if config.params['source_language'] and config.params['source_language'] in self.languagename:
-            self.source_language.setCurrentText(config.params['source_language'])
-        else:
-            self.source_language.setCurrentIndex(2)
-
-
-        # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
-        self.translate_language.addItems(["-"] + self.languagename)
-
-        # 模型下拉菜单内容
-        self.source_model.addItems(self.model_name)
-
+        # self.btn_get_video.setCursor(Qt.PointingHandCursor)
+        # # self.btn_save_dir.setCursor(Qt.PointingHandCursor)
         #
-        # # 目标语言改变
-        # self.listen_btn.setCursor(Qt.PointingHandCursor)
+        # # self.source_mp4.setAcceptDrops(True)
+        # # self.target_dir.setAcceptDrops(True)
+        # # self.proxy.setText(config.proxy)
+        # # language
+        # self.source_language.addItems(self.languagename)
+        # if config.params['source_language'] and config.params['source_language'] in self.languagename:
+        #     self.source_language.setCurrentText(config.params['source_language'])
+        # else:
+        #     self.source_language.setCurrentIndex(2)
         #
-        #  translation type
-        self.translate_type.addItems(TRANSNAMES)
-        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
-
-        self.translate_type.setCurrentText(translate_name)
         #
+        # # 目标语言改变时，如果当前tts是 edgeTTS，则根据目标语言去修改显示的角色
+        # self.translate_language.addItems(["-"] + self.languagename)
+        #
+        # # 模型下拉菜单内容
+        # self.source_model.addItems(self.model_name)
+        #
+        # #
+        # # # 目标语言改变
+        # # self.listen_btn.setCursor(Qt.PointingHandCursor)
+        # #
+        # #  translation type
+        # self.translate_type.addItems(TRANSNAMES)
+        # translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
+        #
+        # self.translate_type.setCurrentText(translate_name)
+        # #
         # #         model
         # self.whisper_type.addItems([config.transobj['whisper_type_all'], config.transobj['whisper_type_split'],
         #                             config.transobj['whisper_type_avg']])
@@ -264,7 +265,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.addbackbtn.clicked.connect(self.util.get_background)
         #
         # self.is_separate.toggled.connect(self.util.is_separate_fun)
-        self.action_page1()
+
 
         # # 设置QAction的大小
         # self.toolBar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -418,51 +419,3 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     print('等待所有进程退出...')
     #     time.sleep(2)
     #     event.accept()
-
-    def get_setting_cache(self):
-        for k in config.params.keys():
-            config.params[k] = self.settings.value(k,"")
-
-        # 从缓存获取默认配置
-        config.params["voice_autorate"] = self.settings.value("voice_autorate", False, bool)
-        config.params["video_autorate"] = self.settings.value("video_autorate", False, bool)
-        config.params["append_video"] = self.settings.value("append_video", False, bool)
-        config.params["auto_ajust"] = self.settings.value("auto_ajust", True, bool)
-
-
-        if self.settings.value("clone_voicelist", ""):
-            config.clone_voicelist = self.settings.value("clone_voicelist", "").split(',')
-
-        config.params["chatgpt_model"] = self.settings.value("chatgpt_model", config.params['chatgpt_model'])
-        config.params["localllm_model"] = self.settings.value("localllm_model", config.params['localllm_model'])
-        config.params["zijiehuoshan_model"] = self.settings.value("zijiehuoshan_model", config.params['zijiehuoshan_model'])
-        os.environ['OPENAI_API_KEY'] = config.params["chatgpt_key"]
-
-        config.params["ttsapi_url"] = self.settings.value("ttsapi_url", "")
-        config.params["ttsapi_extra"] = self.settings.value("ttsapi_extra", "pyvideotrans")
-        config.params["ttsapi_voice_role"] = self.settings.value("ttsapi_voice_role", "")
-
-
-
-
-        config.params["gptsovits_extra"] = self.settings.value("gptsovits_extra", "pyvideotrans")
-        config.params["azure_model"] = self.settings.value("azure_model", config.params['azure_model'])
-
-
-        config.params['translate_type'] = self.settings.value("translate_type", config.params['translate_type'])
-        if config.params['translate_type']=='FreeChatGPT':
-            config.params['translate_type']='FreeGoogle'
-        config.params['subtitle_type'] = self.settings.value("subtitle_type", config.params['subtitle_type'], int)
-        config.proxy = self.settings.value("proxy", "", str)
-        config.params['voice_rate'] = self.settings.value("voice_rate", config.params['voice_rate'].replace('%','').replace('+',''), str)
-        config.params['cuda'] = self.settings.value("cuda", False, bool)
-        config.params['only_video'] = self.settings.value("only_video", False, bool)
-        config.params['tts_type'] = self.settings.value("tts_type", config.params['tts_type'], str) or 'edgeTTS'
-
-    # 存储本地数据
-    def save_setting(self):
-        for k,v in config.params.items():
-            self.settings.setValue(k, v)
-        self.settings.setValue("proxy", config.proxy)
-        self.settings.setValue("voice_rate", config.params['voice_rate'].replace('%','').replace('+',''))
-        self.settings.setValue("clone_voicelist", ','.join(config.clone_voicelist))

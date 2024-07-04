@@ -11,8 +11,10 @@ from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme,
 from qfluentwidgets import FluentIcon as FIF
 from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.video2srt import Video2SRT
+from nice_ui.ui.work_srt import WorkSrt
+
 from videotrans.configure import config
-from videotrans.ui.dark.SingalBridge import get_setting_cache
+from nice_ui.ui.SingalBridge import save_setting,get_setting_cache
 
 
 class Widget(QFrame):
@@ -37,9 +39,10 @@ class Window(FluentWindow):
         # create sub interface
         self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self,self.main_setting)
-        self.translate_srt = Widget('字幕翻译', self)
+        self.translate_srt = WorkSrt('字幕翻译', self,self.main_setting)
         self.edit_srt = Widget('字幕编辑', self)
         self.my_story = TableApp('我的创作', self)
+
 
         self.settingInterface = Widget('我的设置', self)
 
@@ -48,12 +51,13 @@ class Window(FluentWindow):
 
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
+
         self.addSubInterface(self.vide2srt, FIF.VIDEO, '音视频转字幕')
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, '字幕翻译')
         self.addSubInterface(self.edit_srt, FIF.EDIT, '字幕编辑')
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
+        self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
 
 
         # add custom widget to bottom
@@ -68,12 +72,12 @@ class Window(FluentWindow):
 
         # add badge to navigation item
         item = self.navigationInterface.widget(self.vide2srt.objectName())
-        InfoBadge.attension(
-            text=9,
-            parent=item.parent(),
-            target=item,
-            position=InfoBadgePosition.NAVIGATION_ITEM
-        )
+        # InfoBadge.attension(
+        #     text=9,
+        #     parent=item.parent(),
+        #     target=item,
+        #     position=InfoBadgePosition.NAVIGATION_ITEM
+        # )
 
         # NOTE: enable acrylic effect
         # self.navigationInterface.setAcrylicEnabled(True)
