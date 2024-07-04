@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
 
 from videotrans.configure.config import result_path
 from videotrans.task.main_worker import QueueConsumer
-from videotrans.ui.dark.SingalBridge import save_setting
+from nice_ui.ui.SingalBridge import save_setting
 from videotrans.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
