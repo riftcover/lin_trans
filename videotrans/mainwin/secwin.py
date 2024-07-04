@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
 
 from videotrans.configure.config import result_path
 from videotrans.task.main_worker import QueueConsumer
+from videotrans.ui.dark.SingalBridge import save_setting
 from videotrans.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
@@ -429,8 +430,6 @@ class SecWindow():
     # 4. 存在字幕，不需要翻译
     # 是否无需翻译，返回True=无需翻译,False=需要翻译
     def dont_translate(self):
-        if self.main.app_mode in ['peiyin', 'hebing']:
-            return True
         if len(config.queue_mp4) < 1:
             return True
         if self.main.translate_language.currentText() == '-' or self.main.source_language.currentText() == '-':
@@ -452,26 +451,26 @@ class SecWindow():
 
     # 检测开始状态并启动
     def check_start(self):
-        proxy = self.main.proxy.text().strip().replace('：', ':')
-        if proxy:
-            if not re.match(r'^(http|sock)', proxy, re.I):
-                proxy = f'http://{proxy}'
-            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup(
-                    '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-一般代理/vpn格式为 http://127.0.0.1:数字端口号
-如果不知道什么是代理请勿随意填写
-ChatGPT等api地址请填写在菜单-设置-对应配置内。
-如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
+#         proxy = self.main.proxy.text().strip().replace('：', ':')
+#         if proxy:
+#             if not re.match(r'^(http|sock)', proxy, re.I):
+#                 proxy = f'http://{proxy}'
+#             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
+#                 question = tools.show_popup(
+#                     '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
+# 一般代理/vpn格式为 http://127.0.0.1:数字端口号
+# 如果不知道什么是代理请勿随意填写
+# ChatGPT等api地址请填写在菜单-设置-对应配置内。
+# 如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+#                 if question != QMessageBox.Yes:
+#                     self.update_status('stop')
+#                     return
 
         # 倒计时
         config.task_countdown = config.settings['countdown_sec']
         config.settings = config.parse_init()
         # 设置或删除代理
-        config.proxy = proxy
+        # config.proxy = proxy
         with contextlib.suppress(Exception):
             if config.proxy:
                 # 设置代理
@@ -481,6 +480,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
                 tools.set_proxy('del')
         # 原始语言
         language_name = self.main.source_language.currentText()
+        config.logger.debug(f'==========language_name:{language_name}')
         config.params['source_language'] = language_name
         config.params['source_language_code'] = language_code(language_name)
         # config.logger.debug(config.params['source_language'])
@@ -544,7 +544,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
             config.params['only_video'] = True
             # start_thread(self.main)  # todo: 起线程
 
-        self.main.save_setting()
+        save_setting(self.main.setting)
 
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
 
@@ -652,7 +652,7 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         config.current_status = type
         # 当type为ing时将列表media_table中的内容清空,queue_mp4清空
         if type == 'ing':
-            TableWindow().clearTable(self.main.media_table)
+            self.main.table.clearTable(self.main.media_table)
             config.queue_mp4 = []
             # QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
 
@@ -783,88 +783,4 @@ ChatGPT等api地址请填写在菜单-设置-对应配置内。
         return True
 
 
-class TableWindow(SecWindow):
-    # 列表的操作
-    @Slot()
-    def select_files(self, ui_table: QTableWidget):
-        # 选择文件
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                                     "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
 
-        if file_paths:
-            for file_path in file_paths:
-                file_name = os.path.basename(file_path)
-                self.add_file_to_table(ui_table, file_name)
-            config.last_opendir = os.path.dirname(file_paths[0])
-            self.main.settings.setValue("last_dir", config.last_opendir)
-            config.queue_mp4 = file_paths
-
-    def add_file_to_table(self, ui_table: QTableWidget, file_name: str):
-        # 添加文件到表格
-
-        row_position = ui_table.rowCount()
-
-        ui_table.insertRow(row_position)
-        file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
-        # file_duration = self.get_video_duration(file_path)
-        delete_button = QPushButton("删除")
-        delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
-        ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
-        ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
-        ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
-        ui_table.setCellWidget(row_position, 3, delete_button)
-
-        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
-
-    @Slot()
-    def delete_file(self, ui_table: QTableWidget, row: int):
-        # Confirm delete action
-
-        ui_table.removeRow(row)
-        # Update the delete buttons' connections
-        self.update_delete_buttons(ui_table)
-
-    def update_delete_buttons(self, ui_table: QTableWidget):
-        for row in range(ui_table.rowCount()):
-            delete_button = ui_table.cellWidget(row, 3)
-            delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
-
-    def get_video_duration(self, file: Path):
-        # Use ffprobe to get video duration
-        cmd = f"ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\""
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        duration_seconds = float(result.stdout.strip())
-        hours, remainder = divmod(duration_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
-
-    def drag_enter_event(self, event: QDragEnterEvent):
-        # 接受拖入
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
-
-    def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
-        # 拖出
-        file_urls = event.mimeData().urls()
-        config.logger.info(f'file_urls: {file_urls}')
-        file_paths = []
-        if file_urls:
-            for url in event.mimeData().urls():
-                file_path = url.toLocalFile()
-                file_paths.append(file_path)
-                config.logger.info(f'file_path: {file_path}')
-                file_name = os.path.basename(file_path)
-                config.logger.info(f'file_name: {file_name}')
-                self.add_file_to_table(ui_table, file_name)
-            config.queue_mp4 = file_paths
-        event.accept()
-        # ui_table.setText("\n".join(self.file_paths))
-
-    def clearTable(self, ui_table: QTableWidget):
-        # 清空表格
-        ui_table.setRowCount(0)

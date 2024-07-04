@@ -39,6 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             parent (QWidget, optional): The parent widget. Defaults to None.
         """
         super(MainWindow, self).__init__(parent)
+        self.settings = QSettings("Locodol", "LinLInTrans")
         self.model_name = None
         self.languagename = None
         self.setupUi(self)
@@ -73,7 +74,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def initUI(self):
-        self.settings = QSettings("Locodol", "LinLInTrans")
+
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         # language code

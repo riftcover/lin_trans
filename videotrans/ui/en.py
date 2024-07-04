@@ -224,6 +224,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addLayout(self.formLayout_5)
 
         self.stackedWidget.addWidget(self.page)
+
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
         self.layoutWidget1 = QWidget(self.page_2)
@@ -658,130 +659,131 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.action.setText(QCoreApplication.translate("MainWindow", u"\u5145\u503c\u7b97\u529b", None))
-        self.action_2.setText(QCoreApplication.translate("MainWindow", u"\u5151\u6362\u7801", None))
+        self.action.setText(QCoreApplication.translate("MainWindow", u"充值算力", None))
+        self.action_2.setText(QCoreApplication.translate("MainWindow", u"兑换码", None))
 
         __sortingEnabled = self.listWidget.isSortingEnabled()
         self.listWidget.setSortingEnabled(False)
         ___qlistwidgetitem = self.listWidget.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"\u97f3\u89c6\u9891\u8f6c\u5b57\u5e55", None));
+        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"音视频转字幕", None));
         ___qlistwidgetitem1 = self.listWidget.item(1)
-        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"\u5b57\u5e55\u7ffb\u8bd1", None));
+        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None));
         ___qlistwidgetitem2 = self.listWidget.item(2)
-        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"\u7f16\u8f91\u5b57\u5e55", None));
+        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"编辑字幕", None));
         ___qlistwidgetitem3 = self.listWidget.item(3)
-        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u521b\u4f5c", None));
+        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"我的创作", None));
         ___qlistwidgetitem4 = self.listWidget.item(4)
-        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u8bbe\u7f6e", None));
+        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"我的设置", None));
         self.listWidget.setSortingEnabled(__sortingEnabled)
 
-        self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u97f3\u89c6\u9891\u6587\u4ef6", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u" \u539f\u59cb\u8bed\u79cd", None))
+        self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
 #if QT_CONFIG(tooltip)
-        self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u8bc6\u522b\u5f15\u64ce", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
-        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.check_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
+        self.check_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
 #endif // QT_CONFIG(tooltip)
-        self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"\u5b57\u5e55\u7ffb\u8bd1", None))
-        self.label_8.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u5f15\u64ce", None))
+        self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
+        self.label_8.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
 #if QT_CONFIG(tooltip)
-        self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bed\u79cd", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
 #if QT_CONFIG(tooltip)
-        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"\u6587\u4ef6\u540d", None));
+        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
         ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None));
         ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"\u7b97\u529b\u6d88\u8017", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None));
         ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
-        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb111", None))
-        self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u5b57\u5e55\u6587\u4ef6", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u" \u539f\u59cb\u8bed\u79cd", None))
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"开始111", None))
+
+        self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"导入字幕文件", None))
+        self.label_5.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
 #if QT_CONFIG(tooltip)
-        self.source_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.source_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_6.setText(QCoreApplication.translate("MainWindow", u"\u8bc6\u522b\u5f15\u64ce", None))
+        self.label_6.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
 #if QT_CONFIG(tooltip)
-        self.source_model_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.source_model_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_9.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u5f15\u64ce", None))
+        self.label_9.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
 #if QT_CONFIG(tooltip)
-        self.translate_type_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.translate_type_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_7.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bed\u79cd", None))
+        self.label_7.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
 #if QT_CONFIG(tooltip)
-        self.translate_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"\u539f\u89c6\u9891\u53d1\u97f3\u6240\u7528\u8bed\u8a00", None))
+        self.translate_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 #endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem4 = self.srt_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"\u6587\u4ef6\u540d", None));
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
         ___qtablewidgetitem5 = self.srt_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"时长", None));
         ___qtablewidgetitem6 = self.srt_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"\u7b97\u529b\u6d88\u8017", None));
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None));
         ___qtablewidgetitem7 = self.srt_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
-        self.startbtn_srt.setText(QCoreApplication.translate("MainWindow", u"\u5f00\u59cb", None))
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+        self.startbtn_srt.setText(QCoreApplication.translate("MainWindow", u"开始", None))
         ___qtablewidgetitem8 = self.eduit_zimu.horizontalHeaderItem(0)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"\u64cd\u4f5c", None));
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"操作", None));
         ___qtablewidgetitem9 = self.eduit_zimu.horizontalHeaderItem(1)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5217", None));
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
         ___qtablewidgetitem10 = self.eduit_zimu.horizontalHeaderItem(2)
-        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"\u65f6\u957f", None));
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"时长", None));
         ___qtablewidgetitem11 = self.eduit_zimu.horizontalHeaderItem(3)
-        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5217", None));
+        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"新建列", None));
         ___qtablewidgetitem12 = self.eduit_zimu.horizontalHeaderItem(4)
-        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"\u539f\u6587", None));
+        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"原文", None));
         ___qtablewidgetitem13 = self.eduit_zimu.horizontalHeaderItem(5)
-        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"\u7f16\u8f91", None));
-        self.label.setText(QCoreApplication.translate("MainWindow", u"\u6211\u7684\u521b\u4f5c\u9875", None))
-        self.label_16.setText(QCoreApplication.translate("MainWindow", u"\u4f7f\u7528\u672c\u5730\u6a21\u578b", None))
-        self.label_17.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">\u6a21\u578b\u5b58\u653e\u8def\u5f84</span></p></body></html>", None))
-        self.mac_fast.setText(QCoreApplication.translate("MainWindow", u"mac\u52a0\u901f", None))
-        self.cuda_fust.setText(QCoreApplication.translate("MainWindow", u"cuda\u52a0\u901f", None))
-        self.setting_model_change_dir.setText(QCoreApplication.translate("MainWindow", u"\u66f4\u6362\u8def\u5f84", None))
+        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"编辑", None));
+        self.label.setText(QCoreApplication.translate("MainWindow", u"我的创作页", None))
+        self.label_16.setText(QCoreApplication.translate("MainWindow", u"使用本地模型", None))
+        self.label_17.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">模型存放路径</span></p></body></html>", None))
+        self.mac_fast.setText(QCoreApplication.translate("MainWindow", u"mac加速", None))
+        self.cuda_fust.setText(QCoreApplication.translate("MainWindow", u"cuda加速", None))
+        self.setting_model_change_dir.setText(QCoreApplication.translate("MainWindow", u"更换路径", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">OpenAI APi Key</span></p></body></html>", None))
-        self.change_dir_9.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
-        self.label_19.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u667a\u8c31AI APi Key</span></p></body></html>", None))
-        self.change_dir_10.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
-        self.label_20.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u767e\u5ea6\u7ffb\u8bd1</span></p></body></html>", None))
-        self.change_dir_11.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
-        self.label_21.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u817e\u8baf\u7ffb\u8bd1</span></p></body></html>", None))
-        self.change_dir_12.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
-        self.label_22.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">Deepl\u7ffb\u8bd1</span></p></body></html>", None))
-        self.change_dir_13.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
-        self.label_23.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">\u4ee3\u7406\u8bbe\u7f6e</span></p></body></html>", None))
+        self.change_dir_9.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.label_19.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">智谱AI APi Key</span></p></body></html>", None))
+        self.change_dir_10.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.label_20.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">百度翻译</span></p></body></html>", None))
+        self.change_dir_11.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.label_21.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">腾讯翻译</span></p></body></html>", None))
+        self.change_dir_12.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.label_22.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">Deepl翻译</span></p></body></html>", None))
+        self.change_dir_13.setText(QCoreApplication.translate("MainWindow", u"保存", None))
+        self.label_23.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">代理设置</span></p></body></html>", None))
 #if QT_CONFIG(tooltip)
-        self.proxy_no.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
+        self.proxy_no.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
 #endif // QT_CONFIG(tooltip)
-        self.proxy_no.setText(QCoreApplication.translate("MainWindow", u"\u65e0\u4ee3\u7406", None))
+        self.proxy_no.setText(QCoreApplication.translate("MainWindow", u"无代理", None))
 #if QT_CONFIG(tooltip)
-        self.proxy_use.setToolTip(QCoreApplication.translate("MainWindow", u"\u5fc5\u987b\u786e\u5b9a\u6709NVIDIA\u663e\u5361\u4e14\u6b63\u786e\u914d\u7f6e\u4e86CUDA\u73af\u5883\uff0c\u5426\u5219\u52ff\u9009", None))
+        self.proxy_use.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
 #endif // QT_CONFIG(tooltip)
-        self.proxy_use.setText(QCoreApplication.translate("MainWindow", u"\u4f7f\u7528\u4ee3\u7406", None))
-        self.change_dir_14.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
+        self.proxy_use.setText(QCoreApplication.translate("MainWindow", u"使用代理", None))
+        self.change_dir_14.setText(QCoreApplication.translate("MainWindow", u"保存", None))
 
         __sortingEnabled1 = self.memu_settling.isSortingEnabled()
         self.memu_settling.setSortingEnabled(False)
         ___qlistwidgetitem5 = self.memu_settling.item(0)
-        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"\u672c\u5730\u6a21\u578b", None));
+        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"本地模型", None));
         ___qlistwidgetitem6 = self.memu_settling.item(1)
-        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"LLM\u914d\u7f6e", None));
+        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"LLM配置", None));
         ___qlistwidgetitem7 = self.memu_settling.item(2)
-        ___qlistwidgetitem7.setText(QCoreApplication.translate("MainWindow", u"\u7ffb\u8bd1\u8bbe\u7f6e", None));
+        ___qlistwidgetitem7.setText(QCoreApplication.translate("MainWindow", u"翻译设置", None));
         ___qlistwidgetitem8 = self.memu_settling.item(3)
-        ___qlistwidgetitem8.setText(QCoreApplication.translate("MainWindow", u"\u4ee3\u7406\u8bbe\u7f6e", None));
+        ___qlistwidgetitem8.setText(QCoreApplication.translate("MainWindow", u"代理设置", None));
         self.memu_settling.setSortingEnabled(__sortingEnabled1)
 
-        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"\u767b\u9646", None))
+        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"登陆", None))
     # retranslateUi
 

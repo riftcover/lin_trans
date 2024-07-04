@@ -162,7 +162,7 @@ class SrtWriter:
         else:
             model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
                                  device="cpu", local_files_only=True, compute_type="int8")
-        segments_generator, info = model.transcribe(self.input_file, language=self.ln)
+        segments_generator, _ = model.transcribe(self.input_file, language=self.ln)
         segments = list(segments_generator)
         # 获取总段数
         total_segments = len(segments)

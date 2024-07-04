@@ -2,7 +2,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication, QMainWindow
 
-from videotrans.ui.en import Ui_MainWindow
+from nice_ui.ui.en import Ui_MainWindow
 
 
 # longin是".ui"文件转换为".py"文件的文件名
@@ -14,6 +14,7 @@ class MyWindow(QMainWindow):  # 需要和ui创建时的窗体一致
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
 
 
 if __name__ == '__main__':

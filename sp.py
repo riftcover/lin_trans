@@ -31,10 +31,10 @@ class StartWindow(QtWidgets.QWidget):
         # 创建并显示窗口B
         # try:
 
-        if not Path("./nostyle.txt").exists():
-
-            with open('./videotrans/styles/style.qss', 'r', encoding='utf-8') as f:
-                app.setStyleSheet(f.read())
+        # if not Path("./nostyle.txt").exists():
+        #
+        #     with open('./videotrans/styles/style.qss', 'r', encoding='utf-8') as f:
+        #         app.setStyleSheet(f.read())
         # apply_stylesheet(app, theme='light_blue.xml', extra=extra)
         st = time.time()
         from videotrans.mainwin.spwin import MainWindow
