@@ -13,9 +13,10 @@ from PySide6.QtGui import QTextCursor, QDesktopServices, QDragEnterEvent, QDropE
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar, \
     QTableWidgetItem, QTableWidget
 
+from nice_ui.ui.my_story import TableApp
 from videotrans.configure.config import result_path
 from videotrans.task.main_worker import QueueConsumer
-from nice_ui.ui.SingalBridge import save_setting
+from nice_ui.ui.SingalBridge import save_setting, DataBridge
 from videotrans.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
@@ -82,6 +83,7 @@ class SecWindow():
     def __init__(self, main=None):
         self.main = main
         self.usetype = None
+        self.data_bridge = DataBridge()
 
     def is_separate_fun(self, state):
         config.params['is_separate'] = True if state else False
@@ -451,6 +453,7 @@ class SecWindow():
 
     # 检测开始状态并启动
     def check_start(self):
+        # todo: proxy设置暂时不做
 #         proxy = self.main.proxy.text().strip().replace('：', ':')
 #         if proxy:
 #             if not re.match(r'^(http|sock)', proxy, re.I):
@@ -570,10 +573,12 @@ class SecWindow():
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker.error.connect(self.handle_error)
+        config.logger.debug('通知消费线程')
         self.worker.queue_ready.connect(self.start_queue_consumer)  # 连接新信号
         self.worker_thread.start()
 
     def start_queue_consumer(self):
+        config.logger.debug(f'检查config.is_consuming:{config.is_consuming}')
         if not config.is_consuming:
             config.logger.debug('开始消费队列')
             self.queue_consumer_thread = QThread()

@@ -4,6 +4,7 @@ import shutil
 import time
 from PySide6.QtCore import QObject, Signal
 
+from nice_ui.ui.SingalBridge import DataBridge
 from videotrans.configure import config
 from videotrans.task.queue_worker import LinQueue
 # from videotrans.task.trans_create import TransCreate
@@ -18,11 +19,13 @@ work_queue = LinQueue()
 class Worker(QObject):
     finished = Signal()
     error = Signal(str)
-    queue_ready = Signal()  # 新信号，用于通知队列准备就绪
+    queue_ready = Signal()  # 用于通知队列准备就绪 # 用于通知主线程更新表格
+
 
     def __init__(self, queue_mp4_copy):
         super().__init__()
         self.queue_mp4_copy = queue_mp4_copy
+        self.data_bridge = config.data_bridge
 
     def do_work(self):
         """
@@ -51,10 +54,14 @@ class Worker(QObject):
                 return
             # 添加到工作队列
             work_queue.to_war_queue_put(obj_format)
+            self.data_bridge.emit_update_table(obj_format)
+            config.logger.debug(f'添加消息完成')
+
+
             # 添加进度按钮 unid
-            set_process(obj_format['unid'], 'add_process', btnkey=obj_format['unid'])
         self.queue_ready.emit()
         self.finished.emit()
+        config.logger.debug('do_work() 线程工作完成')
 
     def stop(self):
         set_process("", 'stop')
@@ -72,8 +79,8 @@ class QueueConsumer(QObject):
     def process_queue(self):
         config.logger.debug('消费线程开始工作')
         config.is_consuming = True
-        # while not self.queue.empty():
         while not config.mp4_to_war_queue.empty():
+            config.logger.debug('消费线程工作中')
             work_queue.consume_mp4_queue()
         config.is_consuming = False
         self.finished.emit()

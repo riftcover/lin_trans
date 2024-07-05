@@ -11,7 +11,7 @@ Base = declarative_base()
 #创建数据表的映射类,表的作用是存储导入文件的数据
 class ToSrt(Base):
     __tablename__ = 'tosrt'
-    id = Column(Integer, primary_key=True,autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     unid = Column(String)  #唯一标识
     path = Column(String)  #文件路径,原始视频或音频路径
     source_language = Column(String)  #原始语言
@@ -21,7 +21,9 @@ class ToSrt(Base):
     cuda = Column(BOOLEAN)
     raw_ext = Column(String)  #原始文件后缀
 
-    def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, target_language, translate_type, cuda):
+    def __init__(self, unid, path,
+                 source_language, source_module_status, source_module_name,
+                 translate_status,cuda, raw_ext):
         self.unid = unid
         self.path = path
         self.source_language = source_language
@@ -29,6 +31,7 @@ class ToSrt(Base):
         self.source_module_name = source_module_name
         self.translate_status = translate_status
         self.cuda = cuda
+        self.raw_ext = raw_ext
 
     def __repr__(self):
         return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',target_language='{self.target_language}',translate_type='{self.translate_type}',cuda='{self.cuda}')>"
@@ -36,7 +39,7 @@ class ToSrt(Base):
 
 class ToTranslation(Base):
     __tablename__ = 'totranslation'
-    id = Column(Integer, primary_key=True,autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     unid = Column(String)  #唯一标识
     path = Column(String)  # 文件路径 原始音频或转换后的视频路径
     source_language = Column(String)  # 原始语言

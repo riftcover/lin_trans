@@ -51,6 +51,9 @@ def save_setting(settings: QSettings):
 class DataBridge(QObject):
     # 定义信号
     checkbox_b_state_changed = Signal(bool)
+    update_table = Signal(dict) # 音视频转文本添加文件的信号，用来更新我的创作页列表
+    whisper_working = Signal(str,str)
+    whisper_finished = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -65,3 +68,17 @@ class DataBridge(QObject):
         if self._checkbox_b_state != value:
             self._checkbox_b_state = value
             self.checkbox_b_state_changed.emit(value)
+
+    def emit_update_table(self, obj_format):
+        config.logger.info('添加任务到列表')
+        self.update_table.emit(obj_format)
+
+    def emit_whisper_working(self, unid, progress):
+        self.whisper_working.emit(unid, progress)
+
+    def emit_whisper_finished(self, status:str):
+        """
+        Args:
+            status: True 成功 False 失败
+        """
+        self.whisper_finished.emit(status)

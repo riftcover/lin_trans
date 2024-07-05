@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from queue import Queue
 
+from nice_ui.ui.SingalBridge import DataBridge
 from utils.log import Logings
 from videotrans.configure import ModelDict
 # logs
@@ -349,6 +350,8 @@ mp4_to_war_queue = Queue()  # 视频转音频队列
 tts_queue = Queue()  # 音频转文本队列
 trans_queue = Queue()
 is_consuming = False
+
+data_bridge = DataBridge()
 
 # 视频转音频队列
 mp4_queue = []

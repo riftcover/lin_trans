@@ -12,6 +12,7 @@ from videotrans.configure import config
 
 import functools
 import sys
+
 logger = Logings().logger
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -84,7 +85,7 @@ def my_transcribe_function(model, audio, *args, **kwargs):
 
 class SrtWriter:
 
-    def __init__(self, input_dirname: Path, raw_basename: str, ln: str):
+    def __init__(self, unid: str, input_dirname: Path, raw_basename: str, ln: str):
         """
 
         Args:
@@ -99,6 +100,8 @@ class SrtWriter:
         self.input_dirname = input_dirname  #文件所在目录
         self.input_file = audio_path  #文件名带上全路径
         self.ln = ln
+        self.data_bridge = config.data_bridge
+        self.unid = unid
 
     # @log_whisper_progress
 
@@ -155,6 +158,7 @@ class SrtWriter:
 
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
         # 使用faster-whisper进行识别
+        logger.info(f"Using Faster-Whisper to generate SRT file")
         # todo: cuda判断
         if cuda_status:
             model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
@@ -171,18 +175,19 @@ class SrtWriter:
             # 输出当前任务进度
             progress = (i / total_segments) * 100
             print(f"Processing segment {i}/{total_segments} ({progress:.2f}% complete)")
+            # self.data_bridge.emit_whisper_working(self.unid, progress)
             # 输出每个段的信息
-            print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+            # print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
         # get srt writer for the current directory
         srt_file_path = os.path.splitext(self.input_file)[0] + ".srt"
 
         # 调用写入SRT文件的函数
         write_srt_file(segments, srt_file_path)
+        logger.info(f"SRT file saved to {srt_file_path}")
+        self.data_bridge.emit_whisper_finished(self.unid)
 
-
-
-    def factory_whisper(self,model_name, system_type: str, cuda_status: bool):
+    def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
         if system_type != 'darwin':
             self.whisper_faster_to_srt(model_name, cuda_status)
 
@@ -198,4 +203,4 @@ if __name__ == '__main__':
     # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # models = 'D:\dcode\lin_trans\models\small.pt'
 
-    SrtWriter(output, raw_basename, 'en').whisper_faster_to_srt()
+    SrtWriter('xxx',output, raw_basename, 'en').whisper_faster_to_srt()
