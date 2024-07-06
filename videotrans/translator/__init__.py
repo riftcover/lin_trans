@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from videotrans.configure import config
+from nice_ui.configure import config
 
 GOOGLE_NAME = "Google"
 MICROSOFT_NAME = "Microsoft"
@@ -317,7 +317,7 @@ def is_allow_translate(*, translate_type=None, show_target=None, only_key=False)
     if lower_translate_type == CHATGPT_NAME and not config.params['chatgpt_key']:
         return config.transobj['chatgptkeymust']
     if lower_translate_type == LOCALLLM_NAME and not config.params['localllm_api']:
-        return '必须填写本地大模型API地址' if config.defaulelang=='zh' else 'Please input Local LLM API url'
+        return '必须填写本地大模型API地址' if config.defaulelang == 'zh' else 'Please input Local LLM API url'
     if lower_translate_type == ZIJIE_NAME and (not config.params['bytehuoshan_model'] or not config.params['bytehuoshan_key']):
         return '必须填写字节火山api_key和推理接入点'
 
@@ -339,7 +339,7 @@ def is_allow_translate(*, translate_type=None, show_target=None, only_key=False)
         return config.transobj['setdeeplx_address']
 
     if lower_translate_type == TRANSAPI_NAME.lower() and not config.params["trans_api_url"]:
-        return "必须配置自定义翻译api的地址" if config.defaulelang=='zh' else "The address of the custom translation api must be configured"
+        return "必须配置自定义翻译api的地址" if config.defaulelang == 'zh' else "The address of the custom translation api must be configured"
 
     if lower_translate_type == OTT_NAME.lower() and not config.params["ott_address"]:
         return config.transobj['setott_address']

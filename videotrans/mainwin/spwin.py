@@ -1,9 +1,8 @@
-import os
 import warnings
 
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtWidgets import QMainWindow
 
 from nice_ui.ui.SingalBridge import get_setting_cache
 
@@ -12,14 +11,12 @@ warnings.filterwarnings('ignore')
 # from videotrans.task.get_role_list import GetRoleWorker
 # from videotrans.util import tools
 
-from videotrans.translator import TRANSNAMES
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans import VERSION
 # from videotrans.component.controlobj import TextGetdir
 from videotrans.ui.en import Ui_MainWindow
 # from videotrans.box import win
 
-from pathlib import Path
 from videotrans.mainwin.secwin import SecWindow
 # from videotrans.mainwin.subform import Subform
 # from videotrans.task.check_update import CheckUpdateWorker
@@ -60,7 +57,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_rolelist = []
         config.params['line_roles'] = {}
         self.setWindowIcon(QIcon(f"{config.rootdir}/videotrans/styles/icon.ico"))
-        self.rawtitle = f"{config.transobj['softname']}{VERSION}  {'使用文档' if config.defaulelang=='zh' else 'Documents'}  pyvideotrans.com "
+        self.rawtitle = f"{config.transobj['softname']}{VERSION}  {'使用文档' if config.defaulelang == 'zh' else 'Documents'}  pyvideotrans.com "
         self.setWindowTitle(self.rawtitle)
         # 检查窗口是否打开
         self.util = SecWindow(self)

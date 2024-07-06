@@ -17,12 +17,31 @@ from typing import TypedDict
 
 import requests
 
-from videotrans.configure import config
-from videotrans.configure.custom_exceptions import VideoProcessingError
+from nice_ui.configure import config
+from nice_ui.configure.custom_exceptions import VideoProcessingError
+
 
 class ModelInfo(TypedDict):
     status: int
     model_name: str
+
+
+class ObjFormat(TypedDict):
+    # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
+    raw_name: str
+    raw_dirname: str
+    raw_basename: str
+    raw_noextname: str
+    raw_ext: str
+    dirname: str
+    basename: str
+    noextname: str
+    ext: str
+    codec_type: str
+    output: str
+    unid: str
+    source_mp4: str
+    linshi_output: str
 
 
 class StartTools:
@@ -99,9 +118,9 @@ def set_proxy(set_val=''):
     if set_val:
         return _extracted_from_set_proxy(set_val)
     if (
-        http_proxy := config.proxy
-        or os.environ.get('http_proxy')
-        or os.environ.get('https_proxy')
+            http_proxy := config.proxy
+                          or os.environ.get('http_proxy')
+                          or os.environ.get('https_proxy')
     ):
         if not http_proxy.startswith("http") and not http_proxy.startswith('sock'):
             http_proxy = f"http://{http_proxy}"
@@ -853,7 +872,7 @@ def is_novoice_mp4(novoice_mp4, noextname):
             last_size = current_size
 
         if noextname not in config.queue_novice:
-            msg = f"{noextname} split no voice videoerror:{config.queue_novice=}"
+            msg = f"{noextname} split no voice videoerror:{ config.queue_novice=}"
             raise ValueError(msg)
         if config.queue_novice[noextname] == 'error':
             msg = f"{noextname} split no voice videoerror"
@@ -1166,7 +1185,7 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
             shutil.rmtree(config_dir, ignore_errors=True)
 
 
-def detect_media_type(file_path:Path):
+def detect_media_type(file_path: Path):
     # 判断媒体文件是音频还是视频
     try:
         # 使用ffprobe获取文件信息
@@ -1199,7 +1218,7 @@ def detect_media_type(file_path:Path):
 
 
 # 格式化视频信息
-def format_video(name:Path, out=None) -> dict:
+def format_video(name: Path, out=None) -> ObjFormat:
     """
     格式化视频信息
 
@@ -1237,13 +1256,16 @@ def format_video(name:Path, out=None) -> dict:
     h = hashlib.md5()
     h.update(name.encode('utf-8'))
     h.update(config.params.get('source_module_name').encode('utf-8'))
+    current_time = str(time.time()).encode('utf-8')
+    h.update(current_time)
+
     unid = h.hexdigest()
 
     output_path = Path(f'{out}/{unid}')
     config.logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
-    media_type =detect_media_type(name)
+    media_type = detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
     obj = {
         # 原始视频路径
@@ -1274,7 +1296,6 @@ def format_video(name:Path, out=None) -> dict:
         "linshi_output": ""
     }
     obj['linshi_output'] = obj['output']
-
 
     if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
         # 符合规则，原始和目标相同
@@ -1466,4 +1487,3 @@ if __name__ == '__main__':
     for it in job_video:
         # print(format_video(it.replace('\\', '/'), config.params['target_dir']))
         print(detect_media_type(it))
-

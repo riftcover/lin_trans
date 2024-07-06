@@ -1,4 +1,5 @@
-from videotrans.configure import config
+from nice_ui.configure import config
+
 
 def language_code(language_name:str) -> str:
     for k,v in config.langlist.items():

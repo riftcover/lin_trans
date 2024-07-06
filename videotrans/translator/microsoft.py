@@ -2,7 +2,7 @@
 import os
 import time
 import requests
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 
 
@@ -44,7 +44,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
     if pro:
         proxies={"https":pro,"http":pro}
     while 1:
-        if config.exit_soft or (config.current_status!='ing' and config.box_trans!='ing'):
+        if config.exit_soft or (config.current_status != 'ing' and config.box_trans != 'ing'):
             return
         if iter_num >= config.settings['retries']:
             err=f'{err}'
@@ -72,7 +72,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
         try:
             auth=requests.get('https://edge.microsoft.com/translate/auth',headers=headers,proxies=proxies)
         except:
-            err='连接微软翻译失败，请更换其他翻译渠道' if config.defaulelang=='zh' else 'Failed to connect to Microsoft Translate, please change to another translation channel'
+            err='连接微软翻译失败，请更换其他翻译渠道' if config.defaulelang == 'zh' else 'Failed to connect to Microsoft Translate, please change to another translation channel'
             continue
 
         for i,it in enumerate(split_source_text):
@@ -96,7 +96,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 try:
                     re_result=response.json()
                 except Exception:
-                    err=config.transobj['notjson']+response.text
+                    err= config.transobj['notjson'] + response.text
                     break
 
                 if len(re_result)==0 or len(re_result[0]['translations'])==0:
@@ -113,7 +113,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
                     tools.set_process( f'{result[0]}\n\n' if split_size==1 else "\n\n".join(result), 'subtitle')
-                    tools.set_process(config.transobj['starttrans']+f' {i*split_size+1} ',btnkey=inst.init['btnkey'] if inst else "")
+                    tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process("\n\n".join(result), func_name="set_fanyi")
                 result_length=len(result)

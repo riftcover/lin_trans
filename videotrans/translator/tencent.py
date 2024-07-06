@@ -5,7 +5,7 @@ from tencentcloud.common import credential
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
 from tencentcloud.tmt.v20180321 import tmt_client, models
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 
 def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source_code=""):
@@ -29,7 +29,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
     iter_num = 0  # 当前循环次数，如果 大于 config.settings.retries 出错
     err = ""
     while 1:
-        if config.exit_soft or (config.current_status!='ing' and config.box_trans!='ing'):
+        if config.exit_soft or (config.current_status != 'ing' and config.box_trans != 'ing'):
             return
         if iter_num >= config.settings['retries']:
             err = f'{iter_num}{"次重试后依然出错" if config.defaulelang == "zh" else " retries after error persists "}:{err}'
@@ -93,7 +93,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
                     tools.set_process( f'{result[0]}\n\n' if split_size==1 else "\n\n".join(result), 'subtitle')
-                    tools.set_process(config.transobj['starttrans']+f' {i*split_size+1} ',btnkey=inst.init['btnkey'] if inst else "")
+                    tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process("\n\n".join(result), func_name="set_fanyi")
                 result_length = len(result)

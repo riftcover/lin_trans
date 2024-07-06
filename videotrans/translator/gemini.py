@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re,os
+import os
 import time
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
@@ -133,12 +133,12 @@ def trans(text_list, target_language="English", *, set_p=True, inst=None, stop=0
 
 
     prompt = config.params['gemini_template']
-    with open(config.rootdir+"/videotrans/gemini.txt",'r',encoding="utf-8") as f:
+    with open(config.rootdir + "/videotrans/gemini.txt", 'r', encoding="utf-8") as f:
         prompt=f.read()
     prompt=prompt.replace('{lang}', target_language)
 
     # 切割为每次翻译多少行，值在 set.ini中设定，默认10
-    end_point="。" if config.defaulelang=='zh' else ' . '
+    end_point="。" if config.defaulelang == 'zh' else ' . '
     # 整理待翻译的文字为 List[str]
     if not is_srt:
         source_text = [t.strip() for t in text_list.strip().split("\n") if t.strip()]
@@ -208,7 +208,7 @@ def trans(text_list, target_language="English", *, set_p=True, inst=None, stop=0
                         target_text["srts"].append(result_item.strip().rstrip(end_point))
                         if set_p:
                             tools.set_process(result_item + "\n", 'subtitle')
-                            tools.set_process(config.transobj['starttrans'] + f' {i * split_size + x + 1} ',btnkey=inst.init['btnkey'] if inst else "")
+                            tools.set_process(config.transobj['starttrans'] + f' {i * split_size + x + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                         else:
                             tools.set_process_box(text=result_item + "\n", func_name="fanyi",type="set")
 

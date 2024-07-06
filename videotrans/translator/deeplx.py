@@ -3,7 +3,7 @@ import os
 import re
 import time
 import requests
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 shound_del=False
 def update_proxy(type='set'):
@@ -32,7 +32,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
     set_p:
         是否实时输出日志，主界面中需要
     """
-    url=config.params['deeplx_address'].strip().rstrip('/').replace('/translate','')+'/translate'
+    url= config.params['deeplx_address'].strip().rstrip('/').replace('/translate', '') + '/translate'
     if not url.startswith('http'):
         url=f"http://{url}"
     proxies=None
@@ -46,7 +46,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
     iter_num = 0  # 当前循环次数，如果 大于 config.settings.retries 出错
     err = ""
     while 1:
-        if config.exit_soft or (config.current_status!='ing' and config.box_trans!='ing'):
+        if config.exit_soft or (config.current_status != 'ing' and config.box_trans != 'ing'):
             return
         if iter_num >= config.settings['retries']:
             err=f'{iter_num}{"次重试后依然出错，请更换翻译渠道" if config.defaulelang == "zh" else " retries after error persists "}:{err}'
@@ -88,7 +88,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 try:
                     result = response.json()
                 except Exception as e:
-                    err=config.transobj['notjson']+response.text
+                    err= config.transobj['notjson'] + response.text
                     break
                 result=tools.cleartext(result['data'])
                 if not result:
@@ -105,7 +105,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
                     tools.set_process( f'{result[0]}\n\n' if split_size==1 else "\n\n".join(result), 'subtitle')
-                    tools.set_process(config.transobj['starttrans']+f' {i*split_size+1} ',btnkey=inst.init['btnkey'] if inst else "")
+                    tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process("\n\n".join(result), func_name="set_fanyi")
 

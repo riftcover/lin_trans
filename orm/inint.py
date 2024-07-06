@@ -1,11 +1,8 @@
-from pathlib import Path
-
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import sessionmaker
 
-from videotrans.configure.config import root_path
+from nice_ui.configure.config import root_path
 
 # 使用sqlalchemy创建一个sqlite3数据库
 

@@ -1,8 +1,8 @@
 import os
 
-from PySide6.QtCore import Signal, Slot, QObject, QSettings
+from PySide6.QtCore import Signal, QObject, QSettings
 
-from videotrans.configure import config
+from nice_ui.configure import config
 
 
 def get_setting_cache(settings: QSettings):
@@ -45,7 +45,7 @@ def save_setting(settings: QSettings):
     for k, v in config.params.items():
         settings.setValue(k, v)
     settings.setValue("proxy", config.proxy)
-    settings.setValue("voice_rate", config.params['voice_rate'].replace('%','').replace('+',''))
+    settings.setValue("voice_rate", config.params['voice_rate'].replace('%', '').replace('+', ''))
     settings.setValue("clone_voicelist", ','.join(config.clone_voicelist))
 
 class DataBridge(QObject):

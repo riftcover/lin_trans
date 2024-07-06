@@ -8,8 +8,8 @@ from queue import Queue
 
 from nice_ui.ui.SingalBridge import DataBridge
 from utils.log import Logings
-from videotrans.configure import ModelDict
-# logs
+from nice_ui.configure import ModelDict
+
 logger = Logings().logger
 
 def get_executable_path():

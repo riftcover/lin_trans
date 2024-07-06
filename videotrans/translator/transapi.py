@@ -2,11 +2,10 @@
 import os
 import re
 import time
-import urllib
 from urllib.parse import quote
 
 import requests
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 shound_del=False
 def update_proxy(type='set'):
@@ -36,7 +35,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
         是否实时输出日志，主界面中需要
     """
     # 翻译后的文本
-    url=config.params['trans_api_url'].strip().rstrip('/').lower()
+    url= config.params['trans_api_url'].strip().rstrip('/').lower()
     if not url:
         raise Exception(f'Please input your api')
     if not url.startswith('http'):
@@ -53,7 +52,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
     iter_num = 0  # 当前循环次数，如果 大于 config.settings.retries 出错
     err = ""
     while 1:
-        if config.exit_soft or (config.current_status!='ing' and config.box_trans!='ing' and not is_test):
+        if config.exit_soft or (config.current_status != 'ing' and config.box_trans != 'ing' and not is_test):
             return
         if iter_num >= config.settings['retries']:
             err =f'{iter_num}{"次重试后依然出错" if config.defaulelang == "zh" else " retries after error persists "}:{err}'
@@ -85,7 +84,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
 
                 data = {
                     "text": quote("\n".join(it)),
-                    "secret":config.params['trans_secret'],
+                    "secret": config.params['trans_secret'],
                     "source_language": 'zh' if source_code.startswith('zh') else source_code,
                     "target_language": 'zh' if target_language.startswith('zh') else  target_language
                 }
@@ -100,7 +99,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 try:
                     result = response.json()
                 except Exception as e:
-                    err=config.transobj['notjson']+response.text
+                    err= config.transobj['notjson'] + response.text
                     break
                 if result["code"]!=0:
                     err=result['msg']
@@ -120,7 +119,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
                     tools.set_process( f'{result}\n\n')
-                    tools.set_process(config.transobj['starttrans']+f' {i*split_size+1} ',btnkey=inst.init['btnkey'] if inst else "")
+                    tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process(result+"\n\n", func_name="set_fanyi")
                 result_length = len(result)

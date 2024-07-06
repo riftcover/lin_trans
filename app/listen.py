@@ -1,17 +1,16 @@
+import functools
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import whisper
-from whisper.utils import get_writer, format_timestamp, make_safe
 from faster_whisper import WhisperModel
+from whisper.utils import get_writer, format_timestamp, make_safe
 
+from nice_ui.configure import config
 from utils.file_utils import write_srt_file
 from utils.log import Logings
-from videotrans.configure import config
-
-import functools
-import sys
 
 logger = Logings().logger
 

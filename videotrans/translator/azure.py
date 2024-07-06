@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
-import re
 import time
 import httpx
 from openai import AzureOpenAI, APIError
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util import tools
 
 
@@ -77,11 +76,11 @@ def trans(text_list, target_language="English", *, set_p=True,inst=None,stop=0,s
     split_size = int(config.settings['trans_thread'])
 
     prompt = config.params['azure_template'].replace('{lang}', target_language)
-    with open(config.rootdir+"/videotrans/azure.txt",'r',encoding="utf-8") as f:
+    with open(config.rootdir + "/videotrans/azure.txt", 'r', encoding="utf-8") as f:
         prompt=f.read()
     prompt=prompt.replace('{lang}', target_language)
 
-    end_point="。" if config.defaulelang=='zh' else '. '
+    end_point="。" if config.defaulelang == 'zh' else '. '
     # 整理待翻译的文字为 List[str]
     if not is_srt:
         source_text = [t.strip() for t in text_list.strip().split("\n") if t.strip()]
@@ -94,7 +93,7 @@ def trans(text_list, target_language="English", *, set_p=True,inst=None,stop=0,s
 
     response=None
     while 1:
-        if config.exit_soft or (config.current_status!='ing' and config.box_trans!='ing' and not is_test):
+        if config.exit_soft or (config.current_status != 'ing' and config.box_trans != 'ing' and not is_test):
             return
         if iter_num >= config.settings['retries']:
             err=f'{iter_num}{"次重试后依然出错" if config.defaulelang == "zh" else " retries after error persists "}:{err}'
@@ -148,7 +147,7 @@ def trans(text_list, target_language="English", *, set_p=True,inst=None,stop=0,s
                         target_text["srts"].append(result_item.strip().rstrip(end_point))
                         if set_p:
                             tools.set_process(result_item + "\n", 'subtitle')
-                            tools.set_process(config.transobj['starttrans'] + f' {i * split_size + x+1} ',btnkey=inst.init['btnkey'] if inst else "")
+                            tools.set_process(config.transobj['starttrans'] + f' {i * split_size + x + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                         else:
                             tools.set_process_box(text=result_item + "\n", func_name="fanyi",type="set")
                 if len(sep_res)<len(it):

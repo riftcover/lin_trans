@@ -1,12 +1,14 @@
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QFrame, QMainWindow, QLabel, QProgressBar
-from PySide6.QtCore import Qt, QMargins
-from qfluentwidgets import (TableWidget, setTheme, Theme, CheckBox, ProgressBar, ComboBox,
-                            PushButton, LineEdit, InfoBar, InfoBarPosition, FluentIcon,
-                            CardWidget, IconWidget, TransparentToolButton, FlowLayout, ProgressBar, SearchLineEdit)
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QProgressBar
+from PySide6.QtCore import Qt
+from qfluentwidgets import (TableWidget, CheckBox, ComboBox,
+                            PushButton, InfoBar, InfoBarPosition, FluentIcon,
+                            CardWidget, SearchLineEdit)
 
 from orm.queries import ToSrtOrm
-from videotrans.configure import config
+from nice_ui.configure import config
+
+
 class TableApp(CardWidget):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
@@ -42,9 +44,6 @@ class TableApp(CardWidget):
         self.searchInput.setPlaceholderText("搜索文件")
         self.searchInput.textChanged.connect(self.searchFiles)
 
-
-
-
         topLayout.addWidget(self.selectAllBtn)
         topLayout.addWidget(self.addRowBtn)
         topLayout.addStretch()
@@ -77,7 +76,7 @@ class TableApp(CardWidget):
             self.table.cellWidget(row, 0).setChecked(state == Qt.Checked)
 
     def addNewRow(self):
-        self.addRow_init_all("新文件","tt1")
+        self.addRow_init_all("新文件", "tt1")
         InfoBar.success(
             title='成功',
             content="新文件已添加",
@@ -105,7 +104,6 @@ class TableApp(CardWidget):
         fileName.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(rowPosition, 1, fileName)
 
-
         # 进度条
         progressBar = QProgressBar()
         progressBar.setRange(0, 100)
@@ -118,15 +116,14 @@ class TableApp(CardWidget):
         file_unid.setText(unid)
         self.table.setCellWidget(rowPosition, 6, file_unid)
 
-
-    def table_row_working(self, unid, progress:float):
+    def table_row_working(self, unid, progress: float):
         """
         更新指定行的进度条
         :param unid: 第7列（索引为6）的标识符
         :param progress: 进度值 (0-100)
         """
 
-        if self.row_cache:
+        if unid in self.row_cache:
             row = self.row_cache[unid]
             config.logger.debug(f"找到文件:{unid}的行索引:{row}")
         else:
@@ -166,7 +163,7 @@ class TableApp(CardWidget):
         :param data: 要设置的新数据
         """
         config.logger.info(f"文件处理完成:{unid},更新表单")
-        if self.row_cache:
+        if unid in self.row_cache:
             row = self.row_cache[unid]
             item = self.table.cellWidget(row, 6)
             progress_bar = self.table.cellWidget(row, 2)
@@ -190,7 +187,7 @@ class TableApp(CardWidget):
                 deleteBtn.clicked.connect(lambda: self._delete_row(row))
                 self.table.setCellWidget(row, 5, deleteBtn)
 
-    def addRow_init_all(self, filename,unid):
+    def addRow_init_all(self, filename, unid):
         rowPosition = self.table.rowCount()
         self.table.insertRow(rowPosition)
         # 复选框
@@ -202,7 +199,6 @@ class TableApp(CardWidget):
         fileName.setText(filename)
         fileName.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(rowPosition, 1, fileName)
-
 
         # 进度条
         progressBar = QProgressBar()
@@ -233,15 +229,19 @@ class TableApp(CardWidget):
         file_unid.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(rowPosition, 6, file_unid)
 
-
     def _start_row(self, row):
         # todo 从数据库中获取数据，添加到消费队列里
-
         pass
+
     def _delete_row(self, row):
         self.table.removeRow(row)
-        unid_item = self.table.item(row, 6)
+
+        # 在数据库中删除对应数据
+        unid_item = self.table.cellWidget(row, 6)
         ToSrtOrm().delete_to_srt(unid_item.text())
+
+        # 清除缓存索引
+        self.row_cache.clear()
         InfoBar.success(
             title='成功',
             content="文件已删除",
@@ -260,12 +260,15 @@ class TableApp(CardWidget):
             else:
                 self.table.setRowHidden(row, True)
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('文件处理')
         self.setGeometry(100, 100, 900, 600)
         self.setCentralWidget(TableApp("文件处理"))
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()

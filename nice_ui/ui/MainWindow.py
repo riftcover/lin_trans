@@ -1,20 +1,18 @@
 # coding:utf-8
-import os
 import sys
 
 from PySide6.QtCore import Qt, QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
-from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme, FluentWindow,
-                            NavigationAvatarWidget, qrouter, SubtitleLabel, setFont, InfoBadge,
-                            InfoBadgePosition, FluentBackgroundTheme)
+from qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow,
+                            NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme)
 from qfluentwidgets import FluentIcon as FIF
 from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 
-from videotrans.configure import config
-from nice_ui.ui.SingalBridge import save_setting,get_setting_cache
+from nice_ui.configure import config
+from nice_ui.ui.SingalBridge import get_setting_cache
 
 
 class Widget(QFrame):

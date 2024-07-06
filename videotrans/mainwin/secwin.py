@@ -2,32 +2,24 @@ import contextlib
 import copy
 import json
 import os
-import re
-import subprocess
 import warnings
-from pathlib import Path
 
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, Qt, Slot, QThread
-from PySide6.QtGui import QTextCursor, QDesktopServices, QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar, \
-    QTableWidgetItem, QTableWidget
+from PySide6.QtCore import QUrl, Qt, QThread
+from PySide6.QtGui import QTextCursor, QDesktopServices
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
 
-from nice_ui.ui.my_story import TableApp
-from videotrans.configure.config import result_path
-from videotrans.task.main_worker import QueueConsumer
 from nice_ui.ui.SingalBridge import save_setting, DataBridge
+from nice_ui.task.main_worker import QueueConsumer
 from videotrans.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
-from videotrans.task.main_worker import Worker
-from videotrans.task.job import start_thread
+from nice_ui.task.main_worker import Worker
 from videotrans.util import tools
 from videotrans import translator
-from videotrans.configure import config
+from nice_ui.configure import config
 from videotrans.util.tools import StartTools
 
-# from qfluentwidgets import PrimaryPushButton
 
 start_tools = StartTools()
 

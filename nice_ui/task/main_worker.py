@@ -1,17 +1,12 @@
-import copy
-import os
-import shutil
-import time
+import re
+
 from PySide6.QtCore import QObject, Signal
 
-from nice_ui.ui.SingalBridge import DataBridge
-from videotrans.configure import config
-from videotrans.task.queue_worker import LinQueue
-# from videotrans.task.trans_create import TransCreate
+from orm.queries import ToSrtOrm
+from nice_ui.configure import config
+from nice_ui.task.queue_worker import LinQueue
 from videotrans.util import tools
-from videotrans.util.tools import set_process, send_notification
-from pathlib import Path
-import re
+from videotrans.util.tools import set_process
 
 work_queue = LinQueue()
 
@@ -54,11 +49,14 @@ class Worker(QObject):
                 return
             # 添加到工作队列
             work_queue.to_war_queue_put(obj_format)
+            # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
-            config.logger.debug(f'添加消息完成')
+            # 添加消息到数据库
+            ToSrtOrm().add_to_srt(obj_format['unid'], obj_format['raw_name'],
+                                  config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
+                                  config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'])
+            config.logger.debug('添加消息完成')
 
-
-            # 添加进度按钮 unid
         self.queue_ready.emit()
         self.finished.emit()
         config.logger.debug('do_work() 线程工作完成')
