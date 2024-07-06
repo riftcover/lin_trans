@@ -382,18 +382,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # except Exception as e:
         #     print('threaqd-----' + str(e))
 
-    def action_page1(self):
-        self.translate_language.currentTextChanged.connect(self.util.set_voice_role)
-        self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
-        self.startbtn_1.clicked.connect(self.util.check_start)
-        self.act_btn_get_video()
-
-    def act_btn_get_video(self):
-        # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
-        self.btn_get_video.setAcceptDrops(True)
-        self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
+    # def action_page1(self):
+    #     self.translate_language.currentTextChanged.connect(self.util.set_voice_role)
+    #     self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
+    #     self.startbtn_1.clicked.connect(self.util.check_start)
+    #     self.act_btn_get_video()
+    #
+    # def act_btn_get_video(self):
+    #     # 选择文件,并显示路径
+    #     self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
+    #     self.btn_get_video.setAcceptDrops(True)
+    #     self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
+    #     self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
 
     # def closeEvent(self, event):

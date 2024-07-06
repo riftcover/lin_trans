@@ -279,7 +279,7 @@ class TableWindow:
                 self.add_file_to_table(ui_table, file_name)
             config.last_opendir = os.path.dirname(file_paths[0])
             self.setting.setValue("last_dir", config.last_opendir)
-            config.queue_mp4 = file_paths
+            config.queue_mp4.extend(file_paths)
 
     def add_file_to_table(self, ui_table: QTableWidget, file_name: str):
         # 添加文件到表格
@@ -341,7 +341,7 @@ class TableWindow:
                 file_name = os.path.basename(file_path)
                 config.logger.info(f'file_name: {file_name}')
                 self.add_file_to_table(ui_table, file_name)
-            config.queue_mp4 = file_paths
+            config.queue_mp4.extend(file_paths)
         event.accept()
         # ui_table.setText("\n".join(self.file_paths))
 

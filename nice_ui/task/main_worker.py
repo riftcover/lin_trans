@@ -25,10 +25,9 @@ class Worker(QObject):
         """
         点击开始按钮完成后,将需处理的文件放入队列中
         """
-        config.logger.debug('线程开始工作')
+        config.logger.debug(f'do_work()线程开始工作:{self.queue_mp4_copy}')
         for it in self.queue_mp4_copy:
-            config.logger.debug('线程工作中')
-            config.logger.debug(f'it:{it}')
+            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个视频信息
             obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
             config.logger.debug(f'target_dir:{config.params["target_dir"]}')

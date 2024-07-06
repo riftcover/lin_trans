@@ -165,5 +165,5 @@ dmypy.json
 !/xc.py
 !/xd.py
 !/result/
-/ffmpeg_output
-/orm/linlin.db
+ffmpeg_output/
+orm/linlin.db
