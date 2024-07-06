@@ -3,6 +3,7 @@ from utils.log import Logings
 
 logger = Logings().logger
 
+
 def write_srt_file(segment, srt_file_path):
     with open(srt_file_path, 'a', encoding='utf-8') as srt_file:
         start_time = segment.start

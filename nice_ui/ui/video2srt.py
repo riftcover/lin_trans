@@ -250,13 +250,13 @@ class Video2SRT(QWidget):
         self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
         # endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
+        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None))
         ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None))
         ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None))
         ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None));
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None))
         self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"开始", None))
 
 

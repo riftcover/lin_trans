@@ -110,8 +110,6 @@ class SrtWriter:
         :param model_name:
         :return:
         """
-
-        # # todo:添加语言参数
         logger.debug(f'download_root:{config.root_path}/models')
         logger.debug(f'name:{model_name}')
         model = whisper.load_model(name=model_name, download_root=f'{config.root_path}/models/whisper')

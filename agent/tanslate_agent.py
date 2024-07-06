@@ -11,9 +11,7 @@ logger = Logings().logger
 
 class AgentClient:
 
-
     def zhipuai_client(self, text: str) -> str:
-
         client = ZhipuAI(api_key=load_api_key_from_config('zhipu_key'))
 
         response = client.chat.completions.create(
@@ -39,11 +37,10 @@ class AgentClient:
             tools=[{"type": "web_search", "web_search": {"search_result": True}}]
         )
 
-
         return response.choices[0].message.content
 
 
-def translate_document(in_document:str, out_document:str, chunk_size:int=99):
+def translate_document(in_document: str, out_document: str, chunk_size: int = 99):
     chat_client = AgentClient()
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()

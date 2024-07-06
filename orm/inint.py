@@ -22,9 +22,8 @@ class ToSrt(Base):
     cuda = Column(BOOLEAN)
     raw_ext = Column(String)  #原始文件后缀
 
-    def __init__(self, unid, path,
-                 source_language, source_module_status, source_module_name,
-                 translate_status,cuda, raw_ext):
+    def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, **kw: Any):
+        super().__init__(**kw)
         self.unid = unid
         self.path = path
         self.source_language = source_language
@@ -47,7 +46,8 @@ class ToTranslation(Base):
     target_language = Column(String)  #目标语言
     translate_type = Column(String)  #翻译渠道
 
-    def __init__(self, unid, path, source_language, target_language, translate_type):
+    def __init__(self, unid, path, source_language, target_language, translate_type, **kw: Any):
+        super().__init__(**kw)
         self.unid = unid
         self.path = path
         self.source_language = source_language

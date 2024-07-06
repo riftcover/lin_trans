@@ -81,7 +81,3 @@ class QueueConsumer(QObject):
             work_queue.consume_mp4_queue()
         config.is_consuming = False
         self.finished.emit()
-
-
-if __name__ == '__main__':
-    Worker().do_work()

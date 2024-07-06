@@ -7,7 +7,7 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
-class ToSrtOrm():
+class ToSrtOrm:
     # 添加ToSrt数据
     def add_to_srt(self, unid, path,
                    source_language, source_module_status, source_module_name,
@@ -51,7 +51,7 @@ class ToSrtOrm():
 
 # 添加
 
-class ToTranslationOrm():
+class ToTranslationOrm:
     # 添加ToTranslation数据
     def add_to_translation(self, unid, path, source_language, target_language, translate_type):
         new_entry = ToTranslation(unid=unid, path=path, source_language=source_language, target_language=target_language, translate_type=translate_type)
