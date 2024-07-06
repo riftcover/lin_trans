@@ -65,7 +65,8 @@ class TableApp(CardWidget):
         self.table.setColumnWidth(4, 100)
         self.table.setColumnWidth(5, 100)
         self.table.setColumnWidth(6, 100)
-
+        # 为啥没有呢
+        # 设置表头
         self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
