@@ -1,11 +1,11 @@
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QFrame, QMainWindow, QLabel
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QFrame, QMainWindow, QLabel, QProgressBar
 from PySide6.QtCore import Qt, QMargins
 from qfluentwidgets import (TableWidget, setTheme, Theme, CheckBox, ProgressBar, ComboBox,
                             PushButton, LineEdit, InfoBar, InfoBarPosition, FluentIcon,
                             CardWidget, IconWidget, TransparentToolButton, FlowLayout, ProgressBar, SearchLineEdit)
 
-
+from orm.queries import ToSrtOrm
 from videotrans.configure import config
 class TableApp(CardWidget):
     def __init__(self, text: str, parent=None):
@@ -41,6 +41,8 @@ class TableApp(CardWidget):
         self.searchInput = SearchLineEdit()
         self.searchInput.setPlaceholderText("搜索文件")
         self.searchInput.textChanged.connect(self.searchFiles)
+
+
 
 
         topLayout.addWidget(self.selectAllBtn)
@@ -105,7 +107,7 @@ class TableApp(CardWidget):
 
 
         # 进度条
-        progressBar = ProgressBar()
+        progressBar = QProgressBar()
         progressBar.setRange(0, 100)
         progressBar.setValue(0)
         progressBar.setTextVisible(False)
@@ -116,7 +118,8 @@ class TableApp(CardWidget):
         file_unid.setText(unid)
         self.table.setCellWidget(rowPosition, 6, file_unid)
 
-    def table_row_working(self, unid, progress):
+
+    def table_row_working(self, unid, progress:float):
         """
         更新指定行的进度条
         :param unid: 第7列（索引为6）的标识符
@@ -134,18 +137,22 @@ class TableApp(CardWidget):
         # 根据第7列中名称,更新该行数据
         progress_bar = self.table.cellWidget(row, 2)
         if isinstance(progress_bar, ProgressBar):
+            config.logger.info(f"更新文件:{unid}的进度条:{progress}")
             progress_bar.setValue(progress)
 
-    def find_row_by_identifier(self, identifier):
+
+    def find_row_by_identifier(self, unid):
         """
         根据标识符查找对应的行
-        :param identifier: 第7列（索引为6）的标识符
+        :param unid: 第7列（索引为6）的标识符
         :return: 找到的行索引，如果没找到返回None
         """
+        config.logger.info(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
         for row in range(self.table.rowCount()):
-            item = self.table.item(row, 6)
-            if item and item.text() == identifier:
+            item = self.table.cellWidget(row, 6)
+            if item and item.text() == unid:
                 return row
+        config.logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
         return None
 
     def table_row_finish(self, unid):
@@ -155,13 +162,15 @@ class TableApp(CardWidget):
         :param column: 要更新的列索引
         :param data: 要设置的新数据
         """
-        config.logger.info(f"文件处理完成:{unid},开始更新表单")
+        config.logger.info(f"文件处理完成:{unid},更新表单")
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, 6)
             if unid in item.text():
                 # 开始按钮
+                # todo 目前是任务完成显示按钮,需要修改其他中断的要显示
                 startBtn = PushButton("开始")
                 startBtn.setIcon(FluentIcon.PLAY)
+                startBtn.clicked.connect(lambda: self._start_row(row))
                 self.table.setCellWidget(row, 3, startBtn)
 
                 # 导出下拉框
@@ -172,7 +181,7 @@ class TableApp(CardWidget):
                 # 删除按钮
                 deleteBtn = PushButton("删除")
                 deleteBtn.setIcon(FluentIcon.DELETE)
-                deleteBtn.clicked.connect(lambda: self.deleteRow(row))
+                deleteBtn.clicked.connect(lambda: self._delete_row(row))
                 self.table.setCellWidget(row, 5, deleteBtn)
 
     def addRow_init_all(self, filename,unid):
@@ -190,7 +199,7 @@ class TableApp(CardWidget):
 
 
         # 进度条
-        progressBar = ProgressBar()
+        progressBar = QProgressBar()
         progressBar.setRange(0, 100)
         progressBar.setValue(0)
         progressBar.setTextVisible(False)
@@ -209,7 +218,7 @@ class TableApp(CardWidget):
         # 删除按钮
         deleteBtn = PushButton("删除")
         deleteBtn.setIcon(FluentIcon.DELETE)
-        deleteBtn.clicked.connect(lambda: self.deleteRow(rowPosition))
+        deleteBtn.clicked.connect(lambda: self._delete_row(rowPosition))
         self.table.setCellWidget(rowPosition, 5, deleteBtn)
 
         # 隐藏列数据
@@ -219,8 +228,14 @@ class TableApp(CardWidget):
         self.table.setCellWidget(rowPosition, 6, file_unid)
 
 
-    def deleteRow(self, row):
+    def _start_row(self, row):
+        # todo 从数据库中获取数据，添加到消费队列里
+
+        pass
+    def _delete_row(self, row):
         self.table.removeRow(row)
+        unid_item = self.table.item(row, 6)
+        ToSrtOrm().delete_to_srt(unid_item.text())
         InfoBar.success(
             title='成功',
             content="文件已删除",

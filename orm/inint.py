@@ -1,7 +1,11 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import sessionmaker
+
+from videotrans.configure.config import root_path
 
 # 使用sqlalchemy创建一个sqlite3数据库
 
@@ -58,7 +62,9 @@ class ToTranslation(Base):
 
 
 # 创建数据库引擎
-engine = create_engine('sqlite:///linlin.db')
+
+engine = create_engine('sqlite:///' + str(root_path/'orm/linlin.db'))
+
 
 # 创建所有表
 Base.metadata.create_all(engine)

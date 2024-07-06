@@ -52,7 +52,7 @@ class DataBridge(QObject):
     # 定义信号
     checkbox_b_state_changed = Signal(bool)
     update_table = Signal(dict) # 音视频转文本添加文件的信号，用来更新我的创作页列表
-    whisper_working = Signal(str,str)
+    whisper_working = Signal(str,float)
     whisper_finished = Signal(str)
 
     def __init__(self):
@@ -73,7 +73,7 @@ class DataBridge(QObject):
         config.logger.info('添加任务到列表')
         self.update_table.emit(obj_format)
 
-    def emit_whisper_working(self, unid, progress):
+    def emit_whisper_working(self, unid, progress:float):
         self.whisper_working.emit(unid, progress)
 
     def emit_whisper_finished(self, status:str):

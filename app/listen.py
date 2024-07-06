@@ -166,26 +166,22 @@ class SrtWriter:
         else:
             model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
                                  device="cpu", local_files_only=True, compute_type="int8")
-        segments_generator, _ = model.transcribe(self.input_file, language=self.ln)
-        segments = list(segments_generator)
-        # 获取总段数
-        total_segments = len(segments)
+        segments, info = model.transcribe(self.input_file, language=self.ln)
 
-        for i, segment in enumerate(segments, 1):
-            # 输出当前任务进度
-            progress = (i / total_segments) * 100
-            print(f"Processing segment {i}/{total_segments} ({progress:.2f}% complete)")
-            # self.data_bridge.emit_whisper_working(self.unid, progress)
-            # 输出每个段的信息
-            # print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+        logger.info(f"video_duration: {info.duration}")
+        logger.info(f"Writing srt file to {srt_file_path}")
+        for segment in segments:
+            progress_now = (segment.start / info.duration) * 100
+            # logger.debug(f"{self.input_file } progress_now: {progress_now}")
+            write_srt_file(segment, srt_file_path)
+            self.data_bridge.emit_whisper_working(self.unid, progress_now)
+            # logger.info(f"[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
-        # get srt writer for the current directory
-        srt_file_path = os.path.splitext(self.input_file)[0] + ".srt"
 
-        # 调用写入SRT文件的函数
-        write_srt_file(segments, srt_file_path)
-        logger.info(f"SRT file saved to {srt_file_path}")
+        self.data_bridge.emit_whisper_working(self.unid, progress_now)
         self.data_bridge.emit_whisper_finished(self.unid)
+
 
     def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
         if system_type != 'darwin':
