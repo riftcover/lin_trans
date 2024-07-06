@@ -126,20 +126,23 @@ class TableApp(CardWidget):
         :param progress: 进度值 (0-100)
         """
 
-        if unid in self.row_cache:
+        if self.row_cache:
             row = self.row_cache[unid]
+            config.logger.debug(f"找到文件:{unid}的行索引:{row}")
         else:
+            config.logger.info(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
                 self.row_cache[unid] = row
             else:
                 return  # 如果找不到对应的行，直接返回
-        # 根据第7列中名称,更新该行数据
+
         progress_bar = self.table.cellWidget(row, 2)
-        if isinstance(progress_bar, ProgressBar):
+        if isinstance(progress_bar, QProgressBar):
             config.logger.info(f"更新文件:{unid}的进度条:{progress}")
             progress_bar.setValue(progress)
-
+        else:
+            config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
 
     def find_row_by_identifier(self, unid):
         """
@@ -147,7 +150,7 @@ class TableApp(CardWidget):
         :param unid: 第7列（索引为6）的标识符
         :return: 找到的行索引，如果没找到返回None
         """
-        config.logger.info(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
+
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, 6)
             if item and item.text() == unid:
@@ -163,8 +166,11 @@ class TableApp(CardWidget):
         :param data: 要设置的新数据
         """
         config.logger.info(f"文件处理完成:{unid},更新表单")
-        for row in range(self.table.rowCount()):
+        if self.row_cache:
+            row = self.row_cache[unid]
             item = self.table.cellWidget(row, 6)
+            progress_bar = self.table.cellWidget(row, 2)
+            progress_bar.setValue(100)
             if unid in item.text():
                 # 开始按钮
                 # todo 目前是任务完成显示按钮,需要修改其他中断的要显示

@@ -77,6 +77,7 @@ class QueueConsumer(QObject):
     error = Signal(str)
 
     def process_queue(self):
+        # todo: 添加文件开始后立即点击我的创作页,线程不工作
         config.logger.debug('消费线程开始工作')
         config.is_consuming = True
         while not config.mp4_to_war_queue.empty():

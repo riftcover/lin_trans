@@ -178,8 +178,6 @@ class SrtWriter:
             self.data_bridge.emit_whisper_working(self.unid, progress_now)
             # logger.info(f"[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
-
-        self.data_bridge.emit_whisper_working(self.unid, progress_now)
         self.data_bridge.emit_whisper_finished(self.unid)
 
 
