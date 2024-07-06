@@ -16,7 +16,6 @@ class Worker(QObject):
     error = Signal(str)
     queue_ready = Signal()  # 用于通知队列准备就绪 # 用于通知主线程更新表格
 
-
     def __init__(self, queue_mp4_copy):
         super().__init__()
         self.queue_mp4_copy = queue_mp4_copy
@@ -86,4 +85,4 @@ class QueueConsumer(QObject):
 
 
 if __name__ == '__main__':
-        Worker().do_work()
+    Worker().do_work()

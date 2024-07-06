@@ -162,11 +162,8 @@ dmypy.json
 .idea/
 
 !/logs/
-!/run.py
 !/xc.py
-
 !/xd.py
 !/result/
-!/ffmpeg_output/*.txt
-!/orm/linlin.db
-!/plugin/ffmpeg/
+/ffmpeg_output
+/orm/linlin.db

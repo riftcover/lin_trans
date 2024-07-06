@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from better_ffmpeg_progress import FfmpegProcess
+
 from utils.log import Logings
 
 logger = Logings().logger
