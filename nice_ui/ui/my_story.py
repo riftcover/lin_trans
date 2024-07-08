@@ -44,6 +44,26 @@ class TableApp(CardWidget):
         self.selectAllBtn = CheckBox("全选")
         self.selectAllBtn.stateChanged.connect(self.selectAll)
 
+        # 添加批量导出按钮
+        self.exportBtn = PushButton("批量导出")
+        self.exportBtn.setIcon(FluentIcon.DOWN)
+        self.exportBtn.clicked.connect(self.export_files)
+        # selectAllBtn勾选显示exportBtn,未勾选不显示exportBtn
+
+
+
+
+        # 添加批量导入按钮
+
+
+        # 添加批量删除按钮
+        self.deleteBtn = PushButton("批量删除")
+        self.deleteBtn.setIcon(FluentIcon.DELETE)
+        self.deleteBtn.clicked.connect(self.delete_files)
+        # 隐藏deleteBtn
+
+
+
         self.addRowBtn = PushButton("添加文件")
         self.addRowBtn.setIcon(FluentIcon.ADD)
         self.addRowBtn.clicked.connect(self._addNewRow)
@@ -53,6 +73,8 @@ class TableApp(CardWidget):
         self.searchInput.textChanged.connect(self.searchFiles)
 
         topLayout.addWidget(self.selectAllBtn)
+        topLayout.addWidget(self.exportBtn)
+        topLayout.addWidget(self.deleteBtn)
         topLayout.addWidget(self.addRowBtn)
         topLayout.addStretch()
         topLayout.addWidget(self.searchInput)
@@ -79,9 +101,16 @@ class TableApp(CardWidget):
         self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
-    def selectAll(self, state):
+    def selectAll(self):
         for row in range(self.table.rowCount()):
-            self.table.cellWidget(row, 0).setChecked(state == Qt.Checked)
+            self.table.cellWidget(row, 0).setChecked(self.selectAllBtn.isChecked())
+
+    def export_files(self):
+        pass
+
+    def delete_files(self):
+        pass
+
 
     def _init_table(self):
         # 初始化表格,从数据库中获取数据
