@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
 from PySide6.QtWidgets import (QFileDialog)
 
 from nice_ui.configure import config
-from videotrans.mainwin.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow
 from videotrans.translator import TRANSNAMES
 
 
@@ -271,7 +271,7 @@ class TableWindow:
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
         file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                                     "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
+                                                     "Video files(*.mp4 *.avi *.mov *.mpg *.mkv *.mp3 *.wav *.flac)")
 
         if file_paths:
             for file_path in file_paths:

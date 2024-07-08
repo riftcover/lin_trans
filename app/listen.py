@@ -91,7 +91,7 @@ class SrtWriter:
             input_dirname: 需要提取文本的音频文件
             ln: 音频文件语言
         """
-        self.srt_name = raw_basename.split('.')[-2]
+        self.srt_name = raw_basename.rsplit('.',1)[0]
 
         audio_path = os.path.join(input_dirname, f'{self.srt_name}.wav')  # os.path.join(self.cwd, self.raw_basename)
         if not os.path.isfile(audio_path):
@@ -156,7 +156,6 @@ class SrtWriter:
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
         # 使用faster-whisper进行识别
         logger.info(f"Using Faster-Whisper to generate SRT file")
-        # todo: cuda判断
         if cuda_status:
             model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
                                  device="cuda", local_files_only=True, compute_type="float16")

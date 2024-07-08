@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String

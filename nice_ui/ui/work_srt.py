@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
 from PySide6.QtWidgets import (QFileDialog)
 
 from nice_ui.configure import config
-from videotrans.mainwin.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow
 from videotrans.translator import TRANSNAMES
 
 

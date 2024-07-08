@@ -509,7 +509,7 @@ class SecWindow():
 
                 if not allow:
                     self.main.enable_cuda.setChecked(False)
-                    # config.params['cuda'] = False # todo 我没有cuda设置看是否需要
+                    config.params['cuda'] = False
                     return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
 
         # 是否翻译
@@ -537,17 +537,15 @@ class SecWindow():
 
         if len(config.queue_mp4) > 0:
             config.params['only_video'] = True
-            # start_thread(self.main)  # todo: 起线程
 
         save_setting(self.main.setting)
 
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
-
         config.settings = config.parse_init()
-        # config.logger.info("====config.settings====")
-        config.logger.info(config.settings)
-        # config.logger.info("====config.params====")
-        config.logger.info(config.params)
+        config.logger.debug("====config.settings====")
+        config.logger.debug(config.settings)
+        config.logger.debug("====config.params====")
+        config.logger.debug(config.params)
         config.logger.debug("add_queue_thread")
         queue_mp4_copy = copy.deepcopy(config.queue_mp4)
         self.add_queue_thread(queue_mp4_copy)

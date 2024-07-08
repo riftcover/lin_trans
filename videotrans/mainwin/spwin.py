@@ -17,7 +17,7 @@ from videotrans import VERSION
 from videotrans.ui.en import Ui_MainWindow
 # from videotrans.box import win
 
-from videotrans.mainwin.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow
 # from videotrans.mainwin.subform import Subform
 # from videotrans.task.check_update import CheckUpdateWorker
 # from videotrans.task.logs_worker import LogsWorker
