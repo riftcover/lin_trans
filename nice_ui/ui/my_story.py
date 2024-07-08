@@ -1,14 +1,17 @@
 import os
+import shutil
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QProgressBar
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QProgressBar, QFileDialog
 from PySide6.QtCore import Qt
 from qfluentwidgets import (TableWidget, CheckBox, ComboBox,
                             PushButton, InfoBar, InfoBarPosition, FluentIcon,
                             CardWidget, SearchLineEdit)
 
+from nice_ui.task.main_worker import work_queue
+from nice_ui.util import tools
 from orm.queries import ToSrtOrm
 from nice_ui.configure import config
-from nice_ui.util import ObjFormat
+from nice_ui.util.tools import ObjFormat
 
 
 class TableApp(CardWidget):
@@ -70,8 +73,8 @@ class TableApp(CardWidget):
         self.table.setColumnWidth(4, 100)
         self.table.setColumnWidth(5, 100)
         self.table.setColumnWidth(6, 100)
-        # 为啥没有呢
-        # 设置表头
+
+        self.table.setColumnHidden(3, True)
         self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
@@ -93,7 +96,7 @@ class TableApp(CardWidget):
                 # 将上次排队中的任务job_status == 1设置为0
                 self.srt_orm.update_to_srt(srt.unid, job_status=0)
                 # 重新初始化表格,状态显示为未开始
-                config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
+                # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
                 obj_format = {'raw_noextname': filename_without_extension,
                               'unid': srt.unid,}
@@ -116,7 +119,8 @@ class TableApp(CardWidget):
 
     def table_row_init(self, obj_format:ObjFormat,job_status:int=1):
         # 添加新文件时，初始化表格包含的元素
-        config.logger.info(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
+        if job_status == 1:
+            config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
         filename = obj_format['raw_noextname']
         unid = obj_format['unid']
         rowPosition = self.table.rowCount()
@@ -137,7 +141,14 @@ class TableApp(CardWidget):
         if job_status == 1:
             fileName.setText("排队中")
         elif job_status == 0:
+
             fileName.setText("未开始")
+            rowPosition = self.table.rowCount()
+            # todo 未开始也需要添加开始按钮,目前没写完
+            startBtn = PushButton("开始")
+            startBtn.setIcon(FluentIcon.PLAY)
+            startBtn.clicked.connect(lambda: self._start_row(rowPosition))
+            self.table.setCellWidget(rowPosition, 3, startBtn)
         fileName.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(rowPosition, 2, fileName)
 
@@ -165,11 +176,11 @@ class TableApp(CardWidget):
                 return  # 如果找不到对应的行，直接返回
 
         progress_bar = self.table.cellWidget(row, 2)
-        if isinstance(progress_bar, QProgressBar):
-            config.logger.info(f"更新文件:{unid}的进度条:{progress}")
-            progress_bar.setText(f"处理中 {progress}")
-        else:
-            config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
+        # if isinstance(progress_bar, QProgressBar):
+        config.logger.info(f"更新文件:{unid}的进度条:{progress}")
+        progress_bar.setText(f"处理中 {progress}")
+        # else:
+        #     config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
 
     def find_row_by_identifier(self, unid):
         """
@@ -211,9 +222,13 @@ class TableApp(CardWidget):
                 self.table.setCellWidget(row, 3, startBtn)
 
                 # 导出下拉框
-                exportCombo = ComboBox()
-                exportCombo.addItems(["导出srt", "导出txt"])
-                self.table.setCellWidget(row, 4, exportCombo)
+                # exportCombo = ComboBox()
+                # exportCombo.addItems(["导出srt", "导出txt"])
+                # self.table.setCellWidget(row, 4, exportCombo)
+                exportBtn = PushButton("导出")
+                exportBtn.setIcon(FluentIcon.DOWN)
+                exportBtn.clicked.connect(lambda: self._export_row(row))
+                self.table.setCellWidget(row, 4, exportBtn)
 
                 # 删除按钮
                 deleteBtn = PushButton("删除")
@@ -249,9 +264,13 @@ class TableApp(CardWidget):
         self.table.setCellWidget(rowPosition, 3, startBtn)
 
         # 导出下拉框
-        exportCombo = ComboBox()
-        exportCombo.addItems(["导出srt", "导出txt"])
-        self.table.setCellWidget(rowPosition, 4, exportCombo)
+        # exportCombo = ComboBox()
+        # exportCombo.addItems(["导出srt", "导出txt"])
+        # self.table.setCellWidget(rowPosition, 4, exportCombo)
+        exportBtn = PushButton("导出")
+        exportBtn.setIcon(FluentIcon.DOWN)
+        exportBtn.clicked.connect(lambda: self._export_row(rowPosition))
+        self.table.setCellWidget(rowPosition, 4, exportBtn)
 
         # 删除按钮
         deleteBtn = PushButton("删除")
@@ -266,15 +285,22 @@ class TableApp(CardWidget):
         self.table.setCellWidget(rowPosition, 6, file_unid)
 
     def _start_row(self, row):
-        # todo 从数据库中获取数据，添加到消费队列里
-        pass
-
+        # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
+        # 1.和consume_mp4_queue接受的一样
+        # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
+        unid_item = self.table.cellWidget(row, 6)
+        job_path = self.srt_orm.get_db_by_unid(unid_item).path
+        if not os.path.isfile(job_path):
+            config.logger.error(f"文件:{job_path}不存在,无法开始处理")
+            raise FileNotFoundError(f"The file {job_path} does not exist.")
+        obj_format = tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
+        work_queue.to_war_queue_put(job_path)
     def _delete_row(self, row):
         self.table.removeRow(row)
 
         # 在数据库中删除对应数据
         unid_item = self.table.cellWidget(row, 6)
-        self.srt_orm.delete_to_srt(unid_item.text())
+        self.srt_orm.delete_db(unid_item.text())
 
         # 清除缓存索引
         self.row_cache.clear()
@@ -295,6 +321,30 @@ class TableApp(CardWidget):
                 self.table.setRowHidden(row, False)
             else:
                 self.table.setRowHidden(row, True)
+
+    def _export_row(self, row):
+        options = QFileDialog.Options()
+        item = self.table.cellWidget(row, 1)
+        export_name = f"{item.text()}.srt"
+        file_path, _ = QFileDialog.getSaveFileName(self, "导出文件",  export_name,  options=options)
+        if file_path:
+            #移动D:\dcode\lin_trans\result\85247cda952a062ae51356699ed9c78b\1.如何获取需求.srt到file_path
+            unid_item = self.table.cellWidget(row, 6)
+
+            job_obj = self.srt_orm.get_db_by_unid(unid_item.text()).obj
+
+            job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
+            config.logger.info(f"导出文件:{job_path}到{file_path}")
+            shutil.move(job_path, file_path)
+            InfoBar.success(
+                title='成功',
+                content=f"文件已导出到{file_path}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self
+            )
 
 
 class MainWindow(QMainWindow):

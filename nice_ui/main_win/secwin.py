@@ -18,7 +18,7 @@ from nice_ui.task.main_worker import Worker
 from nice_ui.util import tools
 from videotrans import translator
 from nice_ui.configure import config
-from nice_ui.util import StartTools
+from nice_ui.util.tools import StartTools
 
 
 start_tools = StartTools()

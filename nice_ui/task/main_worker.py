@@ -6,7 +6,7 @@ from orm.queries import ToSrtOrm
 from nice_ui.configure import config
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
-from nice_ui.util import set_process
+from nice_ui.util.tools import set_process
 
 work_queue = LinQueue()
 

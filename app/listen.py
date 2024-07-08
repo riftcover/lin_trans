@@ -95,6 +95,7 @@ class SrtWriter:
 
         audio_path = os.path.join(input_dirname, f'{self.srt_name}.wav')  # os.path.join(self.cwd, self.raw_basename)
         if not os.path.isfile(audio_path):
+            logger.error(f"The file {audio_path} does not exist.")
             raise FileNotFoundError(f"The file {audio_path} does not exist.")
         self.input_dirname = input_dirname  #文件所在目录
         self.input_file = audio_path  #文件名带上全路径
