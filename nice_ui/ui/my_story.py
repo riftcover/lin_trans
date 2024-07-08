@@ -42,27 +42,24 @@ class TableApp(CardWidget):
         topLayout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
-        self.selectAllBtn.stateChanged.connect(self.selectAll)
+        self.selectAllBtn.stateChanged.connect(self._selectAll)
 
         # 添加批量导出按钮
         self.exportBtn = PushButton("批量导出")
         self.exportBtn.setIcon(FluentIcon.DOWN)
-        self.exportBtn.clicked.connect(self.export_files)
-        # selectAllBtn勾选显示exportBtn,未勾选不显示exportBtn
-
-
-
-
-        # 添加批量导入按钮
-
+        self.exportBtn.clicked.connect(self._export_batch)
+        # 初始状态隐藏
+        self.exportBtn.setVisible(False)
+        # selectAllBtn勾选时，exportBtn显示，否则隐藏
+        self.selectAllBtn.stateChanged.connect(self.exportBtn.setVisible)
 
         # 添加批量删除按钮
         self.deleteBtn = PushButton("批量删除")
         self.deleteBtn.setIcon(FluentIcon.DELETE)
-        self.deleteBtn.clicked.connect(self.delete_files)
-        # 隐藏deleteBtn
-
-
+        self.deleteBtn.clicked.connect(self._delete_batch)
+        # 初始状态隐藏
+        self.deleteBtn.setVisible(False)
+        self.selectAllBtn.stateChanged.connect(self.deleteBtn.setVisible)
 
         self.addRowBtn = PushButton("添加文件")
         self.addRowBtn.setIcon(FluentIcon.ADD)
@@ -70,6 +67,10 @@ class TableApp(CardWidget):
 
         self.searchInput = SearchLineEdit()
         self.searchInput.setPlaceholderText("搜索文件")
+        # searchInput固定宽度
+        self.searchInput.setFixedWidth(200)
+        # 设置为右对齐
+        self.searchInput.setAlignment(Qt.AlignRight)
         self.searchInput.textChanged.connect(self.searchFiles)
 
         topLayout.addWidget(self.selectAllBtn)
@@ -95,21 +96,21 @@ class TableApp(CardWidget):
         self.table.setColumnWidth(3, 100)
         self.table.setColumnWidth(4, 100)
         self.table.setColumnWidth(5, 100)
-        self.table.setColumnWidth(6, 100)
+        self.table.setColumnWidth(6, 200)
 
         self.table.setColumnHidden(3, True)
-        self.table.setColumnHidden(6, True)
+        # self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
-    def selectAll(self):
+    def _selectAll(self):
         for row in range(self.table.rowCount()):
             self.table.cellWidget(row, 0).setChecked(self.selectAllBtn.isChecked())
 
-    def export_files(self):
-        pass
 
-    def delete_files(self):
-        pass
+
+
+
+
 
 
     def _init_table(self):
@@ -326,12 +327,24 @@ class TableApp(CardWidget):
         work_queue.to_war_queue_put(job_path)
 
     def _delete_row(self, row):
-        self.table.removeRow(row)
-
-        # 在数据库中删除对应数据
+        config.logger.info(f"删除文件所在行:{row} ")
         unid_item = self.table.cellWidget(row, 6)
-        self.srt_orm.delete_db(unid_item.text())
-
+        # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
+        # 删除result中对应文件
+        text = unid_item.text()
+        if text:
+            job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
+            config.logger.info(f"删除目录:{text} 成功")
+            result_dir = job_obj["output"]
+            try:
+                shutil.rmtree(result_dir)
+                config.logger.info(f"删除目录:{result_dir} 成功")
+            except Exception as e:
+                config.logger.error(f"删除目录:{result_dir} 失败:{e}")
+        # 在数据库中删除对应数据
+        self.srt_orm.delete_table_unid(text)
+        # 删除表格行
+        self.table.removeRow(row)        
         # 清除缓存索引
         self.row_cache.clear()
         InfoBar.success(
@@ -343,30 +356,76 @@ class TableApp(CardWidget):
             duration=2000,
             parent=self
         )
-
+    def _delete_batch(self):
+        for row in range(self.table.rowCount()):
+            if self.table.cellWidget(row, 0).isChecked():
+                self._delete_row(row)
     def searchFiles(self, text):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, 1)
+            config.logger.info(f"item:{item.text()}")
             if text.lower() in item.text().lower():
                 self.table.setRowHidden(row, False)
             else:
                 self.table.setRowHidden(row, True)
 
+    def _export_batch(self):
+        # 打开系统文件夹选择框
+        options = QFileDialog.Options()
+        file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
+
+        for row in range(self.table.rowCount()):
+            print(f"{row}:{self.table.cellWidget(row, 4)}")
+            if self.table.cellWidget(row, 4):
+                unid_item = self.table.cellWidget(row, 6)
+
+                job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
+                config.logger.info(f"job_obj:{job_obj}")
+                job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
+                file_path = f'{file_dir}/{job_obj["raw_noextname"]}.srt'
+                config.logger.info(f"导出文件:{job_path} 到 {file_path}")
+            try:
+                shutil.copy(job_path, file_path)
+            except Exception as e:
+                config.logger.error(f"导出文件失败:{e}")
+                InfoBar.error(
+                    title='错误',
+                    content=f"导出文件失败",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    duration=2000,
+                    parent=self
+                )
+                return
+
+        InfoBar.success(
+            title='成功',
+            content=f"文件已导出",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self
+        )
     def _export_row(self, row):
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, 1)
+        config.logger.info(f"文件所在行:{row} 文件名:{item.text()}")
         export_name = f"{item.text()}.srt"
         file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
             unid_item = self.table.cellWidget(row, 6)
+            config.logger.info(f"unid_item:{unid_item}")
+            config.logger.info(f"导出文件:{unid_item.text()} 成功")
             job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
             config.logger.info(f"job_obj:{job_obj}")
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
             config.logger.info(f"导出文件:{job_path}到{file_path}")
-            shutil.move(job_path, file_path)
+            shutil.copy(job_path, file_path)
             InfoBar.success(
                 title='成功',
-                content=f"文件已导出到{file_path}",
+                content=f"文件已导出",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
