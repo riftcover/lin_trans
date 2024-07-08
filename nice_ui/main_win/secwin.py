@@ -22,7 +22,6 @@ from nice_ui.util.tools import StartTools
 
 
 start_tools = StartTools()
-print(222)
 
 class ClickableProgressBar(QLabel):
     def __init__(self, parent=None):
