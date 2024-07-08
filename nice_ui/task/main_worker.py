@@ -1,3 +1,4 @@
+import json
 import re
 
 from PySide6.QtCore import QObject, Signal
@@ -51,9 +52,9 @@ class Worker(QObject):
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
-            srt_orm.add_to_srt(obj_format['unid'], obj_format['raw_name'],
-                                  config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
-                                  config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'],1)
+            srt_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'],
+                                      config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
+                                      config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'], 1, json.dumps(obj_format))
             config.logger.debug('添加消息完成')
         srt_orm.close_session()
         self.queue_ready.emit()

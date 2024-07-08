@@ -24,8 +24,9 @@ class ToSrt(Base):
     cuda = Column(BOOLEAN)
     raw_ext = Column(String)  #原始文件后缀
     job_status = Column(Integer)  #任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败
+    obj = Column(String)
 
-    def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, **kw: Any):
+    def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext,obj, **kw: Any):
         super().__init__(**kw)
         self.unid = unid
         self.path = path
@@ -36,6 +37,7 @@ class ToSrt(Base):
         self.cuda = cuda
         self.raw_ext = raw_ext
         self.job_status = 0
+        self.obj = obj
 
     def __repr__(self):
         return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"

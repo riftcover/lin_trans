@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import sys
@@ -84,26 +85,25 @@ class TableApp(CardWidget):
 
     def _init_table(self):
         # 初始化表格,从数据库中获取数据
-        all_srt = self.srt_orm.get_all_format_unid_path()
+        all_srt = self.srt_orm.query_data_format_unid_path()
         for srt in all_srt:
             filename = os.path.basename(srt.path)
             # 去掉文件扩展名
             filename_without_extension = os.path.splitext(filename)[0]
 
-            if srt.job_status in (0,1):
-                srt.job_status ==0
+            if srt.job_status in (0, 1):
+                srt.job_status == 0
 
                 # 将上次排队中的任务job_status == 1设置为0
-                self.srt_orm.update_to_srt(srt.unid, job_status=0)
+                self.srt_orm.update_table_unid(srt.unid, job_status=0)
                 # 重新初始化表格,状态显示为未开始
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
                 obj_format = {'raw_noextname': filename_without_extension,
-                              'unid': srt.unid,}
-                self.table_row_init(obj_format,0)
+                              'unid': srt.unid, }
+                self.table_row_init(obj_format, 0)
             elif srt.job_status == 2:
                 self.addRow_init_all(filename_without_extension, srt.unid)
-
 
     def _addNewRow(self):
         self.addRow_init_all("新文件", "tt1")
@@ -117,7 +117,7 @@ class TableApp(CardWidget):
             parent=self
         )
 
-    def table_row_init(self, obj_format:ObjFormat,job_status:int=1):
+    def table_row_init(self, obj_format: ObjFormat, job_status: int = 1):
         # 添加新文件时，初始化表格包含的元素
         if job_status == 1:
             config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
@@ -131,26 +131,26 @@ class TableApp(CardWidget):
         self.table.setCellWidget(rowPosition, 0, chk)
 
         # 文件名
-        fileName = QLabel()
-        fileName.setText(filename)
-        fileName.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 1, fileName)
+        file_name = QLabel()
+        file_name.setText(filename)
+        file_name.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(rowPosition, 1, file_name)
 
         # 处理进度
-        fileName = QLabel()
+        file_name = QLabel()
         if job_status == 1:
-            fileName.setText("排队中")
+            file_name.setText("排队中")
         elif job_status == 0:
 
-            fileName.setText("未开始")
+            file_name.setText("未开始")
             rowPosition = self.table.rowCount()
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
             startBtn.setIcon(FluentIcon.PLAY)
             startBtn.clicked.connect(lambda: self._start_row(rowPosition))
             self.table.setCellWidget(rowPosition, 3, startBtn)
-        fileName.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 2, fileName)
+        file_name.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(rowPosition, 2, file_name)
 
         # 隐藏列数据
         file_unid = QLabel()
@@ -211,7 +211,7 @@ class TableApp(CardWidget):
             # 进度条设置为100
             progress_bar.setText("已完成")
             #数据库状态更新为已完成
-            self.srt_orm.update_to_srt(unid, job_status=2)
+            self.srt_orm.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
                 # 开始按钮
@@ -289,12 +289,13 @@ class TableApp(CardWidget):
         # 1.和consume_mp4_queue接受的一样
         # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
         unid_item = self.table.cellWidget(row, 6)
-        job_path = self.srt_orm.get_db_by_unid(unid_item).path
+        job_path = self.srt_orm.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
         obj_format = tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.to_war_queue_put(job_path)
+
     def _delete_row(self, row):
         self.table.removeRow(row)
 
@@ -326,13 +327,11 @@ class TableApp(CardWidget):
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, 1)
         export_name = f"{item.text()}.srt"
-        file_path, _ = QFileDialog.getSaveFileName(self, "导出文件",  export_name,  options=options)
+        file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
-            #移动D:\dcode\lin_trans\result\85247cda952a062ae51356699ed9c78b\1.如何获取需求.srt到file_path
             unid_item = self.table.cellWidget(row, 6)
-
-            job_obj = self.srt_orm.get_db_by_unid(unid_item.text()).obj
-
+            job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
+            config.logger.info(f"job_obj:{job_obj}")
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
             config.logger.info(f"导出文件:{job_path}到{file_path}")
             shutil.move(job_path, file_path)
