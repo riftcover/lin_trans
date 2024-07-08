@@ -5,8 +5,8 @@ from PySide6.QtCore import QObject, Signal
 from orm.queries import ToSrtOrm
 from nice_ui.configure import config
 from nice_ui.task.queue_worker import LinQueue
-from videotrans.util import tools
-from videotrans.util.tools import set_process
+from nice_ui.util import tools
+from nice_ui.util import set_process
 
 work_queue = LinQueue()
 
@@ -25,6 +25,7 @@ class Worker(QObject):
         """
         点击开始按钮完成后,将需处理的文件放入队列中
         """
+        srt_orm = ToSrtOrm()
         config.logger.debug(f'do_work()线程开始工作:{self.queue_mp4_copy}')
         for it in self.queue_mp4_copy:
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
@@ -50,11 +51,11 @@ class Worker(QObject):
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
-            ToSrtOrm().add_to_srt(obj_format['unid'], obj_format['raw_name'],
+            srt_orm.add_to_srt(obj_format['unid'], obj_format['raw_name'],
                                   config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
-                                  config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'])
+                                  config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'],1)
             config.logger.debug('添加消息完成')
-
+        srt_orm.close_session()
         self.queue_ready.emit()
         self.finished.emit()
         config.logger.debug('do_work() 线程工作完成')

@@ -11,14 +11,14 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
 
 from nice_ui.ui.SingalBridge import save_setting, DataBridge
 from nice_ui.task.main_worker import QueueConsumer
-from videotrans.util.code_tools import language_code
+from nice_ui.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
 from nice_ui.task.main_worker import Worker
-from videotrans.util import tools
+from nice_ui.util import tools
 from videotrans import translator
 from nice_ui.configure import config
-from videotrans.util.tools import StartTools
+from nice_ui.util import StartTools
 
 
 start_tools = StartTools()

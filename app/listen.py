@@ -154,6 +154,8 @@ class SrtWriter:
         )
 
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
+        # todo : [0.0 --> 30.0] [30.0 --> 39.92] [40.6 --> 59.64] 1.当前时间戳不精准，2.多句话混在一起
+        # todo : 3.,就是呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃, 口气词太多了
         # 使用faster-whisper进行识别
         logger.info(f"Using Faster-Whisper to generate SRT file")
         if cuda_status:
@@ -169,10 +171,9 @@ class SrtWriter:
         logger.info(f"Writing srt file to {srt_file_path}")
         for segment in segments:
             progress_now = (segment.start / info.duration) * 100
-            # logger.debug(f"{self.input_file } progress_now: {progress_now}")
             write_srt_file(segment, srt_file_path)
             self.data_bridge.emit_whisper_working(self.unid, progress_now)
-            # logger.info(f"[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+            logger.info(f"[{segment.start} --> {segment.end}] {segment.text}")
 
         self.data_bridge.emit_whisper_finished(self.unid)
 
@@ -188,9 +189,9 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe'
-    raw_basename = 'Top 10 Affordable Ski Resorts in Europe.wav'
+    output = r'D:\dcode\lin_trans\result\85247cda952a062ae51356699ed9c78b'
+    raw_basename = '1.如何获取需求.wav'
     # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # models = 'D:\dcode\lin_trans\models\small.pt'
 
-    SrtWriter('xxx',output, raw_basename, 'en').whisper_faster_to_srt()
+    SrtWriter('xxx',output, raw_basename, 'zh').whisper_faster_to_srt()

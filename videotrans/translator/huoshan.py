@@ -3,8 +3,7 @@ import time
 import requests
 from requests import JSONDecodeError
 from nice_ui.configure import config
-from videotrans.util import tools
-
+from nice_ui.util import tools
 
 
 def get_content(d,*,prompt=None,assiant=None):
@@ -106,7 +105,7 @@ def trans(text_list, target_language="English", *, set_p=True,inst=None,stop=0,s
                 if not is_srt:
                     target_text["0"].append(result)
                     if not set_p:
-                        tools.set_process_box(text=result + "\n",func_name="fanyi",type="set")
+                        tools.set_process_box(text=result + "\n", func_name="fanyi", type="set")
                     continue
 
                 sep_res = tools.cleartext(result).split("\n")
@@ -124,7 +123,7 @@ def trans(text_list, target_language="English", *, set_p=True,inst=None,stop=0,s
                             tools.set_process(result_item + "\n", 'subtitle')
                             tools.set_process(config.transobj['starttrans'] + f' {i * split_size + x + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                         else:
-                            tools.set_process_box(text=result_item + "\n", func_name="fanyi",type="set")
+                            tools.set_process_box(text=result_item + "\n", func_name="fanyi", type="set")
                 if len(sep_res)<len(it):
                     tmp=["" for x in range(len(it)-len(sep_res))]
                     target_text["srts"]+=tmp

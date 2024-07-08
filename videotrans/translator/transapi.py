@@ -6,7 +6,8 @@ from urllib.parse import quote
 
 import requests
 from nice_ui.configure import config
-from videotrans.util import tools
+from nice_ui.util import tools
+
 shound_del=False
 def update_proxy(type='set'):
     global shound_del
@@ -18,7 +19,7 @@ def update_proxy(type='set'):
     elif type=='set':
         raw_proxy=os.environ.get('http_proxy')
         if not raw_proxy:
-            proxy=tools.set_proxy()
+            proxy= tools.set_proxy()
             if proxy:
                 shound_del=True
                 os.environ['http_proxy'] = proxy
@@ -104,7 +105,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 if result["code"]!=0:
                     err=result['msg']
                     break
-                result=tools.cleartext(result['text']).split("\n")
+                result= tools.cleartext(result['text']).split("\n")
                 if not result:
                     err=f'{response.text=}'
                     break
@@ -118,10 +119,10 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 if inst and inst.precent < 75:
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
-                    tools.set_process( f'{result}\n\n')
+                    tools.set_process(f'{result}\n\n')
                     tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
-                    tools.set_process(result+"\n\n", func_name="set_fanyi")
+                    tools.set_process(result + "\n\n", func_name="set_fanyi")
                 result_length = len(result)
                 while result_length < source_length:
                     result.append("")

@@ -23,6 +23,7 @@ class ToSrt(Base):
     translate_status = Column(BOOLEAN)  #是否翻译
     cuda = Column(BOOLEAN)
     raw_ext = Column(String)  #原始文件后缀
+    job_status = Column(Integer)  #任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败
 
     def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, **kw: Any):
         super().__init__(**kw)
@@ -34,10 +35,10 @@ class ToSrt(Base):
         self.translate_status = translate_status
         self.cuda = cuda
         self.raw_ext = raw_ext
+        self.job_status = 0
 
     def __repr__(self):
-        return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',target_language='{self.target_language}',translate_type='{self.translate_type}',cuda='{self.cuda}')>"
-
+        return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
 
 class ToTranslation(Base):
     __tablename__ = 'totranslation'
@@ -58,7 +59,6 @@ class ToTranslation(Base):
 
     def __repr__(self):
         return f"<ToTranslation(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}')>"
-
 
 # 创建数据库引擎
 

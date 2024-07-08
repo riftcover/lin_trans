@@ -72,7 +72,7 @@ def get_gptsovits_role():
 
 
 def pygameaudio(filepath):
-    from videotrans.util.playmp3 import AudioPlayer
+    from nice_ui.util.playmp3 import AudioPlayer
     player = AudioPlayer(filepath)
     player.start()
 

@@ -3,8 +3,7 @@ import os
 import time
 import requests
 from nice_ui.configure import config
-from videotrans.util import tools
-
+from nice_ui.util import tools
 
 shound_del=False
 def update_proxy(type='set'):
@@ -17,7 +16,7 @@ def update_proxy(type='set'):
     elif type=='set':
         raw_proxy=os.environ.get('http_proxy')
         if not raw_proxy:
-            proxy=tools.set_proxy()
+            proxy= tools.set_proxy()
             if proxy:
                 shound_del=True
                 os.environ['http_proxy'] = proxy
@@ -103,7 +102,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     err=f'{re_result}'
                     break
 
-                result=tools.cleartext(re_result[0]['translations'][0]['text']).split("\n")
+                result= tools.cleartext(re_result[0]['translations'][0]['text']).split("\n")
                 result_length = len(result)
                 # 如果返回数量和原始语言数量不一致，则重新切割
                 if result_length < source_length:
@@ -112,7 +111,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 if inst and inst.precent < 75:
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
-                    tools.set_process( f'{result[0]}\n\n' if split_size==1 else "\n\n".join(result), 'subtitle')
+                    tools.set_process(f'{result[0]}\n\n' if split_size == 1 else "\n\n".join(result), 'subtitle')
                     tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process("\n\n".join(result), func_name="set_fanyi")

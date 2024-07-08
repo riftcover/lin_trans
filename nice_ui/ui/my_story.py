@@ -1,3 +1,4 @@
+import os
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QProgressBar
 from PySide6.QtCore import Qt
@@ -7,6 +8,7 @@ from qfluentwidgets import (TableWidget, CheckBox, ComboBox,
 
 from orm.queries import ToSrtOrm
 from nice_ui.configure import config
+from nice_ui.util import ObjFormat
 
 
 class TableApp(CardWidget):
@@ -18,6 +20,8 @@ class TableApp(CardWidget):
         self.data_bridge.update_table.connect(self.table_row_init)
         self.data_bridge.whisper_working.connect(self.table_row_working)
         self.data_bridge.whisper_finished.connect(self.table_row_finish)
+        self.srt_orm = ToSrtOrm()
+        self._init_table()
 
         # 用于缓存行索引的字典
         self.row_cache = {}
@@ -38,7 +42,7 @@ class TableApp(CardWidget):
 
         self.addRowBtn = PushButton("添加文件")
         self.addRowBtn.setIcon(FluentIcon.ADD)
-        self.addRowBtn.clicked.connect(self.addNewRow)
+        self.addRowBtn.clicked.connect(self._addNewRow)
 
         self.searchInput = SearchLineEdit()
         self.searchInput.setPlaceholderText("搜索文件")
@@ -75,7 +79,30 @@ class TableApp(CardWidget):
         for row in range(self.table.rowCount()):
             self.table.cellWidget(row, 0).setChecked(state == Qt.Checked)
 
-    def addNewRow(self):
+    def _init_table(self):
+        # 初始化表格,从数据库中获取数据
+        all_srt = self.srt_orm.get_all_format_unid_path()
+        for srt in all_srt:
+            filename = os.path.basename(srt.path)
+            # 去掉文件扩展名
+            filename_without_extension = os.path.splitext(filename)[0]
+
+            if srt.job_status in (0,1):
+                srt.job_status ==0
+
+                # 将上次排队中的任务job_status == 1设置为0
+                self.srt_orm.update_to_srt(srt.unid, job_status=0)
+                # 重新初始化表格,状态显示为未开始
+                config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
+
+                obj_format = {'raw_noextname': filename_without_extension,
+                              'unid': srt.unid,}
+                self.table_row_init(obj_format,0)
+            elif srt.job_status == 2:
+                self.addRow_init_all(filename_without_extension, srt.unid)
+
+
+    def _addNewRow(self):
         self.addRow_init_all("新文件", "tt1")
         InfoBar.success(
             title='成功',
@@ -87,7 +114,8 @@ class TableApp(CardWidget):
             parent=self
         )
 
-    def table_row_init(self, obj_format):
+    def table_row_init(self, obj_format:ObjFormat,job_status:int=1):
+        # 添加新文件时，初始化表格包含的元素
         config.logger.info(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
         filename = obj_format['raw_noextname']
         unid = obj_format['unid']
@@ -104,12 +132,14 @@ class TableApp(CardWidget):
         fileName.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(rowPosition, 1, fileName)
 
-        # 进度条
-        progressBar = QProgressBar()
-        progressBar.setRange(0, 100)
-        progressBar.setValue(0)
-        progressBar.setTextVisible(False)
-        self.table.setCellWidget(rowPosition, 2, progressBar)
+        # 处理进度
+        fileName = QLabel()
+        if job_status == 1:
+            fileName.setText("排队中")
+        elif job_status == 0:
+            fileName.setText("未开始")
+        fileName.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(rowPosition, 2, fileName)
 
         # 隐藏列数据
         file_unid = QLabel()
@@ -137,7 +167,7 @@ class TableApp(CardWidget):
         progress_bar = self.table.cellWidget(row, 2)
         if isinstance(progress_bar, QProgressBar):
             config.logger.info(f"更新文件:{unid}的进度条:{progress}")
-            progress_bar.setValue(progress)
+            progress_bar.setText(f"处理中 {progress}")
         else:
             config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
 
@@ -167,7 +197,11 @@ class TableApp(CardWidget):
             row = self.row_cache[unid]
             item = self.table.cellWidget(row, 6)
             progress_bar = self.table.cellWidget(row, 2)
-            progress_bar.setValue(100)
+            # 进度条设置为100
+            progress_bar.setText("已完成")
+            #数据库状态更新为已完成
+            self.srt_orm.update_to_srt(unid, job_status=2)
+
             if unid in item.text():
                 # 开始按钮
                 # todo 目前是任务完成显示按钮,需要修改其他中断的要显示
@@ -187,6 +221,9 @@ class TableApp(CardWidget):
                 deleteBtn.clicked.connect(lambda: self._delete_row(row))
                 self.table.setCellWidget(row, 5, deleteBtn)
 
+            else:
+                config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
+
     def addRow_init_all(self, filename, unid):
         rowPosition = self.table.rowCount()
         self.table.insertRow(rowPosition)
@@ -201,11 +238,10 @@ class TableApp(CardWidget):
         self.table.setCellWidget(rowPosition, 1, fileName)
 
         # 进度条
-        progressBar = QProgressBar()
-        progressBar.setRange(0, 100)
-        progressBar.setValue(0)
-        progressBar.setTextVisible(False)
-        self.table.setCellWidget(rowPosition, 2, progressBar)
+        fileName = QLabel()
+        fileName.setText("已完成")
+        fileName.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(rowPosition, 2, fileName)
 
         # 开始按钮
         startBtn = PushButton("开始")
@@ -238,7 +274,7 @@ class TableApp(CardWidget):
 
         # 在数据库中删除对应数据
         unid_item = self.table.cellWidget(row, 6)
-        ToSrtOrm().delete_to_srt(unid_item.text())
+        self.srt_orm.delete_to_srt(unid_item.text())
 
         # 清除缓存索引
         self.row_cache.clear()

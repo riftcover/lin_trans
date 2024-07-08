@@ -4,7 +4,8 @@ import os
 import time
 import requests
 from nice_ui.configure import config
-from videotrans.util import tools
+from nice_ui.util import tools
+
 
 def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source_code=""):
     """
@@ -83,7 +84,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                     err= res['error_msg']
                     break
 
-                result = [tools.cleartext(tres['dst']) for tres in  res['trans_result']]
+                result = [tools.cleartext(tres['dst']) for tres in res['trans_result']]
                 if not result or len(result)<1:
                     err=f'{resraw}'
                     break
@@ -96,7 +97,7 @@ def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source
                 if inst and inst.precent < 75:
                     inst.precent += round((i + 1) * 5 / len(split_source_text), 2)
                 if set_p:
-                    tools.set_process( f'{result[0]}\n\n' if split_size==1 else "\n\n".join(result), 'subtitle')
+                    tools.set_process(f'{result[0]}\n\n' if split_size == 1 else "\n\n".join(result), 'subtitle')
                     tools.set_process(config.transobj['starttrans'] + f' {i * split_size + 1} ', btnkey=inst.init['btnkey'] if inst else "")
                 else:
                     tools.set_process("\n\n".join(result), func_name="set_fanyi")
