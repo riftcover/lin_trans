@@ -1,7 +1,7 @@
 from better_ffmpeg_progress import FfmpegProcess
 
 
-def compress_video(input_file, output_file, bitrate='4000k', audio_bitrate='200k'):
+def compress_video(input_file, output_file, bitrate="4000k", audio_bitrate="200k"):
     """
     Compress a video file using VideoToolbox hardware acceleration with progress monitoring.
 
@@ -32,9 +32,9 @@ def compress_video(input_file, output_file, bitrate='4000k', audio_bitrate='200k
     ffmpeg_process.run()
 
 
-if __name__ == '__main__':
-    video_path = '/Users/locodol/Movies/5月8日/'
-    input_video_path = video_path + '5月8日.mp4'
-    output_video_path = video_path + 'tt1.mp4'
+if __name__ == "__main__":
+    video_path = "/Users/locodol/Movies/5月8日/"
+    input_video_path = video_path + "5月8日.mp4"
+    output_video_path = video_path + "tt1.mp4"
 
     compress_video(input_video_path, output_video_path)

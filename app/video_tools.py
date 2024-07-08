@@ -6,10 +6,11 @@ from utils.log import Logings
 
 logger = Logings().logger
 
+
 class FFmpegJobs:
 
     @staticmethod
-    def convert_ts_to_mp4(input_path:Path, output_path:Path):
+    def convert_ts_to_mp4(input_path: Path, output_path: Path):
         logger.info(f'convert ts to mp4: {input_path} -> {output_path}')
         # (
         #     ffmpeg
@@ -17,18 +18,13 @@ class FFmpegJobs:
         #     .output(output_file)
         #     .run(overwrite_output=True)
         # )
-        command = [
-            'ffmpeg',
-            '-i', input_path,
-            '-loglevel', 'warning',
-            output_path
-        ]
+        command = ['ffmpeg', '-i', input_path, '-loglevel', 'warning', output_path]
         ffmpeg_process = FfmpegProcess(command)
         # 执行 FFmpeg 命令并监控进度
         ffmpeg_process.run()
 
     @staticmethod
-    def convert_mp4_to_war(input_path:Path, output_path:Path):
+    def convert_mp4_to_war(input_path: Path, output_path: Path):
         logger.info(f'convert mp4 to war: {input_path} -> {output_path}')
         command = [
             'ffmpeg',
@@ -36,16 +32,13 @@ class FFmpegJobs:
             '-loglevel', 'warning',
             '-ar', '16000', # 采样率
             '-ac', '2',  # 声道
-            '-c:a', 'pcm_s16le', # 音频格式
-            '-f', 'wav',
-            '-y', # 覆盖输出
-            output_path
-        ]
+            '-c:a', 'pcm_s16le',  # 音频格式
+            '-f', 'wav', '-y',  # 覆盖输出
+            output_path]
         ffmpeg_process = FfmpegProcess(command)
         # 执行 FFmpeg 命令并监控进度
         ffmpeg_process.run()
         logger.info("转码完成")
-
 
 
 if __name__ == '__main__':
