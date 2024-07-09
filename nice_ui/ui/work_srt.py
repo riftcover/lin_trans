@@ -46,8 +46,7 @@ class WorkSrt(QWidget):
 
         # 原始语种布局
         source_layout = QHBoxLayout()
-        source_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         source_language_name = QLabel("原始语种")
 
@@ -63,8 +62,7 @@ class WorkSrt(QWidget):
 
         # 翻译语种布局
         translate_layout = QHBoxLayout()
-        translate_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        translate_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_language_name = QLabel("翻译语种")
 
@@ -79,18 +77,13 @@ class WorkSrt(QWidget):
 
         # 翻译引擎布局
         engine_layout = QHBoxLayout()
-        engine_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_model_name = QLabel("翻译引擎")
 
         self.translate_model = ComboBox(self)
         self.translate_model.addItems(TRANSNAMES)
-        translate_name = (
-            config.params["translate_type"]
-            if config.params["translate_type"] in TRANSNAMES
-            else TRANSNAMES[0]
-        )
+        translate_name = (config.params["translate_type"] if config.params["translate_type"] in TRANSNAMES else TRANSNAMES[0])
 
         self.translate_model.setCurrentText(translate_name)
 
@@ -149,8 +142,7 @@ class LTableWindow:
         file_paths = QFileDialog()
         file_paths.setFileMode(QFileDialog.ExistingFiles)
         file_paths.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main,config.transobj['selectsrt'], config.last_opendir,
-                                                     "Srt files(*.srt)")
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectsrt'], config.last_opendir, "Srt files(*.srt)")
 
         if file_paths:
             for file_path in file_paths:
@@ -159,7 +151,7 @@ class LTableWindow:
         self.setting.setValue("last_dir", config.last_opendir)
 
     # 列表的操作
-    def table_set_item(self,ui_table,row_position:int,l0,l1,l2,):
+    def table_set_item(self, ui_table, row_position: int, l0, l1, l2, ):
         #文件名
         file_name = QLabel()
         file_name.setText(os.path.basename(l0))
@@ -209,10 +201,7 @@ class LTableWindow:
             lines = f.readlines()
             for line in lines:
                 # 跳过序号和时间戳
-                if re.match(r"^\d+$", line.strip()) or re.match(
-                    r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
-                    line.strip(),
-                ):
+                if re.match(r"^\d+$", line.strip()) or re.match(r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$", line.strip(), ):
                     continue
                 character_count += len(line.strip())
         return str(character_count)
@@ -247,8 +236,6 @@ class LTableWindow:
                 file_path = url.toLocalFile()
                 self.add_file_to_table(ui_table, file_path)
         event.accept()
-
-
 
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
