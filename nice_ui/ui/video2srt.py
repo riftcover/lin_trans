@@ -5,8 +5,7 @@ from pathlib import Path
 
 from PySide6.QtCore import (QCoreApplication, QRect, Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
-                               QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication)
 from PySide6.QtWidgets import (QFileDialog)
 
 from nice_ui.configure import config
@@ -204,6 +203,15 @@ class Video2SRT(QWidget):
             self.translate_language.setCurrentText(config.params['target_language'])
 
 
+    def add_queue_mp4(self):
+        # 获取self.main.media_table中第4列的数据
+        srt_list = []
+        for i in range(self.media_table.rowCount()):
+            srt_list.append(self.media_table.cellWidget(i, 4).text())
+        config.queue_srt.extend(srt_list)
+        config.logger.info(f'queue_srt: {config.queue_mp4}')
+
+
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
         self.startbtn_1.clicked.connect(self.util.check_start)
@@ -349,13 +357,7 @@ class TableWindow:
                 self.add_file_to_table(ui_table, file_path)
         event.accept()
 
-    def add_queue_mp4(self):
-        # 获取self.main.media_table中第4列的数据
-        srt_list = []
-        for i in range(self.main.media_table.rowCount()):
-            srt_list.append(self.main.media_table.cellWidget(i, 4).text())
-        config.queue_srt.extend(srt_list)
-        config.logger.info(f'queue_srt: {config.queue_mp4}')
+
 
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格

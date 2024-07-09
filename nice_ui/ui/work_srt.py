@@ -128,6 +128,14 @@ class WorkSrt(QWidget):
 
         self.add_queue_btn.clicked.connect(self.table.add_queue_srt)
 
+    def add_queue_srt(self):
+        # 获取self.main.media_table中第4列的数据
+        srt_list = []
+        for i in range(self.media_table.rowCount()):
+            srt_list.append(self.media_table.cellWidget(i, 4).text())
+        config.queue_srt.extend(srt_list)
+        config.logger.info(f"queue_srt: {config.queue_srt}")
+
     def start_translation(self):
         MessageBox("提示", "翻译准备完成，即将开始翻译...", self).exec()
 
@@ -240,13 +248,7 @@ class LTableWindow:
                 self.add_file_to_table(ui_table, file_path)
         event.accept()
 
-    def add_queue_srt(self):
-        # 获取self.main.media_table中第4列的数据
-        srt_list = []
-        for i in range(self.main.media_table.rowCount()):
-            srt_list.append(self.main.media_table.cellWidget(i, 4).text())
-        config.queue_srt.extend(srt_list)
-        config.logger.info(f"queue_srt: {config.queue_srt}")
+
 
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格

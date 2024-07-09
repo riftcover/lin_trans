@@ -460,6 +460,9 @@ class SecWindow():
 #                     self.update_status('stop')
 #                     return
 
+        # 加载数据
+        self.main.add_queue_mp4()
+
         # 倒计时
         config.task_countdown = config.settings['countdown_sec']
         config.settings = config.parse_init()
