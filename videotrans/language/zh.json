@@ -98,6 +98,7 @@
     "selectmp4": "选择视频",
     "bukebaoliubeijing": "必须选择配音角色和输入视频，才能保留背景声音",
     "Separating vocals and background music, which may take a longer time": "正在分离人声和背景音乐，可能耗时较久",
+     "selectsrt": "选择字幕",
     "selectsavedir": "选择翻译后存储目录",
     "proxyerrortitle": "网络代理错误",
     "proxyerrorbody": "无法访问google服务，请正确设置网络代理",

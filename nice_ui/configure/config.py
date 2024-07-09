@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 from queue import Queue
 
+from nice_ui.configure import ModelDict
 from nice_ui.ui.SingalBridge import DataBridge
 from utils.log import Logings
-from nice_ui.configure import ModelDict
 
 logger = Logings().logger
 
@@ -328,6 +328,9 @@ params['gemini_template'] = gemini_path.read_text(encoding='utf-8').strip() + "\
 queue_mp4 = []
 # 存放视频分离为无声视频进度，noextname为key，用于判断某个视频是否是否已预先创建好 novice_mp4, “ing”=需等待，end=成功完成，error=出错了
 queue_novice = {}
+
+# 存放一次性多选的srt
+queue_srt = []
 
 # 倒计时
 task_countdown = 60

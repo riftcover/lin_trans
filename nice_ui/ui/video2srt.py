@@ -1,11 +1,12 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
-from PySide6.QtCore import (QCoreApplication, QRect, Qt, Slot, QSize)
+from PySide6.QtCore import (QCoreApplication, QRect, Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
-                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QHeaderView)
+                               QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication)
 from PySide6.QtWidgets import (QFileDialog)
 
 from nice_ui.configure import config
@@ -235,14 +236,14 @@ class Video2SRT(QWidget):
         # if QT_CONFIG(tooltip)
         self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
         # endif // QT_CONFIG(tooltip)
-        ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None))
-        ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None))
-        ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None))
-        ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None))
+        # ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
+        # ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None))
+        # ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
+        # ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None))
+        # ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
+        # ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None))
+        # ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
+        # ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None))
         self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"开始", None))
 
 
@@ -263,11 +264,42 @@ class TableWindow:
             for file_path in file_paths:
                 file_name = os.path.basename(file_path)
                 self.add_file_to_table(ui_table, file_name)
+
             config.last_opendir = os.path.dirname(file_paths[0])
             self.setting.setValue("last_dir", config.last_opendir)
-            config.queue_mp4.extend(file_paths)
 
-    def add_file_to_table(self, ui_table: QTableWidget, file_name: str):
+    def table_set_item(self,ui_table,row_position:int,l0,l1,l2):
+        #文件名
+        file_name = QLabel()
+        file_name.setText(os.path.basename(l0))
+        file_name.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 0, file_name)
+
+        # 时长
+        file_duration = QLabel()
+        file_duration.setText(l1)
+        file_duration.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 1, file_duration)
+
+        #算力消耗
+        locol_value = QLabel()
+        locol_value.setText(l2)
+        locol_value.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 2, locol_value)
+
+        #操作
+        delete_button = QPushButton("删除")
+        delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
+        ui_table.setCellWidget(row_position, 3, delete_button)
+        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+
+        #文件路径
+        file_path = QLabel()
+        file_path.setText(l0)
+        file_path.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 4, file_path)
+
+    def add_file_to_table(self, ui_table: QTableWidget, file_path: str):
         # 添加文件到表格
 
         row_position = ui_table.rowCount()
@@ -275,14 +307,7 @@ class TableWindow:
         ui_table.insertRow(row_position)
         file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
         # file_duration = self.get_video_duration(file_path)
-        delete_button = QPushButton("删除")
-        delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
-        ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
-        ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
-        ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
-        ui_table.setCellWidget(row_position, 3, delete_button)
-
-        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+        self.table_set_item(ui_table, row_position, file_path, file_duration, "0.00")
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, row: int):
@@ -318,19 +343,26 @@ class TableWindow:
         # 拖出
         file_urls = event.mimeData().urls()
         config.logger.info(f'file_urls: {file_urls}')
-        file_paths = []
         if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
-                file_paths.append(file_path)
-                config.logger.info(f'file_path: {file_path}')
-                file_name = os.path.basename(file_path)
-                config.logger.info(f'file_name: {file_name}')
-                self.add_file_to_table(ui_table, file_name)
-            config.queue_mp4.extend(file_paths)
+                self.add_file_to_table(ui_table, file_path)
         event.accept()
-        # ui_table.setText("\n".join(self.file_paths))
+
+    def add_queue_mp4(self):
+        # 获取self.main.media_table中第4列的数据
+        srt_list = []
+        for i in range(self.main.media_table.rowCount()):
+            srt_list.append(self.main.media_table.cellWidget(i, 4).text())
+        config.queue_srt.extend(srt_list)
+        config.logger.info(f'queue_srt: {config.queue_mp4}')
 
     def clearTable(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = Video2SRT('字幕翻译',setting=QSettings("Locoweed", "LinLInTrans"))
+    window.show()
+    sys.exit(app.exec())

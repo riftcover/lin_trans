@@ -1,26 +1,29 @@
+import os
+import re
 import sys
 
-from PySide6.QtCore import Qt, QRect
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidgetItem, QLabel, \
-    QHeaderView
+import path
+from PySide6.QtCore import Qt, QRect, Slot, QSettings
+from PySide6.QtGui import QDragEnterEvent, QDropEvent
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication
 from qfluentwidgets import (PushButton, ComboBox, TableWidget, FluentIcon, MessageBox)
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from nice_ui.ui.video2srt import TableWindow
 from videotrans.translator import TRANSNAMES
 
 
 class WorkSrt(QWidget):
-    def __init__(self, text: str, parent=None,setting=None):
+    def __init__(self, text: str, parent=None, setting=None):
         super().__init__(parent=parent)
         self.setting = setting
-        self.table = TableWindow(self,setting)
+        self.table = LTableWindow(self, setting)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
         self.setObjectName(text.replace(' ', '-'))
         self.setup_ui()
         self.bind_action()
+
     def setup_ui(self):
         self.setWindowTitle('字幕翻译准备')
         self.setGeometry(QRect(12, 16, 777, 578))
@@ -29,15 +32,17 @@ class WorkSrt(QWidget):
         self.setLayout(main_layout)
 
         # 文件选择按钮
-        self.btn_get_srt = PushButton('选择字幕文件', self)
+        self.btn_get_srt = PushButton('拖拽拖拽文件到页面，选择字幕文件')
         self.btn_get_srt.setIcon(FluentIcon.FOLDER)
-
+        self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
+
+        self.add_queue_btn =PushButton('添加到队列')
+        main_layout.addWidget(self.add_queue_btn)
 
         # 下拉框布局
         combo_layout = QHBoxLayout()
         main_layout.addLayout(combo_layout)
-
 
         # 原始语种布局
         source_layout = QHBoxLayout()
@@ -81,7 +86,8 @@ class WorkSrt(QWidget):
 
         self.translate_model = ComboBox(self)
         self.translate_model.addItems(TRANSNAMES)
-        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
+        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else \
+            TRANSNAMES[0]
 
         self.translate_model.setCurrentText(translate_name)
 
@@ -89,12 +95,16 @@ class WorkSrt(QWidget):
         engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(engine_layout)
 
-
         # 表格
         self.media_table = TableWidget(self)
-        self.media_table.setColumnCount(4)
-        self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作'])
-        self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.media_table.setColumnCount(5)
+        self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
+        self.media_table.setColumnWidth(0, 50)
+        self.media_table.setColumnWidth(1, 200)
+        self.media_table.setColumnWidth(2, 200)
+        self.media_table.setColumnWidth(3, 100)
+        self.media_table.setColumnWidth(4, 100)
+        self.media_table.setShowGrid(False)
         main_layout.addWidget(self.media_table)
 
         # 开始按钮
@@ -103,50 +113,157 @@ class WorkSrt(QWidget):
 
         main_layout.addWidget(self.start_button)
 
-        # 设置接受拖放
-        self.setAcceptDrops(True)
+        # # 设置接受拖放
+        # self.setAcceptDrops(True) #不知道为啥不好使了
+
     def bind_action(self):
-        self.btn_get_srt.clicked.connect(self.select_file)
         self.start_button.clicked.connect(self.start_translation)
+        # 选择文件,并显示路径
+        self.btn_get_srt.clicked.connect(self.table.select_file)
+        self.btn_get_srt.setAcceptDrops(True)
+        self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
+        self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
+
+        self.add_queue_btn.clicked.connect(self.table.add_queue_srt)
 
 
-    def select_file(self):
-        file_dialog = QFileDialog(self)
-        file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
-        if file_dialog.exec():
-            files = file_dialog.selectedFiles()
-            self.add_files_to_table(files)
 
-    def add_files_to_table(self, files):
-        for file in files:
-            row_position = self.media_table.rowCount()
-            self.media_table.insertRow(row_position)
-            self.media_table.setItem(row_position, 0, QTableWidgetItem(file))
-            self.media_table.setItem(row_position, 1, QTableWidgetItem('计算中...'))
-            self.media_table.setItem(row_position, 2, QTableWidgetItem('计算中...'))
-            delete_button = PushButton('删除')
-            delete_button.clicked.connect(lambda _, r=row_position: self.media_table.removeRow(r))
-            self.media_table.setCellWidget(row_position, 3, delete_button)
 
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
 
-    def dropEvent(self, event):
-        files = [u.toLocalFile() for u in event.mimeData().urls()]
-        self.add_files_to_table(files)
+
 
     def start_translation(self):
         MessageBox('提示', '翻译准备完成，即将开始翻译...', self).exec()
 
 
+class LTableWindow:
+    def __init__(self, main, setting):
+        self.main = main
+        self.setting = setting
+
+    def select_file(self):
+        file_paths = QFileDialog()
+        file_paths.setFileMode(QFileDialog.ExistingFiles)
+        file_paths.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main,config.transobj['selectsrt'], config.last_opendir,
+                                                     "Srt files(*.srt)")
+
+        if file_paths:
+            for file_path in file_paths:
+                self.add_file_to_table(self.main.media_table, file_path)
+        config.last_opendir = os.path.dirname(file_paths[0])
+        self.setting.setValue("last_dir", config.last_opendir)
+
+
+    # 列表的操作
+    def table_set_item(self,ui_table,row_position:int,l0,l1,l2,):
+        #文件名
+        file_name = QLabel()
+        file_name.setText(os.path.basename(l0))
+        file_name.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 0, file_name)
+
+        #字符数
+        file_character_count = QLabel()
+        file_character_count.setText(l1)
+        file_character_count.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 1, file_character_count)
+
+        #算力消耗
+        locol_value = QLabel()
+        locol_value.setText(l2)
+        locol_value.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 2, locol_value)
+
+        #操作
+        delete_button = PushButton("删除")
+        delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
+        ui_table.setCellWidget(row_position, 3, delete_button)
+        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+
+        #文件路径
+        file_path = QLabel()
+        file_path.setText(l0)
+        file_path.setAlignment(Qt.AlignCenter)
+        ui_table.setCellWidget(row_position, 4, file_path)
+
+    def add_file_to_table(self, ui_table: TableWidget, file_path: str):
+        # 添加文件到表格
+        row_position = ui_table.rowCount()
+        ui_table.insertRow(row_position)
+
+        file_name = os.path.basename(file_path)
+        config.logger.info(f'file_name: {file_name}')
+        file_character_count = self.get_file_character_count(file_path)
+        config.logger.info(f'file_character_count: {file_character_count}')
+        config.logger.info(f'file_path: {file_path}')
+
+        self.table_set_item(ui_table,row_position,file_path,file_character_count,"未知")
+
+
+
+    # 获取文件字符数
+    def get_file_character_count(self, file_path: path) -> str:
+        # 输入srt格式的文件，获取里面的字符数量，不计算序号，不计算时间戳
+        character_count = 0
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            for line in lines:
+                # 跳过序号和时间戳
+                if re.match(r'^\d+$', line.strip()) or re.match(
+                        r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line.strip()):
+                    continue
+                character_count += len(line.strip())
+        return str(character_count)
+
+    @Slot()
+    def delete_file(self, ui_table: QTableWidget, row: int):
+        # Confirm delete action
+
+        ui_table.removeRow(row)
+        # Update the delete buttons' connections
+        self.update_delete_buttons(ui_table)
+
+    def update_delete_buttons(self, ui_table: QTableWidget):
+        for row in range(ui_table.rowCount()):
+            delete_button = ui_table.cellWidget(row, 3)
+            delete_button.clicked.disconnect()
+            delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
+
+    def drag_enter_event(self, event: QDragEnterEvent):
+        # 接受拖入
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
+        # 拖出
+        file_urls = event.mimeData().urls()
+        config.logger.info(f'file_urls: {file_urls}')
+        if file_urls:
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                self.add_file_to_table(ui_table, file_path)
+        event.accept()
+
+    def add_queue_srt(self):
+        # 获取self.main.media_table中第4列的数据
+        srt_list = []
+        for i in range(self.main.media_table.rowCount()):
+            srt_list.append(self.main.media_table.cellWidget(i, 4).text())
+        config.queue_srt.extend(srt_list)
+        config.logger.info(f'queue_srt: {config.queue_srt}')
+
+
+    def clearTable(self, ui_table: QTableWidget):
+        # 清空表格
+        ui_table.setRowCount(0)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = WorkSrt('字幕翻译')
+    window = WorkSrt('字幕翻译',setting=QSettings("Locoweed", "LinLInTrans"))
     window.show()
     sys.exit(app.exec())
+
