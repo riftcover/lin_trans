@@ -1,12 +1,7 @@
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-                            QMetaObject, QObject, QPoint, QRect,
-                            QSize, QTime, QUrl, Qt)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect)
 
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
-                               QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMainWindow, QMenu,
-                               QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
-                               QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
+from PySide6.QtWidgets import (QLabel, QMenuBar, QStackedWidget,
+                               QStatusBar, QVBoxLayout,
                                QWidget)
 
 

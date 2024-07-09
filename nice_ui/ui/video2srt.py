@@ -2,12 +2,10 @@ import os
 import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import (QCoreApplication, QRect,Qt, Slot,
-                            QSize)
+from PySide6.QtCore import (QCoreApplication, QRect, Qt, Slot, QSize)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
-                               QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
+                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QHeaderView)
 from PySide6.QtWidgets import (QFileDialog)
 
 from nice_ui.configure import config
@@ -21,7 +19,7 @@ class Video2SRT(QWidget):
         self.setting = setting
         self.table =TableWindow(self,setting)
         self.util = SecWindow(self)
-        self.languagename = config.langnamelist
+        self.language_name = config.langnamelist
         self.setObjectName(text.replace(' ', '-'))
         self.setupUi()
         self.initUI()
@@ -152,16 +150,8 @@ class Video2SRT(QWidget):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(80, -1, 80, -1)
         self.media_table = QTableWidget(self.layoutWidget)
-        if (self.media_table.columnCount() < 4):
-            self.media_table.setColumnCount(4)
-        __qtablewidgetitem = QTableWidgetItem()
-        self.media_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.media_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.media_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.media_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        self.media_table.setColumnCount(4)
+        self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.media_table.setObjectName(u"media_table")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy4.setHorizontalStretch(0)
@@ -196,12 +186,12 @@ class Video2SRT(QWidget):
     def initUI(self):
         self.btn_get_video.setCursor(Qt.PointingHandCursor)
         self.source_language.addItems(config.langnamelist)
-        if config.params['source_language'] and config.params['source_language'] in self.languagename:
+        if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language.setCurrentText(config.params['source_language'])
         else:
             self.source_language.setCurrentIndex(2)
 
-        self.translate_language.addItems(["-"] + self.languagename)
+        self.translate_language.addItems(["-"] + self.language_name)
 
         # 模型下拉菜单内容
         self.source_model.addItems(config.model_code_list)
@@ -209,7 +199,7 @@ class Video2SRT(QWidget):
         translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
 
         self.translate_type.setCurrentText(translate_name)
-        if config.params['target_language'] and config.params['target_language'] in self.languagename:
+        if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language.setCurrentText(config.params['target_language'])
 
 
@@ -236,10 +226,6 @@ class Video2SRT(QWidget):
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
         # if QT_CONFIG(tooltip)
         self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        # endif // QT_CONFIG(tooltip)
-        # if QT_CONFIG(tooltip)
-        self.check_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-        # endif // QT_CONFIG(tooltip)
         self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
         # if QT_CONFIG(tooltip)
