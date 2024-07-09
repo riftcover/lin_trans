@@ -357,7 +357,7 @@ class TableWindow:
         config.queue_srt.extend(srt_list)
         config.logger.info(f'queue_srt: {config.queue_mp4}')
 
-    def clearTable(self, ui_table: QTableWidget):
+    def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
 

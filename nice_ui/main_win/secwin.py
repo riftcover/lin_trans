@@ -9,8 +9,8 @@ from PySide6.QtCore import QUrl, Qt, QThread
 from PySide6.QtGui import QTextCursor, QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
 
-from nice_ui.ui.SingalBridge import save_setting, DataBridge
 from nice_ui.task.main_worker import QueueConsumer
+from nice_ui.ui.SingalBridge import save_setting, DataBridge
 from nice_ui.util.code_tools import language_code
 
 warnings.filterwarnings('ignore')
@@ -646,7 +646,7 @@ class SecWindow():
         config.current_status = type
         # 当type为ing时将列表media_table中的内容清空,queue_mp4清空
         if type == 'ing':
-            self.main.table.clearTable(self.main.media_table)
+            self.main.table.clear_table(self.main.media_table)
             config.queue_mp4 = []
             # QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
 

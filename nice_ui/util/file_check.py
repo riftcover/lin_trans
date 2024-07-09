@@ -71,7 +71,6 @@ def is_valid_srt_file(file_path):
     :return: 如果是有效的 .srt 文件，返回 True；否则返回 False
     """
 
-
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             file_content = file.read()
