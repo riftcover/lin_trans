@@ -3,11 +3,11 @@ import re
 
 from PySide6.QtCore import QObject, Signal
 
-from orm.queries import ToSrtOrm
 from nice_ui.configure import config
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
 from nice_ui.util.tools import set_process
+from orm.queries import ToSrtOrm
 
 work_queue = LinQueue()
 

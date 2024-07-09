@@ -1,17 +1,14 @@
 from typing import Any
 
+from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String
 
 from nice_ui.configure.config import root_path
-
-# 使用sqlalchemy创建一个sqlite3数据库
 
 Base = declarative_base()
 
 
-#创建数据表的映射类,表的作用是存储导入文件的数据
 class ToSrt(Base):
     __tablename__ = 'tosrt'
     id = Column(Integer, primary_key=True, autoincrement=True)

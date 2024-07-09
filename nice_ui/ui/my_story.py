@@ -2,17 +2,17 @@ import json
 import os
 import shutil
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QProgressBar, QFileDialog
+
 from PySide6.QtCore import Qt
-from qfluentwidgets import (TableWidget, CheckBox, ComboBox,
-                            PushButton, InfoBar, InfoBarPosition, FluentIcon,
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog
+from qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon,
                             CardWidget, SearchLineEdit)
 
+from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.util import tools
-from orm.queries import ToSrtOrm
-from nice_ui.configure import config
 from nice_ui.util.tools import ObjFormat
+from orm.queries import ToSrtOrm
 
 
 class TableApp(CardWidget):
@@ -106,13 +106,6 @@ class TableApp(CardWidget):
         for row in range(self.table.rowCount()):
             self.table.cellWidget(row, 0).setChecked(self.selectAllBtn.isChecked())
 
-
-
-
-
-
-
-
     def _init_table(self):
         # 初始化表格,从数据库中获取数据
         all_srt = self.srt_orm.query_data_format_unid_path()
@@ -125,13 +118,13 @@ class TableApp(CardWidget):
                 srt.job_status == 0
 
                 # 将上次排队中的任务job_status == 1设置为0
-                self.srt_orm.update_table_unid(srt.unid, job_status=0)
+                self.srt_orm.update_table_unid(srt.unid, job_status=srt.job_status)
                 # 重新初始化表格,状态显示为未开始
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
                 obj_format = {'raw_noextname': filename_without_extension,
                               'unid': srt.unid, }
-                self.table_row_init(obj_format, 0)
+                self.table_row_init(obj_format, srt.job_status)
             elif srt.job_status == 2:
                 self.addRow_init_all(filename_without_extension, srt.unid)
 
@@ -153,18 +146,18 @@ class TableApp(CardWidget):
             config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
         filename = obj_format['raw_noextname']
         unid = obj_format['unid']
-        rowPosition = self.table.rowCount()
-        self.table.insertRow(rowPosition)
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
 
         # 复选框
         chk = CheckBox()
-        self.table.setCellWidget(rowPosition, 0, chk)
+        self.table.setCellWidget(row_position, 0, chk)
 
         # 文件名
         file_name = QLabel()
         file_name.setText(filename)
         file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 1, file_name)
+        self.table.setCellWidget(row_position, 1, file_name)
 
         # 处理进度
         file_name = QLabel()
@@ -173,19 +166,19 @@ class TableApp(CardWidget):
         elif job_status == 0:
 
             file_name.setText("未开始")
-            rowPosition = self.table.rowCount()
+            row_position = self.table.rowCount()
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
             startBtn.setIcon(FluentIcon.PLAY)
-            startBtn.clicked.connect(lambda: self._start_row(rowPosition))
-            self.table.setCellWidget(rowPosition, 3, startBtn)
+            startBtn.clicked.connect(lambda: self._start_row(row_position))
+            self.table.setCellWidget(row_position, 3, startBtn)
         file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 2, file_name)
+        self.table.setCellWidget(row_position, 2, file_name)
 
         # 隐藏列数据
         file_unid = QLabel()
         file_unid.setText(unid)
-        self.table.setCellWidget(rowPosition, 6, file_unid)
+        self.table.setCellWidget(row_position, 6, file_unid)
 
     def table_row_working(self, unid, progress: float):
         """
@@ -270,49 +263,50 @@ class TableApp(CardWidget):
                 config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
     def addRow_init_all(self, filename, unid):
-        rowPosition = self.table.rowCount()
-        self.table.insertRow(rowPosition)
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
         # 复选框
         chk = CheckBox()
-        self.table.setCellWidget(rowPosition, 0, chk)
+        self.table.setCellWidget(row_position, 0, chk)
 
         # 文件名
-        fileName = QLabel()
-        fileName.setText(filename)
-        fileName.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 1, fileName)
+        file_name = QLabel()
+        file_name.setText(filename)
+        file_name.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 1, file_name)
 
         # 进度条
-        fileName = QLabel()
-        fileName.setText("已完成")
-        fileName.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 2, fileName)
+        file_name = QLabel()
+        file_name.setText("已完成")
+        file_name.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 2, file_name)
 
         # 开始按钮
-        startBtn = PushButton("开始")
-        startBtn.setIcon(FluentIcon.PLAY)
-        self.table.setCellWidget(rowPosition, 3, startBtn)
+        start_btn = PushButton("开始")
+        start_btn.setIcon(FluentIcon.PLAY)
+        self.table.setCellWidget(row_position, 3, start_btn)
 
         # 导出下拉框
+
         # exportCombo = ComboBox()
         # exportCombo.addItems(["导出srt", "导出txt"])
-        # self.table.setCellWidget(rowPosition, 4, exportCombo)
-        exportBtn = PushButton("导出")
-        exportBtn.setIcon(FluentIcon.DOWN)
-        exportBtn.clicked.connect(lambda: self._export_row(rowPosition))
-        self.table.setCellWidget(rowPosition, 4, exportBtn)
+        # self.table.setCellWidget(row_position, 4, exportCombo)
+        export_btn = PushButton("导出")
+        export_btn.setIcon(FluentIcon.DOWN)
+        export_btn.clicked.connect(lambda: self._export_row(row_position))
+        self.table.setCellWidget(row_position, 4, export_btn)
 
         # 删除按钮
-        deleteBtn = PushButton("删除")
-        deleteBtn.setIcon(FluentIcon.DELETE)
-        deleteBtn.clicked.connect(lambda: self._delete_row(rowPosition))
-        self.table.setCellWidget(rowPosition, 5, deleteBtn)
+        delete_btn = PushButton("删除")
+        delete_btn.setIcon(FluentIcon.DELETE)
+        delete_btn.clicked.connect(lambda: self._delete_row(row_position))
+        self.table.setCellWidget(row_position, 5, delete_btn)
 
         # 隐藏列数据
         file_unid = QLabel()
         file_unid.setText(unid)
         file_unid.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(rowPosition, 6, file_unid)
+        self.table.setCellWidget(row_position, 6, file_unid)
 
     def _start_row(self, row):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
@@ -329,6 +323,7 @@ class TableApp(CardWidget):
     def _delete_row(self, row):
         config.logger.info(f"删除文件所在行:{row} ")
         unid_item = self.table.cellWidget(row, 6)
+
         # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
         # 删除result中对应文件
         text = unid_item.text()
@@ -344,7 +339,7 @@ class TableApp(CardWidget):
         # 在数据库中删除对应数据
         self.srt_orm.delete_table_unid(text)
         # 删除表格行
-        self.table.removeRow(row)        
+        self.table.removeRow(row)
         # 清除缓存索引
         self.row_cache.clear()
         InfoBar.success(
@@ -356,10 +351,12 @@ class TableApp(CardWidget):
             duration=2000,
             parent=self
         )
+
     def _delete_batch(self):
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, 0).isChecked():
                 self._delete_row(row)
+
     def searchFiles(self, text):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, 1)
@@ -390,7 +387,7 @@ class TableApp(CardWidget):
                 config.logger.error(f"导出文件失败:{e}")
                 InfoBar.error(
                     title='错误',
-                    content=f"导出文件失败",
+                    content="导出文件失败",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
@@ -401,13 +398,14 @@ class TableApp(CardWidget):
 
         InfoBar.success(
             title='成功',
-            content=f"文件已导出",
+            content="文件已导出",
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
             duration=2000,
             parent=self
         )
+
     def _export_row(self, row):
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, 1)
@@ -425,7 +423,7 @@ class TableApp(CardWidget):
             shutil.copy(job_path, file_path)
             InfoBar.success(
                 title='成功',
-                content=f"文件已导出",
+                content="文件已导出",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
