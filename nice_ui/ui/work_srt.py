@@ -141,7 +141,8 @@ class LTableWindow:
     def select_file(self):
         file_paths = QFileDialog()
         file_paths.setFileMode(QFileDialog.ExistingFiles)
-        file_paths.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
+        file_paths.setNameFilter("Subtitle files (*.srt)")
+        # file_paths.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
         file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectsrt'], config.last_opendir, "Srt files(*.srt)")
 
         if file_paths:
