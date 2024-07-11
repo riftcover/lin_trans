@@ -4,14 +4,14 @@ import sys
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, PrimaryPushButton, HyperlinkLabel)
+from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 
 
 class LocalModelPage(QWidget):
-    def __init__(self,setting, parent=None):
+    def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
         self.setting = setting
         self.setup_ui()
@@ -46,10 +46,6 @@ class LocalModelPage(QWidget):
         tips1 = CaptionLabel("提示: 请确保模型存储路径存在且有足够的磁盘空间。")
         layout.addWidget(tips1)
 
-
-
-
-
         # Whisper.Cpp 模型列表
         self.cpp_model_title = BodyLabel("Whisper.Cpp 模型列表")
         self.cpp_model_table = TableWidget(self)
@@ -75,7 +71,6 @@ class LocalModelPage(QWidget):
         tips1 = CaptionLabel("不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请手动下载，并放到上面的模型存储路径中。")
         layout.addWidget(tips1)
 
-
     def bind_action(self):
         self.path_open_btn.clicked.connect(self.open_directory)
         self.path_change_btn.clicked.connect(self.change_path)
@@ -89,7 +84,7 @@ class LocalModelPage(QWidget):
 
         else:
             config.logger.error(f"路径不存在: {path}")
-            
+
     def change_path(self):
         # 选择路径
         if new_path := QFileDialog.getExistingDirectory(self, "选择模型存储路径"):
@@ -117,7 +112,6 @@ class LocalModelPage(QWidget):
         table.resizeColumnsToContents()
         table.setColumnWidth(0, 150)  # 设置第一列宽度
 
-
     def show_model_list(self, engine):
         if engine == "Whisper.Cpp":
             self.cpp_model_title.show()
@@ -125,11 +119,8 @@ class LocalModelPage(QWidget):
             self.faster_model_title.hide()
             self.faster_model_table.hide()
             # 填充 Whisper.Cpp 模型数据
-            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), 
-                          ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), 
-                          ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5),
-                            ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
-                          ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
+            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5),
+                          ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
             self.populate_model_table(self.cpp_model_table, cpp_models)
         else:
             self.cpp_model_title.hide()
@@ -137,11 +128,8 @@ class LocalModelPage(QWidget):
             self.faster_model_title.show()
             self.faster_model_table.show()
             # 填充 FasterWhisper 模型数据
-            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2),
-                          ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
-                          ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5),
-                            ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
-                          ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
+            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5),
+                             ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
 
             self.populate_model_table(self.faster_model_table, faster_models)
 
@@ -158,11 +146,9 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
 
         # 创建两个 OpenAIApiKeyCard 实例
-        kimi_card = LLMKeySet('kimi api','hurl')
+        kimi_card = LLMKeySet('kimi api', 'hurl')
 
-        zhipu_card = LLMKeySet('智谱AI api','zhipu')
-
-
+        zhipu_card = LLMKeySet('智谱AI api', 'zhipu')
 
         # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
@@ -179,11 +165,11 @@ class LLMConfigPage(QWidget):
         self.setLayout(main_layout)
 
 
-
 class TranslationPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setup_ui()
+
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
@@ -212,39 +198,48 @@ class TranslationPage(QWidget):
 
 
 class ProxyPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self,setting, parent=None):
         super().__init__(parent=parent)
+        self.setting = setting
         self.setup_ui()
+
     def setup_ui(self):
         # 添加代理设置
         main_layout = QVBoxLayout()
-
-        # 水平布局
-        a_layout = QHBoxLayout()
         self.no_proxy_radio = RadioButton("无代理", self)
         self.use_proxy_radio = RadioButton("使用代理", self)
-        main_layout.addWidget(self.no_proxy_radio)
-        main_layout.addWidget(self.use_proxy_radio)
-        main_layout.addStretch(1)
+        self.no_proxy_radio.toggled.connect(self.save_proxy)
+        # self.use_proxy_radio.toggled.connect(self.save_proxy)
 
-        radio_layout = QHBoxLayout()
+        # 默认选中"无代理"
+        self.no_proxy_radio.setChecked(True)
+
+        main_layout.addWidget(self.no_proxy_radio)
+        main_layout.addStretch(1)
+        main_layout.addWidget(self.use_proxy_radio)
+
         self.proxy_address = LineEdit(self)
         self.proxy_address.setPlaceholderText("代理地址，比如http://127.0.0.1:8087")
         self.save_btn = PushButton("保存")
-        radio_layout.addWidget(self.proxy_address)
-        radio_layout.addWidget(self.save_btn)
-        self.proxy_test = PrimaryPushButton("测试链接", self)
-
-        main_layout.addLayout(radio_layout)
-        main_layout.addWidget(self.proxy_test)
+        self.save_btn.clicked.connect(self.save_proxy)
+        main_layout.addWidget(self.proxy_address)
+        main_layout.addStretch(1)
+        main_layout.addWidget(self.save_btn)
 
         self.setLayout(main_layout)
 
-
+    def save_proxy(self):
+        if self.no_proxy_radio.isChecked():
+            config.models_path = None
+        else:
+            config.models_path = self.proxy_address.text()
+        self.setting.setValue("proxy", config.models_path)
+        config.logger.info(f"proxy/use_proxy: {self.use_proxy_radio.isChecked()}")
+        config.logger.info(f"proxy/address: {config.models_path}")
 
 
 class SettingInterface(QWidget):
-    def __init__(self, text: str,setting, parent=None):
+    def __init__(self, text: str, setting, parent=None):
         super().__init__(parent=parent)
         self.setting = setting
         self.setObjectName(text.replace(' ', '-'))
@@ -257,7 +252,7 @@ class SettingInterface(QWidget):
         self.localModelPage = LocalModelPage(setting=self.setting)
         self.llmConfigPage = LLMConfigPage(self)
         self.translationPage = TranslationPage(self)
-        self.proxyPage = ProxyPage(self)
+        self.proxyPage = ProxyPage(setting=self.setting)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
@@ -270,7 +265,7 @@ class SettingInterface(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingInterface('setting',setting=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface('setting', setting=QSettings("Locoweed", "LinLInTrans"))
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())

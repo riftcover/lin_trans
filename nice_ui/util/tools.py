@@ -721,7 +721,7 @@ def format_srt(content):
         it = it.strip()
         if is_time := re.match(timepat, it):
             # 当前行是时间格式，则添加
-            result.append({"time": it, "text": []})
+            result.append({"time": it, "text": list})
         elif i == 0:
             # 当前是第一行，并且不是时间格式，跳过
             continue
