@@ -119,7 +119,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
-        self.add_queue_btn.clicked.connect(self.table.add_queue_srt)
+        self.add_queue_btn.clicked.connect(self.add_queue_srt)
 
     def add_queue_srt(self):
         # 获取self.main.media_table中第4列的数据

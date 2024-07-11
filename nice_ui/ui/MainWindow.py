@@ -5,12 +5,12 @@ from PySide6.QtCore import Qt, QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel,
-                            setFont, FluentBackgroundTheme)
+from qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme)
 
 from nice_ui.configure import config
 from nice_ui.ui.SingalBridge import get_setting_cache
 from nice_ui.ui.my_story import TableApp
+from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 
@@ -40,9 +40,7 @@ class Window(FluentWindow):
         self.translate_srt = WorkSrt('字幕翻译', self,self.main_setting)
         self.edit_srt = Widget('字幕编辑', self)
         self.my_story = TableApp('我的创作', self)
-
-
-        self.settingInterface = Widget('我的设置', self)
+        self.settingInterface = SettingInterface('设置',self)
 
         self.initNavigation()
 
@@ -58,7 +56,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
 
 
-        # add custom widget to bottom
+        # add custoxm widget to bottom
         self.navigationInterface.addWidget(
             routeKey='avatar',
             widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'),
@@ -66,7 +64,7 @@ class Window(FluentWindow):
             position=NavigationItemPosition.BOTTOM,
         )
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, 'Settings', NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, 'Settings')
 
         # add badge to navigation item
         item = self.navigationInterface.widget(self.vide2srt.objectName())
@@ -78,7 +76,7 @@ class Window(FluentWindow):
         # )
 
         # NOTE: enable acrylic effect
-        # self.navigationInterface.setAcrylicEnabled(True)
+        # self.navigationInterface.setAcrylicEnabled(True)【
 
     def initWindow(self):
         self.resize(900, 700)
