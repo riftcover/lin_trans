@@ -1,13 +1,15 @@
 import os
+import re
 import sys
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
 from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
+from nice_ui.util import tools
 
 
 class LocalModelPage(QWidget):
@@ -208,7 +210,6 @@ class ProxyPage(QWidget):
         main_layout = QVBoxLayout()
         self.no_proxy_radio = RadioButton("无代理", self)
         self.use_proxy_radio = RadioButton("使用代理", self)
-        self.no_proxy_radio.toggled.connect(self.save_proxy)
         # self.use_proxy_radio.toggled.connect(self.save_proxy)
 
         # 默认选中"无代理"
@@ -230,12 +231,23 @@ class ProxyPage(QWidget):
 
     def save_proxy(self):
         if self.no_proxy_radio.isChecked():
-            config.models_path = None
+            config.proxy = None
         else:
-            config.models_path = self.proxy_address.text()
-        self.setting.setValue("proxy", config.models_path)
+            proxy = self.proxy_address.text()
+            if not re.match(r'^(http|sock)', proxy, re.I):
+                proxy = f'http://{proxy}'
+            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
+                question = tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
+            一般代理/vpn格式为 http://127.0.0.1:数字端口号
+            如果不知道什么是代理请勿随意填写
+            如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+                if question != QMessageBox.Yes:
+                    self.update_status('stop')
+                    return
+            config.proxy = proxy
+        self.setting.setValue("proxy", config.proxy)
         config.logger.info(f"proxy/use_proxy: {self.use_proxy_radio.isChecked()}")
-        config.logger.info(f"proxy/address: {config.models_path}")
+        config.logger.info(f"proxy/address: {config.proxy}")
 
 
 class SettingInterface(QWidget):

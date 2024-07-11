@@ -1,7 +1,7 @@
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 
-from orm.inint import engine, ToSrt, ToTranslation
+from orm.inint import engine, ToSrt, ToTranslation, Prompts
 
 # 创建一个数据库会话
 Session = sessionmaker(bind=engine)
@@ -11,34 +11,11 @@ session = Session()
 class ToSrtOrm:
     # 添加ToSrt数据
 
-    def add_data_to_table(
-        self,
-        unid,
-        path,
-        source_language,
-        source_module_status,
-        source_module_name,
-        translate_status,
-        cuda,
-        raw_ext,
-        job_status=0,
-        obj=None,
-    ):
-
+    def add_data_to_table(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, job_status=0, obj=None, ):
         if obj is None:
             obj = {}
-        new_entry = ToSrt(
-            unid=unid,
-            path=path,
-            source_language=source_language,
-            source_module_status=source_module_status,
-            source_module_name=source_module_name,
-            translate_status=translate_status,
-            cuda=cuda,
-            raw_ext=raw_ext,
-            job_status=job_status,
-            obj=obj,
-        )
+        new_entry = ToSrt(unid=unid, path=path, source_language=source_language, source_module_status=source_module_status, source_module_name=source_module_name, translate_status=translate_status, cuda=cuda,
+            raw_ext=raw_ext, job_status=job_status, obj=obj, )
         session.add(new_entry)
         session.commit()
 
@@ -59,8 +36,7 @@ class ToSrtOrm:
         return session.query(ToSrt.unid, ToSrt.path, ToSrt.job_status).all()
 
     def update_table_unid(self, unid, **kwargs):
-        entry = self.query_data_by_unid(unid)
-        if entry:
+        if entry := self.query_data_by_unid(unid):
             for key, value in kwargs.items():
                 setattr(entry, key, value)
             session.commit()
@@ -68,8 +44,7 @@ class ToSrtOrm:
         return False
 
     def delete_table_unid(self, unid):
-        entry = self.query_data_by_unid(unid)
-        if entry:
+        if entry := self.query_data_by_unid(unid):
             session.delete(entry)
             session.commit()
             return True
@@ -84,16 +59,8 @@ class ToSrtOrm:
 
 class ToTranslationOrm:
     # 添加ToTranslation数据
-    def add_to_translation(
-        self, unid, path, source_language, target_language, translate_type
-    ):
-        new_entry = ToTranslation(
-            unid=unid,
-            path=path,
-            source_language=source_language,
-            target_language=target_language,
-            translate_type=translate_type,
-        )
+    def add_to_translation(self, unid, path, source_language, target_language, translate_type):
+        new_entry = ToTranslation(unid=unid, path=path, source_language=source_language, target_language=target_language, translate_type=translate_type, )
         session.add(new_entry)
         session.commit()
 
@@ -107,8 +74,7 @@ class ToTranslationOrm:
             return None
 
     def update_to_translation(self, unid, **kwargs):
-        entry = self.get_to_translation_by_unid(unid)
-        if entry:
+        if entry := self.get_to_translation_by_unid(unid):
             for key, value in kwargs.items():
                 setattr(entry, key, value)
             session.commit()
@@ -116,8 +82,7 @@ class ToTranslationOrm:
         return False
 
     def delete_to_translation(self, unid):
-        entry = self.get_to_translation_by_unid(unid)
-        if entry:
+        if entry := self.get_to_translation_by_unid(unid):
             session.delete(entry)
             session.commit()
             return True
@@ -125,6 +90,41 @@ class ToTranslationOrm:
 
     def close_session(self):
         session.close()
+
+
+class PromptsOrm:
+    def add_data_to_table(self, prompt):
+        new_entry = Prompts(prompt=prompt)
+        session.add(new_entry)
+        session.commit()
+
+    def get_all_data(self):
+        return session.query(Prompts).all()
+    
+    def query_data_by_prompt(self, prompt):
+        try:
+            return session.query(Prompts).filter_by(prompt=prompt).one()
+        except NoResultFound:
+            return None
+
+    def update_table_prompt(self, prompt, **kwargs):
+        if entry := self.query_data_by_prompt(prompt):
+            for key, value in kwargs.items():
+                setattr(entry, key, value)
+            session.commit()
+            return True
+        return False
+
+    def delete_table_prompt(self, prompt):
+        if entry := self.query_data_by_prompt(prompt):
+            session.delete(entry)
+            session.commit()
+            return True
+        return False
+
+    def close_session(self):
+        session.close()
+            
 
 
 if __name__ == "__main__":

@@ -59,6 +59,29 @@ class ToTranslation(Base):
     def __repr__(self):
         return f"<ToTranslation(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}')>"
 
+
+class Prompts(Base):
+    __tablename__ = 'prompts'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    prompt = Column(String)   #提示语
+
+    def __init__(self, prompt):
+        self.prompt = prompt
+
+    def __repr__(self):
+        return f"<PromptList(prompt='{self.prompt}',create_time='{self.create_time}',update_time='{self.update_time}')>"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'prompt': self.prompt
+        }
+
+    # 获取第一条数据
+
+
+
+
 # 创建数据库引擎
 
 engine = create_engine('sqlite:///' + str(root_path/'orm/linlin.db'))
