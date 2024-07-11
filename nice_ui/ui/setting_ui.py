@@ -3,7 +3,7 @@ import re
 import sys
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox, QTableWidget, QAbstractItemView
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
 from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel)
 
@@ -142,11 +142,14 @@ class LLMConfigPage(QWidget):
         super().__init__(parent=parent)
         self.setup_ui()
         self.prompts_orm = PromptsOrm()
+        self._init_table()
 
     def setup_ui(self):
-        main_layout = QHBoxLayout(self)
-
         # 创建垂直布局来容纳所有组件
+        main_layout = QVBoxLayout()
+        card_api_layout = QHBoxLayout()
+
+
         api_key_title = SubtitleLabel("API Key")
         main_layout.addWidget(api_key_title)
 
@@ -164,17 +167,18 @@ class LLMConfigPage(QWidget):
         cards_layout.addStretch(1)
 
         # 将垂直布局添加到主布局中
-        main_layout.addLayout(cards_layout, 1)
+        card_api_layout.addLayout(cards_layout, 1)
 
         # 添加一个水平伸缩项，使卡片占用左半部分
-        main_layout.addStretch(1)
+        card_api_layout.addStretch(1)
 
+        main_layout.addLayout(card_api_layout)
         prompts_title = SubtitleLabel("提示词")
         main_layout.addWidget(prompts_title)
         # 创建一个table
 
-        self.prompts_table = TableWidget(self)
-        self.prompts_table.setColumnCount(6)
+        self.prompts_table = QTableWidget(self)
+        self.prompts_table.setColumnCount(5)
         self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名字", "提示词", "修改", "删除"])
         self.prompts_table.verticalHeader().setVisible(False)
         self.prompts_table.setColumnWidth(0, 150)  # 设置第一列宽度
@@ -182,15 +186,15 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setColumnWidth(2, 150)  # 设置第三列宽度
         self.prompts_table.setColumnWidth(3, 100)  # 设置第四列宽度
         self.prompts_table.setColumnWidth(4, 100)  # 设置第五列宽度
-        self.prompts_table.setEditTriggers(self.prompts_table.NoEditTriggers)  # 设置表格为不可编辑状态
-        self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
-
+        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑状态
+        # self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
+        main_layout.addWidget(self.prompts_table)
         self.setLayout(main_layout)
 
     def _init_table(self):
         all_prompts = self.prompts_orm.get_all_data()
         for prompt in all_prompts:
-            self.add_prompt(prompt_id=prompt[0], prompt_name=prompt[1], prompt_content=prompt[2])
+            self.add_prompt(prompt_id=prompt['id'], prompt_name=prompt['prompt_name'], prompt_content=prompt['prompt_content'])
 
 
     def add_prompt(self, prompt_id, prompt_name, prompt_content):

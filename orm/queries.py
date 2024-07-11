@@ -1,15 +1,16 @@
 from functools import wraps
 
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from orm.inint import Prompts, engine
 
 # 创建一个数据库会话
 
-SessionLocal = sessionmaker(bind=engine)
-# session = Session()
+SessionLocal = scoped_session(sessionmaker(bind=engine))
+# SessionLocal = sessionmaker(bind=engine)
 
+# 装饰器，用于创建数据库会话，并在函数执行完毕后关闭会话
 def session_manager(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -120,16 +121,29 @@ class PromptsOrm:
 
     @session_manager
     def get_all_data(self,session=None):
-        return session.query(Prompts).all()
+        prompts = session.query(Prompts).all()
+        # 确保所有相关的属性都被加载
+        # 要返回主键id，得改成dict？？ 试一下原生的有id回来么
+        result = []
+        for prompt in prompts:
+            session.refresh(prompt)
+            result.append({'id': prompt.id, 'prompt_name': prompt.prompt_name, 'prompt_content': prompt.prompt_content})
+        session.expunge_all()
+        return result
 
     @session_manager
     def query_data_by_prompt(self, key_id: int,session=None):
         # 输入prompt_name查询数据
         try:
-            return session.query(Prompts).filter_by(id=key_id).one()
+            prompt = session.query(Prompts).filter_by(id=key_id).one()
+            session.refresh(prompt)
+            result = {'id': prompt.id, 'prompt_name': prompt.prompt_name, 'prompt_content': prompt.prompt_content}
+            session.expunge(prompt)
+            return result
         except NoResultFound:
             return None
 
+    @session_manager
     def update_table_prompt(self, key_id: int,session=None, **kwargs,):
         if entry := self.query_data_by_prompt(key_id):
             for key, value in kwargs.items():
@@ -138,6 +152,7 @@ class PromptsOrm:
             return True
         return False
 
+    @session_manager
     def delete_table_prompt(self, key_id,session=None):
         if entry := self.query_data_by_prompt(key_id):
             session.delete(entry)
