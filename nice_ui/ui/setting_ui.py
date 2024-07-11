@@ -5,11 +5,12 @@ import sys
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel)
+from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 from nice_ui.util import tools
+from orm.queries import PromptsOrm
 
 
 class LocalModelPage(QWidget):
@@ -140,11 +141,15 @@ class LLMConfigPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setup_ui()
+        self.prompts_orm = PromptsOrm()
 
     def setup_ui(self):
         main_layout = QHBoxLayout(self)
 
         # 创建垂直布局来容纳所有组件
+        api_key_title = SubtitleLabel("API Key")
+        main_layout.addWidget(api_key_title)
+
         cards_layout = QVBoxLayout()
 
         # 创建两个 OpenAIApiKeyCard 实例
@@ -164,7 +169,57 @@ class LLMConfigPage(QWidget):
         # 添加一个水平伸缩项，使卡片占用左半部分
         main_layout.addStretch(1)
 
+        prompts_title = SubtitleLabel("提示词")
+        main_layout.addWidget(prompts_title)
+        # 创建一个table
+
+        self.prompts_table = TableWidget(self)
+        self.prompts_table.setColumnCount(6)
+        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名字", "提示词", "修改", "删除"])
+        self.prompts_table.verticalHeader().setVisible(False)
+        self.prompts_table.setColumnWidth(0, 150)  # 设置第一列宽度
+        self.prompts_table.setColumnWidth(1, 150)  # 设置第二列宽度
+        self.prompts_table.setColumnWidth(2, 150)  # 设置第三列宽度
+        self.prompts_table.setColumnWidth(3, 100)  # 设置第四列宽度
+        self.prompts_table.setColumnWidth(4, 100)  # 设置第五列宽度
+        self.prompts_table.setEditTriggers(self.prompts_table.NoEditTriggers)  # 设置表格为不可编辑状态
+        self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
+
         self.setLayout(main_layout)
+
+    def _init_table(self):
+        all_prompts = self.prompts_orm.get_all_data()
+        for prompt in all_prompts:
+            self.add_prompt(prompt_id=prompt[0], prompt_name=prompt[1], prompt_content=prompt[2])
+
+
+    def add_prompt(self, prompt_id, prompt_name, prompt_content):
+        row = self.prompts_table.rowCount()
+        self.prompts_table.insertRow(row)
+        self.prompts_table.setItem(row, 0, QTableWidgetItem(str(prompt_id)))
+        self.prompts_table.setItem(row, 1, QTableWidgetItem(str(prompt_name)))
+        self.prompts_table.setItem(row, 2, QTableWidgetItem(str(prompt_content)))
+        edit_btn = PushButton("修改")
+        edit_btn.clicked.connect(lambda: self._edit_prompt(row))
+        self.prompts_table.setCellWidget(row, 3, edit_btn)
+        delete_btn = PushButton("删除")
+        delete_btn.clicked.connect(lambda: self._delete_row(row))
+        self.prompts_table.setCellWidget(row, 4, delete_btn)
+
+
+    def _delete_row(self, row):
+        config.logger.info(f"删除prompt，所在行:{row} ")
+        self.prompts_table.removeRow(row)
+        key_id = self.prompts_table.item(row, 0).text()
+        self.prompts_orm.delete_table_prompt(key_id)
+
+    def _edit_prompt(self, row):
+        config.logger.info(f"编辑prompt,所在行:{row} ")
+        key_id = self.prompts_table.item(row, 0).text()
+        prompt_name = self.prompts_table.item(row, 1).text()
+        prompt_content = self.prompts_table.item(row, 2).text()
+        # todo: 弹出编辑对话框，修改后回写入数据库
+        # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
 
 
 class TranslationPage(QWidget):
@@ -200,7 +255,7 @@ class TranslationPage(QWidget):
 
 
 class ProxyPage(QWidget):
-    def __init__(self,setting, parent=None):
+    def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
         self.setting = setting
         self.setup_ui()

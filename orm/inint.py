@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
@@ -23,18 +21,18 @@ class ToSrt(Base):
     job_status = Column(Integer)  #任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败
     obj = Column(String)
 
-    def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext,obj, **kw: Any):
-        super().__init__(**kw)
-        self.unid = unid
-        self.path = path
-        self.source_language = source_language
-        self.source_module_status = source_module_status
-        self.source_module_name = source_module_name
-        self.translate_status = translate_status
-        self.cuda = cuda
-        self.raw_ext = raw_ext
-        self.job_status = 0
-        self.obj = obj
+    # def __init__(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext,obj, **kw: Any):
+    #     super().__init__(**kw)
+    #     self.unid = unid
+    #     self.path = path
+    #     self.source_language = source_language
+    #     self.source_module_status = source_module_status
+    #     self.source_module_name = source_module_name
+    #     self.translate_status = translate_status
+    #     self.cuda = cuda
+    #     self.raw_ext = raw_ext
+    #     self.job_status = 0
+    #     self.obj = obj
 
     def __repr__(self):
         return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
@@ -48,13 +46,13 @@ class ToTranslation(Base):
     target_language = Column(String)  #目标语言
     translate_type = Column(String)  #翻译渠道
 
-    def __init__(self, unid, path, source_language, target_language, translate_type, **kw: Any):
-        super().__init__(**kw)
-        self.unid = unid
-        self.path = path
-        self.source_language = source_language
-        self.target_language = target_language
-        self.translate_type = translate_type
+    # def __init__(self, unid, path, source_language, target_language, translate_type, **kw: Any):
+    #     super().__init__(**kw)
+    #     self.unid = unid
+    #     self.path = path
+    #     self.source_language = source_language
+    #     self.target_language = target_language
+    #     self.translate_type = translate_type
 
     def __repr__(self):
         return f"<ToTranslation(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}')>"
@@ -63,21 +61,17 @@ class ToTranslation(Base):
 class Prompts(Base):
     __tablename__ = 'prompts'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    prompt = Column(String)   #提示语
+    prompt_name = Column(String)   #提示语
+    prompt_content = Column(String)   #提示语
 
-    def __init__(self, prompt):
-        self.prompt = prompt
+    # def __init__(self,prompt_name, prompt_content):
+    #     self.prompt_name = prompt_name
+    #     self.prompt_content = prompt_content
 
     def __repr__(self):
-        return f"<PromptList(prompt='{self.prompt}',create_time='{self.create_time}',update_time='{self.update_time}')>"
+        return f"<Prompts(prompt_name='{self.prompt_name}',prompt='{self.prompt_content}')>"
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'prompt': self.prompt
-        }
 
-    # 获取第一条数据
 
 
 
