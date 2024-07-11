@@ -4,10 +4,10 @@ import sys
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, PrimaryPushButton)
+from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, PrimaryPushButton, HyperlinkLabel)
 
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet
+from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 
 
 class LocalModelPage(QWidget):
@@ -162,35 +162,11 @@ class LLMConfigPage(QWidget):
 
         zhipu_card = LLMKeySet('智谱AI api','zhipu')
 
-        # 添加代理设置
-        proxy_layout = QVBoxLayout()
-        radio_layout = QHBoxLayout()
-        self.no_proxy_radio = RadioButton("无代理", self)
-        self.use_proxy_radio = RadioButton("使用代理", self)
-        radio_layout.addWidget(self.no_proxy_radio)
-        radio_layout.addWidget(self.use_proxy_radio)
-        radio_layout.addStretch(1)
 
-        self.proxy_address = LineEdit(self)
-        self.proxy_address.setPlaceholderText("代理地址，比如http://127.0.0.1:8087")
-        self.proxy_test = PrimaryPushButton("测试链接", self)
-
-        proxy_layout.addLayout(radio_layout)
-        proxy_layout.addWidget(self.proxy_address)
-        proxy_layout.addWidget(self.proxy_test)
-
-        # 连接信号
-        self.no_proxy_radio.toggled.connect(self.on_proxy_radio_toggled)
-        self.use_proxy_radio.toggled.connect(self.on_proxy_radio_toggled)
-
-        # 默认选中"无代理"
-        self.no_proxy_radio.setChecked(True)
 
         # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
-        cards_layout.addLayout(proxy_layout)
-
         # 添加一些垂直间距
         cards_layout.addStretch(1)
 
@@ -202,13 +178,67 @@ class LLMConfigPage(QWidget):
 
         self.setLayout(main_layout)
 
-    def on_proxy_radio_toggled(self,checker:bool):
-        if self.no_proxy_radio.isChecked():
-            self.proxy_address.hide()
-            self.proxy_test.hide()
-        else:
-            self.proxy_address.show()
-            self.proxy_test.show()
+
+
+class TranslationPage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setup_ui()
+    def setup_ui(self):
+        main_layout = QVBoxLayout()
+
+        tips_label = CaptionLabel("请填写服务商提供的API Key，在翻译任务中可以免除算力，所有Key只会保存在本地。")
+        main_layout.addWidget(tips_label)
+
+        title_layout = QHBoxLayout()
+        title_label = BodyLabel("翻译API Key")
+        tutorial_link = HyperlinkLabel("设置教程")
+        tutorial_link.setUrl('xdd')
+
+        title_layout.addWidget(title_label)
+        title_layout.addWidget(tutorial_link)
+        main_layout.addLayout(title_layout)
+
+        self.baidu_key = TranslateKeySet("百度翻译")
+        self.deepl_key = TranslateKeySet("DeepL翻译")
+        self.google_key = TranslateKeySet("谷歌翻译")
+        self.microsoft_key = TranslateKeySet("微软翻译")
+        main_layout.addWidget(self.baidu_key)
+        main_layout.addWidget(self.deepl_key)
+        main_layout.addWidget(self.google_key)
+        main_layout.addWidget(self.microsoft_key)
+
+        self.setLayout(main_layout)
+
+
+class ProxyPage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setup_ui()
+    def setup_ui(self):
+        # 添加代理设置
+        main_layout = QVBoxLayout()
+
+        # 水平布局
+        a_layout = QHBoxLayout()
+        self.no_proxy_radio = RadioButton("无代理", self)
+        self.use_proxy_radio = RadioButton("使用代理", self)
+        main_layout.addWidget(self.no_proxy_radio)
+        main_layout.addWidget(self.use_proxy_radio)
+        main_layout.addStretch(1)
+
+        radio_layout = QHBoxLayout()
+        self.proxy_address = LineEdit(self)
+        self.proxy_address.setPlaceholderText("代理地址，比如http://127.0.0.1:8087")
+        self.save_btn = PushButton("保存")
+        radio_layout.addWidget(self.proxy_address)
+        radio_layout.addWidget(self.save_btn)
+        self.proxy_test = PrimaryPushButton("测试链接", self)
+
+        main_layout.addLayout(radio_layout)
+        main_layout.addWidget(self.proxy_test)
+
+        self.setLayout(main_layout)
 
 
 
@@ -226,9 +256,13 @@ class SettingInterface(QWidget):
 
         self.localModelPage = LocalModelPage(setting=self.setting)
         self.llmConfigPage = LLMConfigPage(self)
+        self.translationPage = TranslationPage(self)
+        self.proxyPage = ProxyPage(self)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
+        self.tabs.addTab(self.translationPage, "翻译配置")
+        self.tabs.addTab(self.proxyPage, "代理设置")
 
         layout.addWidget(self.tabs)
         self.setLayout(layout)

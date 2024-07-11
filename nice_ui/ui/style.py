@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
@@ -12,7 +12,7 @@ class AppCard(CardWidget):
     用在本地识别页，创建whisper选择卡片
      """
 
-    def __init__(self,title, content,button_status:bool = False, parent=None):
+    def __init__(self, title, content, button_status: bool = False, parent=None):
         super().__init__(parent)
 
         self.radioButton = RadioButton(title, self)
@@ -38,7 +38,6 @@ class AppCard(CardWidget):
         self.hBoxLayout.addStretch(1)
 
 
-
 class AppCardContainer(QWidget):
     """ Container for App cards """
 
@@ -55,12 +54,13 @@ class AppCardContainer(QWidget):
         self.buttonGroup.addButton(card.radioButton)
         return card
 
+
 class LLMKeySet(QWidget):
     """ LLM Key Set
-    用在
-    llm配置页 创建api key 卡片
+    用在llm配置页 创建api key 卡片
     """
-    def __init__(self,api_key:str, url:str, parent=None):
+
+    def __init__(self, api_key: str, url: str, parent=None):
         super().__init__(parent)
         # 创建主布局
         main_layout = QVBoxLayout()
@@ -99,8 +99,46 @@ class LLMKeySet(QWidget):
         print(f"Saving API Key: {api_key}")  # 这里可以添加实际的保存逻辑
 
 
+class TranslateKeySet(QWidget):
+    """ Translate Key Set
+    用在翻译页 创建api key 卡片
+    """
+
+    def __init__(self, api_key: str, parent=None):
+        super().__init__(parent)
+        # 创建主布局
+        main_layout = QHBoxLayout()
+        title_label = BodyLabel(api_key)
+        self.api_key_input = LineEdit()
+        self.api_key_input.setPlaceholderText("Api Key")
+        save_button = PrimaryPushButton("保存")
+        clear_button = PrimaryPushButton("清除")
+        # 将两排布局添加到主布局
+        main_layout.addWidget(title_label)
+        main_layout.addWidget(self.api_key_input)
+        main_layout.addWidget(save_button)
+        main_layout.addWidget(clear_button)
+
+        # 设置卡片的内容布局
+        self.setLayout(main_layout)
+
+    def save_api_key(self):
+        # 实现保存API Key的逻辑
+        api_key = self.api_key_input.text()
+        # todo: 这里可以添加实际的保存逻辑
+        print(f"Saving API Key: {api_key}")  # 这里可以添加实际的保存逻辑
+
+    def clear_api_key(self):
+        # 实现清除API Key的逻辑
+        self.api_key_input.clear()
+
+        # todo: 这里可以添加实际的清除逻辑
+        print("Clearing API Key")  # 这里可以添加实际的清除逻辑
+
+
 if __name__ == '__main__':
     import sys
+
     app = QApplication(sys.argv)
     card = LLMKeySet()
     card.show()
