@@ -5,7 +5,7 @@ import sys
 import path
 from PySide6.QtCore import Qt, QRect, Slot, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, )
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, )
 from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox
 
 from nice_ui.configure import config
@@ -101,6 +101,7 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
         self.media_table.setShowGrid(False)
+        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         main_layout.addWidget(self.media_table)
 
         # 开始按钮

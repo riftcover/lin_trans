@@ -3,9 +3,9 @@ import re
 import sys
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox, QTableWidget, QAbstractItemView
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel)
+from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel, ToolButton)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
@@ -55,6 +55,8 @@ class LocalModelPage(QWidget):
         self.cpp_model_table.setColumnCount(6)
         self.cpp_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
         self.cpp_model_table.verticalHeader().setVisible(False)
+        self.cpp_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
 
         # FasterWhisper 模型列表
         self.faster_model_title = BodyLabel("FasterWhisper 模型列表")
@@ -62,6 +64,7 @@ class LocalModelPage(QWidget):
         self.faster_model_table.setColumnCount(6)
         self.faster_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
         self.faster_model_table.verticalHeader().setVisible(False)
+        self.faster_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         layout.addWidget(self.cpp_model_title)
         layout.addWidget(self.cpp_model_table)
@@ -173,11 +176,22 @@ class LLMConfigPage(QWidget):
         card_api_layout.addStretch(1)
 
         main_layout.addLayout(card_api_layout)
+        prompts_layout =QHBoxLayout()
         prompts_title = SubtitleLabel("提示词")
-        main_layout.addWidget(prompts_title)
+        # 刷新提示词
+
+        refresh_btn = ToolButton("刷新")
+        # todo：补充icon
+        # refresh_btn.setIcon(QIcon("/path/to/icon.png"))
+
+        refresh_btn.clicked.connect(self._init_table)
+        prompts_layout.addWidget(prompts_title)
+        prompts_layout.addWidget(refresh_btn)
+
+        main_layout.addLayout(prompts_layout)
         # 创建一个table
 
-        self.prompts_table = QTableWidget(self)
+        self.prompts_table = TableWidget(self)
         self.prompts_table.setColumnCount(5)
         self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名字", "提示词", "修改", "删除"])
         self.prompts_table.verticalHeader().setVisible(False)
@@ -204,26 +218,33 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setItem(row, 1, QTableWidgetItem(str(prompt_name)))
         self.prompts_table.setItem(row, 2, QTableWidgetItem(str(prompt_content)))
         edit_btn = PushButton("修改")
-        edit_btn.clicked.connect(lambda: self._edit_prompt(row))
+        edit_btn.clicked.connect(self._edit_prompt(edit_btn))
         self.prompts_table.setCellWidget(row, 3, edit_btn)
         delete_btn = PushButton("删除")
-        delete_btn.clicked.connect(lambda: self._delete_row(row))
+        delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.prompts_table.setCellWidget(row, 4, delete_btn)
 
 
-    def _delete_row(self, row):
-        config.logger.info(f"删除prompt，所在行:{row} ")
-        self.prompts_table.removeRow(row)
-        key_id = self.prompts_table.item(row, 0).text()
-        self.prompts_orm.delete_table_prompt(key_id)
+    def _delete_row(self, button):
+        def delete_row():
+            button_row = self.prompts_table.indexAt(button.pos()).row()
+            print(f"删除第{button_row}行数据")
+            key_id = self.prompts_table.item(button_row, 0).text()
+            self.prompts_orm.delete_table_prompt(key_id)
+            self.prompts_table.removeRow(button_row)
+        return delete_row
 
-    def _edit_prompt(self, row):
-        config.logger.info(f"编辑prompt,所在行:{row} ")
-        key_id = self.prompts_table.item(row, 0).text()
-        prompt_name = self.prompts_table.item(row, 1).text()
-        prompt_content = self.prompts_table.item(row, 2).text()
-        # todo: 弹出编辑对话框，修改后回写入数据库
-        # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
+
+    def _edit_prompt(self, button):
+        def edit_row():
+            button_row = self.prompts_table.indexAt(button.pos()).row()
+            config.logger.info(f"编辑prompt,所在行:{button_row} ")
+            key_id = self.prompts_table.item(button_row, 0).text()
+            prompt_name = self.prompts_table.item(button_row, 1).text()
+            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
+
+        return edit_row
+
 
 
 class TranslationPage(QWidget):

@@ -5,8 +5,7 @@ import sys
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog
-from qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget,
-                            SearchLineEdit)
+from qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit)
 
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
@@ -256,7 +255,7 @@ class TableApp(CardWidget):
                 # 删除按钮
                 deleteBtn = PushButton("删除")
                 deleteBtn.setIcon(FluentIcon.DELETE)
-                deleteBtn.clicked.connect(lambda: self._delete_row(row))
+                deleteBtn.clicked.connect(self._delete_row(deleteBtn))
                 self.table.setCellWidget(row, 5, deleteBtn)
 
             else:
@@ -299,7 +298,7 @@ class TableApp(CardWidget):
         # 删除按钮
         delete_btn = PushButton("删除")
         delete_btn.setIcon(FluentIcon.DELETE)
-        delete_btn.clicked.connect(lambda: self._delete_row(row_position))
+        delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.table.setCellWidget(row_position, 5, delete_btn)
 
         # 隐藏列数据
@@ -320,37 +319,41 @@ class TableApp(CardWidget):
         obj_format = tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.to_war_queue_put(job_path)
 
-    def _delete_row(self, row):
-        config.logger.info(f"删除文件所在行:{row} ")
-        unid_item = self.table.cellWidget(row, 6)
+    def _delete_row(self, button):
 
-        # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
-        # 删除result中对应文件
-        text = unid_item.text()
-        if text:
-            job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
-            config.logger.info(f"删除目录:{text} 成功")
-            result_dir = job_obj["output"]
-            try:
-                shutil.rmtree(result_dir)
-                config.logger.info(f"删除目录:{result_dir} 成功")
-            except Exception as e:
-                config.logger.error(f"删除目录:{result_dir} 失败:{e}")
-        # 在数据库中删除对应数据
-        self.srt_orm.delete_table_unid(text)
-        # 删除表格行
-        self.table.removeRow(row)
-        # 清除缓存索引
-        self.row_cache.clear()
-        InfoBar.success(
-            title='成功',
-            content="文件已删除",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=2000,
-            parent=self
-        )
+        def delete_row_callback():
+            button_row = self.table.indexAt(button.pos()).row()
+            config.logger.info(f"删除文件所在行:{button_row} ")
+            unid_item = self.table.cellWidget(button_row, 6)
+
+            # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
+            # 删除result中对应文件
+            text = unid_item.text()
+            if text:
+                job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
+                result_dir = job_obj["output"]
+                config.logger.info(f"删除目录:{text} 成功")
+                try:
+                    shutil.rmtree(result_dir)
+                    config.logger.info(f"删除目录:{result_dir} 成功")
+                except Exception as e:
+                    config.logger.error(f"删除目录:{result_dir} 失败:{e}")
+            # 在数据库中删除对应数据
+            self.srt_orm.delete_table_unid(text)
+            # 删除表格行
+            self.table.removeRow(button_row)
+            # 清除缓存索引
+            self.row_cache.clear()
+            InfoBar.success(
+                title='成功',
+                content="文件已删除",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self
+            )
+        return delete_row_callback
 
     def _delete_batch(self):
         for row in range(self.table.rowCount()):
