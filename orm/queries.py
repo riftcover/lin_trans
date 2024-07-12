@@ -10,6 +10,7 @@ from orm.inint import Prompts, engine
 SessionLocal = scoped_session(sessionmaker(bind=engine))
 # SessionLocal = sessionmaker(bind=engine)
 
+
 # 装饰器，用于创建数据库会话，并在函数执行完毕后关闭会话
 def session_manager(func):
     @wraps(func)
@@ -24,6 +25,7 @@ def session_manager(func):
             raise e
         finally:
             session.close()
+
     return wrapper
 
 
@@ -114,37 +116,39 @@ def session_manager(func):
 
 class PromptsOrm:
     @session_manager
-    def add_data_to_table(self,prompt_name: str, prompt_content: str,session=None):
-        new_entry = Prompts(prompt_name=prompt_name,prompt_content=prompt_content)
+    def add_data_to_table(self, prompt_name: str, prompt_content: str, session=None):
+        new_entry = Prompts(prompt_name=prompt_name, prompt_content=prompt_content)
         session.add(new_entry)
         session.commit()
 
     @session_manager
-    def get_all_data(self,session=None):
+    def get_all_data(self, session=None):
         prompts = session.query(Prompts).all()
         # 确保所有相关的属性都被加载
-        # 要返回主键id，得改成dict？？ 试一下原生的有id回来么
-        result = []
         for prompt in prompts:
             session.refresh(prompt)
-            result.append({'id': prompt.id, 'prompt_name': prompt.prompt_name, 'prompt_content': prompt.prompt_content})
+        # 将对象从会话中分离，但保留其数据
         session.expunge_all()
-        return result
+        return prompts
 
     @session_manager
-    def query_data_by_prompt(self, key_id: int,session=None):
+    def query_data_by_prompt(self, key_id: int, session=None):
         # 输入prompt_name查询数据
         try:
             prompt = session.query(Prompts).filter_by(id=key_id).one()
             session.refresh(prompt)
-            result = {'id': prompt.id, 'prompt_name': prompt.prompt_name, 'prompt_content': prompt.prompt_content}
             session.expunge(prompt)
-            return result
+            return prompt
         except NoResultFound:
             return None
 
     @session_manager
-    def update_table_prompt(self, key_id: int,session=None, **kwargs,):
+    def update_table_prompt(
+        self,
+        key_id: int,
+        session=None,
+        **kwargs,
+    ):
         if entry := self.query_data_by_prompt(key_id):
             for key, value in kwargs.items():
                 setattr(entry, key, value)
@@ -153,14 +157,12 @@ class PromptsOrm:
         return False
 
     @session_manager
-    def delete_table_prompt(self, key_id,session=None):
+    def delete_table_prompt(self, key_id, session=None):
         if entry := self.query_data_by_prompt(key_id):
             session.delete(entry)
             session.commit()
             return True
         return False
-
-            
 
 
 if __name__ == "__main__":

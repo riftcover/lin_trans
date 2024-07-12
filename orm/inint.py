@@ -35,7 +35,7 @@ class ToSrt(Base):
     #     self.obj = obj
 
     def __repr__(self):
-        return f"<ToSrt(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
+        return f"<ToSrt(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
 
 class ToTranslation(Base):
     __tablename__ = 'totranslation'
@@ -46,16 +46,8 @@ class ToTranslation(Base):
     target_language = Column(String)  #目标语言
     translate_type = Column(String)  #翻译渠道
 
-    # def __init__(self, unid, path, source_language, target_language, translate_type, **kw: Any):
-    #     super().__init__(**kw)
-    #     self.unid = unid
-    #     self.path = path
-    #     self.source_language = source_language
-    #     self.target_language = target_language
-    #     self.translate_type = translate_type
-
     def __repr__(self):
-        return f"<ToTranslation(path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}')>"
+        return f"<ToTranslation(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}')>"
 
 
 class Prompts(Base):
@@ -69,7 +61,7 @@ class Prompts(Base):
     #     self.prompt_content = prompt_content
 
     def __repr__(self):
-        return f"<Prompts(prompt_name='{self.prompt_name}',prompt='{self.prompt_content}')>"
+        return f"<Prompts(id={self.id},prompt_name='{self.prompt_name}',prompt='{self.prompt_content}')>"
 
 
 
