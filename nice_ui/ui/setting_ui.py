@@ -36,7 +36,7 @@ class LocalModelPage(QWidget):
         # 模型存储路径
         path_layout = QHBoxLayout()
         path_layout.addWidget(BodyLabel("模型存储路径:"))  # Windows
-        config.logger.debug(f"模型存储路径: {config.models_path}")
+        config.logger.info(f"模型存储路径: {config.models_path}")
 
         self.path_input = QLineEdit(str(config.models_path))
         self.path_change_btn = PushButton("更换路径")
@@ -241,7 +241,8 @@ class LLMConfigPage(QWidget):
             config.logger.info(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
             prompt_name = self.prompts_table.item(button_row, 1).text()
-            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
+            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库
+            # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
 
         return edit_row
 
