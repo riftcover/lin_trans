@@ -36,7 +36,7 @@ class LocalModelPage(QWidget):
         # 模型存储路径
         path_layout = QHBoxLayout()
         path_layout.addWidget(BodyLabel("模型存储路径:"))  # Windows
-        config.logger.info(f"模型存储路径: {config.models_path}")
+        config.logger.debug(f"模型存储路径: {config.models_path}")
 
         self.path_input = QLineEdit(str(config.models_path))
         self.path_change_btn = PushButton("更换路径")
