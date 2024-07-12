@@ -142,7 +142,7 @@ class LLMConfigPage(QWidget):
         super().__init__(parent=parent)
         self.setup_ui()
         self.prompts_orm = PromptsOrm()
-        # self._init_table()
+        self._init_table()
 
     def setup_ui(self):
         # 创建垂直布局来容纳所有组件
@@ -194,7 +194,7 @@ class LLMConfigPage(QWidget):
     def _init_table(self):
         all_prompts = self.prompts_orm.get_all_data()
         for prompt in all_prompts:
-            self.add_prompt(prompt_id=prompt['id'], prompt_name=prompt['prompt_name'], prompt_content=prompt['prompt_content'])
+            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
 
     def add_prompt(self, prompt_id, prompt_name, prompt_content):
