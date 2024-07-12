@@ -142,7 +142,7 @@ class LLMConfigPage(QWidget):
         super().__init__(parent=parent)
         self.setup_ui()
         self.prompts_orm = PromptsOrm()
-        self._init_table()
+        # self._init_table()
 
     def setup_ui(self):
         # 创建垂直布局来容纳所有组件
