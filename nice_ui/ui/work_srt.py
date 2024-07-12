@@ -5,8 +5,8 @@ import sys
 import path
 from PySide6.QtCore import Qt, QRect, Slot, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, )
-from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, )
+from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox, InfoBar, InfoBarPosition
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
@@ -37,6 +37,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
 
+        # todo: 增加到队列按钮到时候屏蔽掉
         self.add_queue_btn = PushButton("添加到队列")
         main_layout.addWidget(self.add_queue_btn)
 
@@ -95,11 +96,11 @@ class WorkSrt(QWidget):
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
-        self.media_table.setColumnWidth(0, 50)
-        self.media_table.setColumnWidth(1, 200)
-        self.media_table.setColumnWidth(2, 200)
+        self.media_table.setColumnWidth(0, 200)
+        self.media_table.setColumnWidth(1, 100)
+        self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
-        self.media_table.setColumnWidth(4, 100)
+        self.media_table.setColumnWidth(4, 0)
         self.media_table.setShowGrid(False)
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         main_layout.addWidget(self.media_table)
@@ -113,14 +114,14 @@ class WorkSrt(QWidget):
         # # 设置接受拖放  # self.setAcceptDrops(True) #不知道为啥不好使了
 
     def bind_action(self):
-        self.start_button.clicked.connect(self.start_translation)
+
         # 选择文件,并显示路径
         self.btn_get_srt.clicked.connect(self.table.select_file)
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
-
         self.add_queue_btn.clicked.connect(self.add_queue_srt)
+        self.start_button.clicked.connect(self.start_translation)
 
     def add_queue_srt(self):
         # 获取self.main.media_table中第4列的数据
@@ -153,60 +154,52 @@ class LTableWindow:
         self.setting.setValue("last_dir", config.last_opendir)
 
     # 列表的操作
-    def table_set_item(self, ui_table, row_position: int, l0, l1, l2, ):
-        #文件名
-        file_name = QLabel()
-        file_name.setText(os.path.basename(l0))
-        file_name.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 0, file_name)
-
-        # 字符数
-        file_character_count = QLabel()
-        file_character_count.setText(l1)
-        file_character_count.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 1, file_character_count)
-
-        # 算力消耗
-        locol_value = QLabel()
-        locol_value.setText(l2)
-        locol_value.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 2, locol_value)
-
-        # 操作
-        delete_button = PushButton("删除")
-        delete_button.setStyleSheet("background-color: red; color: white;")
-        ui_table.setCellWidget(row_position, 3, delete_button)
-        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
-
-        # 文件路径
-        file_path = QLabel()
-        file_path.setText(l0)
-        file_path.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 4, file_path)
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
         row_position = ui_table.rowCount()
-        ui_table.insertRow(row_position)
-
-        file_name = os.path.basename(file_path)
-        config.logger.info(f"file_name: {file_name}")
         file_character_count = self.get_file_character_count(file_path)
-        config.logger.info(f"file_character_count: {file_character_count}")
-        config.logger.info(f"file_path: {file_path}")
+        if file_character_count:
+            ui_table.insertRow(row_position)
+            file_name = os.path.basename(file_path)
+            config.logger.info(f"file_name type: {type(file_name)}")
+            config.logger.info(f"file_name: {file_name}")
+            config.logger.info(f"file_character_count: {file_character_count}")
+            config.logger.info(f"file_path: {file_path}")
+            # todo: 算力消耗
+            #文件名
+            ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
+            # 字符数
+            ui_table.setItem(row_position, 1, QTableWidgetItem(str(file_character_count)))
+            # 算力消耗
+            ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+            # 操作
+            delete_button = PushButton("删除")
+            delete_button.setStyleSheet("background-color: red; color: white;")
+            ui_table.setCellWidget(row_position, 3, delete_button)
+            delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+            # 文件路径
+            ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
+        else:
+            InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self.main)
+
 
     # 获取文件字符数
-    def get_file_character_count(self, file_path: path) -> str:
+    def get_file_character_count(self, file_path: path) -> int | bool:
         # 输入srt格式的文件，获取里面的字符数量，不计算序号，不计算时间戳
         character_count = 0
         with open(file_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+            try:
+                lines = f.readlines()
+            except UnicodeDecodeError:
+                config.logger.error(f"文件{file_path}编码错误，请检查文件编码格式")
+                return False
             for line in lines:
                 # 跳过序号和时间戳
                 if re.match(r"^\d+$", line.strip()) or re.match(r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$", line.strip(), ):
                     continue
                 character_count += len(line.strip())
-        return str(character_count)
+        return character_count
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, row: int):
