@@ -209,6 +209,19 @@ zijiehuoshan_model_list = [it.strip() for it in settings['zijiehuoshan_model'].s
 edgeTTS_rolelist = None
 AzureTTS_rolelist = None
 proxy = None
+# 翻译api map
+translate_api_name= {
+    'google':'谷歌翻译',
+    'deepl':'DeepL翻译',
+    'deeplx':'DeepL翻译X',
+    'tencent':'腾讯翻译',
+    'baidu':'百度翻译',
+    'qwen':'通义千问',
+    'zhipu':'智谱',
+    'chatgpt':'ChatGPT',
+    'kimi':'Kimi',
+    'openai':'OpenAI',
+}
 # 配置
 params = {
      #操作系统类型:win32、linux、darwin
@@ -279,24 +292,24 @@ params = {
     "clone_api": "",
     "zh_recogn_api": "",
 
-    "chatgpt_api": "",
-    "chatgpt_key": "",
-    "localllm_api": "",
-    "localllm_key": "",
-    "zijiehuoshan_key": "",
-    "chatgpt_model": chatgpt_model_list[0],
-    "localllm_model": localllm_model_list[0],
-    "zijiehuoshan_model": zijiehuoshan_model_list[0],
-    "chatgpt_template": "",
-    "localllm_template": "",
-    "zijiehuoshan_template": "",
-    "azure_api": "",
-    "azure_key": "",
-    "azure_model": "gpt-3.5-turbo",
-    "azure_template": "",
-    "openaitts_role": openaiTTS_rolelist,
-    "gemini_key": "",
-    "gemini_template": "",
+    # "chatgpt_api": "",
+    # "chatgpt_key": "",
+    # "localllm_api": "",
+    # "localllm_key": "",
+    # "zijiehuoshan_key": "",
+    # "chatgpt_model": chatgpt_model_list[0],
+    # "localllm_model": localllm_model_list[0],
+    # "zijiehuoshan_model": zijiehuoshan_model_list[0],
+    # "chatgpt_template": "",
+    # "localllm_template": "",
+    # "zijiehuoshan_template": "",
+    # "azure_api": "",
+    # "azure_key": "",
+    # "azure_model": "gpt-3.5-turbo",
+    # "azure_template": "",
+    # "openaitts_role": openaiTTS_rolelist,
+    # "gemini_key": "",
+    # "gemini_template": "",
 
     "ttsapi_url": "",
     "ttsapi_voice_role": "",

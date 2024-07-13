@@ -175,7 +175,7 @@ class PromptsOrm:
 if __name__ == "__main__":
     # 测试
     to_srt_orm = PromptsOrm()
-    to_srt_orm.add_data_to_table(prompt_name="test2", prompt_content="test2")
+    to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
     # all_srt = to_srt_orm.get_all_data()
     # print(all_srt)
     # for srt in all_srt:

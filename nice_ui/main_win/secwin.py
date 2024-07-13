@@ -539,7 +539,7 @@ class SecWindow():
         if len(config.queue_mp4) > 0:
             config.params['only_video'] = True
 
-        save_setting(self.main.setting)
+        save_setting(self.main.settings)
 
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
         config.settings = config.parse_init()

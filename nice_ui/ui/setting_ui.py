@@ -14,9 +14,9 @@ from orm.queries import PromptsOrm
 
 
 class LocalModelPage(QWidget):
-    def __init__(self, setting, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = settings
         self.setup_ui()
         self.bind_action()
 
@@ -97,7 +97,7 @@ class LocalModelPage(QWidget):
             self.path_input.setText(new_path)
             # config.logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
-            self.setting.setValue("models_path", config.models_path)
+            self.settings.setValue("models_path", config.models_path)
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -141,8 +141,9 @@ class LocalModelPage(QWidget):
 
 
 class LLMConfigPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
+        self.settings = settings
         self.setup_ui()
         self.prompts_orm = PromptsOrm()
         self._init_table()
@@ -159,13 +160,14 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
 
         # 创建两个 OpenAIApiKeyCard 实例
-        kimi_card = LLMKeySet('kimi api', 'hurl')
-
-        zhipu_card = LLMKeySet('智谱AI api', 'zhipu')
+        kimi_card = LLMKeySet('kimi', 'hurl',self)
+        zhipu_card = LLMKeySet('zhipu', 'zhipu',self)
+        qwen_card = LLMKeySet('qwen', 'qwen',self)
 
         # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
+        cards_layout.addWidget(qwen_card)
         # 添加一些垂直间距
         cards_layout.addStretch(1)
 
@@ -254,8 +256,9 @@ class LLMConfigPage(QWidget):
 
 
 class TranslationPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self,settings, parent=None):
         super().__init__(parent=parent)
+        self.settings = settings
         self.setup_ui()
 
     def setup_ui(self):
@@ -273,14 +276,13 @@ class TranslationPage(QWidget):
         title_layout.addWidget(tutorial_link)
         main_layout.addLayout(title_layout)
 
-        self.baidu_key = TranslateKeySet("百度翻译")
-        self.deepl_key = TranslateKeySet("DeepL翻译")
-        self.google_key = TranslateKeySet("谷歌翻译")
-        self.microsoft_key = TranslateKeySet("微软翻译")
+        self.baidu_key = TranslateKeySet("baidu",self)
+        self.deepl_key = TranslateKeySet("deepl",self)
+        self.google_key = TranslateKeySet("google",self)
         main_layout.addWidget(self.baidu_key)
         main_layout.addWidget(self.deepl_key)
         main_layout.addWidget(self.google_key)
-        main_layout.addWidget(self.microsoft_key)
+
 
         self.setLayout(main_layout)
 
@@ -439,9 +441,9 @@ class SettingInterface(QWidget):
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
 
-        self.localModelPage = LocalModelPage(setting=self.setting)
-        self.llmConfigPage = LLMConfigPage(self)
-        self.translationPage = TranslationPage(self)
+        self.localModelPage = LocalModelPage(settings=self.setting)
+        self.llmConfigPage = LLMConfigPage(settings=self.setting)
+        self.translationPage = TranslationPage(settings=self.setting)
         self.proxyPage = ProxyPage(setting=self.setting)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
