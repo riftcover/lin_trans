@@ -138,6 +138,17 @@ class PromptsOrm:
         session.expunge_all()
         return prompts
 
+    # 获取表中id大于1的数据
+    @session_manager
+    def get_data_by_id(self, session=None):
+        prompts = session.query(Prompts).filter(Prompts.id > 1).all()
+        # 确保所有相关的属性都被加载
+        for prompt in prompts:
+            session.refresh(prompt)
+        # 将对象从会话中分离，但保留其数据
+        session.expunge_all()
+        return prompts
+
     @session_manager
     def query_data_by_prompt(self, key_id: int, session=None):
         # 输入prompt_name查询数据

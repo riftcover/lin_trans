@@ -1,16 +1,17 @@
 import time
 
+from PySide6.QtCore import QSettings
 from openai import OpenAI
 
-client = OpenAI(
-    api_key="sk-ZBNavwnJtJzolfVLIxCPaBoYEYfwytXk0ezdo49pwQ3frjl6",
-    base_url="https://api.moonshot.cn/v1",
-)
+settings = QSettings("Locoweed", "LinLInTrans")
+kimi_key = settings.value("kimi", type=str)
+
 filter = 'data/5月24日.txt'
 out_file = 'data/finish.txt'
 
 
 def chat_translate(text):
+    client = OpenAI(api_key = kimi_key, base_url="https://api.moonshot.cn/v1", )
     completion = client.chat.completions.create(
         model="moonshot-v1-8k",
         messages=[

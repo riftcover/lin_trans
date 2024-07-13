@@ -208,7 +208,7 @@ class LLMConfigPage(QWidget):
         self.setLayout(main_layout)
 
     def _init_table(self):
-        all_prompts = self.prompts_orm.get_all_data()
+        all_prompts = self.prompts_orm.get_data_by_id()
         for prompt in all_prompts:
             self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
@@ -228,7 +228,7 @@ class LLMConfigPage(QWidget):
 
     def _refresh_table_data(self):
         self.prompts_table.setRowCount(0)  # 清空表格
-        all_prompts = self.prompts_orm.get_all_data()  # 获取最新数据
+        all_prompts = self.prompts_orm.get_data_by_id()  # 获取最新数据
         for prompt in all_prompts:
             self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
 
