@@ -184,7 +184,7 @@ class LLMConfigPage(QWidget):
         # todo：补充icon
         # refresh_btn.setIcon(QIcon("/path/to/icon.png"))
 
-        refresh_btn.clicked.connect(self._init_table)
+        refresh_btn.clicked.connect(self._refresh_table_data)
         prompts_layout.addWidget(prompts_title)
         prompts_layout.addWidget(refresh_btn)
 
@@ -224,6 +224,11 @@ class LLMConfigPage(QWidget):
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.prompts_table.setCellWidget(row, 4, delete_btn)
 
+    def _refresh_table_data(self):
+        self.prompts_table.setRowCount(0)  # 清空表格
+        all_prompts = self.prompts_orm.get_all_data()  # 获取最新数据
+        for prompt in all_prompts:
+            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
 
     def _delete_row(self, button):
         def delete_row():
