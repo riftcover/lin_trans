@@ -2,10 +2,10 @@ import os
 import re
 import sys
 
-from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox, QAbstractItemView
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel, ToolButton)
+from PySide6.QtCore import QSettings, Qt, QUrl
+from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout
+from qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar, InfoBarPosition)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
@@ -241,7 +241,7 @@ class LLMConfigPage(QWidget):
             config.logger.info(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
             prompt_name = self.prompts_table.item(button_row, 1).text()
-            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库
+            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  
             # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
 
         return edit_row
@@ -283,52 +283,144 @@ class TranslationPage(QWidget):
 class ProxyPage(QWidget):
     def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = setting
         self.setup_ui()
 
     def setup_ui(self):
         # 添加代理设置
-        main_layout = QVBoxLayout()
-        self.no_proxy_radio = RadioButton("无代理", self)
-        self.use_proxy_radio = RadioButton("使用代理", self)
-        # self.use_proxy_radio.toggled.connect(self.save_proxy)
+        layout = QVBoxLayout()
 
-        # 默认选中"无代理"
-        self.no_proxy_radio.setChecked(True)
+        # 创建单选框
+        self.no_proxy_radio = RadioButton("无代理")
+        self.use_proxy_radio = RadioButton("使用代理")
 
-        main_layout.addWidget(self.no_proxy_radio)
-        main_layout.addStretch(1)
-        main_layout.addWidget(self.use_proxy_radio)
+        radio_layout = QHBoxLayout()
+        radio_layout.addWidget(self.no_proxy_radio)
+        radio_layout.addWidget(self.use_proxy_radio)
+        layout.addLayout(radio_layout)
 
-        self.proxy_address = LineEdit(self)
-        self.proxy_address.setPlaceholderText("代理地址，比如http://127.0.0.1:8087")
-        self.save_btn = PushButton("保存")
-        self.save_btn.clicked.connect(self.save_proxy)
-        main_layout.addWidget(self.proxy_address)
-        main_layout.addStretch(1)
-        main_layout.addWidget(self.save_btn)
+        # 创建代理输入框
+        self.proxy_input = LineEdit()
+        self.proxy_input.setPlaceholderText("输入代理地址 (例如: http://127.0.0.1:8080)")
+        layout.addWidget(self.proxy_input)
 
-        self.setLayout(main_layout)
+        # 创建应用代理按钮
+        self.apply_button = PushButton("保存")
+        self.apply_button.clicked.connect(self.apply_proxy)
+        layout.addWidget(self.apply_button)
 
-    def save_proxy(self):
-        if self.no_proxy_radio.isChecked():
-            config.proxy = None
+        # 创建显示当前代理设置按钮
+        self.show_settings_button = PushButton("显示当前代理设置")
+        self.show_settings_button.clicked.connect(self.show_current_settings)
+        layout.addWidget(self.show_settings_button)
+
+        # 添加测试按钮
+        self.test_button = PushButton("测试代理", self)
+        self.test_button.clicked.connect(self.test_proxy)
+        layout.addWidget(self.test_button)
+
+        self.setLayout(layout)
+
+        # 加载保存的设置
+        self.load_settings()
+
+        # 连接单选框信号
+        self.no_proxy_radio.toggled.connect(self.toggle_proxy_input)
+        self.use_proxy_radio.toggled.connect(self.toggle_proxy_input)
+
+    def load_settings(self):
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
+        proxy = self.settings.value("proxy", "", type=str)  # 实际使用的
+        proxy_text = self.settings.value("proxy_text", "", type=str)  # 仅做文本显示
+
+        if use_proxy:
+            self.use_proxy_radio.setChecked(True)
         else:
-            proxy = self.proxy_address.text()
+            self.no_proxy_radio.setChecked(True)
+
+        self.proxy_input.setText(proxy_text)
+        self.toggle_proxy_input()
+
+    def toggle_proxy_input(self):
+        self.proxy_input.setEnabled(self.use_proxy_radio.isChecked())
+
+    def apply_proxy(self):
+        use_proxy = self.use_proxy_radio.isChecked()
+
+        if use_proxy:
+            proxy = self.proxy_input.text()
             if not re.match(r'^(http|sock)', proxy, re.I):
                 proxy = f'http://{proxy}'
             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
                 question = tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-            一般代理/vpn格式为 http://127.0.0.1:数字端口号
-            如果不知道什么是代理请勿随意填写
-            如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
-            config.proxy = proxy
-        self.setting.setValue("proxy", config.proxy)
-        config.logger.info(f"proxy/use_proxy: {self.use_proxy_radio.isChecked()}")
-        config.logger.info(f"proxy/address: {config.proxy}")
+                       一般代理/vpn格式为 http://127.0.0.1:数字端口号
+                       如果不知道什么是代理请勿随意填写
+                       如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+
+            if not proxy:
+                InfoBar.warning(title="警告", content="请输入有效的代理地址", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+                return
+            self.settings.setValue("use_proxy", use_proxy)
+            self.settings.setValue("proxy", proxy)
+            self.settings.setValue("proxy_text", proxy)
+        else:
+            proxy = ""
+            self.settings.setValue("use_proxy", use_proxy)
+            self.settings.setValue("proxy", proxy)
+        # 保存设置
+
+        # 应用代理设置到应用程序
+        try:
+            if use_proxy:
+                # 解析代理地址
+                protocol, address = proxy.split("://")
+                host, port = address.split(":")
+                port = int(port)
+
+                # 设置全局代理
+                proxy_obj = QNetworkProxy()
+                if protocol.lower() == "http":
+                    proxy_obj.setType(QNetworkProxy.HttpProxy)
+                elif protocol.lower() == "socks5":
+                    proxy_obj.setType(QNetworkProxy.Socks5Proxy)
+                else:
+                    raise ValueError("Unsupported proxy protocol")
+
+                proxy_obj.setHostName(host)
+                proxy_obj.setPort(port)
+                QNetworkProxy.setApplicationProxy(proxy_obj)
+            else:
+                # 这里添加取消代理的代码
+                QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
+
+            InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+        except Exception as e:
+            InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+
+    def show_current_settings(self):
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
+        proxy = self.settings.value("proxy", "", type=str)
+
+        if use_proxy:
+            message = f"当前使用代理: {proxy}"
+        else:
+            message = "当前未使用代理"
+
+        InfoBar.info(title="当前代理设置", content=message, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+
+    def test_proxy(self):
+        manager = QNetworkAccessManager(self)
+        manager.finished.connect(self.handle_response)
+
+        request = QNetworkRequest(QUrl("https://www.google.com/"))
+        manager.get(request)
+
+    def handle_response(self, reply):
+        if reply.error():
+            InfoBar.error(title='错误', content=f"测试失败: {reply.errorString()}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self)
+        else:
+            response = reply.readAll().data().decode()
+            InfoBar.success(title='成功', content=f"测试成功: {response}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self)
 
 
 class SettingInterface(QWidget):

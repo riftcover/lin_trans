@@ -52,7 +52,8 @@ def parse_init():
     settings = {
         "lang": defaulelang,
         "dubbing_thread": 3,
-        "trans_thread": 15,
+        "trans_row": 15,  # 每次翻译的行数
+        "agent_rpm":2, # api每分钟请求次数
         "countdown_sec": 30,
         "cuda_com_type": "float16",
         "whisper_threads": 4,
