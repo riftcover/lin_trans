@@ -5,7 +5,7 @@ import sys
 from PySide6.QtCore import QSettings, Qt, QUrl
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar, InfoBarPosition)
+from qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar, InfoBarPosition, FluentIcon)
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
@@ -183,8 +183,7 @@ class LLMConfigPage(QWidget):
         # 刷新提示词
 
         refresh_btn = ToolButton("刷新")
-        # todo：补充icon
-        # refresh_btn.setIcon(QIcon("/path/to/icon.png"))
+        refresh_btn.setIcon(FluentIcon.ROTATE)
 
         refresh_btn.clicked.connect(self._refresh_table_data)
         prompts_layout.addWidget(prompts_title)

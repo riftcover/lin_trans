@@ -3,7 +3,7 @@ import re
 import sys
 
 import path
-from PySide6.QtCore import Qt, QRect, Slot, QSettings
+from PySide6.QtCore import Qt, Slot, QSettings
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, )
 from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox, InfoBar, InfoBarPosition
@@ -25,8 +25,6 @@ class WorkSrt(QWidget):
         self.bind_action()
 
     def setup_ui(self):
-        self.setWindowTitle("字幕翻译准备")
-        self.setGeometry(QRect(12, 16, 777, 578))
 
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
@@ -37,9 +35,9 @@ class WorkSrt(QWidget):
         self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
 
-        # todo: 增加到队列按钮到时候屏蔽掉
-        self.add_queue_btn = PushButton("添加到队列")
-        main_layout.addWidget(self.add_queue_btn)
+        # # todo: 增加到队列按钮到时候屏蔽掉
+        # self.add_queue_btn = PushButton("添加到队列")
+        # main_layout.addWidget(self.add_queue_btn)
 
         # 下拉框布局
         combo_layout = QHBoxLayout()

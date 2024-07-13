@@ -3,10 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import (QCoreApplication, QRect, Qt, Slot, QSize, QSettings)
+from PySide6.QtCore import (QCoreApplication, Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication)
 from PySide6.QtWidgets import (QFileDialog)
+from qfluentwidgets import PushButton, FluentIcon
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
@@ -27,74 +28,56 @@ class Video2SRT(QWidget):
 
 
     def setupUi(self):
-        self.layoutWidget = QWidget(self)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(12, 16, 777, 578))
-        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.btn_get_video = QPushButton(self.layoutWidget)
-        self.btn_get_video.setObjectName(u"btn_get_video")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.btn_get_video.sizePolicy().hasHeightForWidth())
-        self.btn_get_video.setSizePolicy(sizePolicy1)
-        self.btn_get_video.setMinimumSize(QSize(300, 150))
+        main_layout = QVBoxLayout()
 
-        self.verticalLayout_4.addWidget(self.btn_get_video)
+        self.btn_get_video = PushButton("导入音视频文件，自动生成字幕")
 
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.formLayout = QFormLayout()
-        self.formLayout.setObjectName(u"formLayout")
-        self.formLayout.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_2 = QLabel(self.layoutWidget)
-        self.label_2.setObjectName(u"label_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
-        self.label_2.setSizePolicy(sizePolicy2)
-        self.label_2.setMinimumSize(QSize(0, 35))
+        self.btn_get_video.setIcon(FluentIcon.VIDEO)
+        self.btn_get_video.setFixedHeight(100)  # 增加按钮的高度
+        main_layout.addWidget(self.btn_get_video)
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_2)
+        # 下拉框布局
+        combo_layout = QHBoxLayout()
+        main_layout.addLayout(combo_layout)
 
-        self.source_language = QComboBox(self.layoutWidget)
-        self.source_language.setObjectName(u"source_language")
-        sizePolicy1.setHeightForWidth(self.source_language.sizePolicy().hasHeightForWidth())
-        self.source_language.setSizePolicy(sizePolicy1)
-        self.source_language.setMinimumSize(QSize(0, 35))
+        # 原始语种布局
+        source_layout = QHBoxLayout()
+        source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.source_language)
+        
+        source_language_label = QLabel("原始语种")
+        # source_language_label.setMinimumSize(QSize(0, 35))
 
-        self.horizontalLayout.addLayout(self.formLayout)
 
-        self.formLayout_2 = QFormLayout()
-        self.formLayout_2.setObjectName(u"formLayout_2")
-        self.formLayout_2.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_3 = QLabel(self.layoutWidget)
-        self.label_3.setObjectName(u"label_3")
-        sizePolicy2.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
-        self.label_3.setSizePolicy(sizePolicy2)
-        self.label_3.setMinimumSize(QSize(0, 35))
+        self.source_language = QComboBox()
+        self.source_language.addItems(config.langnamelist)
+        # self.source_language.setMinimumSize(QSize(0, 35))
 
-        self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_3)
+        source_layout.addWidget(source_language_label)
+        source_layout.addWidget(self.source_language)
+        combo_layout.addLayout(source_layout)
 
-        self.source_model = QComboBox(self.layoutWidget)
-        self.source_model.setObjectName(u"source_model")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.source_model.sizePolicy().hasHeightForWidth())
-        self.source_model.setSizePolicy(sizePolicy3)
-        self.source_model.setMinimumSize(QSize(0, 35))
+        # 识别引擎布局
 
-        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.source_model)
+        recognition_layout = QHBoxLayout()
+        recognition_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        #识别引擎
+        recognition_label =QLabel("识别引擎")
 
-        self.horizontalLayout.addLayout(self.formLayout_2)
+        self.source_model = QComboBox()
+        self.source_model.addItems(config.model_code_list)
+        # sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        # sizePolicy3.setHorizontalStretch(0)
+        # sizePolicy3.setVerticalStretch(0)
+        # sizePolicy3.setHeightForWidth(self.source_model.sizePolicy().hasHeightForWidth())
+        # self.source_model.setSizePolicy(sizePolicy3)
+        # self.source_model.setMinimumSize(QSize(0, 35))
+        recognition_layout.addWidget(recognition_label)
+        recognition_layout.addWidget(self.source_model)
+        combo_layout.addLayout(recognition_layout)
 
-        self.check_fanyi = QCheckBox(self.layoutWidget)
+
+        self.check_fanyi = QCheckBox("字幕翻译")
         self.check_fanyi.setObjectName(u"check_fanyi")
         sizePolicy3.setHeightForWidth(self.check_fanyi.sizePolicy().hasHeightForWidth())
         self.check_fanyi.setSizePolicy(sizePolicy3)
@@ -144,7 +127,7 @@ class Video2SRT(QWidget):
 
         self.horizontalLayout.addLayout(self.formLayout_4)
 
-        self.verticalLayout_4.addLayout(self.horizontalLayout)
+        main_layout.addLayout(self.horizontalLayout)
 
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -162,7 +145,7 @@ class Video2SRT(QWidget):
 
         self.verticalLayout.addWidget(self.media_table)
 
-        self.verticalLayout_4.addLayout(self.verticalLayout)
+        main_layout.addLayout(self.verticalLayout)
 
         self.formLayout_5 = QFormLayout()
         self.formLayout_5.setObjectName(u"formLayout_5")
@@ -179,13 +162,15 @@ class Video2SRT(QWidget):
 
         self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.startbtn_1)
 
-        self.verticalLayout_4.addLayout(self.formLayout_5)
+        main_layout.addLayout(self.formLayout_5)
+
+        self.setLayout(main_layout)
         self.lateUI()
         self.initUI()
         self.bind_action()
     def initUI(self):
         self.btn_get_video.setCursor(Qt.PointingHandCursor)
-        self.source_language.addItems(config.langnamelist)
+
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language.setCurrentText(config.params['source_language'])
         else:
@@ -194,7 +179,7 @@ class Video2SRT(QWidget):
         self.translate_language.addItems(["-"] + self.language_name)
 
         # 模型下拉菜单内容
-        self.source_model.addItems(config.model_code_list)
+
         self.translate_type.addItems(TRANSNAMES)
         translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
 
@@ -228,7 +213,7 @@ class Video2SRT(QWidget):
 
     def lateUI(self):
         self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
+        source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
         # if QT_CONFIG(tooltip)
         self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
         # endif // QT_CONFIG(tooltip)
