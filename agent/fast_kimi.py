@@ -1,4 +1,5 @@
 import time
+
 from openai import OpenAI
 
 client = OpenAI(
@@ -6,7 +7,9 @@ client = OpenAI(
     base_url="https://api.moonshot.cn/v1",
 )
 filter = 'data/5月24日.txt'
-out_file='data/finish.txt'
+out_file = 'data/finish.txt'
+
+
 def chat_translate(text):
     completion = client.chat.completions.create(
         model="moonshot-v1-8k",
@@ -26,7 +29,7 @@ def chat_translate(text):
     return completion.choices[0].message.content
 
 
-def translate_document(in_document,out_document, chunk_size=30):
+def translate_document(in_document, out_document, chunk_size=30):
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()
     chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
@@ -36,12 +39,10 @@ def translate_document(in_document,out_document, chunk_size=30):
             print(paragraph)
             translated_paragraph = chat_translate(paragraph)
             print(translated_paragraph)
-            # translated_paragraph = paragraph
             output_content.writelines(translated_paragraph)
             time.sleep(32)
 
 
 #
-translation = translate_document(filter,out_file)
+translation = translate_document(filter, out_file)
 print(translation)
-
