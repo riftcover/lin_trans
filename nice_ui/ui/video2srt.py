@@ -5,9 +5,9 @@ from pathlib import Path
 
 from PySide6.QtCore import (QCoreApplication, Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication, QAbstractItemView)
 from PySide6.QtWidgets import (QFileDialog)
-from qfluentwidgets import PushButton, FluentIcon
+from qfluentwidgets import PushButton, FluentIcon, TableWidget
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
@@ -18,20 +18,17 @@ class Video2SRT(QWidget):
     def __init__(self, text: str, parent=None, setting=None):
         super().__init__(parent=parent)
         self.setting = setting
-        self.table =TableWindow(self,setting)
+        self.table = TableWindow(self, setting)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
         self.setObjectName(text.replace(' ', '-'))
         self.setupUi()
-        self.initUI()
-
-
 
     def setupUi(self):
         main_layout = QVBoxLayout()
 
         self.btn_get_video = PushButton("导入音视频文件，自动生成字幕")
-
+        self.btn_get_video.setCursor(Qt.PointingHandCursor)
         self.btn_get_video.setIcon(FluentIcon.VIDEO)
         self.btn_get_video.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_video)
@@ -44,14 +41,17 @@ class Video2SRT(QWidget):
         source_layout = QHBoxLayout()
         source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        
         source_language_label = QLabel("原始语种")
         # source_language_label.setMinimumSize(QSize(0, 35))
-
 
         self.source_language = QComboBox()
         self.source_language.addItems(config.langnamelist)
         # self.source_language.setMinimumSize(QSize(0, 35))
+        if config.params['source_language'] and config.params['source_language'] in self.language_name:
+            self.source_language.setCurrentText(config.params['source_language'])
+        else:
+            self.source_language.setCurrentIndex(2)
+
 
         source_layout.addWidget(source_language_label)
         source_layout.addWidget(self.source_language)
@@ -62,7 +62,7 @@ class Video2SRT(QWidget):
         recognition_layout = QHBoxLayout()
         recognition_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         #识别引擎
-        recognition_label =QLabel("识别引擎")
+        recognition_label = QLabel("识别引擎")
 
         self.source_model = QComboBox()
         self.source_model.addItems(config.model_code_list)
@@ -76,83 +76,71 @@ class Video2SRT(QWidget):
         recognition_layout.addWidget(self.source_model)
         combo_layout.addLayout(recognition_layout)
 
-
         self.check_fanyi = QCheckBox("字幕翻译")
-        self.check_fanyi.setObjectName(u"check_fanyi")
-        sizePolicy3.setHeightForWidth(self.check_fanyi.sizePolicy().hasHeightForWidth())
-        self.check_fanyi.setSizePolicy(sizePolicy3)
         self.check_fanyi.setMinimumSize(QSize(0, 35))
+        combo_layout.addWidget(self.check_fanyi)
 
-        self.horizontalLayout.addWidget(self.check_fanyi)
+        # 翻译语言布局
+        translate_language_layout = QHBoxLayout()
+        translate_language_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        self.formLayout_3 = QFormLayout()
-        self.formLayout_3.setObjectName(u"formLayout_3")
-        self.formLayout_3.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_8 = QLabel(self.layoutWidget)
-        self.label_8.setObjectName(u"label_8")
-        sizePolicy2.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
-        self.label_8.setSizePolicy(sizePolicy2)
-        self.label_8.setMinimumSize(QSize(0, 35))
+        translate_language_label = QLabel("翻译语种")
+        self.translate_language = QComboBox()
+        self.translate_language.addItems(self.language_name)
+        if config.params['target_language'] and config.params['target_language'] in self.language_name:
+            self.translate_language.setCurrentText(config.params['target_language'])
+        translate_language_layout.addWidget(translate_language_label)
+        translate_language_layout.addWidget(self.translate_language)
+        combo_layout.addLayout(translate_language_layout)
 
-        self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_8)
+        # 翻译引擎布局
+        translate_engine_layout = QHBoxLayout()
+        translate_engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        self.translate_type = QComboBox(self.layoutWidget)
-        self.translate_type.setObjectName(u"translate_type")
-        sizePolicy3.setHeightForWidth(self.translate_type.sizePolicy().hasHeightForWidth())
-        self.translate_type.setSizePolicy(sizePolicy3)
-        self.translate_type.setMinimumSize(QSize(0, 35))
+        translate_model_label = QLabel("翻译引擎")
 
-        self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.translate_type)
+        self.translate_type = QComboBox()
+        # todo: 翻译引擎列表需调整
+        # 模型下拉菜单内容
+        self.translate_type.addItems(TRANSNAMES)
+        # 模型默认值
+        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
+        self.translate_type.setCurrentText(translate_name)
+        translate_engine_layout.addWidget(translate_model_label)
+        translate_engine_layout.addWidget(self.translate_type)
+        combo_layout.addLayout(translate_engine_layout)
 
-        self.horizontalLayout.addLayout(self.formLayout_3)
+        media_table_layout = QVBoxLayout()
+        # media_table_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        media_table_layout.setContentsMargins(60, -1, 60, -1)
+        self.media_table = TableWidget(self)
+        self.media_table.setColumnCount(5)
+        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作', '文件路径'])
+        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.media_table.setColumnWidth(0, 200)
+        self.media_table.setColumnWidth(1, 100)
+        self.media_table.setColumnWidth(2, 100)
+        self.media_table.setColumnWidth(3, 100)
+        self.media_table.setColumnWidth(4, 0)
 
-        self.formLayout_4 = QFormLayout()
-        self.formLayout_4.setObjectName(u"formLayout_4")
-        self.formLayout_4.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label_4 = QLabel(self.layoutWidget)
-        self.label_4.setObjectName(u"label_4")
-        sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
-        self.label_4.setSizePolicy(sizePolicy2)
-        self.label_4.setMinimumSize(QSize(0, 35))
-
-        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_4)
-
-        self.translate_language = QComboBox(self.layoutWidget)
-        self.translate_language.setObjectName(u"translate_language")
-        sizePolicy3.setHeightForWidth(self.translate_language.sizePolicy().hasHeightForWidth())
-        self.translate_language.setSizePolicy(sizePolicy3)
-        self.translate_language.setMinimumSize(QSize(0, 0))
-
-        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.translate_language)
-
-        self.horizontalLayout.addLayout(self.formLayout_4)
-
-        main_layout.addLayout(self.horizontalLayout)
-
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(80, -1, 80, -1)
-        self.media_table = QTableWidget(self.layoutWidget)
-        self.media_table.setColumnCount(4)
-        self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.media_table.setObjectName(u"media_table")
+        # self.media_table.setShowGrid(False) #隐藏网格线
+        self.media_table.setColumnHidden(4, True)  # 隐藏操作列
+        # self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.media_table.setObjectName(u"media_table")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
         sizePolicy4.setHeightForWidth(self.media_table.sizePolicy().hasHeightForWidth())
         self.media_table.setSizePolicy(sizePolicy4)
         self.media_table.setMinimumSize(QSize(0, 300))
-
-        self.verticalLayout.addWidget(self.media_table)
-
-        main_layout.addLayout(self.verticalLayout)
+        media_table_layout.addWidget(self.media_table)
+        main_layout.addLayout(media_table_layout )
 
         self.formLayout_5 = QFormLayout()
-        self.formLayout_5.setObjectName(u"formLayout_5")
         self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
-        self.startbtn_1 = QPushButton(self.layoutWidget)
-        self.startbtn_1.setObjectName(u"startbtn_1")
+        self.startbtn_1 = PushButton("开始")
+        self.startbtn_1.setIcon(FluentIcon.PLAY)
         sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy5.setHorizontalStretch(0)
         sizePolicy5.setVerticalStretch(0)
@@ -165,27 +153,9 @@ class Video2SRT(QWidget):
         main_layout.addLayout(self.formLayout_5)
 
         self.setLayout(main_layout)
-        self.lateUI()
-        self.initUI()
         self.bind_action()
-    def initUI(self):
-        self.btn_get_video.setCursor(Qt.PointingHandCursor)
 
-        if config.params['source_language'] and config.params['source_language'] in self.language_name:
-            self.source_language.setCurrentText(config.params['source_language'])
-        else:
-            self.source_language.setCurrentIndex(2)
 
-        self.translate_language.addItems(["-"] + self.language_name)
-
-        # 模型下拉菜单内容
-
-        self.translate_type.addItems(TRANSNAMES)
-        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
-
-        self.translate_type.setCurrentText(translate_name)
-        if config.params['target_language'] and config.params['target_language'] in self.language_name:
-            self.translate_language.setCurrentText(config.params['target_language'])
 
 
     def add_queue_mp4(self):
@@ -196,7 +166,6 @@ class Video2SRT(QWidget):
         config.queue_srt.extend(srt_list)
         config.logger.info(f'queue_srt: {config.queue_mp4}')
 
-
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
         self.startbtn_1.clicked.connect(self.util.check_start)
@@ -206,52 +175,44 @@ class Video2SRT(QWidget):
     def act_btn_get_video(self):
         # self.table = TableWindow(self)
         # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
+        self.btn_get_video.clicked.connect(lambda: self.table.select_files(self.media_table))
         self.btn_get_video.setAcceptDrops(True)
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
-    def lateUI(self):
-        self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
-        source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
-        # if QT_CONFIG(tooltip)
-        self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        # endif // QT_CONFIG(tooltip)
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
-        # if QT_CONFIG(tooltip)
-        self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
-        self.label_8.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
-        # if QT_CONFIG(tooltip)
-        self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        # endif // QT_CONFIG(tooltip)
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-        # if QT_CONFIG(tooltip)
-        self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-        # endif // QT_CONFIG(tooltip)
-        # ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
-        # ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None))
-        # ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
-        # ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"时长", None))
-        # ___qtablewidgetitem2 = self.media_table.horizontalHeaderItem(2)
-        # ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"算力消耗", None))
-        # ___qtablewidgetitem3 = self.media_table.horizontalHeaderItem(3)
-        # ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None))
-        self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"开始", None))
+    # def lateUI(self):
+    #     self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
+    #     source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
+    #     # if QT_CONFIG(tooltip)
+    #     self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+    #     # endif // QT_CONFIG(tooltip)
+    #     self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
+    #     # if QT_CONFIG(tooltip)
+    #     self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+    #     self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
+    #     self.translate_model.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
+    #     # if QT_CONFIG(tooltip)
+    #     self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+    #     # endif // QT_CONFIG(tooltip)
+    #     self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
+    #     # if QT_CONFIG(tooltip)
+    #     self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+
+
 
 
 class TableWindow:
-    def __init__(self,main,setting):
+    def __init__(self, main, setting):
         self.main = main
         self.setting = setting
+
     # 列表的操作
     @Slot()
     def select_files(self, ui_table: QTableWidget):
         # 选择文件
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                                     "Video files(*.mp4 *.avi *.mov *.mpg *.mkv *.mp3 *.wav *.flac)")
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir, "Video files(*.mp4 *.avi *.mov *.mpg *.mkv *.mp3 *.wav *.flac)")
 
         if file_paths:
             for file_path in file_paths:
@@ -261,7 +222,7 @@ class TableWindow:
             config.last_opendir = os.path.dirname(file_paths[0])
             self.setting.setValue("last_dir", config.last_opendir)
 
-    def table_set_item(self,ui_table,row_position:int,l0,l1,l2):
+    def table_set_item(self, ui_table, row_position: int, l0, l1, l2):
         #文件名
         file_name = QLabel()
         file_name.setText(os.path.basename(l0))
@@ -342,14 +303,13 @@ class TableWindow:
                 self.add_file_to_table(ui_table, file_path)
         event.accept()
 
-
-
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = Video2SRT('字幕翻译',setting=QSettings("Locoweed", "LinLInTrans"))
+    window = Video2SRT('字幕翻译', setting=QSettings("Locoweed", "LinLInTrans"))
     window.show()
     sys.exit(app.exec())

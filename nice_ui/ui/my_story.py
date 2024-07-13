@@ -301,7 +301,7 @@ class TableApp(CardWidget):
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.table.setCellWidget(row_position, 5, delete_btn)
 
-        # 隐藏列数据
+        # 隐藏列数据:unid
         file_unid = QLabel()
         file_unid.setText(unid)
         file_unid.setAlignment(Qt.AlignCenter)

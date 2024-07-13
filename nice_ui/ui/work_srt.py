@@ -3,9 +3,9 @@ import re
 import sys
 
 import path
-from PySide6.QtCore import Qt, Slot, QSettings
+from PySide6.QtCore import Qt, Slot, QSettings, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, )
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, QSizePolicy, QFormLayout, )
 from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox, InfoBar, InfoBarPosition
 
 from nice_ui.configure import config
@@ -81,6 +81,7 @@ class WorkSrt(QWidget):
         translate_model_name = QLabel("翻译引擎")
 
         self.translate_model = ComboBox(self)
+        # todo: 翻译引擎列表需调整
         self.translate_model.addItems(TRANSNAMES)
         translate_name = (config.params["translate_type"] if config.params["translate_type"] in TRANSNAMES else TRANSNAMES[0])
 
@@ -91,6 +92,8 @@ class WorkSrt(QWidget):
         combo_layout.addLayout(engine_layout)
 
         # 表格
+        media_table_layout = QHBoxLayout()
+        media_table_layout.setContentsMargins(60, -1, 60, -1)
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
@@ -98,16 +101,30 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(1, 100)
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
-        self.media_table.setColumnWidth(4, 0)
-        self.media_table.setShowGrid(False)
+        self.media_table.setColumnWidth(4, 100)
+        # self.media_table.setShowGrid(False) #隐藏网格线
+        self.media_table.setColumnHidden(4, True)  # 隐藏操作列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        main_layout.addWidget(self.media_table)
+        media_table_layout.addWidget(self.media_table)
+        main_layout.addLayout(media_table_layout)
 
         # 开始按钮
-        self.start_button = PushButton("开始翻译", self)
+        self.formLayout_5 = QFormLayout()
+        self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
+        self.start_button = PushButton("开始", self)
         self.start_button.setIcon(FluentIcon.PLAY)
 
-        main_layout.addWidget(self.start_button)
+        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.start_button.sizePolicy().hasHeightForWidth())
+        self.start_button.setSizePolicy(sizePolicy5)
+        self.start_button.setMinimumSize(QSize(200, 50))
+        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.start_button)
+
+
+        main_layout.addLayout(self.formLayout_5)
 
         # # 设置接受拖放  # self.setAcceptDrops(True) #不知道为啥不好使了
 
@@ -118,7 +135,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
-        self.add_queue_btn.clicked.connect(self.add_queue_srt)
+        # self.add_queue_btn.clicked.connect(self.add_queue_srt)
         self.start_button.clicked.connect(self.start_translation)
 
     def add_queue_srt(self):
