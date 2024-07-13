@@ -74,16 +74,17 @@ class SaveButton(PrimaryPushButton):
     用在llm配置页 创建api key 按钮
     """
 
-    def __init__(self, setting: QSettings, lineedit: LineEdit, api_key: str, parent=None):
+    def __init__(self, settings: QSettings, lineedit: LineEdit, api_key: str, parent=None):
         super().__init__(parent)
         self.setText("保存")
+        self.settings = settings
         self.lineEdit = lineedit
         self.clicked.connect(lambda: self.save_api_key(api_key))
 
     def save_api_key(self, api_key):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
         key_text = self.lineEdit.text()
-        self.parent().settings.setValue(api_key, key_text)
+        self.settings.setValue(api_key, key_text)
 
 
 class LLMKeySet(QWidget):
@@ -98,6 +99,7 @@ class LLMKeySet(QWidget):
         key_name: 显示在卡片上的API名称
         api_key: 保存到QSettings中的API名称
         url: 教程链接
+        在父窗口中要传入settings，settings是QSettings对象
         """
         # 创建主布局
         main_layout = QVBoxLayout()
@@ -118,7 +120,7 @@ class LLMKeySet(QWidget):
         # 第二排布局
         input_layout = QHBoxLayout()
         self.api_key_input = KeyLineEdit(self.parent().settings.value(api_key, type=str))
-        save_button = SaveButton(self.parent().settings, self.api_key_input, api_key, self)
+        save_button = SaveButton(self.parent().settings, self.api_key_input, api_key)
         input_layout.addWidget(self.api_key_input)
         input_layout.addWidget(save_button)
 
@@ -143,11 +145,12 @@ class TranslateKeySet(QWidget):
         key_name，api_key是在config.translate_api_name中配对的值{api_key：key_name}
         key_name: 显示在卡片上的API名称
         api_key: 保存到QSettings中的API名称
+        在父窗口中要传入settings，settings是QSettings对象
         """
         main_layout = QHBoxLayout()
         title_label = BodyLabel(config.translate_api_name.get(api_key))
         self.api_key_input = KeyLineEdit(self.parent().settings.value(api_key, type=str))
-        save_button = SaveButton(self.parent().settings, self.api_key_input, api_key, self)
+        save_button = SaveButton(self.parent().settings, self.api_key_input, api_key)
         # 将两排布局添加到主布局
         main_layout.addWidget(title_label)
         main_layout.addWidget(self.api_key_input)
