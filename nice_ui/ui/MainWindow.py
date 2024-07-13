@@ -32,15 +32,15 @@ class Window(FluentWindow):
 
     def __init__(self):
         super().__init__()
-        self.main_setting = QSettings("Locoweed", "LinLInTrans")
+        self.settings = QSettings("Locoweed", "LinLInTrans")
         self.initWindow()
         # create sub interface
         self.homeInterface = Widget('Search Interface', self)
-        self.vide2srt = Video2SRT('音视频转字幕', self,self.main_setting)
-        self.translate_srt = WorkSrt('字幕翻译', self,self.main_setting)
+        self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
+        self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
         self.edit_srt = Widget('字幕编辑', self)
         self.my_story = TableApp('我的创作', self)
-        self.settingInterface = SettingInterface('设置',self)
+        self.settingInterface = SettingInterface('设置',self,self.settings)
 
         self.initNavigation()
 
@@ -92,8 +92,8 @@ class Window(FluentWindow):
 
         #下面的是从spwin的initUI中复制过来的
         # 获取最后一次选择的目录
-        config.last_opendir = self.main_setting.value("last_dir", config.last_opendir, str)
-        get_setting_cache(self.main_setting)
+        config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
+        get_setting_cache(self.settings)
 
 
     def showMessageBox(self):

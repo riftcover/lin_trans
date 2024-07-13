@@ -208,7 +208,7 @@ class LLMConfigPage(QWidget):
         self.setLayout(main_layout)
 
     def _init_table(self):
-        all_prompts = self.prompts_orm.get_data_by_id()
+        all_prompts = self.prompts_orm.get_data_with_id_than_one()
         for prompt in all_prompts:
             self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
@@ -228,7 +228,7 @@ class LLMConfigPage(QWidget):
 
     def _refresh_table_data(self):
         self.prompts_table.setRowCount(0)  # 清空表格
-        all_prompts = self.prompts_orm.get_data_by_id()  # 获取最新数据
+        all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
         for prompt in all_prompts:
             self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
 
@@ -248,8 +248,10 @@ class LLMConfigPage(QWidget):
             config.logger.info(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
             prompt_name = self.prompts_table.item(button_row, 1).text()
-            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  
+            prompt_content = self.prompts_table.item(button_row, 2).text()
+            # todo: 弹出编辑对话框，修改后回写入数据库
             # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
+
 
         return edit_row
 
@@ -431,9 +433,9 @@ class ProxyPage(QWidget):
 
 
 class SettingInterface(QWidget):
-    def __init__(self, text: str, setting, parent=None):
+    def __init__(self, text: str, parent=None,settings=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = settings
         self.setObjectName(text.replace(' ', '-'))
         self.initUI()
 
@@ -441,10 +443,10 @@ class SettingInterface(QWidget):
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
 
-        self.localModelPage = LocalModelPage(settings=self.setting)
-        self.llmConfigPage = LLMConfigPage(settings=self.setting)
-        self.translationPage = TranslationPage(settings=self.setting)
-        self.proxyPage = ProxyPage(setting=self.setting)
+        self.localModelPage = LocalModelPage(settings=self.settings)
+        self.llmConfigPage = LLMConfigPage(settings=self.settings)
+        self.translationPage = TranslationPage(settings=self.settings)
+        self.proxyPage = ProxyPage(setting=self.settings)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
@@ -457,7 +459,7 @@ class SettingInterface(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingInterface('setting', setting=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface('setting', settings=QSettings("Locoweed", "LinLInTrans"))
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())
