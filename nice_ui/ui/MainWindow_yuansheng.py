@@ -1,8 +1,6 @@
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect)
 
-from PySide6.QtWidgets import (QLabel, QMenuBar, QStackedWidget,
-                               QStatusBar, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QLabel, QMenuBar, QStackedWidget, QStatusBar, QVBoxLayout, QWidget)
 
 
 class Ui_MainWindow(object):

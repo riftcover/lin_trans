@@ -121,23 +121,14 @@ class TableApp(CardWidget):
                 # 重新初始化表格,状态显示为未开始
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
-                obj_format = {'raw_noextname': filename_without_extension,
-                              'unid': srt.unid, }
+                obj_format = {'raw_noextname': filename_without_extension, 'unid': srt.unid, }
                 self.table_row_init(obj_format, srt.job_status)
             elif srt.job_status == 2:
                 self.addRow_init_all(filename_without_extension, srt.unid)
 
     def _addNewRow(self):
         self.addRow_init_all("新文件", "tt1")
-        InfoBar.success(
-            title='成功',
-            content="新文件已添加",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=2000,
-            parent=self
-        )
+        InfoBar.success(title='成功', content="新文件已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
 
     def table_row_init(self, obj_format: ObjFormat, job_status: int = 1):
         # 添加新文件时，初始化表格包含的元素
@@ -200,9 +191,7 @@ class TableApp(CardWidget):
         progress_bar = self.table.cellWidget(row, 2)
         # if isinstance(progress_bar, QProgressBar):
         config.logger.info(f"更新文件:{unid}的进度条:{progress}")
-        progress_bar.setText(f"处理中 {progress}")
-        # else:
-        #     config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
+        progress_bar.setText(f"处理中 {progress}")  # else:  #     config.logger.error(f"文件:{unid}的进度条不是进度条,无法更新")
 
     def find_row_by_identifier(self, unid):
         """
@@ -232,7 +221,7 @@ class TableApp(CardWidget):
             progress_bar = self.table.cellWidget(row, 2)
             # 进度条设置为100
             progress_bar.setText("已完成")
-            #数据库状态更新为已完成
+            # 数据库状态更新为已完成
             self.srt_orm.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
@@ -344,15 +333,8 @@ class TableApp(CardWidget):
             self.table.removeRow(button_row)
             # 清除缓存索引
             self.row_cache.clear()
-            InfoBar.success(
-                title='成功',
-                content="文件已删除",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=2000,
-                parent=self
-            )
+            InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+
         return delete_row_callback
 
     def _delete_batch(self):
@@ -388,26 +370,10 @@ class TableApp(CardWidget):
                 shutil.copy(job_path, file_path)
             except Exception as e:
                 config.logger.error(f"导出文件失败:{e}")
-                InfoBar.error(
-                    title='错误',
-                    content="导出文件失败",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP_RIGHT,
-                    duration=2000,
-                    parent=self
-                )
+                InfoBar.error(title='错误', content="导出文件失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
                 return
 
-        InfoBar.success(
-            title='成功',
-            content="文件已导出",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=2000,
-            parent=self
-        )
+        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
 
     def _export_row(self, row):
         options = QFileDialog.Options()
@@ -424,15 +390,7 @@ class TableApp(CardWidget):
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
             config.logger.info(f"导出文件:{job_path}到{file_path}")
             shutil.copy(job_path, file_path)
-            InfoBar.success(
-                title='成功',
-                content="文件已导出",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=2000,
-                parent=self
-            )
+            InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
 
 
 class MainWindow(QMainWindow):

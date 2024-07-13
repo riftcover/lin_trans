@@ -8,16 +8,12 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
-                            QSize, Qt)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QSize, Qt)
 from PySide6.QtGui import (QAction)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout,
-                               QHBoxLayout, QLabel, QLineEdit,
-                               QListWidget, QListWidgetItem, QMenu,
-                               QMenuBar, QPushButton, QSizePolicy, QStackedWidget,
-                               QStatusBar, QTableWidget, QTableWidgetItem, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, QMenuBar, QPushButton, QSizePolicy, QStackedWidget, QStatusBar, QTableWidget,
+                               QTableWidgetItem, QVBoxLayout, QWidget)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -48,8 +44,6 @@ class Ui_MainWindow(object):
         self.stackedWidget.setObjectName(u"stackedWidget")
         self.stackedWidget.setGeometry(QRect(90, 0, 831, 601))
 
-
-
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
         self.layoutWidget1 = QWidget(self.page_2)
@@ -70,7 +64,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.formLayout_6 = QFormLayout()
         self.formLayout_6.setObjectName(u"formLayout_6")
-        self.formLayout_6.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.formLayout_6.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.label_5 = QLabel(self.layoutWidget1)
         self.label_5.setObjectName(u"label_5")
         sizePolicy2.setHeightForWidth(self.label_5.sizePolicy().hasHeightForWidth())
@@ -87,12 +81,11 @@ class Ui_MainWindow(object):
 
         self.formLayout_6.setWidget(0, QFormLayout.FieldRole, self.source_language_srt)
 
-
         self.horizontalLayout_2.addLayout(self.formLayout_6)
 
         self.formLayout_7 = QFormLayout()
         self.formLayout_7.setObjectName(u"formLayout_7")
-        self.formLayout_7.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.formLayout_7.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.label_6 = QLabel(self.layoutWidget1)
         self.label_6.setObjectName(u"label_6")
         sizePolicy2.setHeightForWidth(self.label_6.sizePolicy().hasHeightForWidth())
@@ -109,12 +102,11 @@ class Ui_MainWindow(object):
 
         self.formLayout_7.setWidget(0, QFormLayout.FieldRole, self.source_model_srt)
 
-
         self.horizontalLayout_2.addLayout(self.formLayout_7)
 
         self.formLayout_8 = QFormLayout()
         self.formLayout_8.setObjectName(u"formLayout_8")
-        self.formLayout_8.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.formLayout_8.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.label_9 = QLabel(self.layoutWidget1)
         self.label_9.setObjectName(u"label_9")
         sizePolicy2.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
@@ -131,12 +123,11 @@ class Ui_MainWindow(object):
 
         self.formLayout_8.setWidget(0, QFormLayout.FieldRole, self.translate_type_srt)
 
-
         self.horizontalLayout_2.addLayout(self.formLayout_8)
 
         self.formLayout_9 = QFormLayout()
         self.formLayout_9.setObjectName(u"formLayout_9")
-        self.formLayout_9.setFormAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+        self.formLayout_9.setFormAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.label_7 = QLabel(self.layoutWidget1)
         self.label_7.setObjectName(u"label_7")
         sizePolicy2.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
@@ -153,9 +144,7 @@ class Ui_MainWindow(object):
 
         self.formLayout_9.setWidget(0, QFormLayout.FieldRole, self.translate_language_srt)
 
-
         self.horizontalLayout_2.addLayout(self.formLayout_9)
-
 
         self.verticalLayout_5.addLayout(self.horizontalLayout_2)
 
@@ -180,7 +169,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.srt_table)
 
-
         self.verticalLayout_5.addLayout(self.verticalLayout_2)
 
         self.verticalLayout_3 = QVBoxLayout()
@@ -192,7 +180,6 @@ class Ui_MainWindow(object):
         self.startbtn_srt.setMinimumSize(QSize(200, 50))
 
         self.verticalLayout_3.addWidget(self.startbtn_srt, 0, Qt.AlignmentFlag.AlignHCenter)
-
 
         self.verticalLayout_5.addLayout(self.verticalLayout_3)
 
@@ -305,7 +292,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_13.addWidget(self.change_dir_9)
 
-
         self.verticalLayout_6.addLayout(self.horizontalLayout_13)
 
         self.horizontalLayout_14 = QHBoxLayout()
@@ -324,7 +310,6 @@ class Ui_MainWindow(object):
         self.change_dir_10.setObjectName(u"change_dir_10")
 
         self.horizontalLayout_14.addWidget(self.change_dir_10)
-
 
         self.verticalLayout_6.addLayout(self.horizontalLayout_14)
 
@@ -355,7 +340,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_15.addWidget(self.change_dir_11)
 
-
         self.verticalLayout_7.addLayout(self.horizontalLayout_15)
 
         self.horizontalLayout_16 = QHBoxLayout()
@@ -375,7 +359,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_16.addWidget(self.change_dir_12)
 
-
         self.verticalLayout_7.addLayout(self.horizontalLayout_16)
 
         self.horizontalLayout_17 = QHBoxLayout()
@@ -394,7 +377,6 @@ class Ui_MainWindow(object):
         self.change_dir_13.setObjectName(u"change_dir_13")
 
         self.horizontalLayout_17.addWidget(self.change_dir_13)
-
 
         self.verticalLayout_7.addLayout(self.horizontalLayout_17)
 
@@ -441,7 +423,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_18.addWidget(self.change_dir_14)
 
-
         self.verticalLayout_8.addLayout(self.horizontalLayout_18)
 
         self.stackedWidget_2.addWidget(self.page_13)
@@ -479,8 +460,8 @@ class Ui_MainWindow(object):
         self.stackedWidget.setCurrentIndex(0)
         self.stackedWidget_2.setCurrentIndex(0)
 
-
         QMetaObject.connectSlotsByName(MainWindow)
+
     # setupUi
 
     def retranslateUi(self, MainWindow):
@@ -504,25 +485,25 @@ class Ui_MainWindow(object):
 
         self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.check_fanyi.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem = self.media_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
         ___qtablewidgetitem1 = self.media_table.horizontalHeaderItem(1)
@@ -533,25 +514,23 @@ class Ui_MainWindow(object):
         ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"操作", None));
         self.startbtn_1.setText(QCoreApplication.translate("MainWindow", u"开始111", None))
 
-
-
         self.btn_get_srt.setText(QCoreApplication.translate("MainWindow", u"导入字幕文件", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.source_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.source_model_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.translate_type_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.translate_language_srt.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         ___qtablewidgetitem4 = self.srt_table.horizontalHeaderItem(0)
         ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"文件名", None));
         ___qtablewidgetitem5 = self.srt_table.horizontalHeaderItem(1)
@@ -590,13 +569,13 @@ class Ui_MainWindow(object):
         self.label_22.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">Deepl翻译</span></p></body></html>", None))
         self.change_dir_13.setText(QCoreApplication.translate("MainWindow", u"保存", None))
         self.label_23.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:700;\">代理设置</span></p></body></html>", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.proxy_no.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.proxy_no.setText(QCoreApplication.translate("MainWindow", u"无代理", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.proxy_use.setToolTip(QCoreApplication.translate("MainWindow", u"必须确定有NVIDIA显卡且正确配置了CUDA环境，否则勿选", None))
-#endif // QT_CONFIG(tooltip)
+        # endif // QT_CONFIG(tooltip)
         self.proxy_use.setText(QCoreApplication.translate("MainWindow", u"使用代理", None))
         self.change_dir_14.setText(QCoreApplication.translate("MainWindow", u"保存", None))
 
@@ -612,6 +591,4 @@ class Ui_MainWindow(object):
         ___qlistwidgetitem8.setText(QCoreApplication.translate("MainWindow", u"代理设置", None));
         self.memu_settling.setSortingEnabled(__sortingEnabled1)
 
-        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"登陆", None))
-    # retranslateUi
-
+        self.menu_2.setTitle(QCoreApplication.translate("MainWindow", u"登陆", None))  # retranslateUi

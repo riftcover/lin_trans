@@ -57,7 +57,6 @@ class LocalModelPage(QWidget):
         self.cpp_model_table.verticalHeader().setVisible(False)
         self.cpp_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-
         # FasterWhisper 模型列表
         self.faster_model_title = BodyLabel("FasterWhisper 模型列表")
         self.faster_model_table = TableWidget(self)
@@ -153,16 +152,15 @@ class LLMConfigPage(QWidget):
         main_layout = QVBoxLayout()
         card_api_layout = QHBoxLayout()
 
-
         api_key_title = SubtitleLabel("API Key")
         main_layout.addWidget(api_key_title)
 
         cards_layout = QVBoxLayout()
 
         # 创建两个 OpenAIApiKeyCard 实例
-        kimi_card = LLMKeySet('kimi', 'hurl',self)
-        zhipu_card = LLMKeySet('zhipu', 'zhipu',self)
-        qwen_card = LLMKeySet('qwen', 'qwen',self)
+        kimi_card = LLMKeySet('kimi', 'hurl', self)
+        zhipu_card = LLMKeySet('zhipu', 'zhipu', self)
+        qwen_card = LLMKeySet('qwen', 'qwen', self)
 
         # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
@@ -178,7 +176,7 @@ class LLMConfigPage(QWidget):
         card_api_layout.addStretch(1)
 
         main_layout.addLayout(card_api_layout)
-        prompts_layout =QHBoxLayout()
+        prompts_layout = QHBoxLayout()
         prompts_title = SubtitleLabel("提示词")
         # 刷新提示词
 
@@ -211,7 +209,6 @@ class LLMConfigPage(QWidget):
         for prompt in all_prompts:
             self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
-
     def add_prompt(self, prompt_id, prompt_name, prompt_content):
         row = self.prompts_table.rowCount()
         self.prompts_table.insertRow(row)
@@ -238,8 +235,8 @@ class LLMConfigPage(QWidget):
             key_id = self.prompts_table.item(button_row, 0).text()
             self.prompts_orm.delete_table_prompt(key_id)
             self.prompts_table.removeRow(button_row)
-        return delete_row
 
+        return delete_row
 
     def _edit_prompt(self, button):
         def edit_row():
@@ -247,17 +244,13 @@ class LLMConfigPage(QWidget):
             config.logger.info(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
             prompt_name = self.prompts_table.item(button_row, 1).text()
-            prompt_content = self.prompts_table.item(button_row, 2).text()
-            # todo: 弹出编辑对话框，修改后回写入数据库
-            # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
-
+            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
 
         return edit_row
 
 
-
 class TranslationPage(QWidget):
-    def __init__(self,settings, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
         self.settings = settings
         self.setup_ui()
@@ -277,13 +270,12 @@ class TranslationPage(QWidget):
         title_layout.addWidget(tutorial_link)
         main_layout.addLayout(title_layout)
 
-        self.baidu_key = TranslateKeySet("baidu",self)
-        self.deepl_key = TranslateKeySet("deepl",self)
-        self.google_key = TranslateKeySet("google",self)
+        self.baidu_key = TranslateKeySet("baidu", self)
+        self.deepl_key = TranslateKeySet("deepl", self)
+        self.google_key = TranslateKeySet("google", self)
         main_layout.addWidget(self.baidu_key)
         main_layout.addWidget(self.deepl_key)
         main_layout.addWidget(self.google_key)
-
 
         self.setLayout(main_layout)
 
@@ -432,7 +424,7 @@ class ProxyPage(QWidget):
 
 
 class SettingInterface(QWidget):
-    def __init__(self, text: str, parent=None,settings=None):
+    def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
         self.setObjectName(text.replace(' ', '-'))

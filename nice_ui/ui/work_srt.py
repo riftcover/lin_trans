@@ -123,7 +123,6 @@ class WorkSrt(QWidget):
         self.start_button.setMinimumSize(QSize(200, 50))
         self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.start_button)
 
-
         main_layout.addLayout(self.formLayout_5)
 
         # # 设置接受拖放  # self.setAcceptDrops(True) #不知道为啥不好使了
@@ -182,7 +181,7 @@ class LTableWindow:
             config.logger.info(f"file_character_count: {file_character_count}")
             config.logger.info(f"file_path: {file_path}")
             # todo: 算力消耗
-            #文件名
+            # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数
             ui_table.setItem(row_position, 1, QTableWidgetItem(str(file_character_count)))
@@ -197,7 +196,6 @@ class LTableWindow:
             ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
         else:
             InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self.main)
-
 
     # 获取文件字符数
     def get_file_character_count(self, file_path: path) -> int | bool:

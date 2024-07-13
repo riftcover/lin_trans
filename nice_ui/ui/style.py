@@ -132,7 +132,6 @@ class LLMKeySet(QWidget):
         self.setLayout(main_layout)
 
 
-
 class TranslateKeySet(QWidget):
     """ Translate Key Set
     用在翻译页 创建api key 卡片

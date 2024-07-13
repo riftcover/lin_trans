@@ -3,9 +3,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import (QCoreApplication, Qt, Slot, QSize, QSettings)
+from PySide6.QtCore import (Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QHeaderView, QApplication, QAbstractItemView)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QApplication, QAbstractItemView)
 from PySide6.QtWidgets import (QFileDialog)
 from qfluentwidgets import PushButton, FluentIcon, TableWidget
 
@@ -52,7 +52,6 @@ class Video2SRT(QWidget):
         else:
             self.source_language.setCurrentIndex(2)
 
-
         source_layout.addWidget(source_language_label)
         source_layout.addWidget(self.source_language)
         combo_layout.addLayout(source_layout)
@@ -61,7 +60,7 @@ class Video2SRT(QWidget):
 
         recognition_layout = QHBoxLayout()
         recognition_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        #识别引擎
+        # 识别引擎
         recognition_label = QLabel("识别引擎")
 
         self.source_model = QComboBox()
@@ -134,7 +133,7 @@ class Video2SRT(QWidget):
         self.media_table.setSizePolicy(sizePolicy4)
         self.media_table.setMinimumSize(QSize(0, 300))
         media_table_layout.addWidget(self.media_table)
-        main_layout.addLayout(media_table_layout )
+        main_layout.addLayout(media_table_layout)
 
         self.formLayout_5 = QFormLayout()
         self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -154,9 +153,6 @@ class Video2SRT(QWidget):
 
         self.setLayout(main_layout)
         self.bind_action()
-
-
-
 
     def add_queue_mp4(self):
         # 获取self.main.media_table中第4列的数据
@@ -180,25 +176,7 @@ class Video2SRT(QWidget):
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
-    # def lateUI(self):
-    #     self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))
-    #     source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))
-    #     # if QT_CONFIG(tooltip)
-    #     self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-    #     # endif // QT_CONFIG(tooltip)
-    #     self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))
-    #     # if QT_CONFIG(tooltip)
-    #     self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-    #     self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))
-    #     self.translate_model.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))
-    #     # if QT_CONFIG(tooltip)
-    #     self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-    #     # endif // QT_CONFIG(tooltip)
-    #     self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))
-    #     # if QT_CONFIG(tooltip)
-    #     self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
-
-
+    # def lateUI(self):  #     self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))  #     source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))  #     # if QT_CONFIG(tooltip)  #     self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))  #     self.translate_model.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 
 
 class TableWindow:
@@ -223,7 +201,7 @@ class TableWindow:
             self.setting.setValue("last_dir", config.last_opendir)
 
     def table_set_item(self, ui_table, row_position: int, l0, l1, l2):
-        #文件名
+        # 文件名
         file_name = QLabel()
         file_name.setText(os.path.basename(l0))
         file_name.setAlignment(Qt.AlignCenter)
@@ -235,19 +213,19 @@ class TableWindow:
         file_duration.setAlignment(Qt.AlignCenter)
         ui_table.setCellWidget(row_position, 1, file_duration)
 
-        #算力消耗
+        # 算力消耗
         locol_value = QLabel()
         locol_value.setText(l2)
         locol_value.setAlignment(Qt.AlignCenter)
         ui_table.setCellWidget(row_position, 2, locol_value)
 
-        #操作
+        # 操作
         delete_button = QPushButton("删除")
         delete_button.setStyleSheet("background-color: red; color: white;")  # todo: 调整样式
         ui_table.setCellWidget(row_position, 3, delete_button)
         delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
 
-        #文件路径
+        # 文件路径
         file_path = QLabel()
         file_path.setText(l0)
         file_path.setAlignment(Qt.AlignCenter)
