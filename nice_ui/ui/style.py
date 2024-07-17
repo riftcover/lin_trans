@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QMessageBox
 from PySide6.QtWidgets import QWidget, QButtonGroup
-from qfluentwidgets import (CaptionLabel, RadioButton)
+from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 
 from nice_ui.configure import config
@@ -85,6 +85,7 @@ class SaveButton(PrimaryPushButton):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
         key_text = self.lineEdit.text()
         self.settings.setValue(api_key, key_text)
+        InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self.parent().parent(), )
 
 
 class LLMKeySet(QWidget):
