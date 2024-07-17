@@ -5,7 +5,8 @@ from pathlib import Path
 
 from PySide6.QtCore import (Qt, Slot, QSize, QSettings)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QApplication, QAbstractItemView)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget,
+                               QApplication, QAbstractItemView, QTableWidgetItem)
 from PySide6.QtWidgets import (QFileDialog)
 from qfluentwidgets import PushButton, FluentIcon, TableWidget
 
@@ -15,10 +16,10 @@ from videotrans.translator import TRANSNAMES
 
 
 class Video2SRT(QWidget):
-    def __init__(self, text: str, parent=None, setting=None):
+    def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
-        self.setting = setting
-        self.table = TableWindow(self, setting)
+        self.settings = settings
+        self.table = TableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
         self.setObjectName(text.replace(' ', '-'))
@@ -158,8 +159,10 @@ class Video2SRT(QWidget):
         # 获取self.main.media_table中第4列的数据
         srt_list = []
         for i in range(self.media_table.rowCount()):
-            srt_list.append(self.media_table.cellWidget(i, 4).text())
-        config.queue_srt.extend(srt_list)
+            # 获取self.media_table第i行第4列的数据
+            config.logger.info(self.media_table.item(i, 4).text())
+            srt_list.append(self.media_table.item(i, 4).text())
+        config.queue_mp4.extend(srt_list)
         config.logger.info(f'queue_srt: {config.queue_mp4}')
 
     def bind_action(self):
@@ -180,9 +183,9 @@ class Video2SRT(QWidget):
 
 
 class TableWindow:
-    def __init__(self, main, setting):
+    def __init__(self, main, settings):
         self.main = main
-        self.setting = setting
+        self.settings = settings
 
     # 列表的操作
     @Slot()
@@ -194,30 +197,29 @@ class TableWindow:
 
         if file_paths:
             for file_path in file_paths:
-                file_name = os.path.basename(file_path)
-                self.add_file_to_table(ui_table, file_name)
+                self.add_file_to_table(ui_table, file_path)
 
             config.last_opendir = os.path.dirname(file_paths[0])
-            self.setting.setValue("last_dir", config.last_opendir)
+            self.settings.setValue("last_dir", config.last_opendir)
 
-    def table_set_item(self, ui_table, row_position: int, l0, l1, l2):
+    def add_file_to_table(self, ui_table: QTableWidget, file_path: Path):
+        # 添加文件到表格
+        config.logger.info(f'add_file_to_table: {file_path}')
+        row_position = ui_table.rowCount()
+
+        ui_table.insertRow(row_position)
+        # file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
+        file_duration = self.get_video_duration(file_path)
+        # self.table_set_item(ui_table, row_position, file_path, file_duration, "0.00")
+        file_name = os.path.basename(file_path)
         # 文件名
-        file_name = QLabel()
-        file_name.setText(os.path.basename(l0))
-        file_name.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 0, file_name)
+        ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
 
         # 时长
-        file_duration = QLabel()
-        file_duration.setText(l1)
-        file_duration.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 1, file_duration)
+        ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
 
         # 算力消耗
-        locol_value = QLabel()
-        locol_value.setText(l2)
-        locol_value.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 2, locol_value)
+        ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
 
         # 操作
         delete_button = QPushButton("删除")
@@ -226,20 +228,8 @@ class TableWindow:
         delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
 
         # 文件路径
-        file_path = QLabel()
-        file_path.setText(l0)
-        file_path.setAlignment(Qt.AlignCenter)
-        ui_table.setCellWidget(row_position, 4, file_path)
+        ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
 
-    def add_file_to_table(self, ui_table: QTableWidget, file_path: str):
-        # 添加文件到表格
-
-        row_position = ui_table.rowCount()
-
-        ui_table.insertRow(row_position)
-        file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
-        # file_duration = self.get_video_duration(file_path)
-        self.table_set_item(ui_table, row_position, file_path, file_duration, "0.00")
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, row: int):
@@ -287,7 +277,9 @@ class TableWindow:
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = Video2SRT('字幕翻译', setting=QSettings("Locoweed", "LinLInTrans"))
-    window.show()
-    sys.exit(app.exec())
+    # app = QApplication(sys.argv)
+    # window = Video2SRT('字幕翻译', settings=QSettings("Locoweed", "LinLInTrans"))
+    # window.show()
+    # sys.exit(app.exec())
+    a =TableWindow(None, None)
+    print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))

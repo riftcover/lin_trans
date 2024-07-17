@@ -97,6 +97,7 @@ class LocalModelPage(QWidget):
             # config.logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
             self.settings.setValue("models_path", config.models_path)
+            # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -450,7 +451,7 @@ class SettingInterface(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingInterface('setting', settings=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface('settings', settings=QSettings("Locoweed", "LinLInTrans"))
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())

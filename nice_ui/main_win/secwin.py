@@ -445,20 +445,19 @@ class SecWindow():
 
     # 检测开始状态并启动
     def check_start(self):
-        # todo: proxy设置暂时不做
-        proxy = config.proxy
-        if proxy:
-            if not re.match(r'^(http|sock)', proxy, re.I):
-                proxy = f'http://{proxy}'
-            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup(
-                    '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-一般代理/vpn格式为 http://127.0.0.1:数字端口号
-如果不知道什么是代理请勿随意填写
-如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
+#         proxy = config.proxy
+#         if proxy:
+#             if not re.match(r'^(http|sock)', proxy, re.I):
+#                 proxy = f'http://{proxy}'
+#             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
+#                 question = tools.show_popup(
+#                     '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
+# 一般代理/vpn格式为 http://127.0.0.1:数字端口号
+# 如果不知道什么是代理请勿随意填写
+# 如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+#                 if question != QMessageBox.Yes:
+#                     self.update_status('stop')
+#                     return
 
         # 加载数据
         self.main.add_queue_mp4()
@@ -522,15 +521,16 @@ class SecWindow():
 
         # 翻译渠道
         config.params['translate_type'] = self.main.translate_type.currentText()
+
         # 如果需要翻译，再判断是否符合翻译规则
-        if target_language:
-            if not self.dont_translate():
-                rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
-                                                   show_target=config.params['target_language'])
-                if rs is not True:
-                    # 不是True，有错误
-                    QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-                    return False
+        # if target_language:
+        #     if not self.dont_translate():
+        #         rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
+        #                                            show_target=config.params['target_language'])
+        #         if rs is not True:
+        #             # 不是True，有错误
+        #             QMessageBox.critical(self.main, config.transobj['anerror'], rs)
+        #             return False
 
         # 存在视频
         config.params['only_video'] = False
@@ -552,6 +552,9 @@ class SecWindow():
         self.add_queue_thread(queue_mp4_copy)
 
         self.update_status('ing')
+
+    def check_translate(self):
+        self.main.add_queue_srt()
 
     def add_queue_thread(self, data_copy):
         # 添加需处理文件到队列的线程

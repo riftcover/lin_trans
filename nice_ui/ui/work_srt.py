@@ -141,7 +141,7 @@ class WorkSrt(QWidget):
         # 获取self.main.media_table中第4列的数据
         srt_list = []
         for i in range(self.media_table.rowCount()):
-            srt_list.append(self.media_table.cellWidget(i, 4).text())
+            srt_list.append(self.media_table.item(i, 4).text())
         config.queue_srt.extend(srt_list)
         config.logger.info(f"queue_srt: {config.queue_srt}")
 
