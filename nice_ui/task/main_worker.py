@@ -56,7 +56,6 @@ class Worker(QObject):
                                       config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
                                       config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'], 1, json.dumps(obj_format))
             config.logger.debug('添加消息完成')
-        srt_orm.close_session()
         self.queue_ready.emit()
         self.finished.emit()
         config.logger.debug('do_work() 线程工作完成')
