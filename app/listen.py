@@ -172,6 +172,8 @@ class SrtWriter:
         logger.info(f"Writing srt file to {srt_file_path}")
         for segment in segments:
             progress_now = (segment.start / info.duration) * 100
+            # progress_now 取整
+            progress_now = round(progress_now, 2)
             write_srt_file(segment, srt_file_path)
             self.data_bridge.emit_whisper_working(self.unid, progress_now)
             logger.info(f"[{segment.start} --> {segment.end}] {segment.text}")

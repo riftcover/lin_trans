@@ -306,7 +306,7 @@ class TableApp(CardWidget):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
         obj_format = tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
-        work_queue.to_war_queue_put(job_path)
+        work_queue.lin_queue_put(job_path)
 
     def _delete_row(self, button):
 

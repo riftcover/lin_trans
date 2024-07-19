@@ -10,13 +10,15 @@ from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, Messag
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from videotrans.translator import TRANSNAMES
+from agent import translate_api_name, get_translate_code
+from orm.queries import PromptsOrm
 
 
 class WorkSrt(QWidget):
     def __init__(self, text: str, parent=None, setting=None):
         super().__init__(parent=parent)
         self.setting = setting
+        self.prompts_orm = PromptsOrm()
         self.table = LTableWindow(self, setting)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
@@ -82,14 +84,26 @@ class WorkSrt(QWidget):
 
         self.translate_model = ComboBox(self)
         # todo: 翻译引擎列表需调整
-        self.translate_model.addItems(TRANSNAMES)
-        translate_name = (config.params["translate_type"] if config.params["translate_type"] in TRANSNAMES else TRANSNAMES[0])
-
+        translate_list = get_translate_code()
+        self.translate_model.addItems(translate_list)
+        translate_name = config.params["translate_type"]
+        config.logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
         engine_layout.addWidget(translate_model_name)
         engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(engine_layout)
+
+        # todo: 只有选择ai时才显示
+        prompt_layout = QHBoxLayout()
+        prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        ai_prompt_name = QLabel("提示词")
+        self.ai_prompt = ComboBox(self)
+        self.ai_prompt.addItems(self._get_ai_prompt())
+        self.ai_prompt.setCurrentText(config.params["prompt_name"])
+        prompt_layout.addWidget(ai_prompt_name)
+        prompt_layout.addWidget(self.ai_prompt)
+        main_layout.addLayout(prompt_layout)
 
         # 表格
         media_table_layout = QHBoxLayout()
@@ -147,6 +161,15 @@ class WorkSrt(QWidget):
 
     def start_translation(self):
         MessageBox("提示", "翻译准备完成，即将开始翻译...", self).exec()
+
+    def _get_ai_prompt(self) -> list:
+        # 获取AI提示列表
+        prompt_names = self.prompts_orm.get_prompt_name()
+        prompt_name_list = []
+        for i in prompt_names:
+            prompt_name_list.append(i.prompt_name)
+        return prompt_name_list
+
 
 
 class LTableWindow:

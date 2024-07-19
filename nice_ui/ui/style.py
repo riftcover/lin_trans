@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 
+from agent import translate_api_name
 from nice_ui.configure import config
 
 
@@ -85,7 +86,7 @@ class SaveButton(PrimaryPushButton):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
         key_text = self.lineEdit.text()
         self.settings.setValue(api_key, key_text)
-        InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self.parent().parent(), )
+        InfoBar.success(title="成功", content="API已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self.parent().parent(), )
 
 
 class LLMKeySet(QWidget):
@@ -106,7 +107,7 @@ class LLMKeySet(QWidget):
         main_layout = QVBoxLayout()
 
         # 第一排布局
-        key_name = config.translate_api_name.get(api_key)
+        key_name = translate_api_name.get(api_key)
         config.logger.debug(f"key_name: {key_name}")
         title_layout = QHBoxLayout()
         title_label = BodyLabel(key_name)
@@ -148,7 +149,7 @@ class TranslateKeySet(QWidget):
         在父窗口中要传入settings，settings是QSettings对象
         """
         main_layout = QHBoxLayout()
-        title_label = BodyLabel(config.translate_api_name.get(api_key))
+        title_label = BodyLabel(translate_api_name.get(api_key))
         self.api_key_input = KeyLineEdit(self.parent().settings.value(api_key, type=str))
         save_button = SaveButton(self.parent().settings, self.api_key_input, api_key)
         # 将两排布局添加到主布局

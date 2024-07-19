@@ -77,6 +77,11 @@ class Window(FluentWindow):
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         get_setting_cache(self.settings)
+        all_keys = self.settings.allKeys()
+        # self.settings.clear()
+        # for key in all_keys:
+        #     value = self.settings.value(key)
+        #     config.logger.info(f"Key: {key}, Value: {value}")
 
     def showMessageBox(self):
         w = MessageBox('支持作者🥰', '个人开发不易，如果这个项目帮助到了您，可以考虑请作者喝一瓶快乐水🥤。您的支持就是作者开发和维护项目的动力🚀', self)

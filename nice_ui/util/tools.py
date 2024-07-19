@@ -28,6 +28,24 @@ class ModelInfo(TypedDict):
 
 class ObjFormat(TypedDict):
     # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
+    """
+    {
+  'raw_name': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_dirname': 'F:/ski/国外教学翻译',
+  'raw_basename': 'Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_noextname': 'Top 10 Affordable Ski Resorts in Europe',
+  'raw_ext': 'mp4',
+  'dirname': 'D:/dcode/lin_trans/tmp/f1f54d3c61d87f77344a132e0fac69b8',
+  'basename': 'f1f54d3c61d87f77344a132e0fac69b8.mp4',
+  'noextname': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'ext': 'mp4',
+  'codec_type': 'video',
+  'output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8',
+  'unid': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'source_mp4': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'linshi_output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8'
+}
+    """
     raw_name: str
     raw_dirname: str
     raw_basename: str

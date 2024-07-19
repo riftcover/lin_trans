@@ -35,11 +35,13 @@ class ToSrtOrm:
     # 添加ToSrt数据
 
     @session_manager
-    def add_data_to_table(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, job_status=0, obj=None, session=None):
+    def add_data_to_table(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, job_status=0, obj=None,
+                          session=None):
         if obj is None:
             obj = {}
-        new_entry = ToSrt(unid=unid, path=path, source_language=source_language, source_module_status=source_module_status, source_module_name=source_module_name, translate_status=translate_status, cuda=cuda,
-                          raw_ext=raw_ext, job_status=job_status, obj=obj, )
+        new_entry = ToSrt(unid=unid, path=path, source_language=source_language, source_module_status=source_module_status,
+                          source_module_name=source_module_name, translate_status=translate_status, cuda=cuda, raw_ext=raw_ext, job_status=job_status,
+                          obj=obj, )
         session.add(new_entry)
         session.commit()
 
@@ -87,8 +89,12 @@ class ToSrtOrm:
 class ToTranslationOrm:
     # 添加ToTranslation数据
     @session_manager
-    def add_to_translation(self, unid, path, source_language, target_language, translate_type, session=None):
-        new_entry = ToTranslation(unid=unid, path=path, source_language=source_language, target_language=target_language, translate_type=translate_type, )
+    def add_data_to_table(self, unid, path, source_language, target_language, translate_type, job_type, job_status, obj=None, session=None):
+        if obj is None:
+            obj = {}
+        new_entry = ToTranslation(unid=unid, path=path, source_language=source_language,
+                                  target_language=target_language, translate_type=translate_type,
+                                  job_type=job_type, job_status=job_status, obj=obj)
         session.add(new_entry)
         session.commit()
 
@@ -150,10 +156,25 @@ class PromptsOrm:
         return prompts
 
     @session_manager
+    def get_prompt_name(self, session=None):
+        return session.query(Prompts.prompt_name).all()
+
+    @session_manager
     def query_data_by_id(self, key_id: int, session=None):
         # 输入prompt_name查询数据
         try:
             prompt = session.query(Prompts).filter_by(id=key_id).one()
+            session.refresh(prompt)
+            session.expunge(prompt)
+            return prompt
+        except NoResultFound:
+            return None
+
+    @session_manager
+    def query_data_by_name(self, name: str, session=None):
+        # 输入prompt_name查询数据
+        try:
+            prompt = session.query(Prompts.prompt_content).filter_by(prompt_name=name).one()
             session.refresh(prompt)
             session.expunge(prompt)
             return prompt
@@ -179,16 +200,19 @@ class PromptsOrm:
 
 
 if __name__ == "__main__":
-    if __name__ == "__main__":
-        # 测试
-        to_srt_orm = PromptsOrm()
-        # to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
-        one_srt = to_srt_orm.query_data_by_id(1)
-        lang = 'zh-CN'
-        # print(one_srt.prompt_content)
+    # 测试
+    to_srt_orm = PromptsOrm()
 
-        # 替换 {lang} 为 zh-cn
-        modified_content = one_srt.prompt_content.format(lang='zh-cn',text='你好')
-        print(modified_content)
+    # to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
 
-        # all_srt = to_srt_orm.get_all_data()  # print(all_srt)  # for srt in all_srt:  #     print(srt)
+    # print(one_srt.prompt_content)
+
+    # 替换 {lang} 为 zh-cn
+    # modified_content = one_srt.prompt_content.format(lang='zh-cn', text='你好')
+    # print(modified_content)
+    print(to_srt_orm.get_prompt_name())
+    to_srt_orm = ToSrtOrm()
+    # print(to_srt_orm.query_data_format_unid_path())
+    print(list(to_srt_orm.query_data_format_unid_path()))
+
+    # all_srt = to_srt_orm.get_all_data()  # print(all_srt)  # for srt in all_srt:  #     print(srt)

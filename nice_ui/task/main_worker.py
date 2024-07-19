@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Literal
 
 from PySide6.QtCore import QObject, Signal
 
@@ -7,7 +8,7 @@ from nice_ui.configure import config
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
 from nice_ui.util.tools import set_process
-from orm.queries import ToSrtOrm
+from orm.queries import ToSrtOrm, ToTranslationOrm
 
 work_queue = LinQueue()
 
@@ -17,51 +18,80 @@ class Worker(QObject):
     error = Signal(str)
     queue_ready = Signal()  # 用于通知队列准备就绪 # 用于通知主线程更新表格
 
-    def __init__(self, queue_mp4_copy):
+    def __init__(self, queue_copy):
         super().__init__()
-        self.queue_mp4_copy = queue_mp4_copy
+        self.queue_copy = queue_copy
         self.data_bridge = config.data_bridge
 
-    def do_work(self):
+    def do_work(self, work_type: Literal['mp4', 'srt']):
         """
         点击开始按钮完成后,将需处理的文件放入队列中
         """
-        srt_orm = ToSrtOrm()
-        config.logger.debug(f'do_work()线程开始工作:{self.queue_mp4_copy}')
-        for it in self.queue_mp4_copy:
-            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
-            # 格式化每个视频信息
-            obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
-            config.logger.debug(f'target_dir:{config.params["target_dir"]}')
-            config.logger.debug(f'obj_format:{obj_format}')
-            target_dir_mp4 = obj_format['output'] + f"/{obj_format['raw_noextname']}.mp4"
 
-            if len(target_dir_mp4) >= 250:
-                # 调用 set_process() 函数，将提示信息 config.transobj['chaochu255'] 和 it 的值拼接在一起，并将提示级别设置为 'alert'。
-                # set_process() 函数会在主线程中显示提示信息。
-                # self.stop() 函数会在主线程中停止程序运行。
-                set_process(config.transobj['chaochu255'] + "\n\n" + it, 'alert')
-                self.stop()
-                return
-            if re.search(r'[\&\+\:\?\|]+', it[2:]):
-                set_process(config.transobj['teshufuhao'] + "\n\n" + it, 'alert')
-                self.stop()
-                return
-            # 添加到工作队列
-            work_queue.to_war_queue_put(obj_format)
-            # 添加文件到我的创作页表格中
-            self.data_bridge.emit_update_table(obj_format)
-            # 添加消息到数据库
-            srt_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'],
-                                      config.params['source_language'], config.params['source_module_status'], config.params['source_module_name'],
-                                      config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'], 1, json.dumps(obj_format))
-            config.logger.debug('添加消息完成')
+        config.logger.debug(f'do_work()线程开始工作:{self.queue_copy}')
+        if work_type == 'whisper':
+            self.mp4_work()
+        elif work_type == 'trans':
+            self.srt_work()
         self.queue_ready.emit()
         self.finished.emit()
         config.logger.debug('do_work() 线程工作完成')
 
-    def stop(self):
+    def mp4_work(self):
+        srt_orm = ToSrtOrm()
+        for it in self.queue_copy:
+            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
+            # 格式化每个视频信息
+            obj_format = self._check_obj(it)
+            obj_format['job_type'] = 'whisper'
+            # 添加到工作队列
+            work_queue.lin_queue_put(obj_format)
+            # 添加文件到我的创作页表格中
+            self.data_bridge.emit_update_table(obj_format)
+            # 添加消息到数据库
+            srt_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'], config.params['source_language'], config.params['source_module_status'],
+                                      config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'], 1,
+                                      json.dumps(obj_format))
+            config.logger.debug('添加视频消息完成')
+
+    def srt_work(self):
+        trans_orm = ToTranslationOrm()
+        for it in self.queue_copy:
+            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
+            # 格式化每个字幕信息
+            obj_format = self._check_obj(it)
+            obj_format['job_type'] ='trans'
+            # 添加到工作队列
+            work_queue.lin_queue_put(obj_format)
+            # 添加文件到我的创作页表格中
+            self.data_bridge.emit_update_table(obj_format)
+            # 添加消息到数据库
+            trans_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'], config.params['source_language'], config.params['target_language'],
+                                        config.params['translate_type'], 2, 1, json.dumps(obj_format))
+            config.logger.debug('添加翻译消息完成')
+
+    def _check_obj(self, it):
+        obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
+        config.logger.debug(f'target_dir:{config.params["target_dir"]}')
+        config.logger.debug(f'obj_format:{obj_format}')
+        target_dir = obj_format['output'] + f"/{obj_format['raw_noextname']}.mp4"
+
+        if len(target_dir) >= 250:
+            # 调用 set_process() 函数，将提示信息 config.transobj['chaochu255'] 和 it 的值拼接在一起，并将提示级别设置为 'alert'。
+            # set_process() 函数会在主线程中显示提示信息。
+            # self.stop() 函数会在主线程中停止程序运行。
+            set_process(config.transobj['chaochu255'] + "\n\n" + it, 'alert')
+            self.stop()
+            return
+        if re.search(r'[\&\+\:\?\|]+', it[2:]):
+            set_process(config.transobj['teshufuhao'] + "\n\n" + it, 'alert')
+            self.stop()
+            return
+        return obj_format
+
+    def stop( self):
         set_process("", 'stop')
+        # todo: 在翻译任务中,也要清空queue_srt
         config.queue_mp4 = []
         self.finished.emit()
 
@@ -77,8 +107,8 @@ class QueueConsumer(QObject):
         # todo: 添加文件开始后立即点击我的创作页,线程不工作
         config.logger.debug('消费线程开始工作')
         config.is_consuming = True
-        while not config.mp4_to_war_queue.empty():
+        while not config.lin_queue.empty():
             config.logger.debug('消费线程工作中')
-            work_queue.consume_mp4_queue()
+            work_queue.consume_queue()
         config.is_consuming = False
         self.finished.emit()
