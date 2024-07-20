@@ -46,17 +46,14 @@ def capture_whisper_variables(func):
 
                 # Check if we're at the start of the while loop
                 if (frame.f_lineno == frame.f_code.co_firstlineno + 66 and  # Adjust this line number,检查行号
-                        captured_data['content_frames'] is not None and
-                        captured_data['seek'] is not None and
-                        captured_data['previous_seek'] is not None and
+                        captured_data['content_frames'] is not None and captured_data['seek'] is not None and captured_data['previous_seek'] is not None and
                         captured_data['seek'] != captured_data['last_printed_seek']  # 确保这个 seek 值没有被打印过
                 ):
 
                     print("my print===="
                           f"content_frames: {captured_data['content_frames']}, "
                           f"seek: {captured_data['seek']}, "
-                          f"previous_seek: {captured_data['previous_seek']}",
-                          )
+                          f"previous_seek: {captured_data['previous_seek']}", )
                     # pbar.update(min(content_frames, seek) - previous_seek)
                     for segment in captured_data['current_segments']:
                         start, end, text = segment["start"], segment["end"], segment["text"]
@@ -91,7 +88,7 @@ class SrtWriter:
             input_dirname: 需要提取文本的音频文件
             ln: 音频文件语言
         """
-        self.srt_name = raw_basename.rsplit('.',1)[0]
+        self.srt_name = raw_basename.rsplit('.', 1)[0]
 
         audio_path = os.path.join(input_dirname, f'{self.srt_name}.wav')  # os.path.join(self.cwd, self.raw_basename)
         if not os.path.isfile(audio_path):
@@ -125,9 +122,7 @@ class SrtWriter:
 
     # @timeit
 
-    def whisper_cpp_to_srt(
-            self,
-            model_name: str = 'ggml-medium.en.bin') -> None:
+    def whisper_cpp_to_srt(self, model_name: str = 'ggml-medium.en.bin') -> None:
         """
         如果mac系统或者没有CUDA走这个
         :param model_name:
@@ -144,14 +139,9 @@ class SrtWriter:
         # cwd_path = os.path.join(self.cwd, whisper_name)
 
         # 运行 whisper.cpp 的命令
-        command = ["./main", "-m", model_path, "-f", self.input_file, "-l", self.ln, "-osrt", "-of", audio_srt_path,
-                   "-pp"]
+        command = ["./main", "-m", model_path, "-f", self.input_file, "-l", self.ln, "-osrt", "-of", audio_srt_path, "-pp"]
         logger.debug("Running command:", " ".join(command))
-        subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            # cwd=cwd_path
+        subprocess.run(command, capture_output=True, text=True, # cwd=cwd_path
         )
 
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
@@ -160,11 +150,11 @@ class SrtWriter:
         # 使用faster-whisper进行识别
         logger.info(f"Using Faster-Whisper to generate SRT file")
         if cuda_status:
-            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
-                                 device="cuda", local_files_only=True, compute_type="float16")
+            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cuda", local_files_only=True,
+                                 compute_type="float16")
         else:
-            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}',
-                                 device="cpu", local_files_only=True, compute_type="int8")
+            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cpu", local_files_only=True,
+                                 compute_type="int8")
         segments, info = model.transcribe(self.input_file, language=self.ln)
 
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
@@ -179,7 +169,6 @@ class SrtWriter:
             logger.info(f"[{segment.start} --> {segment.end}] {segment.text}")
 
         self.data_bridge.emit_whisper_finished(self.unid)
-
 
     def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
         if system_type != 'darwin':
@@ -197,4 +186,4 @@ if __name__ == '__main__':
     # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # models = 'D:\dcode\lin_trans\models\small.pt'
 
-    SrtWriter('xxx',output, raw_basename, 'zh').whisper_faster_to_srt()
+    SrtWriter('xxx', output, raw_basename, 'zh').whisper_faster_to_srt()

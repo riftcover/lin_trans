@@ -1,12 +1,11 @@
 import os
 import subprocess
-import sys
 from pathlib import Path
 
-from PySide6.QtCore import (Qt, Slot, QSize, QSettings)
+from PySide6.QtCore import (Qt, Slot, QSize)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QTableWidget, QVBoxLayout, QWidget,
-                               QApplication, QAbstractItemView, QTableWidgetItem)
+                               QAbstractItemView, QTableWidgetItem)
 from PySide6.QtWidgets import (QFileDialog)
 from qfluentwidgets import PushButton, FluentIcon, TableWidget
 
@@ -168,7 +167,6 @@ class Video2SRT(QWidget):
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
         self.startbtn_1.clicked.connect(self.util.check_start)
-        self.startbtn_1.clicked.connect(lambda: print("开始"))
         self.act_btn_get_video()
 
     def act_btn_get_video(self):

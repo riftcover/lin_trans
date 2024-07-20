@@ -5,21 +5,22 @@ import sys
 import path
 from PySide6.QtCore import Qt, Slot, QSettings, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, QSizePolicy, QFormLayout, )
-from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, MessageBox, InfoBar, InfoBarPosition
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem,
+                               QSizePolicy, QFormLayout, )
+from qfluentwidgets import PushButton, ComboBox, TableWidget, FluentIcon, InfoBar, InfoBarPosition
 
+from agent import get_translate_code
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from agent import translate_api_name, get_translate_code
 from orm.queries import PromptsOrm
 
 
 class WorkSrt(QWidget):
-    def __init__(self, text: str, parent=None, setting=None):
+    def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = settings
         self.prompts_orm = PromptsOrm()
-        self.table = LTableWindow(self, setting)
+        self.table = LTableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
         self.setObjectName(text.replace(" ", "-"))
@@ -149,7 +150,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
         # self.add_queue_btn.clicked.connect(self.add_queue_srt)
-        self.start_button.clicked.connect(self.start_translation)
+        self.start_button.clicked.connect(self.util.check_translate)
 
     def add_queue_srt(self):
         # 获取self.main.media_table中第4列的数据
@@ -159,8 +160,7 @@ class WorkSrt(QWidget):
         config.queue_srt.extend(srt_list)
         config.logger.info(f"queue_srt: {config.queue_srt}")
 
-    def start_translation(self):
-        MessageBox("提示", "翻译准备完成，即将开始翻译...", self).exec()
+
 
     def _get_ai_prompt(self) -> list:
         # 获取AI提示列表
@@ -173,9 +173,9 @@ class WorkSrt(QWidget):
 
 
 class LTableWindow:
-    def __init__(self, main, setting):
+    def __init__(self, main, settings):
         self.main = main
-        self.setting = setting
+        self.settings = settings
 
     def select_file(self):
         file_paths = QFileDialog()
@@ -188,7 +188,7 @@ class LTableWindow:
             for file_path in file_paths:
                 self.add_file_to_table(self.main.media_table, file_path)
         config.last_opendir = os.path.dirname(file_paths[0])
-        self.setting.setValue("last_dir", config.last_opendir)
+        self.settings.setValue("last_dir", config.last_opendir)
 
     # 列表的操作
 
