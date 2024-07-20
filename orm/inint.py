@@ -34,7 +34,7 @@ class ToTranslation(Base):
     target_language = Column(String)  # 目标语言
     translate_type = Column(String)  # 翻译渠道
     job_type = Column(Integer)  # 任务类型 1:音视频转字幕自动翻译 2:字幕直接翻译
-    job_status = Column(Integer)  # 任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败
+    job_status = Column(Integer)  # 任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败 （目前只用到0，1，2）
     obj = Column(String)
 
     def __repr__(self):

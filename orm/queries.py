@@ -4,7 +4,9 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from orm.inint import Prompts, engine, ToSrt, ToTranslation
+from utils.log import Logings
 
+logger = Logings().logger
 # 创建一个数据库会话
 
 SessionLocal = scoped_session(sessionmaker(bind=engine))
@@ -112,13 +114,25 @@ class ToTranslationOrm:
             return None
 
     @session_manager
-    def update_to_translation(self, unid, session=None, **kwargs):
-        if entry := self.get_to_translation_by_unid(unid):
-            for key, value in kwargs.items():
-                setattr(entry, key, value)
+    def query_data_format_unid_path(self, session=None):
+
+        # 输出所有行的unid和path
+        return session.query(ToTranslation.unid, ToTranslation.path, ToTranslation.job_status).filter(ToTranslation.job_type == 2).all()
+
+
+    @session_manager
+    def update_table_unid`(self, unid,new_status, session=None, **kwargs):
+        record = session.query(ToTranslation).filter(ToTranslation.unid == unid).first()
+
+        if record:
+            # 如果找到记录，更新 job_status
+            record.job_status = new_status
             session.commit()
-            return True
-        return False
+            logger.info(f"Updated job_status to {new_status} for unid: {unid}")
+        else:
+            logger.info(f"No record found with unid: {unid}")
+
+
 
     @session_manager
     def delete_to_translation(self, unid, session=None):
@@ -201,7 +215,8 @@ class PromptsOrm:
 
 if __name__ == "__main__":
     # 测试
-    to_srt_orm = PromptsOrm()
+    # to_srt_orm = PromptsOrm()
+    to_srt_orm = ToTranslationOrm()
 
     # to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
 
@@ -210,5 +225,5 @@ if __name__ == "__main__":
     # 替换 {lang} 为 zh-cn
     # modified_content = one_srt.prompt_content.format(lang='zh-cn', text='你好')
     # print(modified_content)
-    print(to_srt_orm.query_data_by_name('默认'))
+    print(to_srt_orm.query_data_format_unid_path())
 

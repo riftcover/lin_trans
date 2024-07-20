@@ -1,15 +1,12 @@
-import contextlib
 import copy
 import json
 import os
-import re
 import warnings
 
 from PySide6 import QtCore
 from PySide6.QtCore import QUrl, Qt, QThread
 from PySide6.QtGui import QTextCursor, QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
-from qfluentwidgets import InfoBar
 
 from agent import translate_api_name
 from nice_ui.task.main_worker import QueueConsumer
