@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QLineEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TableWidget, TransparentToolButton, FluentIcon)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
@@ -86,7 +86,8 @@ class SaveButton(PrimaryPushButton):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
         key_text = self.lineEdit.text()
         self.settings.setValue(api_key, key_text)
-        InfoBar.success(title="成功", content="API已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self.parent().parent(), )
+        InfoBar.success(title="成功", content="API已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                        parent=self.parent().parent(), )
 
 
 class LLMKeySet(QWidget):
@@ -160,11 +161,12 @@ class TranslateKeySet(QWidget):
         # 设置卡片的内容布局
         self.setLayout(main_layout)
 
-class CustomTimeEdit(QTimeEdit):
-    def __init__(self, parent=None):
+
+class LTimeEdit(QTimeEdit):
+    def __init__(self, time_str, parent=None):
         super().__init__(parent)
-        self.setDisplayFormat("hh:mm:ss.zzz")
-        time = QTime(0, 0, 2, 266)
+        self.setDisplayFormat("hh:mm:ss,zzz")
+        time = QTime.fromString(time_str, "hh:mm:ss,zzz")
         self.setTime(time)
 
     def stepBy(self, steps):
@@ -173,30 +175,102 @@ class CustomTimeEdit(QTimeEdit):
         self.setTime(new_time)
 
 
-class SubtitleTable(TableWidget):
+class LinLineEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setReadOnly(True)  # 初始设置为只读
+        self.setLineWrapMode(QTextEdit.WidgetWidth)  # 设置自动换行模式
+        self.setAcceptRichText(False)  # 禁用富文本，只接受纯文本
+        self.mousePressEvent = self.on_mouse_press  # 重写鼠标点击事件
+
+    def on_mouse_press(self, event):
+        if event.button() == Qt.LeftButton:
+            self.setReadOnly(False)  # 点击后设置为可编辑
+        super().mousePressEvent(event)
+
+
+class SubtitleTable(TableWidget):
+    def __init__(self, file_path, parent=None):
+        super().__init__(parent)
+        self.file_path = file_path
+
         self.initUI()
+
+    def load_subtitle(self):
+        """
+        加载字幕文件，返回字幕列表
+        :return:[('00:00:00,166', '00:00:01,166', '你好，世界！')]
+                [start_time, end_time, content]
+        """
+        subtitles = []
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        i = 0
+        while i < len(lines):
+            # 跳过行号
+            if lines[i].strip().isdigit():
+                i += 1
+
+            # 读取时间范围
+            time_range = lines[i].strip()
+            try:
+                start_time, end_time = time_range.split(' --> ')
+            except ValueError:
+                print(f"Error parsing time range: {time_range}")
+                i += 1
+                continue
+            i += 1
+
+            # 读取字幕内容
+            content = []
+            while i < len(lines) and lines[i].strip():
+                content.append(lines[i].strip())
+                i += 1
+
+            # 将字幕内容合并为一行
+            content_str = ' '.join(content)
+
+            # 添加到字幕列表
+            subtitles.append((start_time, end_time, content_str))
+
+            # 跳过空行
+            while i < len(lines) and not lines[i].strip():
+                i += 1
+        config.logger.debug(f"字幕文件行数: {len(subtitles)}")
+        return subtitles
 
     def initUI(self):
         self.setColumnCount(6)
         # self.setHorizontalHeaderLabels(["操作", "行号", "时间", "时长", "原文", "译文", "编辑"])
-        self.setHorizontalHeaderLabels(["操作", "行号", "时间",  "原文", "译文", "编辑"])
+        self.setHorizontalHeaderLabels(["操作", "行号", "时间", "原文", "译文", "编辑"])
 
         self.setColumnWidth(0, 50)
         self.setColumnWidth(1, 50)
-        self.setColumnWidth(2, 400)
-        self.setColumnWidth(3, 200)
-        self.setColumnWidth(4, 200)
+        self.setColumnWidth(2, 200)
+        self.setColumnWidth(3, 300)
+        self.setColumnWidth(4, 300)
         self.setColumnWidth(5, 50)
 
         # 设置表格样式
-        self.setShowGrid(False)
-        self.horizontalHeader().setStretchLastSection(True)
-        self.verticalHeader().setVisible(False)
+        # self.setShowGrid(False)
+        # self.verticalHeader().setVisible(False)
 
-    def addRow(self):
-        rowPosition = self.rowCount()
+        # 加载字幕文件
+        for i, j in enumerate(self.load_subtitle()):
+            self._add_data(j)
+
+        # 设置每行的高度为90
+        for row in range(self.rowCount()):
+            self.setRowHeight(row, 90)
+
+    def _add_data(self, srt_data: tuple = None,init_row : int=None):
+        rowPosition = None
+        if init_row is None:
+            config.logger.debug(f"rowPosition: {rowPosition}")
+            rowPosition = self.rowCount()
+        else:
+            rowPosition = init_row
         self.insertRow(rowPosition)
 
         # 第一列：操作按钮
@@ -226,9 +300,11 @@ class SubtitleTable(TableWidget):
         self.setItem(rowPosition, 1, QTableWidgetItem(str(rowPosition + 1)))
 
         # 第三列：时间
-        timeLayout = QHBoxLayout()
-        startTime = CustomTimeEdit()
-        endTime =CustomTimeEdit()
+        timeLayout = QVBoxLayout()
+        config.logger.debug(f"srt_data[0]: {srt_data[0]}")
+        config.logger.debug(f"srt_data[1]: {srt_data[1]}")
+        startTime = LTimeEdit(srt_data[0])
+        endTime = LTimeEdit(srt_data[1])
         timeLayout.addWidget(startTime)
         timeLayout.addWidget(endTime)
         timeWidget = QWidget()
@@ -240,13 +316,15 @@ class SubtitleTable(TableWidget):
 
         # 第五列：原文
         # 设置按钮的固定大小
-        your_text = LineEdit()
-        text_size = QSize(190, 90)
+        your_text = LinLineEdit()
+        your_text.setText(srt_data[2])
+        text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
         self.setCellWidget(rowPosition, 3, your_text)
 
         # 第六列：译文
-        translated_text = LineEdit()
+        #todo: 待添加
+        translated_text = LinLineEdit()
         translated_text.setFixedSize(text_size)
         self.setCellWidget(rowPosition, 4, translated_text)
 
@@ -256,7 +334,9 @@ class SubtitleTable(TableWidget):
         editLayout.setContentsMargins(2, 2, 2, 2)
 
         deleteButton = TransparentToolButton(FluentIcon.DELETE)
+        deleteButton.clicked.connect(self._delete_row)
         addButton = TransparentToolButton(FluentIcon.ADD)
+        addButton.clicked.connect(self._add_row(addButton))
 
         deleteButton.setFixedSize(button_size)
         addButton.setFixedSize(button_size)
@@ -271,17 +351,36 @@ class SubtitleTable(TableWidget):
 
         self.setCellWidget(rowPosition, 5, editWidget)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        # self.setColumnWidth(0, 30)  # 设置第一列的宽度
-        # self.setColumnWidth(6, 30)  # 设置最后一列的宽度
-        self.setRowHeight(0, 90)  # 根据需要调整高度
+    def update_row_numbers(self):
+        # 更新行号
+        for row in range(self.rowCount()):
+            item = self.item(row, 1)
+            if item:
+                item.setText(str(row + 1))
+    def _delete_row(self):
+        button = self.sender()
+        if button:
+            row = self.indexAt(button.pos()).row()
+            self.removeRow(row)
+
+        self.update_row_numbers()
+
+    def _add_row(self, button):
+        def add_row_callback():
+            button_row = self.indexAt(button.pos()).row()
+            new_row_position = button_row + 1
+            config.logger.debug(f"new_row_position: {new_row_position}")
+            self._add_data(srt_data=("", "", ""), init_row=new_row_position)
+
+        return add_row_callback
 
 
 if __name__ == '__main__':
     import sys
 
+    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
-    card = LLMKeySet()
+    card = SubtitleTable(patt)
+    # print(card.load_subtitle())
     card.show()
     sys.exit(app.exec())

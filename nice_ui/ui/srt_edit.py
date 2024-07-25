@@ -14,16 +14,9 @@ class SubtitleEditPage(QWidget):
     def initUI(self):
         layout = QVBoxLayout(self)
         # 创建并添加SubtitleTable
-        self.subtitleTable = SubtitleTable(self)
+        patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
+        self.subtitleTable = SubtitleTable(patt)
         layout.addWidget(self.subtitleTable)
-
-        # 添加示例行
-        self.subtitleTable.addRow()
-
-        # 添加新行按钮
-        addButton = PushButton("添加新行", self, icon=FluentIcon.ADD)
-        addButton.clicked.connect(self.subtitleTable.addRow)
-        layout.addWidget(addButton)
 
 
 
@@ -31,6 +24,7 @@ class SubtitleEditPage(QWidget):
 
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     window = SubtitleEditPage()
     window.resize(1000, 600)
