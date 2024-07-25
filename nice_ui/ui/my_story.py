@@ -11,7 +11,7 @@ from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.util import tools
 from nice_ui.util.tools import ObjFormat
-from orm.queries import ToSrtOrm
+from orm.queries import ToSrtOrm, ToTranslationOrm
 
 
 class TableApp(CardWidget):
@@ -24,6 +24,7 @@ class TableApp(CardWidget):
         self.data_bridge.whisper_working.connect(self.table_row_working)
         self.data_bridge.whisper_finished.connect(self.table_row_finish)
         self.srt_orm = ToSrtOrm()
+        self.trans_orm = ToTranslationOrm()
         self._init_table()
 
         # 用于缓存行索引的字典
@@ -108,12 +109,14 @@ class TableApp(CardWidget):
     def _init_table(self):
         # 初始化表格,从数据库中获取数据
         all_srt = self.srt_orm.query_data_format_unid_path()
+        all_trans = self.trans_orm.query_data_format_unid_path()
         for srt in all_srt:
             filename = os.path.basename(srt.path)
             # 去掉文件扩展名
             filename_without_extension = os.path.splitext(filename)[0]
 
             if srt.job_status in (0, 1):
+                # todo： 为啥mac上开始按钮没有了？？
                 srt.job_status == 0
 
                 # 将上次排队中的任务job_status == 1设置为0
@@ -126,9 +129,29 @@ class TableApp(CardWidget):
             elif srt.job_status == 2:
                 self.addRow_init_all(filename_without_extension, srt.unid)
 
+        for trans in all_trans:
+            filename = os.path.basename(trans.path)
+            # 去掉文件扩展名
+            filename_without_extension = os.path.splitext(filename)[0]
+
+            if trans.job_status in (0, 1):
+                trans.job_status == 0
+
+                # 将上次排队中的任务job_status == 1设置为0
+                self.trans_orm.update_table_unid(trans.unid, new_status=trans.job_status)
+                # 重新初始化表格,状态显示为未开始
+                # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
+
+                obj_format = {'raw_noextname': filename_without_extension, 'unid': trans.unid, }
+                self.table_row_init(obj_format, trans.job_status)
+            elif trans.job_status == 2:
+                self.addRow_init_all(filename_without_extension, trans.unid)
+
+
     def _addNewRow(self):
         self.addRow_init_all("新文件", "tt1")
-        InfoBar.success(title='成功', content="新文件已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+        InfoBar.success(title='成功', content="新文件已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                        parent=self)
 
     def table_row_init(self, obj_format: ObjFormat, job_status: int = 1):
         # 添加新文件时，初始化表格包含的元素
@@ -333,7 +356,8 @@ class TableApp(CardWidget):
             self.table.removeRow(button_row)
             # 清除缓存索引
             self.row_cache.clear()
-            InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+            InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                            parent=self)
 
         return delete_row_callback
 
@@ -370,10 +394,12 @@ class TableApp(CardWidget):
                 shutil.copy(job_path, file_path)
             except Exception as e:
                 config.logger.error(f"导出文件失败:{e}")
-                InfoBar.error(title='错误', content="导出文件失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+                InfoBar.error(title='错误', content="导出文件失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                              parent=self)
                 return
 
-        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                        parent=self)
 
     def _export_row(self, row):
         options = QFileDialog.Options()
@@ -390,7 +416,8 @@ class TableApp(CardWidget):
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
             config.logger.info(f"导出文件:{job_path}到{file_path}")
             shutil.copy(job_path, file_path)
-            InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+            InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                            parent=self)
 
 
 class MainWindow(QMainWindow):

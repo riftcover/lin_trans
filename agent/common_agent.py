@@ -54,18 +54,20 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
     data_bridge = config.data_bridge
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()
-    chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
-    duration =len(chunks)
+    # chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
+    chunks = list(range(10))
+    duration = len(chunks)
 
     with open(out_document, 'a', encoding='utf-8') as output_content:
         for i,paragraph in enumerate(chunks):
             logger.info(paragraph)
-            translated_paragraph = chat_translate(agent, prompt, paragraph)
-            output_content.writelines(translated_paragraph)
+            # translated_paragraph = chat_translate(agent, prompt, paragraph)
+            # output_content.writelines(translated_paragraph)
             progress_now = int((i+1)/duration*100)
-            # todo: 发送进度条消息,信号槽调整
             data_bridge.emit_whisper_working(unid, progress_now)
-            time.sleep(sleep_time)
+            # time.sleep(sleep_time)
+            time.sleep(2)
+    data_bridge.emit_whisper_finished(unid)
 
 
 if __name__ == '__main__':
