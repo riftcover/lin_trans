@@ -1,5 +1,7 @@
+import functools
+
 from PySide6.QtCore import Qt, QSettings, QSize, QTime
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QLineEdit, QTextEdit
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QLineEdit, QTextEdit, QTableWidget
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TableWidget, TransparentToolButton, FluentIcon)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
@@ -176,6 +178,9 @@ class LTimeEdit(QTimeEdit):
 
 
 class LinLineEdit(QTextEdit):
+    """
+    字幕文本编辑组件
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)  # 初始设置为只读
@@ -258,19 +263,13 @@ class SubtitleTable(TableWidget):
 
         # 加载字幕文件
         for i, j in enumerate(self.load_subtitle()):
-            self._add_data(j)
+            self._add_row(i,j)
 
-        # 设置每行的高度为90
-        for row in range(self.rowCount()):
-            self.setRowHeight(row, 90)
 
-    def _add_data(self, srt_data: tuple = None,init_row : int=None):
-        rowPosition = None
-        if init_row is None:
-            config.logger.debug(f"rowPosition: {rowPosition}")
-            rowPosition = self.rowCount()
-        else:
-            rowPosition = init_row
+
+
+    def _add_row(self,rowPosition : int=None, srt_data: tuple = None):
+
         self.insertRow(rowPosition)
 
         # 第一列：操作按钮
@@ -301,10 +300,12 @@ class SubtitleTable(TableWidget):
 
         # 第三列：时间
         timeLayout = QVBoxLayout()
-        config.logger.debug(f"srt_data[0]: {srt_data[0]}")
-        config.logger.debug(f"srt_data[1]: {srt_data[1]}")
-        startTime = LTimeEdit(srt_data[0])
-        endTime = LTimeEdit(srt_data[1])
+        # config.logger.debug(f"srt_data[0]: {srt_data[0]}")
+        # config.logger.debug(f"srt_data[1]: {srt_data[1]}")
+        startTime = LTimeEdit(srt_data[0],self)
+        startTime.setObjectName("startTime")
+        endTime = LTimeEdit(srt_data[1],self)
+        endTime.setObjectName("endTime")
         timeLayout.addWidget(startTime)
         timeLayout.addWidget(endTime)
         timeWidget = QWidget()
@@ -334,9 +335,12 @@ class SubtitleTable(TableWidget):
         editLayout.setContentsMargins(2, 2, 2, 2)
 
         deleteButton = TransparentToolButton(FluentIcon.DELETE)
-        deleteButton.clicked.connect(self._delete_row)
+        deleteButton.setObjectName("deleteButton")
+        deleteButton.clicked.connect(lambda _, r=rowPosition: self._delete_row(r))
         addButton = TransparentToolButton(FluentIcon.ADD)
-        addButton.clicked.connect(self._add_row(addButton))
+        addButton.setObjectName("addButton")
+        addButton.clicked.connect(lambda _, r=rowPosition: self._insert_row_below(r))
+
 
         deleteButton.setFixedSize(button_size)
         addButton.setFixedSize(button_size)
@@ -351,28 +355,57 @@ class SubtitleTable(TableWidget):
 
         self.setCellWidget(rowPosition, 5, editWidget)
 
+        # 设置每行的高度为90
+        self.setRowHeight(rowPosition, 90)
+
     def update_row_numbers(self):
         # 更新行号
         for row in range(self.rowCount()):
             item = self.item(row, 1)
             if item:
                 item.setText(str(row + 1))
-    def _delete_row(self):
-        button = self.sender()
-        if button:
-            row = self.indexAt(button.pos()).row()
-            self.removeRow(row)
 
+            editWidget = self.cellWidget(row, 5)
+            if editWidget:
+                deleteButton = editWidget.findChild(TransparentToolButton, "deleteButton")
+                addButton = editWidget.findChild(TransparentToolButton, "addButton")
+                if deleteButton:
+                    deleteButton.clicked.disconnect()
+                    deleteButton.clicked.connect(lambda _, r=row: self._delete_row(r))
+                if addButton:
+                    addButton.clicked.disconnect()
+                    addButton.clicked.connect(lambda _, r=row:self._insert_row_below(r))
+
+    def _delete_row(self,row):
+        self.removeRow(row)
         self.update_row_numbers()
 
-    def _add_row(self, button):
-        def add_row_callback():
-            button_row = self.indexAt(button.pos()).row()
-            new_row_position = button_row + 1
-            config.logger.debug(f"new_row_position: {new_row_position}")
-            self._add_data(srt_data=("", "", ""), init_row=new_row_position)
+    def _insert_row_below(self, row):
+        new_row_position = row + 1
+        end_time_edit = self.cellWidget(row, 2).findChild(LTimeEdit, "endTime")
+        config.logger.debug(f"end_time_edit: {end_time_edit}")
+        if end_time_edit:
+            # 获取当前行的结束时间
+            current_row_end_time = end_time_edit.time()
+        else:
+            current_row_end_time = QTime(0, 0)
+            config.logger.error("Warning: Could not find endTime widget")
+        # 将结束时间转换为字符串
+        start_time_str = current_row_end_time.toString("hh:mm:ss,zzz")
+        config.logger.debug(f"start_time_str: {start_time_str}")
 
-        return add_row_callback
+        # 计算新的结束时间（加500毫秒）
+        new_end_time = current_row_end_time.addMSecs(500)
+        end_time_str = new_end_time.toString("hh:mm:ss,zzz")
+
+        # 创建新的srt_data元组
+        new_srt_data = (start_time_str, end_time_str, '')
+
+        # 在当前行下方插入新行
+        self._add_row(new_row_position, new_srt_data)
+
+        # 更新行号
+        self.update_row_numbers()
 
 
 if __name__ == '__main__':

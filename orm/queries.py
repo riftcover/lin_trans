@@ -121,7 +121,7 @@ class ToTranslationOrm:
 
 
     @session_manager
-    def update_table_unid`(self, unid,new_status, session=None, **kwargs):
+    def update_table_unid(self, unid,new_status, session=None, **kwargs):
         record = session.query(ToTranslation).filter(ToTranslation.unid == unid).first()
 
         if record:
