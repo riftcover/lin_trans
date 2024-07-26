@@ -1,7 +1,5 @@
-import functools
-
 from PySide6.QtCore import Qt, QSettings, QSize, QTime
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QLineEdit, QTextEdit, QTableWidget
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TableWidget, TransparentToolButton, FluentIcon)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
@@ -181,6 +179,7 @@ class LinLineEdit(QTextEdit):
     """
     字幕文本编辑组件
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)  # 初始设置为只读
@@ -228,16 +227,21 @@ class SubtitleTable(TableWidget):
             i += 1
 
             # 读取字幕内容
-            content = []
-            while i < len(lines) and lines[i].strip():
-                content.append(lines[i].strip())
+            english_content = []
+            if i < len(lines) and lines[i].strip():
+                english_content.append(lines[i].strip())
                 i += 1
 
-            # 将字幕内容合并为一行
-            content_str = ' '.join(content)
+            chinese_content = []
+            if i < len(lines) and lines[i].strip():
+                chinese_content.append(lines[i].strip())
+                i += 1
+
+            english_content_str = ' '.join(english_content)
+            chinese_content_str = ' '.join(chinese_content)
 
             # 添加到字幕列表
-            subtitles.append((start_time, end_time, content_str))
+            subtitles.append((start_time, end_time, english_content_str, chinese_content_str))
 
             # 跳过空行
             while i < len(lines) and not lines[i].strip():
@@ -263,12 +267,9 @@ class SubtitleTable(TableWidget):
 
         # 加载字幕文件
         for i, j in enumerate(self.load_subtitle()):
-            self._add_row(i,j)
+            self._add_row(i, j)
 
-
-
-
-    def _add_row(self,rowPosition : int=None, srt_data: tuple = None):
+    def _add_row(self, rowPosition: int = None, srt_data: tuple = None):
 
         self.insertRow(rowPosition)
 
@@ -300,11 +301,9 @@ class SubtitleTable(TableWidget):
 
         # 第三列：时间
         timeLayout = QVBoxLayout()
-        # config.logger.debug(f"srt_data[0]: {srt_data[0]}")
-        # config.logger.debug(f"srt_data[1]: {srt_data[1]}")
-        startTime = LTimeEdit(srt_data[0],self)
+        startTime = LTimeEdit(srt_data[0], self)
         startTime.setObjectName("startTime")
-        endTime = LTimeEdit(srt_data[1],self)
+        endTime = LTimeEdit(srt_data[1], self)
         endTime.setObjectName("endTime")
         timeLayout.addWidget(startTime)
         timeLayout.addWidget(endTime)
@@ -326,6 +325,7 @@ class SubtitleTable(TableWidget):
         # 第六列：译文
         #todo: 待添加
         translated_text = LinLineEdit()
+        translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
         self.setCellWidget(rowPosition, 4, translated_text)
 
@@ -340,7 +340,6 @@ class SubtitleTable(TableWidget):
         addButton = TransparentToolButton(FluentIcon.ADD)
         addButton.setObjectName("addButton")
         addButton.clicked.connect(lambda _, r=rowPosition: self._insert_row_below(r))
-
 
         deleteButton.setFixedSize(button_size)
         addButton.setFixedSize(button_size)
@@ -374,9 +373,9 @@ class SubtitleTable(TableWidget):
                     deleteButton.clicked.connect(lambda _, r=row: self._delete_row(r))
                 if addButton:
                     addButton.clicked.disconnect()
-                    addButton.clicked.connect(lambda _, r=row:self._insert_row_below(r))
+                    addButton.clicked.connect(lambda _, r=row: self._insert_row_below(r))
 
-    def _delete_row(self,row):
+    def _delete_row(self, row):
         self.removeRow(row)
         self.update_row_numbers()
 
