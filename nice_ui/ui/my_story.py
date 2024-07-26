@@ -332,6 +332,7 @@ class TableApp(CardWidget):
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self, button):
+        #todo： 删除的行好像是错的，删除的是下一行。style中SubtitleTable中_delete_row,update_row_numbers貌似是对的
 
         def delete_row_callback():
             button_row = self.table.indexAt(button.pos()).row()
