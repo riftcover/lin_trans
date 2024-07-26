@@ -3,7 +3,8 @@ from collections import deque
 from PySide6.QtCore import Qt, QSettings, QSize, QTime
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
-from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox)
+from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
+                            ToolTipPosition)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 
 from agent import translate_api_name
@@ -266,7 +267,7 @@ class SubtitleTable(TableWidget):
 
         # 设置表格样式
         # self.setShowGrid(False)
-        # self.verticalHeader().setVisible(False)
+        self.verticalHeader().setVisible(False)
 
         # 加载字幕文件
         for i, j in enumerate(self.load_subtitle()):
@@ -339,10 +340,14 @@ class SubtitleTable(TableWidget):
         editLayout.setContentsMargins(2, 2, 2, 2)
 
         deleteButton = TransparentToolButton(FluentIcon.DELETE)
+        deleteButton.setToolTip("删除本行字幕")
+        deleteButton.installEventFilter(ToolTipFilter(deleteButton, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         deleteButton.setObjectName("deleteButton")
         deleteButton.clicked.connect(lambda _, r=rowPosition: self._delete_row(r))
         addButton = TransparentToolButton(FluentIcon.ADD)
         addButton.setObjectName("addButton")
+        addButton.setToolTip("下方添加一行")
+        addButton.installEventFilter(ToolTipFilter(addButton, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         addButton.clicked.connect(lambda _, r=rowPosition: self._insert_row_below(r))
 
         deleteButton.setFixedSize(button_size)
@@ -351,9 +356,13 @@ class SubtitleTable(TableWidget):
         # 移动译文上一行、下一行
         down_row_button = TransparentToolButton(FluentIcon.DOWN)
         down_row_button.setObjectName("downButton")
+        down_row_button.setToolTip("移动译文到下一行")
+        down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         down_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_down(r))
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("upButton")
+        up_row_button.setToolTip("移动译文到上一行")
+        up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         up_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_up(r))
 
         down_row_button.setFixedSize(button_size)
@@ -512,6 +521,37 @@ class SubtitleTable(TableWidget):
         if len(rows) > 0:
             for row in rows:
                 self._move_row_up(row)
+    def save_subtitle(self):
+        """
+        保存字幕文件
+        """
+        subtitles = []
+        for row in range(self.rowCount()):
+            # 第三列开始时间
+            start_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "startTime")
+            if start_time_edit:
+                start_time_str = start_time_edit.time().toString("hh:mm:ss,zzz")
+            else:
+                start_time_str = "00:00:00,000"
+            # 第三列结束时间
+            end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "endTime")
+            if end_time_edit:
+                end_time_str = end_time_edit.time().toString("hh:mm:ss,zzz")
+            else:
+                end_time_str = "00:00:00,000"
+            # 第五列原文
+            your_text = self.cellWidget(row, 4).toPlainText()
+            # 第六列译文
+            translated_text = self.cellWidget(row, 5).toPlainText()
+            # 添加到字幕列表
+            subtitles.append((start_time_str, end_time_str, your_text, translated_text))
+        # 保存字幕文件
+        with open(self.file_path, 'w', encoding='utf-8') as f:
+            for i, j in enumerate(subtitles):
+                f.write(f"{i+1}\n")
+                f.write(f"{j[0]} --> {j[1]}\n")
+                f.write(f"{j[2]}\n")
+                f.write(f"{j[3]}\n\n")
 
 
 if __name__ == '__main__':
