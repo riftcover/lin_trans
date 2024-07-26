@@ -10,6 +10,8 @@ from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, 
 from agent import translate_api_name
 from nice_ui.configure import config
 
+HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
+
 
 # 这里放的是自定义样式组件
 
@@ -168,8 +170,8 @@ class TranslateKeySet(QWidget):
 class LTimeEdit(QTimeEdit):
     def __init__(self, time_str, parent=None):
         super().__init__(parent)
-        self.setDisplayFormat("hh:mm:ss,zzz")
-        time = QTime.fromString(time_str, "hh:mm:ss,zzz")
+        self.setDisplayFormat(HH_MM_SS_ZZZ)
+        time = QTime.fromString(time_str, HH_MM_SS_ZZZ)
         self.setTime(time)
 
     def stepBy(self, steps):
@@ -273,49 +275,49 @@ class SubtitleTable(TableWidget):
         for i, j in enumerate(self.load_subtitle()):
             self._add_row(i, j)
 
-    def _add_row(self, rowPosition: int = None, srt_data: tuple = None):
+    def _add_row(self, row_position: int = None, srt_data: tuple = None):
 
-        self.insertRow(rowPosition)
+        self.insertRow(row_position)
         # 第一列:勾选框
         chk = CheckBox()
-        self.setCellWidget(rowPosition, 0, chk)
+        self.setCellWidget(row_position, 0, chk)
 
         # 第一列：操作按钮
-        operationLayout = QVBoxLayout()
-        operationLayout.setSpacing(2)
-        operationLayout.setContentsMargins(2, 2, 2, 2)
+        operation_layout = QVBoxLayout()
+        operation_layout.setSpacing(2)
+        operation_layout.setContentsMargins(2, 2, 2, 2)
 
-        playButton = TransparentToolButton(FluentIcon.PLAY)
-        cutButton = TransparentToolButton(FluentIcon.CUT)
+        play_button = TransparentToolButton(FluentIcon.PLAY)
+        cut_button = TransparentToolButton(FluentIcon.CUT)
 
         # 设置按钮的固定大小
         button_size = QSize(15, 15)
-        playButton.setFixedSize(button_size)
-        cutButton.setFixedSize(button_size)
+        play_button.setFixedSize(button_size)
+        cut_button.setFixedSize(button_size)
 
-        operationLayout.addWidget(playButton)
-        operationLayout.addWidget(cutButton)
-        # operationLayout.addStretch()
+        operation_layout.addWidget(play_button)
+        operation_layout.addWidget(cut_button)
+        # operation_layout.addStretch()
 
-        operationWidget = QWidget()
-        operationWidget.setLayout(operationLayout)
+        operation_widget = QWidget()
+        operation_widget.setLayout(operation_layout)
 
-        self.setCellWidget(rowPosition, 1, operationWidget)
+        self.setCellWidget(row_position, 1, operation_widget)
 
         # 第二列：行号
-        self.setItem(rowPosition, 2, QTableWidgetItem(str(rowPosition + 1)))
+        self.setItem(row_position, 2, QTableWidgetItem(str(row_position + 1)))
 
         # 第三列：时间
-        timeLayout = QVBoxLayout()
-        startTime = LTimeEdit(srt_data[0], self)
-        startTime.setObjectName("startTime")
-        endTime = LTimeEdit(srt_data[1], self)
-        endTime.setObjectName("endTime")
-        timeLayout.addWidget(startTime)
-        timeLayout.addWidget(endTime)
-        timeWidget = QWidget()
-        timeWidget.setLayout(timeLayout)
-        self.setCellWidget(rowPosition, 3, timeWidget)
+        time_layout = QVBoxLayout()
+        start_time = LTimeEdit(srt_data[0], self)
+        start_time.setObjectName("start_time")
+        end_time = LTimeEdit(srt_data[1], self)
+        end_time.setObjectName("end_time")
+        time_layout.addWidget(start_time)
+        time_layout.addWidget(end_time)
+        time_widget = QWidget()
+        time_widget.setLayout(time_layout)
+        self.setCellWidget(row_position, 3, time_widget)
 
         # # 第四列：时长
         # self.setItem(rowPosition, 3, QTableWidgetItem("0.0s"))
@@ -326,85 +328,85 @@ class SubtitleTable(TableWidget):
         your_text.setText(srt_data[2])
         text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
-        self.setCellWidget(rowPosition, 4, your_text)
+        self.setCellWidget(row_position, 4, your_text)
 
         # 第六列：译文
         translated_text = LinLineEdit()
         translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
-        self.setCellWidget(rowPosition, 5, translated_text)
+        self.setCellWidget(row_position, 5, translated_text)
 
         # 第七列：编辑按钮
-        editLayout = QVBoxLayout()
-        editLayout.setSpacing(2)
-        editLayout.setContentsMargins(2, 2, 2, 2)
+        edit_layout = QVBoxLayout()
+        edit_layout.setSpacing(2)
+        edit_layout.setContentsMargins(2, 2, 2, 2)
 
-        deleteButton = TransparentToolButton(FluentIcon.DELETE)
-        deleteButton.setToolTip("删除本行字幕")
-        deleteButton.installEventFilter(ToolTipFilter(deleteButton, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        deleteButton.setObjectName("deleteButton")
-        deleteButton.clicked.connect(lambda _, r=rowPosition: self._delete_row(r))
-        addButton = TransparentToolButton(FluentIcon.ADD)
-        addButton.setObjectName("addButton")
-        addButton.setToolTip("下方添加一行")
-        addButton.installEventFilter(ToolTipFilter(addButton, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        addButton.clicked.connect(lambda _, r=rowPosition: self._insert_row_below(r))
+        delete_button = TransparentToolButton(FluentIcon.DELETE)
+        delete_button.setToolTip("删除本行字幕")
+        delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+        delete_button.setObjectName("delete_button")
+        delete_button.clicked.connect(lambda _, r=row_position: self._delete_row(r))
+        add_button = TransparentToolButton(FluentIcon.ADD)
+        add_button.setObjectName("add_button")
+        add_button.setToolTip("下方添加一行")
+        add_button.installEventFilter(ToolTipFilter(add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+        add_button.clicked.connect(lambda _, r=row_position: self._insert_row_below(r))
 
-        deleteButton.setFixedSize(button_size)
-        addButton.setFixedSize(button_size)
+        delete_button.setFixedSize(button_size)
+        add_button.setFixedSize(button_size)
 
         # 移动译文上一行、下一行
         down_row_button = TransparentToolButton(FluentIcon.DOWN)
         down_row_button.setObjectName("downButton")
         down_row_button.setToolTip("移动译文到下一行")
         down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        down_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_down(r))
+        down_row_button.clicked.connect(lambda _, r=row_position: self._move_row_down(r))
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("upButton")
         up_row_button.setToolTip("移动译文到上一行")
         up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        up_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_up(r))
+        up_row_button.clicked.connect(lambda _, r=row_position: self._move_row_up(r))
 
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
 
-        editLayout.addWidget(down_row_button)
-        editLayout.addWidget(up_row_button)
+        edit_layout.addWidget(down_row_button)
+        edit_layout.addWidget(up_row_button)
 
-        editLayout.addWidget(deleteButton)
-        editLayout.addWidget(addButton)
-        # editLayout.addStretch()
+        edit_layout.addWidget(delete_button)
+        edit_layout.addWidget(add_button)
+        # edit_layout.addStretch()
 
-        editWidget = QWidget()
-        editWidget.setLayout(editLayout)
-        # editWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        edit_widget = QWidget()
+        edit_widget.setLayout(edit_layout)
+        # edit_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
-        self.setCellWidget(rowPosition, 6, editWidget)
+        self.setCellWidget(row_position, 6, edit_widget)
 
         # 设置每行的高度为90
-        self.setRowHeight(rowPosition, 90)
+        self.setRowHeight(row_position, 90)
 
     def update_row_numbers(self):
         # 更新行号
         for row in range(self.rowCount()):
-            editWidget = self.cellWidget(row, 6)
+            edit_widget = self.cellWidget(row, 6)
 
             item = self.item(row, 1)
             if item:
                 item.setText(str(row + 1))
-            if editWidget:
-                deleteButton = editWidget.findChild(TransparentToolButton, "deleteButton")
-                addButton = editWidget.findChild(TransparentToolButton, "addButton")
-                if deleteButton:
-                    deleteButton.clicked.disconnect()
-                    deleteButton.clicked.connect(lambda _, r=row: self._delete_row(r))
-                if addButton:
-                    addButton.clicked.disconnect()
-                    addButton.clicked.connect(lambda _, r=row: self._insert_row_below(r))
+            if edit_widget:
+                delete_button = edit_widget.findChild(TransparentToolButton, "delete_button")
+                add_button = edit_widget.findChild(TransparentToolButton, "add_button")
+                if delete_button:
+                    delete_button.clicked.disconnect()
+                    delete_button.clicked.connect(lambda _, r=row: self._delete_row(r))
+                if add_button:
+                    add_button.clicked.disconnect()
+                    add_button.clicked.connect(lambda _, r=row: self._insert_row_below(r))
                 # 更新移动按钮行号
 
-                down_row_button = editWidget.findChild(TransparentToolButton, "downButton")
-                up_row_button = editWidget.findChild(TransparentToolButton, "upButton")
+                down_row_button = edit_widget.findChild(TransparentToolButton, "downButton")
+                up_row_button = edit_widget.findChild(TransparentToolButton, "upButton")
                 if down_row_button:
                     # 更新向下按钮
                     down_row_button.clicked.disconnect()
@@ -419,7 +421,7 @@ class SubtitleTable(TableWidget):
 
     def _insert_row_below(self, row):
         new_row_position = row + 1
-        end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "endTime")
+        end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "end_time")
         config.logger.debug(f"end_time_edit: {end_time_edit}")
         if end_time_edit:
             # 获取当前行的结束时间
