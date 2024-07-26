@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton)
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QPushButton)
 from qfluentwidgets import CardWidget
 
 from nice_ui.ui.style import SubtitleTable
