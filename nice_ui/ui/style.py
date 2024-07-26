@@ -1,7 +1,9 @@
+from collections import deque
+
 from PySide6.QtCore import Qt, QSettings, QSize, QTime
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QSizePolicy, QTimeEdit, QTextEdit
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
-from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TableWidget, TransparentToolButton, FluentIcon)
+from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox)
 from qfluentwidgets import (CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 
 from agent import translate_api_name
@@ -250,16 +252,17 @@ class SubtitleTable(TableWidget):
         return subtitles
 
     def initUI(self):
-        self.setColumnCount(6)
+        self.setColumnCount(7)
         # self.setHorizontalHeaderLabels(["操作", "行号", "时间", "时长", "原文", "译文", "编辑"])
-        self.setHorizontalHeaderLabels(["操作", "行号", "时间", "原文", "译文", "编辑"])
+        self.setHorizontalHeaderLabels(["", "操作", "行号", "时间", "原文", "译文", "编辑"])
 
         self.setColumnWidth(0, 50)
         self.setColumnWidth(1, 50)
-        self.setColumnWidth(2, 200)
-        self.setColumnWidth(3, 300)
+        self.setColumnWidth(2, 50)
+        self.setColumnWidth(3, 200)
         self.setColumnWidth(4, 300)
-        self.setColumnWidth(5, 50)
+        self.setColumnWidth(5, 300)
+        self.setColumnWidth(6, 50)
 
         # 设置表格样式
         # self.setShowGrid(False)
@@ -272,6 +275,9 @@ class SubtitleTable(TableWidget):
     def _add_row(self, rowPosition: int = None, srt_data: tuple = None):
 
         self.insertRow(rowPosition)
+        # 第一列:勾选框
+        chk = CheckBox()
+        self.setCellWidget(rowPosition, 0, chk)
 
         # 第一列：操作按钮
         operationLayout = QVBoxLayout()
@@ -282,22 +288,21 @@ class SubtitleTable(TableWidget):
         cutButton = TransparentToolButton(FluentIcon.CUT)
 
         # 设置按钮的固定大小
-        button_size = QSize(24, 24)
+        button_size = QSize(15, 15)
         playButton.setFixedSize(button_size)
         cutButton.setFixedSize(button_size)
 
         operationLayout.addWidget(playButton)
         operationLayout.addWidget(cutButton)
-        operationLayout.addStretch()
+        # operationLayout.addStretch()
 
         operationWidget = QWidget()
         operationWidget.setLayout(operationLayout)
-        operationWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
-        self.setCellWidget(rowPosition, 0, operationWidget)
+        self.setCellWidget(rowPosition, 1, operationWidget)
 
         # 第二列：行号
-        self.setItem(rowPosition, 1, QTableWidgetItem(str(rowPosition + 1)))
+        self.setItem(rowPosition, 2, QTableWidgetItem(str(rowPosition + 1)))
 
         # 第三列：时间
         timeLayout = QVBoxLayout()
@@ -309,7 +314,7 @@ class SubtitleTable(TableWidget):
         timeLayout.addWidget(endTime)
         timeWidget = QWidget()
         timeWidget.setLayout(timeLayout)
-        self.setCellWidget(rowPosition, 2, timeWidget)
+        self.setCellWidget(rowPosition, 3, timeWidget)
 
         # # 第四列：时长
         # self.setItem(rowPosition, 3, QTableWidgetItem("0.0s"))
@@ -320,14 +325,13 @@ class SubtitleTable(TableWidget):
         your_text.setText(srt_data[2])
         text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
-        self.setCellWidget(rowPosition, 3, your_text)
+        self.setCellWidget(rowPosition, 4, your_text)
 
         # 第六列：译文
-        #todo: 待添加
         translated_text = LinLineEdit()
         translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
-        self.setCellWidget(rowPosition, 4, translated_text)
+        self.setCellWidget(rowPosition, 5, translated_text)
 
         # 第七列：编辑按钮
         editLayout = QVBoxLayout()
@@ -344,15 +348,29 @@ class SubtitleTable(TableWidget):
         deleteButton.setFixedSize(button_size)
         addButton.setFixedSize(button_size)
 
+        # 移动译文上一行、下一行
+        down_row_button = TransparentToolButton(FluentIcon.DOWN)
+        down_row_button.setObjectName("downButton")
+        down_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_down(r))
+        up_row_button = TransparentToolButton(FluentIcon.UP)
+        up_row_button.setObjectName("upButton")
+        up_row_button.clicked.connect(lambda _, r=rowPosition: self._move_row_up(r))
+
+        down_row_button.setFixedSize(button_size)
+        up_row_button.setFixedSize(button_size)
+
+        editLayout.addWidget(down_row_button)
+        editLayout.addWidget(up_row_button)
+
         editLayout.addWidget(deleteButton)
         editLayout.addWidget(addButton)
-        editLayout.addStretch()
+        # editLayout.addStretch()
 
         editWidget = QWidget()
         editWidget.setLayout(editLayout)
-        editWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        # editWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
-        self.setCellWidget(rowPosition, 5, editWidget)
+        self.setCellWidget(rowPosition, 6, editWidget)
 
         # 设置每行的高度为90
         self.setRowHeight(rowPosition, 90)
@@ -360,11 +378,11 @@ class SubtitleTable(TableWidget):
     def update_row_numbers(self):
         # 更新行号
         for row in range(self.rowCount()):
+            editWidget = self.cellWidget(row, 6)
+
             item = self.item(row, 1)
             if item:
                 item.setText(str(row + 1))
-
-            editWidget = self.cellWidget(row, 5)
             if editWidget:
                 deleteButton = editWidget.findChild(TransparentToolButton, "deleteButton")
                 addButton = editWidget.findChild(TransparentToolButton, "addButton")
@@ -374,6 +392,17 @@ class SubtitleTable(TableWidget):
                 if addButton:
                     addButton.clicked.disconnect()
                     addButton.clicked.connect(lambda _, r=row: self._insert_row_below(r))
+                # 更新移动按钮行号
+
+                down_row_button = editWidget.findChild(TransparentToolButton, "downButton")
+                up_row_button = editWidget.findChild(TransparentToolButton, "upButton")
+                if down_row_button:
+                    # 更新向下按钮
+                    down_row_button.clicked.disconnect()
+                    down_row_button.clicked.connect(lambda _, r=row: self._move_row_down(r))
+                if up_row_button:
+                    up_row_button.clicked.disconnect()
+                    up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
 
     def _delete_row(self, row):
         self.removeRow(row)
@@ -381,7 +410,7 @@ class SubtitleTable(TableWidget):
 
     def _insert_row_below(self, row):
         new_row_position = row + 1
-        end_time_edit = self.cellWidget(row, 2).findChild(LTimeEdit, "endTime")
+        end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "endTime")
         config.logger.debug(f"end_time_edit: {end_time_edit}")
         if end_time_edit:
             # 获取当前行的结束时间
@@ -398,13 +427,91 @@ class SubtitleTable(TableWidget):
         end_time_str = new_end_time.toString("hh:mm:ss,zzz")
 
         # 创建新的srt_data元组
-        new_srt_data = (start_time_str, end_time_str, '')
+        new_srt_data = (start_time_str, end_time_str, '', '')
 
         # 在当前行下方插入新行
         self._add_row(new_row_position, new_srt_data)
 
         # 更新行号
         self.update_row_numbers()
+
+    def _move_row_down(self, row):
+        """
+        移动行译文到下一行
+        """
+        config.logger.debug(f"移动行: {row}")
+        if row < self.rowCount() - 1:  # 确保不是最后一行
+            # 获取当前行和下一行的第5列内容
+            current_row_widget = self.cellWidget(row, 5)
+            next_row_widget = self.cellWidget(row + 1, 5)
+
+            if current_row_widget and next_row_widget:
+                # 获取当前行的文本内容
+                current_row_text = current_row_widget.toPlainText()
+
+                # 将当前行的文本内容移动到下一行
+                next_row_widget.setPlainText(current_row_text)
+
+                # 清空当前行的文本内容
+                current_row_widget.setPlainText("")
+            else:
+                config.logger.error("Error: Could not find text widget in row")
+        else:
+            config.logger.warning("Warning: Cannot move row down as it is the last row")
+
+    def move_row_down_more(self):
+        """
+        移动多行译文到下一行
+        """
+        config.logger.debug("移动多行译文到下一行")
+        rows = []
+        for row in range(self.rowCount()):
+            chk = self.cellWidget(row, 0)
+            if chk and chk.isChecked():
+                config.logger.debug(f"选中行: {row}")
+                rows.append(row)
+        if len(rows) > 0:
+            for row in reversed(rows):
+                # 反向遍历rows列表
+                self._move_row_down(row)
+
+    def _move_row_up(self, row):
+        """
+        移动行译文到上一行
+        """
+        if row > 0:  # 确保不是第一行
+            # 获取当前行和上一行的第5列内容
+            current_row_widget = self.cellWidget(row, 5)
+            prev_row_widget = self.cellWidget(row - 1, 5)
+
+            if current_row_widget and prev_row_widget:
+                # 获取当前行的文本内容
+                current_row_text = current_row_widget.toPlainText()
+
+                # 将当前行的文本内容移动到上一行
+                prev_row_widget.setPlainText(current_row_text)
+
+                # 清空当前行的文本内容
+                current_row_widget.setPlainText("")
+            else:
+                config.logger.error("Error: Could not find text widget in row")
+        else:
+            config.logger.warning("Warning: Cannot move row up as it is the first row")
+
+    def move_row_up_more(self):
+        """
+        移动多行译文到上一行
+        """
+        config.logger.debug("移动多行译文到上一行")
+        rows = []
+        for row in range(self.rowCount()):
+            chk = self.cellWidget(row, 0)
+            if chk and chk.isChecked():
+                config.logger.debug(f"选中行: {row}")
+                rows.append(row)
+        if len(rows) > 0:
+            for row in rows:
+                self._move_row_up(row)
 
 
 if __name__ == '__main__':
