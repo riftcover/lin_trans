@@ -1,6 +1,6 @@
 from collections import deque
 
-from PySide6.QtCore import Qt, QSettings, QSize, QTime
+from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
@@ -199,11 +199,18 @@ class LinLineEdit(QTextEdit):
 
 
 class SubtitleTable(TableWidget):
+    tableChanged = Signal(list)
+
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
 
         self.initUI()
+        # 预处理字幕数据
+        self.subtitles = []
+        self.process_subtitles()
+        # 连接 itemChanged 信号到我们的处理方法
+        self.itemChanged.connect(self._on_item_changed)
 
     def load_subtitle(self):
         """
@@ -253,6 +260,30 @@ class SubtitleTable(TableWidget):
                 i += 1
         config.logger.debug(f"字幕文件行数: {len(subtitles)}")
         return subtitles
+
+    def process_subtitles(self):
+        """ 预处理字幕数据 """
+        self.subtitles.clear()
+        config.logger.debug("预处理字幕")
+        for row in range(self.rowCount()):
+            try:
+                time_widget = self.cellWidget(row, 3)
+                # config.logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
+                start_time = time_widget.findChild(LTimeEdit, "start_time")
+                end_time = time_widget.findChild(LTimeEdit, "end_time")
+
+                start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
+                end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
+
+                subtitle_widget = self.cellWidget(row, 4)
+                subtitle_text = subtitle_widget.toPlainText()
+
+                self.subtitles.append((start_ms, end_ms, subtitle_text))
+            except AttributeError as e:
+                config.logger.error(f"字幕rowCount:{row} 错误：{e}")
+
+        # 按开始时间排序
+        self.subtitles.sort(key=lambda x: x[0])
 
     def initUI(self):
         self.setColumnCount(7)
@@ -357,12 +388,12 @@ class SubtitleTable(TableWidget):
 
         # 移动译文上一行、下一行
         down_row_button = TransparentToolButton(FluentIcon.DOWN)
-        down_row_button.setObjectName("downButton")
+        down_row_button.setObjectName("down_button")
         down_row_button.setToolTip("移动译文到下一行")
         down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         down_row_button.clicked.connect(lambda _, r=row_position: self._move_row_down(r))
         up_row_button = TransparentToolButton(FluentIcon.UP)
-        up_row_button.setObjectName("upButton")
+        up_row_button.setObjectName("up_button")
         up_row_button.setToolTip("移动译文到上一行")
         up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         up_row_button.clicked.connect(lambda _, r=row_position: self._move_row_up(r))
@@ -388,9 +419,9 @@ class SubtitleTable(TableWidget):
 
     def update_row_numbers(self):
         # 更新行号
+        config.logger.debug("更新行号")
         for row in range(self.rowCount()):
             edit_widget = self.cellWidget(row, 6)
-
             item = self.item(row, 1)
             if item:
                 item.setText(str(row + 1))
@@ -405,8 +436,8 @@ class SubtitleTable(TableWidget):
                     add_button.clicked.connect(lambda _, r=row: self._insert_row_below(r))
                 # 更新移动按钮行号
 
-                down_row_button = edit_widget.findChild(TransparentToolButton, "downButton")
-                up_row_button = edit_widget.findChild(TransparentToolButton, "upButton")
+                down_row_button = edit_widget.findChild(TransparentToolButton, "down_button")
+                up_row_button = edit_widget.findChild(TransparentToolButton, "up_button")
                 if down_row_button:
                     # 更新向下按钮
                     down_row_button.clicked.disconnect()
@@ -414,12 +445,16 @@ class SubtitleTable(TableWidget):
                 if up_row_button:
                     up_row_button.clicked.disconnect()
                     up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
+        # 变更行好时发出信号
+        self.process_subtitles()
+        self.tableChanged.emit(self.subtitles)
 
     def _delete_row(self, row):
         self.removeRow(row)
         self.update_row_numbers()
 
     def _insert_row_below(self, row):
+        # 添加新行
         new_row_position = row + 1
         end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "end_time")
         config.logger.debug(f"end_time_edit: {end_time_edit}")
@@ -470,6 +505,9 @@ class SubtitleTable(TableWidget):
         else:
             config.logger.warning("Warning: Cannot move row down as it is the last row")
 
+        self.process_subtitles()
+        self.tableChanged.emit(self.subtitles)
+
     def move_row_down_more(self):
         """
         移动多行译文到下一行
@@ -509,6 +547,9 @@ class SubtitleTable(TableWidget):
         else:
             config.logger.warning("Warning: Cannot move row up as it is the first row")
 
+        self.process_subtitles()
+        self.tableChanged.emit(self.subtitles)
+
     def move_row_up_more(self):
         """
         移动多行译文到上一行
@@ -523,6 +564,7 @@ class SubtitleTable(TableWidget):
         if len(rows) > 0:
             for row in rows:
                 self._move_row_up(row)
+
     def save_subtitle(self):
         """
         保存字幕文件
@@ -530,17 +572,18 @@ class SubtitleTable(TableWidget):
         subtitles = []
         for row in range(self.rowCount()):
             # 第三列开始时间
-            start_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "start_time")
+            time_widget = self.cellWidget(row, 3)
+            start_time_edit = time_widget.findChild(LTimeEdit, "start_time")
             if start_time_edit:
                 start_time_str = start_time_edit.time().toString("hh:mm:ss,zzz")
             else:
-                start_time_str = "00:00:00,000"
+                raise ValueError("Could not find startTime widget")
             # 第三列结束时间
-            end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "end_time")
+            end_time_edit = time_widget.findChild(LTimeEdit, "end_time")
             if end_time_edit:
                 end_time_str = end_time_edit.time().toString("hh:mm:ss,zzz")
             else:
-                end_time_str = "00:00:00,000"
+                raise ValueError("Could not find startTime widget")
             # 第五列原文
             your_text = self.cellWidget(row, 4).toPlainText()
             # 第六列译文
@@ -550,10 +593,20 @@ class SubtitleTable(TableWidget):
         # 保存字幕文件
         with open(self.file_path, 'w', encoding='utf-8') as f:
             for i, j in enumerate(subtitles):
-                f.write(f"{i+1}\n")
+                f.write(f"{i + 1}\n")
                 f.write(f"{j[0]} --> {j[1]}\n")
                 f.write(f"{j[2]}\n")
                 f.write(f"{j[3]}\n\n")
+
+    def time_to_milliseconds(self, time_str):
+        """ 将时间字符串转换为毫秒 """
+        h, m, s = time_str.split(':')
+        s, ms = s.split(',')
+        return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
+
+    def _on_item_changed(self, item):
+        # 当单元格内容变化时发出信号
+        self.tableChanged.emit(self.subtitles)
 
 
 if __name__ == '__main__':
