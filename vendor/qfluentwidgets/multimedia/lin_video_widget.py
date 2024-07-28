@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScen
 
 from nice_ui.ui.style import LTimeEdit, SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
-from .media_play_bar import StandardMediaPlayBar, SimpleMediaPlayBar
+from .media_play_bar import StandardMediaPlayBar, SimpleMediaPlayBar, LinMediaPlayBar
 
 
 class SrtParser:
@@ -62,7 +62,7 @@ class LinVideoWidget(QWidget):
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
         #todo：bar调整样式
-        self.playBar = StandardMediaPlayBar(self)
+        self.playBar = LinMediaPlayBar(self)
 
         self.graphicsView.setScene(self.graphicsScene)
         self.graphicsScene.addItem(self.videoItem)

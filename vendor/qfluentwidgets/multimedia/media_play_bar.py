@@ -1,7 +1,7 @@
 # coding:utf-8
 from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QPoint
 from PySide6.QtGui import QPixmap, QPainter, QColor
-from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout, QLabel
 
 from ..common.icon import FluentIcon
 from ..common.style_sheet import isDarkTheme, FluentStyleSheet
@@ -241,6 +241,62 @@ class SimpleMediaPlayBar(MediaPlayBarBase):
         """ add button to the right side of play bar """
         self.hBoxLayout.addWidget(button, 0)
 
+
+def Qlabel():
+    pass
+
+
+class LinMediaPlayBar(MediaPlayBarBase):
+    """ Standard media play bar """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.vHoxLayout = QHBoxLayout(self)
+        self.timeLayout = QHBoxLayout()
+        self.xiegang = QLabel("/")
+
+        self.currentTimeLabel = CaptionLabel('0:00:00', self)
+        self.remainTimeLabel = CaptionLabel('0:00:00', self)
+
+        self.__initWidgets()
+
+    def __initWidgets(self):
+        self.setFixedHeight(48)
+        self.vHoxLayout.setSpacing(6)
+        self.vHoxLayout.setContentsMargins(10, 4, 10, 4)
+        self.vHoxLayout.addWidget(self.playButton,0, Qt.AlignLeft)
+        # self.vHoxLayout.setContentsMargins(5, 9, 5, 9)
+        self.vHoxLayout.addWidget(self.progressSlider, 1)
+
+        self.vHoxLayout.addLayout(self.timeLayout)
+        self.timeLayout.setContentsMargins(10, 0, 10, 0)
+        self.timeLayout.addWidget(self.currentTimeLabel, 0, Qt.AlignLeft)
+        self.timeLayout.addWidget(self.xiegang, 0, Qt.AlignCenter)
+        self.timeLayout.addWidget(self.remainTimeLabel, 0, Qt.AlignRight)
+
+        self.vHoxLayout.addWidget(self.volumeButton, 0, Qt.AlignRight)
+
+        self.setMediaPlayer(MediaPlayer(self))
+
+    def skipBack(self, ms: int):
+        """ Back up for specified milliseconds """
+        self.player.setPosition(self.player.position()-ms)
+
+    def skipForward(self, ms: int):
+        """ Fast forward specified milliseconds """
+        self.player.setPosition(self.player.position()+ms)
+
+    def _onPositionChanged(self, position: int):
+        super()._onPositionChanged(position)
+        self.currentTimeLabel.setText(self._formatTime(position))
+        self.remainTimeLabel.setText(self._formatTime(self.player.duration() - position))
+
+    def _formatTime(self, time: int):
+        time = int(time / 1000)
+        s = time % 60
+        m = int(time / 60)
+        h = int(time / 3600)
+        return f'{h}:{m:02}:{s:02}'
 
 class StandardMediaPlayBar(MediaPlayBarBase):
     """ Standard media play bar """
