@@ -530,13 +530,13 @@ class SubtitleTable(TableWidget):
         subtitles = []
         for row in range(self.rowCount()):
             # 第三列开始时间
-            start_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "startTime")
+            start_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "start_time")
             if start_time_edit:
                 start_time_str = start_time_edit.time().toString("hh:mm:ss,zzz")
             else:
                 start_time_str = "00:00:00,000"
             # 第三列结束时间
-            end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "endTime")
+            end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "end_time")
             if end_time_edit:
                 end_time_str = end_time_edit.time().toString("hh:mm:ss,zzz")
             else:
