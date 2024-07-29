@@ -46,7 +46,7 @@ class SubtitleEditPage(CardWidget):
         top_layout.addWidget(save_button)
         top_layout.addWidget(export_button)
 
-        self.videoWidget = LinVideoWidget(self.subtitleTable,self)
+        self.videoWidget = LinVideoWidget(self.subtitleTable,self.subtitleTable.subtitles,self)
         # self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
         self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
 
@@ -55,7 +55,7 @@ class SubtitleEditPage(CardWidget):
 
         # 水平布局
         h_layout = QHBoxLayout()
-        h_layout.addLayout(layout,1)
+        h_layout.addLayout(layout,3)
         h_layout.addWidget(self.videoWidget,1)
 
         #设置布局

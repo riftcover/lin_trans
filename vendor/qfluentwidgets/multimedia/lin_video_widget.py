@@ -8,10 +8,10 @@ from PySide6.QtGui import QPainter, QFont
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
 from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QSpacerItem, QSizePolicy, QGraphicsTextItem
 
-from nice_ui.ui.style import LTimeEdit, SubtitleTable
+from nice_ui.ui.style import LTimeEdit, SubtitleTable, LinLineEdit
 from ..common.style_sheet import FluentStyleSheet
 from .media_play_bar import StandardMediaPlayBar, SimpleMediaPlayBar, LinMediaPlayBar
-
+from nice_ui.configure import config
 
 class SrtParser:
     def __init__(self, srt_file):
@@ -54,14 +54,14 @@ class SrtParser:
 class LinVideoWidget(QWidget):
     """ Video widget """
 
-    def __init__(self,subtitle_table:SubtitleTable, parent=None):
+    def __init__(self,subtitle_table:SubtitleTable,subtitles, parent=None):
         super().__init__(parent)
         self.subtitle_table = subtitle_table
+        self.subtitles = subtitles
         self.vBoxLayout = QVBoxLayout(self)
         self.graphicsView = QGraphicsView(self)
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
-        #todo：bar调整样式
         self.playBar = LinMediaPlayBar(self)
 
         self.graphicsView.setScene(self.graphicsScene)
@@ -89,35 +89,37 @@ class LinVideoWidget(QWidget):
         FluentStyleSheet.MEDIA_PLAYER.apply(self)
 
         # 预处理字幕数据
-        self.subtitles = []
-        self.process_subtitles()
+        self.subtitles = subtitles
 
         # 连接播放器的positionChanged信号到更新字幕的方法
         # self.player.positionChanged.connect(self.update_subtitle)
         # 目前巨快，如果性能不好尝试降低
         self.player.positionChanged.connect(self.update_subtitle_from_table)
 
-    def process_subtitles(self):
-        """ 预处理字幕数据 """
-        for row in range(self.subtitle_table.rowCount()):
-            time_widget = self.subtitle_table.cellWidget(row, 3)
-            start_time = time_widget.findChild(LTimeEdit, "start_time")
-            end_time = time_widget.findChild(LTimeEdit, "end_time")
+        # # 监听 SubtitleTable 的变化
+        self.setup_subtitle_change_listeners()
 
-            start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
-            end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
 
-            subtitle_widget = self.subtitle_table.cellWidget(row, 4)
-            subtitle_text = subtitle_widget.toPlainText()
 
-            self.subtitles.append((start_ms, end_ms, subtitle_text))
+    def setup_subtitle_change_listeners(self):
+        """ 设置监听 SubtitleTable 变化的事件 """
+        # for row in range(self.subtitle_table.rowCount()):
+        #     subtitle_widget = self.subtitle_table.cellWidget(row, 4)
+        #     if isinstance(subtitle_widget, LinLineEdit):
+        #         subtitle_widget.textChanged.connect(self.on_subtitle_changed)
+        #todo：修改文本没反应
+        self.subtitle_table.tableChanged.connect(self.on_subtitle_changed)
 
-        # 按开始时间排序
-        self.subtitles.sort(key=lambda x: x[0])
+
+    def on_subtitle_changed(self,new_srt):
+        """ 当字幕改变时调用 """
+        config.logger.debug("on_subtitle_changed")
+        self.subtitles = new_srt
+
 
     def setVideo(self, url: QUrl):
         """ set the video to play
-            立即暂停以显示第一帧
+            播放器默认显示第一帧
         """
         self.player.setSource(url)
         self.player.play()
@@ -137,6 +139,8 @@ class LinVideoWidget(QWidget):
         subtitles = []
 
         for match in subtitle_pattern.finditer(content):
+            # 格式：
+            # <re.Match object; span=(0, 60), match="1\n00:00:00,166 --> 00:00:01,166\nwe're going to >
             start_time = self.time_to_milliseconds(match.group(2))
             end_time = self.time_to_milliseconds(match.group(3))
             text = match.group(4).strip()
@@ -151,7 +155,7 @@ class LinVideoWidget(QWidget):
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
     def update_subtitle(self, position):
-        """ 根据当前播放位置更新字幕 """
+        """ 根据当前播放位置更新字幕，这个是加载srt文件使用的 """
         current_subtitle = ""
         for start, end, text in self.subtitles:
             if start <= position <= end:
@@ -162,7 +166,7 @@ class LinVideoWidget(QWidget):
         self.position_subtitle()
 
     def update_subtitle_from_table(self, position):
-        """ 根据当前播放位置更新字幕 """
+        """ 根据当前播放位置更新字幕，这个是读取table中的字幕数据使用的 """
         position_ms = position
 
         # 使用二分查找找到当前时间对应的字幕
@@ -171,8 +175,8 @@ class LinVideoWidget(QWidget):
             start_ms, end_ms, subtitle_text = self.subtitles[index]
             if start_ms <= position_ms <= end_ms:
                 self.subtitleItem.setPlainText(subtitle_text)
-            else:
-                self.subtitleItem.setPlainText("")
+            # else:
+            #     self.subtitleItem.setPlainText("")
         # else:
         #     self.subtitleItem.setPlainText("")
 
