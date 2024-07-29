@@ -1,6 +1,7 @@
 from collections import deque
 
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
+from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
@@ -174,10 +175,44 @@ class LTimeEdit(QTimeEdit):
         time = QTime.fromString(time_str, HH_MM_SS_ZZZ)
         self.setTime(time)
 
+        # 设置步长为500毫秒
+        self._step_msecs = 500
+
+        # 设置默认选中毫秒部分
+        self.setSelectedSection(QTimeEdit.Section.MSecSection)
+
     def stepBy(self, steps):
-        current_time = self.time()
+        current_time: QTime = self.time()
+        config.logger.debug(f"当前时间：{current_time}, steps:{steps}")
+        # if QTime(0, 0, 0, 500) < current_time < QTime(23, 59, 59, 499):
         new_time = current_time.addMSecs(steps * 500)  # 每次调整500毫秒
+        config.logger.debug(f"调整后的时间：{new_time}")
+        # 在时间边界时调整时间，使其不会超出范围
+        if steps < 0 and new_time > current_time:
+            new_time = QTime(0, 0, 0, 000)
+        elif steps > 0 and new_time < current_time:
+            new_time = QTime(23, 59, 59, 999)
+
         self.setTime(new_time)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        # 在鼠标点击时，始终选中毫秒部分
+        self.setSelectedSection(QTimeEdit.Section.MSecSection)
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        # 在获得焦点时，选中毫秒部分
+        self.setSelectedSection(QTimeEdit.Section.MSecSection)
+
+    def wheelEvent(self, event):
+        # 处理鼠标滚轮事件
+        delta = event.angleDelta().y()
+        if delta > 0:
+            self.stepBy(1)
+        elif delta < 0:
+            self.stepBy(-1)
+        event.accept()
 
 
 class LinLineEdit(QTextEdit):
@@ -360,12 +395,14 @@ class SubtitleTable(TableWidget):
         text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 4, your_text)
+        your_text.textChanged.connect(lambda: self._on_item_changed())
 
         # 第六列：译文
         translated_text = LinLineEdit()
         translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 5, translated_text)
+        translated_text.textChanged.connect(lambda: self._on_item_changed())
 
         # 第七列：编辑按钮
         edit_layout = QVBoxLayout()
@@ -446,8 +483,7 @@ class SubtitleTable(TableWidget):
                     up_row_button.clicked.disconnect()
                     up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
         # 变更行好时发出信号
-        self.process_subtitles()
-        self.tableChanged.emit(self.subtitles)
+        self._on_item_changed()
 
     def _delete_row(self, row):
         self.removeRow(row)
@@ -505,8 +541,7 @@ class SubtitleTable(TableWidget):
         else:
             config.logger.warning("Warning: Cannot move row down as it is the last row")
 
-        self.process_subtitles()
-        self.tableChanged.emit(self.subtitles)
+        self._on_item_changed()
 
     def move_row_down_more(self):
         """
@@ -547,8 +582,7 @@ class SubtitleTable(TableWidget):
         else:
             config.logger.warning("Warning: Cannot move row up as it is the first row")
 
-        self.process_subtitles()
-        self.tableChanged.emit(self.subtitles)
+        self._on_item_changed()
 
     def move_row_up_more(self):
         """
@@ -604,8 +638,9 @@ class SubtitleTable(TableWidget):
         s, ms = s.split(',')
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self):
         # 当单元格内容变化时发出信号
+        self.process_subtitles()
         self.tableChanged.emit(self.subtitles)
 
 
