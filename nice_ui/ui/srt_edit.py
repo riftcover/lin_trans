@@ -1,10 +1,11 @@
 import sys
 
 from PySide6.QtCore import QUrl
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout)
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
 from qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
-from vendor.qfluentwidgets.multimedia import LinVideoWidget
+
 from nice_ui.ui.style import SubtitleTable
+from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
 
 class SubtitleEditPage(CardWidget):
@@ -46,17 +47,22 @@ class SubtitleEditPage(CardWidget):
         top_layout.addWidget(save_button)
         top_layout.addWidget(export_button)
 
+        video_layout = QVBoxLayout()
         self.videoWidget = LinVideoWidget(self.subtitleTable,self.subtitleTable.subtitles,self)
         # self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
         self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
+        spacer = QSpacerItem(20, 500, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         layout.addWidget(top_card)
         layout.addWidget(self.subtitleTable)
 
+        video_layout.addWidget(self.videoWidget)
+        video_layout.addItem(spacer)
+
         # 水平布局
         h_layout = QHBoxLayout()
         h_layout.addLayout(layout,3)
-        h_layout.addWidget(self.videoWidget,1)
+        h_layout.addLayout(video_layout,1)
 
         #设置布局
         self.setLayout(h_layout)

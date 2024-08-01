@@ -1,7 +1,4 @@
-from collections import deque
-
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 from qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
@@ -181,10 +178,11 @@ class LTimeEdit(QTimeEdit):
         # 设置默认选中毫秒部分
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
 
+        #todo：当前默认毫秒高亮，后续修改为默认不高亮
+
     def stepBy(self, steps):
         current_time: QTime = self.time()
         config.logger.debug(f"当前时间：{current_time}, steps:{steps}")
-        # if QTime(0, 0, 0, 500) < current_time < QTime(23, 59, 59, 499):
         new_time = current_time.addMSecs(steps * 500)  # 每次调整500毫秒
         config.logger.debug(f"调整后的时间：{new_time}")
         # 在时间边界时调整时间，使其不会超出范围
@@ -236,7 +234,7 @@ class LinLineEdit(QTextEdit):
 class SubtitleTable(TableWidget):
     tableChanged = Signal(list)
 
-    def __init__(self, file_path, parent=None):
+    def __init__(self, file_path:str, parent=None):
         super().__init__(parent)
         self.file_path = file_path
 

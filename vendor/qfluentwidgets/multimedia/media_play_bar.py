@@ -259,10 +259,21 @@ class LinMediaPlayBar(MediaPlayBarBase):
         self.remainTimeLabel = CaptionLabel('0:00:00', self)
 
         self.__initWidgets()
+    #     # 设置透明属性
+    #     self.setAttribute(Qt.WA_TranslucentBackground)
+    #     self.setWindowFlags(Qt.FramelessWindowHint)
+    #     # 设置组件的背景为透明
+    #     self.setStyleSheet("background: transparent;")
+    #
+    # def paintEvent(self, event):
+    #     # 绘制一个透明背景
+    #     painter = QPainter(self)
+    #     painter.setRenderHint(QPainter.Antialiasing)
+    #     painter.fillRect(self.rect(), QColor(0, 0, 0, 0))
 
     def __initWidgets(self):
-        self.setFixedHeight(48)
-        self.vHoxLayout.setSpacing(6)
+        self.setFixedHeight(40)
+        self.vHoxLayout.setSpacing(1)
         self.vHoxLayout.setContentsMargins(10, 4, 10, 4)
         self.vHoxLayout.addWidget(self.playButton,0, Qt.AlignLeft)
         # self.vHoxLayout.setContentsMargins(5, 9, 5, 9)

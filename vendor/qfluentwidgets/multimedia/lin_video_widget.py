@@ -3,14 +3,14 @@ import re
 from datetime import timedelta
 from bisect import bisect_right
 
-from PySide6.QtCore import Qt, Signal, QUrl, QSizeF, QTimer, QEvent
+from PySide6.QtCore import Qt, QUrl, QSizeF
 from PySide6.QtGui import QPainter, QFont
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
-from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QSpacerItem, QSizePolicy, QGraphicsTextItem
+from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QSpacerItem, QSizePolicy, QGraphicsTextItem, QGraphicsDropShadowEffect
 
-from nice_ui.ui.style import LTimeEdit, SubtitleTable, LinLineEdit
+from nice_ui.ui.style import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
-from .media_play_bar import StandardMediaPlayBar, SimpleMediaPlayBar, LinMediaPlayBar
+from .media_play_bar import LinMediaPlayBar
 from nice_ui.configure import config
 
 class SrtParser:
@@ -54,7 +54,7 @@ class SrtParser:
 class LinVideoWidget(QWidget):
     """ Video widget """
 
-    def __init__(self,subtitle_table:SubtitleTable,subtitles, parent=None):
+    def __init__(self,subtitle_table:SubtitleTable=None,subtitles=None, parent=None):
         super().__init__(parent)
         self.subtitle_table = subtitle_table
         self.subtitles = subtitles
@@ -63,7 +63,10 @@ class LinVideoWidget(QWidget):
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
         self.playBar = LinMediaPlayBar(self)
+        # self.playBar = StandardMediaPlayBar(self)
+        config.logger.debug(f'self.playBar.size()={self.playBar.size()}')
 
+        # 将图形视图与图形场景关联，添加视频项到场景中，并设置滚动条策略和渲染提示。
         self.graphicsView.setScene(self.graphicsScene)
         self.graphicsScene.addItem(self.videoItem)
         self.graphicsView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -73,14 +76,24 @@ class LinVideoWidget(QWidget):
         # 添加字幕项
         self.subtitleItem = QGraphicsTextItem()
         self.subtitleItem.setDefaultTextColor(Qt.white)
-        self.subtitleItem.setFont(QFont("Arial", 16))
+        self.subtitleItem.setFont(QFont("Arial", 14))
+        self.graphicsScene.addItem(self.subtitleItem)
+
+        # 创建并设置阴影效果
+        shadow_effect = QGraphicsDropShadowEffect()
+        shadow_effect.setBlurRadius(0)  # 不模糊，纯黑边
+        shadow_effect.setColor(Qt.black)  # 阴影颜色为黑色
+        shadow_effect.setOffset(1, 1)  # 阴影偏移量，调整黑边的粗细
+        self.subtitleItem.setGraphicsEffect(shadow_effect)
+
         self.graphicsScene.addItem(self.subtitleItem)
 
         # 创建一个弹性空间，它会吸收额外的垂直空间
         spacer = QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.vBoxLayout.addWidget(self.graphicsView)
-        self.vBoxLayout.addSpacing(5)
+        # self.vBoxLayout.addLayout(self.videoItem)
+        self.vBoxLayout.addSpacing(0)
         self.vBoxLayout.addWidget(self.playBar)
         # self.vBoxLayout.addSpacerItem(spacer)  # 添加固定间距
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
@@ -102,12 +115,9 @@ class LinVideoWidget(QWidget):
 
 
     def setup_subtitle_change_listeners(self):
-        """ 设置监听 SubtitleTable 变化的事件 """
-        # for row in range(self.subtitle_table.rowCount()):
-        #     subtitle_widget = self.subtitle_table.cellWidget(row, 4)
-        #     if isinstance(subtitle_widget, LinLineEdit):
-        #         subtitle_widget.textChanged.connect(self.on_subtitle_changed)
-        #todo：修改文本没反应
+        """ 监听 SubtitleTable 内容变化：字幕改变，字幕行变化，字幕时间变化 """
+        if self.subtitle_table is None:
+            return
         self.subtitle_table.tableChanged.connect(self.on_subtitle_changed)
 
 
@@ -124,7 +134,6 @@ class LinVideoWidget(QWidget):
         self.player.setSource(url)
         self.player.play()
         self.player.pause()
-        self.fitInView()
 
     def setSrtFile(self, srt_file_path: str):
         """ 设置SRT文件并解析 """
@@ -216,6 +225,7 @@ class LinVideoWidget(QWidget):
     def fitInView(self):
         # 调整 graphicsView 的大小以填充除了 playBar 和间距之外的所有空间
         # available_height = self.height() - self.playBar.height() - 5  # 5 是间距高度
+        config.logger.debug(f'self.graphicsView.size()={self.graphicsView.size()}')
         self.videoItem.setSize(QSizeF(self.graphicsView.size()))
         # self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
 
