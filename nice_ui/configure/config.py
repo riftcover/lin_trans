@@ -97,7 +97,7 @@ def parse_init():
         "chattts_voice": '1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869',
         "cors_run": True
     }
-    file = root_path / 'videotrans/set.ini'
+    file = root_path / 'nice_ui/set.ini'
     if file.exists():
         try:
             with file.open('r', encoding="utf-8") as f:
@@ -141,10 +141,10 @@ settings = parse_init()
 if settings['lang']:
     defaulelang = settings['lang'].lower()
 # 语言代码文件是否存在
-lang_path = root_path / f'videotrans/language/{defaulelang}.json'
+lang_path = root_path / f'nice_ui/language/{defaulelang}.json'
 if not lang_path.exists():
     defaulelang = "en"
-    lang_path = root_path / f'videotrans/language/{defaulelang}.json'
+    lang_path = root_path / f'nice_ui/language/{defaulelang}.json'
 
 obj = json.load(lang_path.open('r', encoding='utf-8'))
 # 交互语言代码
@@ -160,7 +160,7 @@ langnamelist = list(langlist.values())
 
 # 模型列表
 model_list: ModelDict = obj["model_code_list"]
-
+model_type: int = 2
 
 def init_model_code_key() -> list:
     # 模型列表
@@ -282,17 +282,17 @@ params = {#操作系统类型:win32、linux、darwin
 
 }
 
-chatgpt_path = root_path / 'videotrans/chatgpt.txt'
-localllm_path = root_path / 'videotrans/localllm.txt'
-zijiehuoshan_path = root_path / 'videotrans/zijie.txt'
-azure_path = root_path / 'videotrans/azure.txt'
-gemini_path = root_path / 'videotrans/gemini.txt'
+chatgpt_path = root_path / 'nice_ui/chatgpt.txt'
+localllm_path = root_path / 'nice_ui/localllm.txt'
+zijiehuoshan_path = root_path / 'nice_ui/zijie.txt'
+azure_path = root_path / 'nice_ui/azure.txt'
+gemini_path = root_path / 'nice_ui/gemini.txt'
 
-params['localllm_template'] = localllm_path.read_text(encoding='utf-8').strip() + "\n"
-params['zijiehuoshan_template'] = zijiehuoshan_path.read_text(encoding='utf-8').strip() + "\n"
-params['chatgpt_template'] = chatgpt_path.read_text(encoding='utf-8').strip() + "\n"
-params['azure_template'] = azure_path.read_text(encoding='utf-8').strip() + "\n"
-params['gemini_template'] = gemini_path.read_text(encoding='utf-8').strip() + "\n"
+# params['localllm_template'] = localllm_path.read_text(encoding='utf-8').strip() + "\n"
+# params['zijiehuoshan_template'] = zijiehuoshan_path.read_text(encoding='utf-8').strip() + "\n"
+# params['chatgpt_template'] = chatgpt_path.read_text(encoding='utf-8').strip() + "\n"
+# params['azure_template'] = azure_path.read_text(encoding='utf-8').strip() + "\n"
+# params['gemini_template'] = gemini_path.read_text(encoding='utf-8').strip() + "\n"
 
 agent_settings = {"qwen": {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen2-57b-a14b-instruct"},
         "kimi": {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}}
@@ -340,3 +340,12 @@ if __name__ == '__main__':
     # logger.info(lang_path)
     # logger.info(obj)
     logger.info(model_code_list)
+    model_list = model_code_list[:4]
+    a =2
+    if a ==1:
+        model_list.extend(model_code_list[4:9])
+    elif a ==2:
+        model_list.extend(model_code_list[9:14])
+
+    logger.info(model_list)
+

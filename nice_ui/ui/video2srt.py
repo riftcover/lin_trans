@@ -64,7 +64,14 @@ class Video2SRT(QWidget):
         recognition_label = QLabel("识别引擎")
 
         self.source_model = QComboBox()
-        self.source_model.addItems(config.model_code_list)
+        model_type = self.settings.value('model_type', type=int)
+        config.logger.info(f"获取model_type: {model_type}")
+        model_list = config.model_code_list[:4]
+        if model_type == 1:
+            model_list.extend(config.model_code_list[4:9])
+        elif model_type == 2:
+            model_list.extend(config.model_code_list[9:14])
+        self.source_model.addItems(model_list)
         # sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         # sizePolicy3.setHorizontalStretch(0)
         # sizePolicy3.setVerticalStretch(0)
@@ -115,6 +122,9 @@ class Video2SRT(QWidget):
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作', '文件路径'])
+
+        self.media_table.verticalHeader().setVisible(False) #隐藏行头
+
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.media_table.setColumnWidth(0, 200)
         self.media_table.setColumnWidth(1, 100)

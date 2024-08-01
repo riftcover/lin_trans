@@ -6,8 +6,10 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
 
 from qfluentwidgets import setTheme, Theme
-from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
 
+from nice_ui.ui.style import SubtitleTable
+from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
+from nice_ui.configure import config
 
 class Demo1(QWidget):
 
@@ -43,15 +45,23 @@ class Demo2(QWidget):
     def __init__(self):
         super().__init__()
         self.vBoxLayout = QVBoxLayout(self)
-        self.videoWidget = LinVideoWidget(self)
+        self.videoWidget = LinVideoWidget()
 
         self.videoWidget.setVideo(QUrl(
-            '/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
-        self.videoWidget.play()
+            '/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
+        # self.videoWidget.play()
+        self.videoWidget.setSrtFile('/Users/locodol/my_own/code/lin_trans/result/tt1/tt.srt')
 
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.addWidget(self.videoWidget)
-        self.resize(800, 450)
+        # self.resize(634, 412)
+        video_size_x,video_size_y = 1920/3, 1080/3
+        config.logger.debug(f"Video size: {video_size_x}x{video_size_y}")
+        self.resize(video_size_x, video_size_y+40)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        config.logger.debug(f"Window size: {self.size()}")
 
 
 if __name__ == '__main__':

@@ -30,7 +30,9 @@ class LocalModelPage(QWidget):
 
         # "Whisper.Cpp"被点击时显示"Whisper.Cpp 模型列表"，"FasterWhisper"被点击时显示"FasterWhisper 模型列表"
         self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.show_model_list("Whisper.Cpp"))
+        self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.model_type(1))
         self.faster_whisper_card.radioButton.clicked.connect(lambda: self.show_model_list("FasterWhisper"))
+        self.faster_whisper_card.radioButton.clicked.connect(lambda: self.model_type(2))
 
         layout.addWidget(self.appCardContainer)
         # 模型存储路径
@@ -138,6 +140,15 @@ class LocalModelPage(QWidget):
                              ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
 
             self.populate_model_table(self.faster_model_table, faster_models)
+
+    def model_type(self, param:int):
+        """
+        设置模型类型，1为Whisper.Cpp，2为FasterWhisper
+        """
+        config.model_type = param
+        config.logger.info(f"设置模型类型: {config.model_type}")
+        self.settings.setValue("model_type", param)
+
 
 
 class LLMConfigPage(QWidget):

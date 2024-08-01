@@ -35,8 +35,8 @@ class AppCard(CardWidget):
         self.hBoxLayout.setSpacing(15)
 
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.addWidget(self.radioButton, 0, Qt.AlignVCenter)
+        self.vBoxLayout.setSpacing(10)
         self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignVCenter)
         self.vBoxLayout.setAlignment(Qt.AlignVCenter)
         self.hBoxLayout.addLayout(self.vBoxLayout)
