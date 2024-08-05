@@ -5,9 +5,9 @@ import sys
 import path
 from PySide6.QtCore import Qt, Slot, QSettings, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem,
-                               QSizePolicy, QFormLayout, QComboBox, )
-from qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem,
+                               QSizePolicy, QFormLayout, )
+from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition,ComboBox,BodyLabel
 
 from agent import get_translate_code
 from nice_ui.configure import config
@@ -50,9 +50,9 @@ class WorkSrt(QWidget):
         source_layout = QHBoxLayout()
         source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        source_language_name = QLabel("原始语种")
+        source_language_name = BodyLabel("原始语种")
 
-        self.source_language_combo = QComboBox(self)
+        self.source_language_combo = ComboBox(self)
         self.source_language_combo.addItems(self.language_name)
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language_combo.setCurrentText(config.params['source_language'])
@@ -66,9 +66,9 @@ class WorkSrt(QWidget):
         translate_layout = QHBoxLayout()
         translate_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        translate_language_name = QLabel("翻译语种")
+        translate_language_name = BodyLabel("翻译语种")
 
-        self.translate_language_combo = QComboBox(self)
+        self.translate_language_combo = ComboBox(self)
         self.translate_language_combo.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language_combo.setCurrentText(config.params['target_language'])
@@ -81,9 +81,9 @@ class WorkSrt(QWidget):
         engine_layout = QHBoxLayout()
         engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        translate_model_name = QLabel("翻译引擎")
+        translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = QComboBox(self)
+        self.translate_model = ComboBox(self)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
@@ -98,8 +98,8 @@ class WorkSrt(QWidget):
         # todo: 只有选择ai时才显示
         prompt_layout = QHBoxLayout()
         prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        ai_prompt_name = QLabel("提示词")
-        self.ai_prompt = QComboBox(self)
+        ai_prompt_name = BodyLabel("提示词")
+        self.ai_prompt = ComboBox(self)
         self.ai_prompt.addItems(self._get_ai_prompt())
         self.ai_prompt.setCurrentText(config.params["prompt_name"])
         prompt_layout.addWidget(ai_prompt_name)
@@ -112,12 +112,13 @@ class WorkSrt(QWidget):
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
-        self.media_table.setColumnWidth(0, 200)
+        self.media_table.setColumnWidth(0, 400)
         self.media_table.setColumnWidth(1, 100)
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
         # self.media_table.setShowGrid(False) #隐藏网格线
+        self.media_table.setColumnHidden(2, True)  # 隐藏操作列
         self.media_table.setColumnHidden(4, True)  # 隐藏操作列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         media_table_layout.addWidget(self.media_table)
@@ -212,7 +213,10 @@ class LTableWindow:
             ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
             # 操作
             delete_button = PushButton("删除")
-            delete_button.setStyleSheet("background-color: red; color: white;")
+            delete_button.setFixedSize(QSize(80, 30))
+            delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+
+            delete_button.setStyleSheet("background-color: #dd3838; color: white;")
             ui_table.setCellWidget(row_position, 3, delete_button)
             delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
             # 文件路径
