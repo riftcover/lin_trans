@@ -54,7 +54,10 @@ class ToSrtOrm:
     @session_manager
     def query_data_by_unid(self, unid, session=None):
         try:
-            return session.query(ToSrt).filter_by(unid=unid).one()
+            logger.info('找到数据')
+            logger.info(f'{session.query(ToSrt).filter(ToSrt.unid==unid).first()}')
+            return session.query(ToSrt).filter(ToSrt.unid==unid).first()
+
         except NoResultFound:
             return None
 
@@ -69,11 +72,13 @@ class ToSrtOrm:
 
     @session_manager
     def update_table_unid(self, unid, session=None, **kwargs):
-        if entry := self.query_data_by_unid(unid):
+        if entry := session.query(ToSrt).filter(ToSrt.unid == unid).first():
             for key, value in kwargs.items():
                 setattr(entry, key, value)
             session.commit()
+            logger.info(f'更新 {unid} 的数据：{key}:{value}')
             return True
+        logger.error(f"没有找到数据 unid: {unid}")
         return False
 
     @session_manager
@@ -122,15 +127,14 @@ class ToTranslationOrm:
 
     @session_manager
     def update_table_unid(self, unid,new_status, session=None, **kwargs):
-        record = session.query(ToTranslation).filter(ToTranslation.unid == unid).first()
-
-        if record:
-            # 如果找到记录，更新 job_status
-            record.job_status = new_status
+        if entry := session.query(ToSrt).filter(ToSrt.unid == unid).first():
+            for key, value in kwargs.items():
+                setattr(entry, key, value)
             session.commit()
-            logger.info(f"Updated job_status to {new_status} for unid: {unid}")
-        else:
-            logger.info(f"No record found with unid: {unid}")
+            logger.info(f'更新 {unid} 的数据：{key}:{value}')
+            return True
+        logger.error(f"没有找到数据 unid: {unid}")
+        return False
 
 
 

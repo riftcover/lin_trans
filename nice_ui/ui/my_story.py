@@ -114,18 +114,20 @@ class TableApp(CardWidget):
             filename = os.path.basename(srt.path)
             # 去掉文件扩展名
             filename_without_extension = os.path.splitext(filename)[0]
+            config.logger.debug(f"文件:{filename_without_extension} 状态:{srt.job_status}")
 
             if srt.job_status in (0, 1):
                 # todo： 为啥mac上开始按钮没有了？？
-                srt.job_status == 0
+                if srt.job_status == 1:
+                    new_status = 0
 
-                # 将上次排队中的任务job_status == 1设置为0
-                self.srt_orm.update_table_unid(srt.unid, job_status=srt.job_status)
+                    # 将上次排队中的任务job_status == 1设置为0
+                    self.srt_orm.update_table_unid(srt.unid, job_status=new_status)
                 # 重新初始化表格,状态显示为未开始
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
                 obj_format = {'raw_noextname': filename_without_extension, 'unid': srt.unid, }
-                self.table_row_init(obj_format, srt.job_status)
+                self.table_row_init(obj_format, 0)
             elif srt.job_status == 2:
                 self.addRow_init_all(filename_without_extension, srt.unid)
 
@@ -133,12 +135,14 @@ class TableApp(CardWidget):
             filename = os.path.basename(trans.path)
             # 去掉文件扩展名
             filename_without_extension = os.path.splitext(filename)[0]
+            config.logger.debug(f"文件:{filename_without_extension} 状态:{trans.job_status}")
 
             if trans.job_status in (0, 1):
-                trans.job_status == 0
+                if trans.job_status == 1:
+                    new_status = 0
 
-                # 将上次排队中的任务job_status == 1设置为0
-                self.trans_orm.update_table_unid(trans.unid, new_status=trans.job_status)
+                    # 将上次排队中的任务job_status == 1设置为0
+                    self.trans_orm.update_table_unid(trans.unid, job_status=new_status)
                 # 重新初始化表格,状态显示为未开始
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
@@ -173,20 +177,20 @@ class TableApp(CardWidget):
         self.table.setCellWidget(row_position, 1, file_name)
 
         # 处理进度
-        file_name = QLabel()
+        file_status = QLabel()
         if job_status == 1:
-            file_name.setText("排队中")
+            file_status.setText("排队中")
         elif job_status == 0:
-
-            file_name.setText("未开始")
+            config.logger.debug(f"文件:{filename} 状态更新为未开始")
+            file_status.setText("未开始")
             row_position = self.table.rowCount()
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
             startBtn.setIcon(FluentIcon.PLAY)
             startBtn.clicked.connect(lambda: self._start_row(row_position))
             self.table.setCellWidget(row_position, 3, startBtn)
-        file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 2, file_name)
+        file_status.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 2, file_status)
 
         # 隐藏列数据
         file_unid = QLabel()
@@ -274,6 +278,7 @@ class TableApp(CardWidget):
                 config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
     def addRow_init_all(self, filename, unid):
+        config.logger.info(f"添加已完成:{filename} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         # 复选框

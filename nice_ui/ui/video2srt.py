@@ -118,7 +118,7 @@ class Video2SRT(QWidget):
         combo_layout.addLayout(translate_engine_layout)
 
         media_table_layout = QVBoxLayout()
-        # media_table_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        media_table_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         media_table_layout.setContentsMargins(60, -1, 60, -1)
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
