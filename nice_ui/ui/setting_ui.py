@@ -324,12 +324,12 @@ class ProxyPage(QWidget):
         # 创建显示当前代理设置按钮
         self.show_settings_button = PushButton("显示当前代理设置")
         self.show_settings_button.clicked.connect(self.show_current_settings)
-        layout.addWidget(self.show_settings_button)
+        # layout.addWidget(self.show_settings_button)
 
         # 添加测试按钮
-        self.test_button = PushButton("测试代理", self)
+        self.test_button = PushButton("测试代理")
         self.test_button.clicked.connect(self.test_proxy)
-        layout.addWidget(self.test_button)
+        # layout.addWidget(self.test_button)
 
         self.setLayout(layout)
 

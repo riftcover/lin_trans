@@ -3,8 +3,8 @@ import os
 import shutil
 import sys
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy
 from qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit)
 
 from nice_ui.configure import config
@@ -46,6 +46,8 @@ class TableApp(CardWidget):
 
         # 添加批量导出按钮
         self.exportBtn = PushButton("批量导出")
+        self.exportBtn.setFixedSize(QSize(80, 30))
+        self.exportBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         self.exportBtn.setIcon(FluentIcon.DOWN)
         self.exportBtn.clicked.connect(self._export_batch)
         # 初始状态隐藏
@@ -55,6 +57,8 @@ class TableApp(CardWidget):
 
         # 添加批量删除按钮
         self.deleteBtn = PushButton("批量删除")
+        self.deleteBtn.setFixedSize(QSize(80, 30))
+        self.deleteBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         self.deleteBtn.setIcon(FluentIcon.DELETE)
         self.deleteBtn.clicked.connect(self._delete_batch)
         # 初始状态隐藏
@@ -62,6 +66,8 @@ class TableApp(CardWidget):
         self.selectAllBtn.stateChanged.connect(self.deleteBtn.setVisible)
 
         self.addRowBtn = PushButton("添加文件")
+        self.addRowBtn.setFixedSize(QSize(80, 30))
+        self.addRowBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         self.addRowBtn.setIcon(FluentIcon.ADD)
         self.addRowBtn.clicked.connect(self._addNewRow)
 
@@ -98,7 +104,7 @@ class TableApp(CardWidget):
         self.table.setColumnWidth(5, 100)
         self.table.setColumnWidth(6, 200)
 
-        self.table.setColumnHidden(3, True)
+        # self.table.setColumnHidden(3, True)
         # self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
@@ -186,6 +192,8 @@ class TableApp(CardWidget):
             row_position = self.table.rowCount()
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
+            startBtn.setFixedSize(QSize(80, 30))
+            startBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
             startBtn.setIcon(FluentIcon.PLAY)
             startBtn.clicked.connect(lambda: self._start_row(row_position))
             self.table.setCellWidget(row_position, 3, startBtn)
@@ -255,6 +263,8 @@ class TableApp(CardWidget):
                 # 开始按钮
                 # todo 目前是任务完成显示按钮,需要修改其他中断的要显示
                 startBtn = PushButton("开始")
+                startBtn.setFixedSize(QSize(80, 30))
+                startBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
                 startBtn.setIcon(FluentIcon.PLAY)
                 startBtn.clicked.connect(lambda: self._start_row(row))
                 self.table.setCellWidget(row, 3, startBtn)
@@ -264,12 +274,19 @@ class TableApp(CardWidget):
                 # exportCombo.addItems(["导出srt", "导出txt"])
                 # self.table.setCellWidget(row, 4, exportCombo)
                 exportBtn = PushButton("导出")
+                exportBtn.setFixedSize(QSize(80, 30))
+                exportBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
                 exportBtn.setIcon(FluentIcon.DOWN)
+                # config.logger.info(exportBtn.size())
+                # config.logger.info(f"Row height of row {row_position}: {ui_table.rowHeight(row_position)}")
+
                 exportBtn.clicked.connect(lambda: self._export_row(row))
                 self.table.setCellWidget(row, 4, exportBtn)
 
                 # 删除按钮
                 deleteBtn = PushButton("删除")
+                deleteBtn.setFixedSize(QSize(80, 30))
+                deleteBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
                 deleteBtn.setIcon(FluentIcon.DELETE)
                 deleteBtn.clicked.connect(self._delete_row(deleteBtn))
                 self.table.setCellWidget(row, 5, deleteBtn)
@@ -299,6 +316,8 @@ class TableApp(CardWidget):
 
         # 开始按钮
         start_btn = PushButton("开始")
+        start_btn.setFixedSize(QSize(80, 30))
+        start_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         start_btn.setIcon(FluentIcon.PLAY)
         self.table.setCellWidget(row_position, 3, start_btn)
 
@@ -308,12 +327,16 @@ class TableApp(CardWidget):
         # exportCombo.addItems(["导出srt", "导出txt"])
         # self.table.setCellWidget(row_position, 4, exportCombo)
         export_btn = PushButton("导出")
+        export_btn.setFixedSize(QSize(80, 30))
+        export_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         export_btn.setIcon(FluentIcon.DOWN)
         export_btn.clicked.connect(lambda: self._export_row(row_position))
         self.table.setCellWidget(row_position, 4, export_btn)
 
         # 删除按钮
         delete_btn = PushButton("删除")
+        delete_btn.setFixedSize(QSize(80, 30))
+        delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         delete_btn.setIcon(FluentIcon.DELETE)
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.table.setCellWidget(row_position, 5, delete_btn)
@@ -429,9 +452,9 @@ class TableApp(CardWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('文件处理')
+        self.setWindowTitle('我的创作列表')
         self.setGeometry(100, 100, 900, 600)
-        self.setCentralWidget(TableApp("文件处理"))
+        self.setCentralWidget(TableApp("我的创作列表"))
 
 
 if __name__ == '__main__':

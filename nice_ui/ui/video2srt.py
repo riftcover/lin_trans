@@ -235,8 +235,8 @@ class TableWindow:
         delete_button = PushButton("删除")
         delete_button.setFixedSize(QSize(80, 30))
         delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        # config.logger.info(delete_button.size())
-        # config.logger.info(f"Row height of row {row_position}: {ui_table.rowHeight(row_position)}")
+        config.logger.info(delete_button.size())
+        config.logger.info(f"Row height of row {row_position}: {ui_table.rowHeight(row_position)}")
 
         delete_button.setStyleSheet("background-color: #dd3838; color: white;")
         ui_table.setCellWidget(row_position, 3, delete_button)
