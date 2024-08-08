@@ -46,7 +46,7 @@ class TableApp(CardWidget):
 
         # 添加批量导出按钮
         self.exportBtn = PushButton("批量导出")
-        self.exportBtn.setFixedSize(QSize(80, 30))
+        self.exportBtn.setFixedSize(QSize(110, 30))
         self.exportBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         self.exportBtn.setIcon(FluentIcon.DOWN)
         self.exportBtn.clicked.connect(self._export_batch)
@@ -57,7 +57,7 @@ class TableApp(CardWidget):
 
         # 添加批量删除按钮
         self.deleteBtn = PushButton("批量删除")
-        self.deleteBtn.setFixedSize(QSize(80, 30))
+        self.deleteBtn.setFixedSize(QSize(110, 30))
         self.deleteBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         self.deleteBtn.setIcon(FluentIcon.DELETE)
         self.deleteBtn.clicked.connect(self._delete_batch)
@@ -65,11 +65,11 @@ class TableApp(CardWidget):
         self.deleteBtn.setVisible(False)
         self.selectAllBtn.stateChanged.connect(self.deleteBtn.setVisible)
 
-        self.addRowBtn = PushButton("添加文件")
-        self.addRowBtn.setFixedSize(QSize(80, 30))
-        self.addRowBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        self.addRowBtn.setIcon(FluentIcon.ADD)
-        self.addRowBtn.clicked.connect(self._addNewRow)
+        # self.addRowBtn = PushButton("添加文件")
+        # self.addRowBtn.setFixedSize(QSize(110, 30))
+        # self.addRowBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+        # self.addRowBtn.setIcon(FluentIcon.ADD)
+        # self.addRowBtn.clicked.connect(self._addNewRow)
 
         self.searchInput = SearchLineEdit()
         self.searchInput.setPlaceholderText("搜索文件")
@@ -82,7 +82,7 @@ class TableApp(CardWidget):
         topLayout.addWidget(self.selectAllBtn)
         topLayout.addWidget(self.exportBtn)
         topLayout.addWidget(self.deleteBtn)
-        topLayout.addWidget(self.addRowBtn)
+        # topLayout.addWidget(self.addRowBtn)
         topLayout.addStretch()
         topLayout.addWidget(self.searchInput)
 
@@ -110,7 +110,9 @@ class TableApp(CardWidget):
 
     def _selectAll(self):
         for row in range(self.table.rowCount()):
-            self.table.cellWidget(row, 0).setChecked(self.selectAllBtn.isChecked())
+            chk = self.table.cellWidget(row, 0)
+            if chk.isEnabled():
+                chk.setChecked(self.selectAllBtn.isChecked())
 
     def _init_table(self):
         # 初始化表格,从数据库中获取数据
@@ -123,7 +125,6 @@ class TableApp(CardWidget):
             config.logger.debug(f"文件:{filename_without_extension} 状态:{srt.job_status}")
 
             if srt.job_status in (0, 1):
-                # todo： 为啥mac上开始按钮没有了？？
                 if srt.job_status == 1:
                     new_status = 0
 
@@ -153,7 +154,7 @@ class TableApp(CardWidget):
                 # config.logger.info(f"文件:{filename_without_extension} 状态更新为未开始")
 
                 obj_format = {'raw_noextname': filename_without_extension, 'unid': trans.unid, }
-                self.table_row_init(obj_format, trans.job_status)
+                self.table_row_init(obj_format, 0)
             elif trans.job_status == 2:
                 self.addRow_init_all(filename_without_extension, trans.unid)
 
@@ -174,6 +175,7 @@ class TableApp(CardWidget):
 
         # 复选框
         chk = CheckBox()
+        chk.stateChanged.connect(self._update_buttons_visibility)  # 连接状态改变信号到更新按钮可见性的方法
         self.table.setCellWidget(row_position, 0, chk)
 
         # 文件名
@@ -185,11 +187,13 @@ class TableApp(CardWidget):
         # 处理进度
         file_status = QLabel()
         if job_status == 1:
+
             file_status.setText("排队中")
         elif job_status == 0:
             config.logger.debug(f"文件:{filename} 状态更新为未开始")
-            file_status.setText("未开始")
-            row_position = self.table.rowCount()
+            chk.setEnabled(False)  # 设置置灰
+            file_status.setText("处理失败")
+            file_status.setStyleSheet("color: #dd3838;")
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
             startBtn.setFixedSize(QSize(80, 30))
@@ -300,6 +304,7 @@ class TableApp(CardWidget):
         self.table.insertRow(row_position)
         # 复选框
         chk = CheckBox()
+        chk.stateChanged.connect(self._update_buttons_visibility)  # 连接状态改变信号到更新按钮可见性的方法
         self.table.setCellWidget(row_position, 0, chk)
 
         # 文件名
@@ -447,6 +452,12 @@ class TableApp(CardWidget):
             shutil.copy(job_path, file_path)
             InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                             parent=self)
+
+    def _update_buttons_visibility(self):
+        # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
+        any_checked = any(self.table.cellWidget(row, 0).isChecked() for row in range(self.table.rowCount()))
+        self.deleteBtn.setVisible(any_checked)
+        self.exportBtn.setVisible(any_checked)
 
 
 class MainWindow(QMainWindow):
