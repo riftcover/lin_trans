@@ -2,10 +2,12 @@
 import sys
 
 from PySide6.QtCore import Qt, QUrl, QSettings
-from PySide6.QtGui import QIcon, QDesktopServices
+from PySide6.QtGui import QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
-from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme)
+from vendor.qfluentwidgets import FluentIcon as FIF
+from vendor.qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme,
+                                    setTheme, Theme, setThemeColor
+                                   )
 
 from nice_ui.configure import config
 from nice_ui.ui.SingalBridge import get_setting_cache
@@ -23,6 +25,7 @@ class Widget(QFrame):
         self.hBoxLayout = QHBoxLayout(self)
 
         setFont(self.label, 24)
+        setThemeColor(QColor(0, 120, 212))  # 蓝色
         self.label.setAlignment(Qt.AlignCenter)
         self.hBoxLayout.addWidget(self.label, 1, Qt.AlignCenter)
         self.setObjectName(text.replace(' ', '-'))
@@ -35,7 +38,7 @@ class Window(FluentWindow):
         self.settings = QSettings("Locoweed", "LinLInTrans")
         self.initWindow()
         # create sub interface
-        self.homeInterface = Widget('Search Interface', self)
+        # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
         self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
         self.edit_srt = Widget('字幕编辑', self)
@@ -45,16 +48,14 @@ class Window(FluentWindow):
         self.initNavigation()
 
     def initNavigation(self):
+        # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
         self.addSubInterface(self.vide2srt, FIF.VIDEO, '音视频转字幕')
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, '字幕翻译')
         self.addSubInterface(self.edit_srt, FIF.EDIT, '字幕编辑')
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
-        self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
 
-        # add custoxm widget to bottom
         self.navigationInterface.addWidget(routeKey='avatar', widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'), onClick=self.showMessageBox, position=NavigationItemPosition.BOTTOM, )
-
         self.addSubInterface(self.settingInterface, FIF.SETTING, 'Settings')
 
         # add badge to navigation item

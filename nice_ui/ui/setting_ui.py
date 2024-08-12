@@ -2,13 +2,16 @@ import os
 import re
 import sys
 
-from PySide6.QtCore import QSettings, Qt, QUrl
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize
+from PySide6.QtGui import QColor
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar, InfoBarPosition, FluentIcon)
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
+    QSizePolicy, QHeaderView, QLabel, QTextEdit
+from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, )
 
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
+from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
 
@@ -149,7 +152,33 @@ class LocalModelPage(QWidget):
         config.logger.info(f"设置模型类型: {config.model_type}")
         self.settings.setValue("model_type", param)
 
+class PopupWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("编辑提示词")
+        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
+        self.setup_ui()
 
+    def setup_ui(self):
+        layout = QVBoxLayout()
+        label = QTextEdit()
+        label.setPlaceholderText("请输入提示词")
+        close_button = PushButton("取消")
+        close_button.clicked.connect(self.close)
+        enter_button = PrimaryPushButton("确定")
+        enter_button.clicked.connect(self.save_prompt)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(4)
+        button_layout.addWidget(enter_button)
+        button_layout.addWidget(close_button)
+
+
+        layout.addWidget(label)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def save_prompt(self):
+        pass  # todo: 保存提示词到数据库
 
 class LLMConfigPage(QWidget):
     def __init__(self, settings, parent=None):
@@ -204,13 +233,16 @@ class LLMConfigPage(QWidget):
 
         self.prompts_table = TableWidget(self)
         self.prompts_table.setColumnCount(5)
-        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名字", "提示词", "修改", "删除"])
+        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词", "提示词", "修改", "删除"])
         self.prompts_table.verticalHeader().setVisible(False)
+        self.prompts_table.horizontalHeader().setVisible(False)
         self.prompts_table.setColumnWidth(0, 150)  # 设置第一列宽度
         self.prompts_table.setColumnWidth(1, 150)  # 设置第二列宽度
         self.prompts_table.setColumnWidth(2, 150)  # 设置第三列宽度
         self.prompts_table.setColumnWidth(3, 100)  # 设置第四列宽度
         self.prompts_table.setColumnWidth(4, 100)  # 设置第五列宽度
+
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)  # 设置表头的拉伸模式
         self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑状态
         # self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
         main_layout.addWidget(self.prompts_table)
@@ -228,9 +260,13 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setItem(row, 1, QTableWidgetItem(str(prompt_name)))
         self.prompts_table.setItem(row, 2, QTableWidgetItem(str(prompt_content)))
         edit_btn = PushButton("修改")
+        edit_btn.setFixedSize(QSize(80, 30))
+        edit_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         edit_btn.clicked.connect(self._edit_prompt(edit_btn))
         self.prompts_table.setCellWidget(row, 3, edit_btn)
-        delete_btn = PushButton("删除")
+        delete_btn = DeleteButton("删除")
+        delete_btn.setFixedSize(QSize(80, 30))
+        delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.prompts_table.setCellWidget(row, 4, delete_btn)
 
@@ -257,7 +293,8 @@ class LLMConfigPage(QWidget):
             key_id = self.prompts_table.item(button_row, 0).text()
             prompt_name = self.prompts_table.item(button_row, 1).text()
             prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
-
+            self.popup = PopupWidget()
+            self.popup.show()
         return edit_row
 
 

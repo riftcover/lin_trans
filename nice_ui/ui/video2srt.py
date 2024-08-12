@@ -238,7 +238,7 @@ class TableWindow:
         config.logger.info(delete_button.size())
         config.logger.info(f"Row height of row {row_position}: {ui_table.rowHeight(row_position)}")
 
-        delete_button.setStyleSheet("background-color: #dd3838; color: white;")
+        delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
         ui_table.setCellWidget(row_position, 3, delete_button)
         delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
 

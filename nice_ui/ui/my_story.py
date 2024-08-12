@@ -105,7 +105,7 @@ class TableApp(CardWidget):
         self.table.setColumnWidth(6, 200)
 
         # self.table.setColumnHidden(3, True)
-        # self.table.setColumnHidden(6, True)
+        self.table.setColumnHidden(6, True)
         layout.addWidget(self.table)
 
     def _selectAll(self):
@@ -187,13 +187,13 @@ class TableApp(CardWidget):
         # 处理进度
         file_status = QLabel()
         if job_status == 1:
-
             file_status.setText("排队中")
         elif job_status == 0:
             config.logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)  # 设置置灰
             file_status.setText("处理失败")
-            file_status.setStyleSheet("color: #dd3838;")
+            # file_status.setStyleSheet("color: #dd3838;")
+            file_status.setStyleSheet("color: #FF6C64;")
             # todo 未开始也需要添加开始按钮,目前没写完
             startBtn = PushButton("开始")
             startBtn.setFixedSize(QSize(80, 30))
