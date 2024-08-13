@@ -49,7 +49,7 @@ defaulelang = locale.getdefaultlocale()[0][:2].lower()  # 获取本地语言
 
 def parse_init():
     # 加载init
-    settings = {
+    init_settings = {
         "lang": defaulelang,
         "dubbing_thread": 3,
         "trans_row": 40,  # 每次翻译的行数
@@ -112,20 +112,20 @@ def parse_init():
                     key = key.strip()
                     value = value.strip()
                     if re.match(r'^\d+$', value):
-                        settings[key] = int(value)
+                        init_settings[key] = int(value)
                     elif re.match(r'^\d+\.\d$', value):
-                        settings[key] = round(float(value), 1)
+                        init_settings[key] = round(float(value), 1)
                     elif value.lower() == 'true':
-                        settings[key] = True
+                        init_settings[key] = True
                     elif value.lower() == 'false':
-                        settings[key] = False
+                        init_settings[key] = False
                     else:
-                        settings[key] = str(value.lower()) if value else ""
+                        init_settings[key] = str(value.lower()) if value else ""
         except Exception as e:
             logger.error(f'set.ini 中有语法错误:{str(e)}')
-        if isinstance(settings['fontsize'], str) and settings['fontsize'].find('px') > 0:
-            settings['fontsize'] = int(settings['fontsize'].replace('px', ''))
-    return settings
+        if isinstance(init_settings['fontsize'], str) and init_settings['fontsize'].find('px') > 0:
+            init_settings['fontsize'] = int(init_settings['fontsize'].replace('px', ''))
+    return init_settings
 
 
 # 语言

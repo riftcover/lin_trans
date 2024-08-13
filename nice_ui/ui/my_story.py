@@ -411,6 +411,7 @@ class TableApp(CardWidget):
 
     def _export_batch(self):
         # 打开系统文件夹选择框
+        job_path,file_path =None,None
         options = QFileDialog.Options()
         file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
 

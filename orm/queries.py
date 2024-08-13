@@ -75,8 +75,8 @@ class ToSrtOrm:
         if entry := session.query(ToSrt).filter(ToSrt.unid == unid).first():
             for key, value in kwargs.items():
                 setattr(entry, key, value)
+                logger.info(f'更新 {unid} 的数据：{key}:{value}')
             session.commit()
-            logger.info(f'更新 {unid} 的数据：{key}:{value}')
             return True
         logger.error(f"没有找到数据 unid: {unid}")
         return False
@@ -127,11 +127,12 @@ class ToTranslationOrm:
 
     @session_manager
     def update_table_unid(self, unid,new_status, session=None, **kwargs):
-        if entry := session.query(ToSrt).filter(ToSrt.unid == unid).first():
+        if entry := session.query(ToTranslation).filter(ToTranslation.unid == unid).first():
             for key, value in kwargs.items():
                 setattr(entry, key, value)
+                logger.info(f'更新 {unid} 的数据：{key}:{value}')
             session.commit()
-            logger.info(f'更新 {unid} 的数据：{key}:{value}')
+
             return True
         logger.error(f"没有找到数据 unid: {unid}")
         return False

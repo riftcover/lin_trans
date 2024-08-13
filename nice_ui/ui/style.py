@@ -69,10 +69,10 @@ class AppCardContainer(QWidget):
         self.buttonGroup.setExclusive(True)  # 确保只有一个按钮可以被选中
 
     def addAppCard(self, title, content, button_status=False):
-        card = AppCard(title, content, button_status, self)
-        self.layout.addWidget(card)
-        self.buttonGroup.addButton(card.radioButton)
-        return card
+        ll_card = AppCard(title, content, button_status, self)
+        self.layout.addWidget(ll_card)
+        self.buttonGroup.addButton(ll_card.radioButton)
+        return ll_card
 
 
 class KeyLineEdit(LineEdit):

@@ -182,8 +182,8 @@ if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
     output = r'D:\dcode\lin_trans\result\85247cda952a062ae51356699ed9c78b'
-    raw_basename = '1.如何获取需求.wav'
+    tt1 = '1.如何获取需求.wav'
     # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # models = 'D:\dcode\lin_trans\models\small.pt'
 
-    SrtWriter('xxx', output, raw_basename, 'zh').whisper_faster_to_srt()
+    SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
