@@ -1,11 +1,11 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
-from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
-                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel, PushButton)
 
 from agent import translate_api_name
 from nice_ui.configure import config
+from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, TableWidget, CheckBox, ToolTipFilter,
+                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 
 HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 

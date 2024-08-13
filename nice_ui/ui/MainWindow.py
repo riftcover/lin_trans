@@ -4,10 +4,6 @@ import sys
 from PySide6.QtCore import Qt, QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
-from vendor.qfluentwidgets import FluentIcon as FIF
-from vendor.qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme,
-                                    setTheme, Theme, setThemeColor
-                                   )
 
 from nice_ui.configure import config
 from nice_ui.ui.SingalBridge import get_setting_cache
@@ -15,6 +11,9 @@ from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
+from vendor.qfluentwidgets import FluentIcon as FIF
+from vendor.qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme,
+                                   setThemeColor)
 
 
 class Widget(QFrame):
@@ -56,7 +55,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
 
         self.navigationInterface.addWidget(routeKey='avatar', widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'), onClick=self.showMessageBox, position=NavigationItemPosition.BOTTOM, )
-        self.addSubInterface(self.settingInterface, FIF.SETTING, 'Settings')
+        self.addSubInterface(self.settingInterface, FIF.SETTING, '设置')
 
         # add badge to navigation item
         item = self.navigationInterface.widget(self.vide2srt.objectName())  # InfoBadge.attension(  #     text=9,  #     parent=item.parent(),  #     target=item,  #     position=InfoBadgePosition.NAVIGATION_ITEM  # )

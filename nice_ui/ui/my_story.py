@@ -5,13 +5,13 @@ import sys
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy
-from qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit)
 
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.util import tools
 from nice_ui.util.tools import ObjFormat
 from orm.queries import ToSrtOrm, ToTranslationOrm
+from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit)
 
 
 class TableApp(CardWidget):

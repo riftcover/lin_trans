@@ -1,6 +1,3 @@
-import sys
-import os
-
 # 将修改后的库路径添加到sys.path
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'vendor'))
 

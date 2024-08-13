@@ -5,14 +5,14 @@ import sys
 import path
 from PySide6.QtCore import Qt, Slot, QSettings, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem,
-                               QSizePolicy, QFormLayout, )
-from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition,ComboBox,BodyLabel
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, QSizePolicy,
+                               QFormLayout, )
 
 from agent import get_translate_code
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
+from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel
 
 
 class WorkSrt(QWidget):

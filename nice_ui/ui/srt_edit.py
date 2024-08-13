@@ -2,9 +2,9 @@ import sys
 
 from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
-from qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
 
 from nice_ui.ui.style import SubtitleTable
+from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
 

@@ -2,17 +2,17 @@ import os
 import re
 import sys
 
-from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QEvent
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
     QSizePolicy, QTextEdit
-from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
-                                   InfoBarPosition, FluentIcon, PrimaryPushButton, TextEdit, )
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
+from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, )
 
 
 class LocalModelPage(QWidget):
