@@ -197,7 +197,7 @@ class PopupWidget(QWidget):
         self.setLayout(layout)
 
     def save_prompt(self):
-        # todo: 保存提示词到数据库
+        # 保存提示词到数据库
         # config.logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
         new_msg = self.label.toPlainText()
         config.logger.info(f"修改提示词: {new_msg}")
