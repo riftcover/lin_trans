@@ -183,7 +183,7 @@ class PromptsOrm:
     def query_data_by_id(self, key_id: int, session=None):
         # 输入prompt_name查询数据
         try:
-            prompt = session.query(Prompts).filter_by(id=key_id).one()
+            prompt = session.query(Prompts).filter(Prompts.id==key_id).first()
             # session.refresh(prompt)
             # session.expunge(prompt)
             return prompt
@@ -201,7 +201,7 @@ class PromptsOrm:
 
     @session_manager
     def update_table_prompt(self, key_id: int, session=None, **kwargs, ):
-        if entry := self.query_data_by_id(key_id):
+        if entry := session.query(Prompts).filter(Prompts.id==key_id).first():
             for key, value in kwargs.items():
                 setattr(entry, key, value)
             session.commit()
@@ -220,7 +220,7 @@ class PromptsOrm:
 if __name__ == "__main__":
     # 测试
     # to_srt_orm = PromptsOrm()
-    to_srt_orm = ToTranslationOrm()
+    to_srt_orm = PromptsOrm()
 
     # to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
 
@@ -229,5 +229,5 @@ if __name__ == "__main__":
     # 替换 {lang} 为 zh-cn
     # modified_content = one_srt.prompt_content.format(lang='zh-cn', text='你好')
     # print(modified_content)
-    print(to_srt_orm.query_data_format_unid_path())
+    print(to_srt_orm.update_table_prompt(2,"你好"))
 

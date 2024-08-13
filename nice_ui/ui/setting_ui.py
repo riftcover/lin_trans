@@ -2,13 +2,12 @@ import os
 import re
 import sys
 
-from PySide6.QtCore import QSettings, Qt, QUrl, QSize
-from PySide6.QtGui import QColor
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QEvent
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QHeaderView, QLabel, QTextEdit
+    QSizePolicy, QTextEdit
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
-                                   InfoBarPosition, FluentIcon, PrimaryPushButton, )
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, TextEdit, )
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
@@ -101,8 +100,7 @@ class LocalModelPage(QWidget):
             self.path_input.setText(new_path)
             # config.logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
-            self.settings.setValue("models_path", config.models_path)
-            # self.settings.sync()
+            self.settings.setValue("models_path", config.models_path)  # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -130,8 +128,9 @@ class LocalModelPage(QWidget):
             self.faster_model_title.hide()
             self.faster_model_table.hide()
             # 填充 Whisper.Cpp 模型数据
-            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5),
-                          ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
+            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+                          ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+                          ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
             self.populate_model_table(self.cpp_model_table, cpp_models)
         else:
             self.cpp_model_title.hide()
@@ -139,12 +138,13 @@ class LocalModelPage(QWidget):
             self.faster_model_title.show()
             self.faster_model_table.show()
             # 填充 FasterWhisper 模型数据
-            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5),
-                             ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
+            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+                             ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+                             ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
 
             self.populate_model_table(self.faster_model_table, faster_models)
 
-    def model_type(self, param:int):
+    def model_type(self, param: int):
         """
         设置模型类型，1为Whisper.Cpp，2为FasterWhisper
         """
@@ -152,17 +152,37 @@ class LocalModelPage(QWidget):
         config.logger.info(f"设置模型类型: {config.model_type}")
         self.settings.setValue("model_type", param)
 
+
 class PopupWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, key_id: int, msg: str, parent=None):
+        super().__init__(parent=parent)
+        self.key_id = key_id
+        self.msg = msg
         self.setWindowTitle("编辑提示词")
+        self.resize(460, 330)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.setup_ui()
 
+    # def event(self, event):
+    #     """
+    #     重写事件过滤器，打印窗口大小
+    #     检查事件类型是否为 QEvent.Move，这是窗口移动事件。
+    #     如果是移动事件，调用 self.print_window_size() 方法打印窗口大小。
+    #     调用 super().event(event) 以确保其他事件也能被正确处理。
+    #     """
+    #
+    #     if event.type() == QEvent.Move:
+    #         self.print_window_size()
+    #     return super().event(event)
+    #
+    # def print_window_size(self):
+    #     size = self.size()
+    #     print(f"窗口大小: 宽度={size.width()}, 高度={size.height()}")
+
     def setup_ui(self):
         layout = QVBoxLayout()
-        label = QTextEdit()
-        label.setPlaceholderText("请输入提示词")
+        self.label = QTextEdit()
+        self.label.setPlainText(self.msg)
         close_button = PushButton("取消")
         close_button.clicked.connect(self.close)
         enter_button = PrimaryPushButton("确定")
@@ -172,13 +192,19 @@ class PopupWidget(QWidget):
         button_layout.addWidget(enter_button)
         button_layout.addWidget(close_button)
 
-
-        layout.addWidget(label)
+        layout.addWidget(self.label)
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
     def save_prompt(self):
-        pass  # todo: 保存提示词到数据库
+        # todo: 保存提示词到数据库
+        # config.logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
+        new_msg = self.label.toPlainText()
+        config.logger.info(f"修改提示词: {new_msg}")
+        self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
+        self.close()
+        self.parent()._refresh_table_data()
+
 
 class LLMConfigPage(QWidget):
     def __init__(self, settings, parent=None):
@@ -289,12 +315,14 @@ class LLMConfigPage(QWidget):
     def _edit_prompt(self, button):
         def edit_row():
             button_row = self.prompts_table.indexAt(button.pos()).row()
-            config.logger.info(f"编辑prompt,所在行:{button_row} ")
+            config.logger.debug(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
+            config.logger.debug(f"编辑prompt,key_id:{key_id} ")
             prompt_name = self.prompts_table.item(button_row, 1).text()
-            prompt_content = self.prompts_table.item(button_row, 2).text()  # todo: 弹出编辑对话框，修改后回写入数据库  # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
-            self.popup = PopupWidget()
+            prompt_content = self.prompts_table.item(button_row, 2).text()
+            self.popup = PopupWidget(int(key_id), prompt_content, self)
             self.popup.show()
+
         return edit_row
 
 
@@ -407,7 +435,8 @@ class ProxyPage(QWidget):
                        如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
 
             if not proxy:
-                InfoBar.warning(title="警告", content="请输入有效的代理地址", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+                InfoBar.warning(title="警告", content="请输入有效的代理地址", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                                duration=2000, parent=self, )
                 return
             self.settings.setValue("use_proxy", use_proxy)
             self.settings.setValue("proxy", proxy)
@@ -442,9 +471,11 @@ class ProxyPage(QWidget):
                 # 这里添加取消代理的代码
                 QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
 
-            InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+            InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                            parent=self, )
         except Exception as e:
-            InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self, )
+            InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                          parent=self, )
 
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -466,10 +497,12 @@ class ProxyPage(QWidget):
 
     def handle_response(self, reply):
         if reply.error():
-            InfoBar.error(title='错误', content=f"测试失败: {reply.errorString()}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self)
+            InfoBar.error(title='错误', content=f"测试失败: {reply.errorString()}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                          duration=3000, parent=self)
         else:
             response = reply.readAll().data().decode()
-            InfoBar.success(title='成功', content=f"测试成功: {response}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self)
+            InfoBar.success(title='成功', content=f"测试成功: {response}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
+                            parent=self)
 
 
 class SettingInterface(QWidget):
