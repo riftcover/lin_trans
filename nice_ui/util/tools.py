@@ -1168,7 +1168,7 @@ def get_google_url():
                         if res.status_code == 200:
                             return google_url
                     except Exception:
-                        msg = (f'测试失败: {google_url}')
+                        msg = f'测试失败: {google_url}'
                         config.logger.error(msg)
                         continue
                     finally:

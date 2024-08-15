@@ -73,4 +73,4 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
 if __name__ == '__main__':
     filter = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.srt'
     out_file = r'D:\dcode\lin_trans\result\tt1\finish-qwen2-57b-a14b-instruct.srt'
-    translation = translate_document(filter, out_file)
+    translate_document('57b-a14b-instruct', filter, out_file)

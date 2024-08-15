@@ -230,5 +230,4 @@ if __name__ == "__main__":
     # 替换 {lang} 为 zh-cn
     # modified_content = one_srt.prompt_content.format(lang='zh-cn', text='你好')
     # print(modified_content)
-    print(to_srt_orm.update_table_prompt(2,"你好"))
 

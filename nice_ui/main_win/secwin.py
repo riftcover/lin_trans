@@ -70,8 +70,12 @@ class ClickableProgressBar(QLabel):
 # primary ui
 
 
-class SecWindow():
+class SecWindow:
     def __init__(self, main=None):
+        self.queue_consumer = None
+        self.queue_consumer_thread = None
+        self.worker = None
+        self.worker_thread = None
         self.main = main
         self.usetype = None
         self.data_bridge = DataBridge()
@@ -302,7 +306,7 @@ class SecWindow():
             fnames[i] = it.replace('\\', '/')
 
         if len(fnames) > 0:
-            self.main.source_mp4.setText(f'{len((fnames))} videos')
+            self.main.source_mp4.setText(f'{len(fnames)} videos')
             config.last_opendir = os.path.dirname(fnames[0])
             self.main.settings.setValue("last_dir", config.last_opendir)
             config.queue_mp4 = fnames

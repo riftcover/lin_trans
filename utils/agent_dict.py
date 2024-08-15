@@ -11,16 +11,9 @@ class AgentDict(TypedDict):
 
 AgentSettings = Dict[str, AgentDict]
 
+qwen_msg: dict[str, str] = {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen2-57b-a14b-instruct"}
 
-qwen_msg ={
-    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    "model": "qwen2-57b-a14b-instruct"
-}
-
-kimi_msg = {
-    "base_url": "https://api.moonshot.cn/v1",
-    "model": "moonshot-v1-8k"
-}
+kimi_msg = {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}
 
 
 def agent_settings() -> AgentSettings:
@@ -29,7 +22,4 @@ def agent_settings() -> AgentSettings:
     qwen_msg.update(qwen_key)
     kimi_key = {"key": gui_settings.value("kimi")}
     kimi_msg.update(kimi_key)
-    return {
-        "qwen": qwen_msg,
-        "kimi": kimi_msg
-    }
+    return {"qwen": qwen_msg, "kimi": kimi_msg}
