@@ -2,14 +2,16 @@ import functools
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+import threading
 
 import whisper
 from faster_whisper import WhisperModel
 from whisper.utils import get_writer, format_timestamp, make_safe
-
+from funasr import AutoModel
 from nice_ui.configure import config
-from utils.file_utils import write_srt_file
+from utils.file_utils import write_srt_file, get_segment_timestamps, funasr_write_srt_file
 from utils.log import Logings
 
 logger = Logings().logger
@@ -20,12 +22,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 def capture_whisper_variables(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        captured_data = {
-            "current_segments": None,
-            "content_frames": None,
-            "seek": None,
-            "previous_seek": None,
-            "last_printed_seek": None  # 这个变量来跟踪上次打印的 seek 值
+        captured_data = {"current_segments": None, "content_frames": None, "seek": None, "previous_seek": None, "last_printed_seek": None  # 这个变量来跟踪上次打印的 seek 值
         }
 
         def trace(frame, event, arg):
@@ -81,7 +78,7 @@ def my_transcribe_function(model, audio, *args, **kwargs):
 
 class SrtWriter:
 
-    def __init__(self, unid: str, input_dirname: Path, raw_basename: str, ln: str):
+    def __init__(self, unid: str, input_dirname: Path | str, raw_basename: str, ln: str):
         """
 
         Args:
@@ -99,8 +96,17 @@ class SrtWriter:
         self.ln = ln
         self.data_bridge = config.data_bridge
         self.unid = unid
+        self._stop_progress_thread = False  # 用于停止进度线程，线程是用来更新funasr的进度条的，是一个假的进度条
 
     # @log_whisper_progress
+    def _update_progress(self):
+        progress = 0
+        while not self._stop_progress_thread:
+            self.data_bridge.emit_whisper_working(self.unid, progress)
+            progress += 1
+            if progress >= 93:
+                break
+            time.sleep(1)
 
     def whisper_only_to_srt(self, model_name: str = 'small') -> None:
         """
@@ -141,8 +147,8 @@ class SrtWriter:
         # 运行 whisper.cpp 的命令
         command = ["./main", "-m", model_path, "-f", self.input_file, "-l", self.ln, "-osrt", "-of", audio_srt_path, "-pp"]
         logger.debug("Running command:", " ".join(command))
-        subprocess.run(command, capture_output=True, text=True, # cwd=cwd_path
-        )
+        subprocess.run(command, capture_output=True, text=True,  # cwd=cwd_path
+                       )
 
     def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
         # todo : [0.0 --> 30.0] [30.0 --> 39.92] [40.6 --> 59.64] 1.当前时间戳不精准，2.多句话混在一起
@@ -170,6 +176,29 @@ class SrtWriter:
 
         self.data_bridge.emit_whisper_finished(self.unid)
 
+    def funasr_to_srt(self, model_name: str = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'):
+        logger.info("使用FunASR开始识别")
+        model_dir = f'{config.root_path}/models/funasr/{model_name}'
+        # model_dir =r"D:\dcode\lin_trans\models\funasr\speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
+        model = AutoModel(model=model_dir, model_revision="v2.0.4", vad_model="fsmn-vad", vad_model_revision="v2.0.4",
+                          # punc_model="ct-punc-c",punc_model_revision="v2.0.4", # 标点符号
+                          # spk_model="cam++", spk_model_revision="v2.0.2", # 说话人确认
+                          disable_update=True)
+        # 启动进度更新线程
+        progress_thread = threading.Thread(target=self._update_progress)
+        progress_thread.start()
+        try:
+            res = model.generate(input=self.input_file, batch_size_s=300, hotword=None, language=self.ln)
+        finally:
+            self._stop_progress_thread = True
+            progress_thread.join()  # 模型生成完成，更新进度值到 80
+        self.data_bridge.emit_whisper_working(self.unid, 93)
+        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+        segments = get_segment_timestamps(res)
+        # self.data_bridge.emit_whisper_working(self.unid, 90)
+        funasr_write_srt_file(segments, srt_file_path)
+        self.data_bridge.emit_whisper_finished(self.unid)
+
     def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
         if system_type != 'darwin':
             self.whisper_faster_to_srt(model_name, cuda_status)
@@ -181,9 +210,10 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    output = r'D:\dcode\lin_trans\result\85247cda952a062ae51356699ed9c78b'
+    output = r'D:\dcode\lin_trans\result\tt1'
     tt1 = '1.如何获取需求.wav'
     # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # models = 'D:\dcode\lin_trans\models\small.pt'
 
-    SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
+    # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
+    SrtWriter('xxx', output, tt1, 'zh').funasr_to_srt()

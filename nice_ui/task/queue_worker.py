@@ -32,22 +32,30 @@ class LinQueue:
     def consume_queue():
 
         # 将mp4转为war,在QueueConsumer中消费
+        config.logger.debug('消费线程工作中')
         task = config.lin_queue.get_nowait()
+        config.logger.debug(f'获取到任务:{task}')
         if task['job_type'] == 'srt':
-            if task['codec_type'] == 'video':
+            config.logger.debug('消费srt任务')
+            # if task['codec_type'] == 'video':
                 # 视频转音频
-                final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'
-                FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)
-                # 处理音频转文本
-                srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )
-                srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
-            elif task['codec_type'] == 'audio':
-                final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'
-                FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)
-                srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )
-                srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
+
+            final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'
+            # 音视频转wav格式
+            config.logger.debug(f'准备音视频转wav格式:{final_name}')
+            FFmpegJobs.convert_mp4_to_wav(task['raw_name'], final_name)
+            # 处理音频转文本
+            srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )
+            # srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
+            srt_worker.funasr_to_srt()
+            # elif task['codec_type'] == 'audio':
+            #     final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'
+            #     FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)
+            #     srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )
+            #     srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
 
         elif task['job_type'] == 'trans':
+            config.logger.debug('消费translate任务')
             agent_type = config.params['translate_type']
             if agent_type in ('qwen','kimi'):
                 final_name = f'{task["output"]}/{task["raw_noextname_译文"]}.srt'

@@ -43,7 +43,7 @@ class Worker(QObject):
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it)
-            obj_format['job_type'] = 'whisper'
+            obj_format['job_type'] = 'srt'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
@@ -105,10 +105,10 @@ class QueueConsumer(QObject):
 
     def process_queue(self):
         # todo: 添加文件开始后立即点击我的创作页,线程不工作
-        config.logger.debug('消费线程开始工作')
+        config.logger.debug('通知消费线程')
         config.is_consuming = True
         while not config.lin_queue.empty():
-            config.logger.debug('消费线程工作中')
+            config.logger.debug('消费线程开始准备')
             work_queue.consume_queue()
         config.is_consuming = False
         self.finished.emit()
