@@ -16,15 +16,13 @@ class Logings:
         if not os.path.isdir(log_path): os.makedirs(log_path)
         self.logger.remove()  # 删去import logger之后自动产生的handler，不删除的话会出现重复输出的现象
         self.logger.add(sys.stderr, level="DEBUG")  # 控制台日志级别
-        self.logger.add(
-            f'{log_path}/{DATE}.log',
-            encoding='utf-8',
-            retention='1 days',  # 设置历史保留时长
+        self.logger.add(f'{log_path}/{DATE}.log', encoding='utf-8',
             backtrace=True,  # 回溯
             diagnose=True,  # 诊断
             enqueue=True,  # 异步写入
             filter="",  # 过滤器
-            level="INFO"  # 过滤级别
+            level="INFO",  # 过滤级别
+            rotation="1 day" # 设置历史保留时长
             # rotation="5kb",  # 切割，设置文件大小，rotation="12:00"，rotation="1 week"
             # filter="my_module"  # 过滤模块
             # compression="zip"   # 文件压缩

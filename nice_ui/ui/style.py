@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
 from agent import translate_api_name
@@ -182,10 +182,6 @@ class TranslateKeySet(QWidget):
 class LTimeEdit(QTimeEdit):
     def __init__(self, time_str, parent=None):
         super().__init__(parent)
-        self.setDisplayFormat(HH_MM_SS_ZZZ)
-        time = QTime.fromString(time_str, HH_MM_SS_ZZZ)
-        self.setTime(time)
-
         # 设置步长为500毫秒
         self._step_msecs = 500
 
@@ -193,6 +189,11 @@ class LTimeEdit(QTimeEdit):
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
 
         #todo：当前默认毫秒高亮，后续修改为默认不高亮
+
+    def initTime(self, time_str):
+        self.setDisplayFormat(HH_MM_SS_ZZZ)
+        time = QTime.fromString(time_str, HH_MM_SS_ZZZ)
+        self.setTime(time)
 
     def stepBy(self, steps):
         current_time: QTime = self.time()
@@ -245,7 +246,7 @@ class LinLineEdit(QTextEdit):
         super().mousePressEvent(event)
 
 
-class SubtitleTable(TableWidget):
+class SubtitleTable(QTableWidget):
     tableChanged = Signal(list)
 
     def __init__(self, file_path:str, parent=None):
@@ -387,9 +388,11 @@ class SubtitleTable(TableWidget):
 
         # 第三列：时间
         time_layout = QVBoxLayout()
-        start_time = LTimeEdit(srt_data[0], self)
+        start_time = LTimeEdit(self)
+        start_time.initTime(srt_data[0])
         start_time.setObjectName("start_time")
-        end_time = LTimeEdit(srt_data[1], self)
+        end_time = LTimeEdit(self)
+        end_time.initTime(srt_data[1])
         end_time.setObjectName("end_time")
         time_layout.addWidget(start_time)
         time_layout.addWidget(end_time)
@@ -660,8 +663,8 @@ if __name__ == '__main__':
     import sys
 
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\1.如何获取需求.srt'
     app = QApplication(sys.argv)
     card = SubtitleTable(patt)
-    # print(card.load_subtitle())
     card.show()
     sys.exit(app.exec())
