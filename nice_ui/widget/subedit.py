@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QTableView, QStyledItemDelegate, QPushButton, QWidget, QVBoxLayout, QStyle, QStyleOptionButton, \
     QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal, \
+    QElapsedTimer
 from PySide6.QtGui import QBrush, QColor, QStandardItemModel, QRegion
 import sys
 
@@ -231,8 +232,9 @@ class CustomItemDelegate(QStyledItemDelegate):
             super().setModelData(editor, model, index)
 
     def paint(self, painter, option, index):
+        timer = QElapsedTimer()
+        timer.start()
         if index.column() in [0, 1, 2, 3, 4, 5, 6]:
-            # 为这些列创建持久化的编辑器
             if index not in self._persistent_editors:
                 editor = self.createEditor(self.parent(), option, index)
                 self.setEditorData(editor, index)
@@ -240,6 +242,10 @@ class CustomItemDelegate(QStyledItemDelegate):
                 self._persistent_editors[index] = editor
         else:
             super().paint(painter, option, index)
+        print('======')
+        print(len(self._persistent_editors))
+        # print(self._persistent_editors)
+        # print(f"Paint time: {timer.elapsed()} ms")
 
     def sizeHint(self, option, index):
         # 返回固定大小以提高性能
@@ -333,7 +339,7 @@ class SubtitleTable(QTableView):
 
     def schedule_update(self):
         # 使用计时器来延迟更新，避免频繁更新
-        self.update_timer.start(800)  # 100ms 延迟
+        self.update_timer.start(500)  # 100ms 延迟
 
     def delayed_update(self):
         # 实际更新视口
@@ -341,11 +347,10 @@ class SubtitleTable(QTableView):
 
     def closeEvent(self, event):
         # 确保在关闭表格时清理所有编辑器
-        for editors in self.editor_pool.values():
-            for editor in editors:
+        delegate = self.itemDelegate()
+        if isinstance(delegate, CustomItemDelegate):
+            for editor in delegate._persistent_editors.values():
                 editor.deleteLater()
-        for editor in self.visible_editors.values():
-            editor.deleteLater()
         super().closeEvent(event)
 
 
