@@ -255,7 +255,7 @@ class SubtitleModel(QAbstractTableModel):
     def rowCount(self, parent=QModelIndex()):
         return len(self._data)
 
-    def columnCount(self, parent):
+    def columnCount(self, parent=QModelIndex()):
         return 7
 
     def data(self, index, role=Qt.DisplayRole):
@@ -302,12 +302,16 @@ class SubtitleModel(QAbstractTableModel):
 class SubtitleTable(QTableView):
     def __init__(self,file_path: str):
         super().__init__()
+        self.model = None
         self.file_path = file_path
         self.data_loader = DataLoader(file_path)
         self.data_loader.data_loaded.connect(self.on_data_loaded)
         self.data_loader.start()
 
-
+        # 添加计时器
+        self.update_timer = QTimer(self)
+        self.update_timer.setSingleShot(True)
+        self.update_timer.timeout.connect(self.delayed_update)
 
     def on_data_loaded(self, data):
         self.all_data = data
@@ -323,24 +327,43 @@ class SubtitleTable(QTableView):
             self.setRowHeight(row, 80)
 
         self.setItemDelegate(CustomItemDelegate(self))
+        # 连接滚动信号到更新函数
+        self.verticalScrollBar().valueChanged.connect(self.schedule_update)
         # self._add_row(self.all_data)
 
+    def schedule_update(self):
+        # 使用计时器来延迟更新，避免频繁更新
+        self.update_timer.start(800)  # 100ms 延迟
+
+    def delayed_update(self):
+        # 实际更新视口
+        self.viewport().update()
+
+    def closeEvent(self, event):
+        # 确保在关闭表格时清理所有编辑器
+        for editors in self.editor_pool.values():
+            for editor in editors:
+                editor.deleteLater()
+        for editor in self.visible_editors.values():
+            editor.deleteLater()
+        super().closeEvent(event)
 
 
 
 
-    def _add_row(self, srt_data):
-        # 初始化时加载数据
-        for row_position, srt_line in enumerate(srt_data):
-            # 第四列：时间
-            index_3 = self.model.index(row_position, 3)  # 第4列的索引是3
-            start_time = srt_line[0]
-            end_time = srt_line[1]
-            times = (start_time, end_time)
-            self.model.setData(index_3, times, Qt.UserRole)
-            # 第五列：原文
-            index_4 = self.model.index(row_position, 4)  # 第5列的索引是4
-            self.model.setData(index_4, srt_line[2], Qt.EditRole)
+
+    # def _add_row(self, srt_data):
+    #     # 初始化时加载数据
+    #     for row_position, srt_line in enumerate(srt_data):
+    #         # 第四列：时间
+    #         index_3 = self.model.index(row_position, 3)  # 第4列的索引是3
+    #         start_time = srt_line[0]
+    #         end_time = srt_line[1]
+    #         times = (start_time, end_time)
+    #         self.model.setData(index_3, times, Qt.UserRole)
+    #         # 第五列：原文
+    #         index_4 = self.model.index(row_position, 4)  # 第5列的索引是4
+    #         self.model.setData(index_4, srt_line[2], Qt.EditRole)
 
 
 if __name__ == "__main__":
