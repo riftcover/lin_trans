@@ -9,6 +9,7 @@ from nice_ui.configure import config
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
 from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
 
+
 class DataLoader(QThread):
     data_loaded = Signal(list)
 
@@ -69,8 +70,12 @@ class DataLoader(QThread):
         config.logger.debug(f"字幕文件行数: {len(subtitles)}")
         return subtitles
 
+
 class CustomItemDelegate(QStyledItemDelegate):
+    # 自定义代理项，用于设置单元格的样式
+
     def __init__(self, parent=None):
+        # 构造函数，初始化父类，创建一个持久化编辑器字典
         super().__init__(parent)
         self._persistent_editors = {}
 
@@ -141,12 +146,12 @@ class CustomItemDelegate(QStyledItemDelegate):
         delete_button.setToolTip("删除本行字幕")
         delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         delete_button.setObjectName("delete_button")
-        delete_button.clicked.connect(lambda _, r=row: self._delete_row(r))
+        delete_button.clicked.connect(lambda _, r=row:self._delete_row(r))
         add_button = TransparentToolButton(FluentIcon.ADD)
         add_button.setObjectName("add_button")
         add_button.setToolTip("下方添加一行")
         add_button.installEventFilter(ToolTipFilter(add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        add_button.clicked.connect(lambda _, r=row: self._insert_row_below(r))
+        add_button.clicked.connect(lambda _, r=row:self._insert_row_below(r))
 
         delete_button.setFixedSize(button_size)
         add_button.setFixedSize(button_size)
@@ -156,12 +161,12 @@ class CustomItemDelegate(QStyledItemDelegate):
         down_row_button.setObjectName("down_button")
         down_row_button.setToolTip("移动译文到下一行")
         down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        down_row_button.clicked.connect(lambda _, r=row: self._move_row_down(r))
+        down_row_button.clicked.connect(lambda _, r=row:self._move_row_down(r))
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("up_button")
         up_row_button.setToolTip("移动译文到上一行")
         up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
+        up_row_button.clicked.connect(lambda _, r=row:self._move_row_up(r))
 
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
@@ -182,6 +187,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         return button
 
     def setEditorData(self, editor, index):
+        # 编辑器数据设置
         if index.column() == 0:
             # 勾选框
             editor.setChecked(index.data(Qt.CheckStateRole) == Qt.Checked)
@@ -194,7 +200,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 3:
             # 时间
             times = index.data(Qt.UserRole)
-            start_time =editor.findChild(LTimeEdit, "start_time")
+            start_time = editor.findChild(LTimeEdit, "start_time")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
@@ -208,6 +214,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             super().setEditorData(editor, index)
 
     def setModelData(self, editor, model, index):
+        # 编辑器数据保存
         if index.column() == 0:
             # 勾选框
             model.setData(index, editor.isChecked(), Qt.CheckStateRole)
@@ -221,7 +228,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             start_time = editor.findChild(LTimeEdit, "start_time").time().toString()
             end_time = editor.findChild(LTimeEdit, "end_time").time().toString()
-            model.setData(index, f"{start_time} - {end_time}",Qt.UserRole)
+            model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
             # 原文和译文
             model.setData(index, editor.toText(), Qt.EditRole)
@@ -232,8 +239,18 @@ class CustomItemDelegate(QStyledItemDelegate):
             super().setModelData(editor, model, index)
 
     def paint(self, painter, option, index):
+        # 绘制单元格
         timer = QElapsedTimer()
         timer.start()
+
+        table_view = self.parent()
+        visible_range = table_view.viewport().rect()
+        row_height = table_view.rowHeight(0)
+
+        # 计算可见行的范围
+        first_visible_row = table_view.rowAt(visible_range.top())
+        last_visible_row = table_view.rowAt(visible_range.bottom())
+        config.logger.debug(f"index: {index.row()}, first_visible_row: {first_visible_row}, last_visible_row: {last_visible_row}")
         if index.column() in [0, 1, 2, 3, 4, 5, 6]:
             if index not in self._persistent_editors:
                 editor = self.createEditor(self.parent(), option, index)
@@ -241,11 +258,8 @@ class CustomItemDelegate(QStyledItemDelegate):
                 self.parent().setIndexWidget(index, editor)
                 self._persistent_editors[index] = editor
         else:
-            super().paint(painter, option, index)
-        print('======')
-        print(len(self._persistent_editors))
-        # print(self._persistent_editors)
-        # print(f"Paint time: {timer.elapsed()} ms")
+            super().paint(painter, option,
+                          index)  # print('======')  # print(len(self._persistent_editors))  # print(self._persistent_editors)  # print(f"Paint time: {timer.elapsed()} ms")
 
     def sizeHint(self, option, index):
         # 返回固定大小以提高性能
@@ -253,7 +267,9 @@ class CustomItemDelegate(QStyledItemDelegate):
 
     # def sizeHint(self, option, index):  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
+
 class SubtitleModel(QAbstractTableModel):
+    # 定义数据模型
     def __init__(self, data, parent=None):
         super().__init__(parent)
         self._data = data
@@ -265,6 +281,7 @@ class SubtitleModel(QAbstractTableModel):
         return 7
 
     def data(self, index, role=Qt.DisplayRole):
+        # 定义数据获取方式
         if not index.isValid() or not (0 <= index.row() < len(self._data)):
             return None
 
@@ -305,8 +322,11 @@ class SubtitleModel(QAbstractTableModel):
 
     def flags(self, index):
         return super().flags(index) | Qt.ItemIsEditable
+
+
 class SubtitleTable(QTableView):
-    def __init__(self,file_path: str):
+    # 定义表格视图
+    def __init__(self, file_path: str):
         super().__init__()
         self.model = None
         self.file_path = file_path
@@ -334,8 +354,7 @@ class SubtitleTable(QTableView):
 
         self.setItemDelegate(CustomItemDelegate(self))
         # 连接滚动信号到更新函数
-        self.verticalScrollBar().valueChanged.connect(self.schedule_update)
-        # self._add_row(self.all_data)
+        self.verticalScrollBar().valueChanged.connect(self.schedule_update)  # self._add_row(self.all_data)
 
     def schedule_update(self):
         # 使用计时器来延迟更新，避免频繁更新
@@ -353,22 +372,7 @@ class SubtitleTable(QTableView):
                 editor.deleteLater()
         super().closeEvent(event)
 
-
-
-
-
-    # def _add_row(self, srt_data):
-    #     # 初始化时加载数据
-    #     for row_position, srt_line in enumerate(srt_data):
-    #         # 第四列：时间
-    #         index_3 = self.model.index(row_position, 3)  # 第4列的索引是3
-    #         start_time = srt_line[0]
-    #         end_time = srt_line[1]
-    #         times = (start_time, end_time)
-    #         self.model.setData(index_3, times, Qt.UserRole)
-    #         # 第五列：原文
-    #         index_4 = self.model.index(row_position, 4)  # 第5列的索引是4
-    #         self.model.setData(index_4, srt_line[2], Qt.EditRole)
+    # def _add_row(self, srt_data):  #     # 初始化时加载数据  #     for row_position, srt_line in enumerate(srt_data):  #         # 第四列：时间  #         index_3 = self.model.index(row_position, 3)  # 第4列的索引是3  #         start_time = srt_line[0]  #         end_time = srt_line[1]  #         times = (start_time, end_time)  #         self.model.setData(index_3, times, Qt.UserRole)  #         # 第五列：原文  #         index_4 = self.model.index(row_position, 4)  # 第5列的索引是4  #         self.model.setData(index_4, srt_line[2], Qt.EditRole)
 
 
 if __name__ == "__main__":
