@@ -354,6 +354,7 @@ class SubtitleTable(QTableView):
         self.setVerticalScrollMode(QTableView.ScrollPerPixel)
         self.setHorizontalScrollMode(QTableView.ScrollPerPixel)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
         column_widths = [50, 250, 50, 200, 300, 300, 50]
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
