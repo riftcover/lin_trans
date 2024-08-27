@@ -1,4 +1,4 @@
-from typing import Dict, Set, Tuple, Optional, Any
+from typing import Dict, Set, Tuple, Optional, Any, List
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel
 
