@@ -1,5 +1,9 @@
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, QThread, Signal
-from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QApplication, QMainWindow, QTableView, QStyledItemDelegate, QPushButton, QWidget, QVBoxLayout, QStyle, QStyleOptionButton, \
+    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal, \
+    QElapsedTimer
+from PySide6.QtGui import QBrush, QColor, QStandardItemModel, QRegion
+import sys
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
@@ -90,35 +94,9 @@ class CustomItemDelegate(QStyledItemDelegate):
             return self.create_edit_widget(parent, index.row())
         return super().createEditor(parent, option, index)
 
-    # def paint(self, painter, option, index):
-    """
-    在使用openPersistentEditor时会持久化创建编辑器，就不需要使用print函数了
-    使用print函数会导致窗口闪烁
-    """
-    #     # 绘制单元格
-    #     timer = QElapsedTimer()
-    #     timer.start()
-    #
-    #     table_view = self.parent()
-    #     visible_range = table_view.viewport().rect()
-    #     row_height = table_view.rowHeight(0)
-    #
-    #     # 计算可见行的范围
-    #     first_visible_row = table_view.rowAt(visible_range.top())
-    #     last_visible_row = table_view.rowAt(visible_range.bottom())
-    #     config.logger.debug(f"index: {index.row()}, first_visible_row: {first_visible_row}, last_visible_row: {last_visible_row}")
-    #     if index.column() in [0, 1, 2, 3, 4, 5, 6]:
-    #         if index not in self._persistent_editors:
-    #             editor = self.createEditor(self.parent(), option, index)
-    #             self.setEditorData(editor, index)
-    #             self.parent().setIndexWidget(index, editor)
-    #             self._persistent_editors[index] = editor
-    #     else:
-    #         super().paint(painter, option,index)
-    #         # print('======')
-    #         # print(len(self._persistent_editors))
-    #         # print(self._persistent_editors)
-    #         # print(f"Paint time: {timer.elapsed()} ms")
+    def paint(self, painter, option, index):
+        # 重写paint方法，不执行任何绘制操作
+        pass
 
     def create_checkbox(self, parent):
         return CheckBox(parent)
@@ -264,8 +242,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         else:
             super().setModelData(editor, model, index)
 
-
-
     def sizeHint(self, option, index):
         # 返回固定大小以提高性能
         return QSize(50, 80)
@@ -355,19 +331,14 @@ class SubtitleTable(QTableView):
         self.setHorizontalScrollMode(QTableView.ScrollPerPixel)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
+        self.verticalHeader().setDefaultSectionSize(80)
         column_widths = [50, 250, 50, 200, 300, 300, 50]
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
 
         for row in range(self.model.rowCount()):
-            self.setRowHeight(row, 80)
-            # 创建持久编辑器
-            self.openPersistentEditor(self.model.index(row, 1))
-            self.openPersistentEditor(self.model.index(row, 2))
-            self.openPersistentEditor(self.model.index(row, 3))
-            self.openPersistentEditor(self.model.index(row, 4))
-            self.openPersistentEditor(self.model.index(row, 5))
-            self.openPersistentEditor(self.model.index(row, 6))
+            for col in range(self.model.columnCount()):
+                self.openPersistentEditor(self.model.index(row, col))
 
 
 
@@ -394,8 +365,8 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
-    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    # patt =r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小

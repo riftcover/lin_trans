@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - fluent_ui_ll
+#      - fluent_ui_ll
 
 jobs:
   qodana:
