@@ -334,7 +334,10 @@ class SubtitleTable(QTableWidget):
         self.subtitles.sort(key=lambda x: x[0])
 
     def initUI(self):
+        _data = self.load_subtitle()
+
         self.setColumnCount(7)
+        self.setRowCount(len(_data))
         # self.setHorizontalHeaderLabels(["操作", "行号", "时间", "时长", "原文", "译文", "编辑"])
         self.setHorizontalHeaderLabels(["", "操作", "行号", "时间", "原文", "译文", "编辑"])
 
@@ -351,12 +354,12 @@ class SubtitleTable(QTableWidget):
         self.verticalHeader().setVisible(False)
 
         # 加载字幕文件
-        for i, j in enumerate(self.load_subtitle()):
+        for i, j in enumerate(_data):
             self._add_row(i, j)
 
     def _add_row(self, row_position: int = None, srt_data: tuple = None):
 
-        self.insertRow(row_position)
+        # self.insertRow(row_position)
         # 第一列:勾选框
         chk = CheckBox()
         self.setCellWidget(row_position, 0, chk)
@@ -662,8 +665,8 @@ class SubtitleTable(QTableWidget):
 if __name__ == '__main__':
     import sys
 
-    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
-    # patt = r'D:\dcode\lin_trans\result\tt1\1.如何获取需求.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
     app = QApplication(sys.argv)
     card = SubtitleTable(patt)
     card.show()
