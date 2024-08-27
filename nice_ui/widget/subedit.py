@@ -384,6 +384,12 @@ class SubtitleTable(QTableView):
     遗留问题：当前初始化时会同时调用：resizeEvent和initialize_visible_editors，
     导致编辑器创建函数执行2次，但是好的是会去set（visible_editors）中查找，实际编辑器还只创建了一个
 
+
+    在 __init__ 方法中，我们创建了一个 QTimer 对象 self.update_timer。
+        我们添加了一个新的 delayed_update 方法，它会在计时器触发时调用 create_visible_editors。
+        在 on_scroll 和 resizeEvent 方法中，我们不再直接调用 create_visible_editors，而是启动计时器。
+        每次滚动或调整大小时，我们首先停止之前的计时器（如果存在），然后启动一个新的计时器。这确保了在快速连续的滚动或调整大小操作中，只有最后一次操作会触发更新。
+
     """
 
     def __init__(self, file_path: str):
@@ -484,10 +490,18 @@ class SubtitleTable(QTableView):
             self.closePersistentEditor(index)
             config.logger.debug(f"Removed editor for ({row}, {col})")
 
+    def delayed_update(self):
+        self.create_visible_editors()    
+    
     def on_scroll(self):
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
         config.logger.debug("Scroll event")
-        self.create_visible_editors()  # self.remove_invisible_editors()
+        # 取消之前的计时器（如果存在）
+        self.update_timer.stop()
+        # 启动新的计时器，200毫秒后更新
+        self.update_timer.start(200)
+        # self.create_visible_editors()  
+        # self.remove_invisible_editors()
 
     def on_editor_created(self, row, col):
         self.visible_editors.add((row, col))
@@ -518,14 +532,17 @@ class SubtitleTable(QTableView):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         config.logger.debug("Resize event")
-        self.create_visible_editors()
+        # 取消之前的计时器（如果存在）
+        self.update_timer.stop()
+        # 启动新的计时器，200毫秒后更新
+        self.update_timer.start(200)
 
 
 if __name__ == "__main__":
     import sys
 
-    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    # patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
