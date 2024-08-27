@@ -50,7 +50,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 6:  # 编辑按钮
             return self.create_edit_widget(parent, index.row())
 
-
         return super().createEditor(parent, option, index)
 
     def destroyEditor(self, editor, index):
@@ -375,6 +374,7 @@ class SubtitleTable(QTableView):
     导致编辑器创建函数执行2次，但是好的是会去set（visible_editors）中查找，实际编辑器还只创建了一个
 
     """
+
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
@@ -410,25 +410,24 @@ class SubtitleTable(QTableView):
         QTimer.singleShot(0, self.initialize_visible_editors)
 
     def initialize_visible_editors(self):
-        # initialize_visible_editors 方法在表格初始化时创建初始可见的编辑器。
+        # 在表格初始化时创建初始可见的编辑器。
         config.logger.debug("Initializing visible event")
         self.create_visible_editors()
 
     def create_visible_editors(self):
-        # create_visible_editors 方法只为可见区域创建编辑器。
+        # 只为可见区域创建编辑器。
         visible_rect = self.viewport().rect()
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
         config.logger.debug(f"Visible rect: {visible_rect}")
         config.logger.debug(f"Top left index: {top_left.row()}")
         config.logger.debug(f"Bottom right index: {bottom_right.row()}")
-        
+
         # if not top_left.isValid() or not bottom_right.isValid():
         #     config.logger.warning("Invalid index range")
         #     return
 
         # config.logger.debug(f"Creating editors for rows {top_left.row()} to {bottom_right.row()}")
-
 
         # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = 0 if not top_left.isValid() else top_left.row()
@@ -448,14 +447,13 @@ class SubtitleTable(QTableView):
         #                 self.openPersistentEditor(index)
         #                 config.logger.debug(f"Created editor for ({row}, {col})")
         for row in range(start_row, end_row + 1):
-            if row < self.model.rowCount():  # 确保不超出模型的行数
-                if (row, 0) not in self.visible_editors:
-                    index = self.model.index(row, 0)
+            for col in range(self.model.columnCount()):
+                if (row, col) not in self.visible_editors:
+                    index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     config.logger.debug(f"Created editor for ({row}, 0)")
 
-
-        self.verify_visible_editors()
+        # self.verify_visible_editors()
 
     def remove_invisible_editors(self):
         # remove_invisible_editors 方法移除不再可见的编辑器。
@@ -476,28 +474,10 @@ class SubtitleTable(QTableView):
             self.closePersistentEditor(index)
             config.logger.debug(f"Removed editor for ({row}, {col})")
 
-
-        # visible_rect = self.viewport().rect()
-        # top_left = self.indexAt(visible_rect.topLeft())
-        # bottom_right = self.indexAt(visible_rect.bottomRight())
-        #
-        # if not top_left.isValid() or not bottom_right.isValid():
-        #     config.logger.warning("Invalid index range")
-        #     return
-        #
-        # visible_range = set((row, 0) for row in range(top_left.row(), bottom_right.row() + 1))
-        #
-        # to_remove = self.visible_editors - visible_range
-        # for row, col in to_remove:
-        #     index = self.model.index(row, col)
-        #     self.closePersistentEditor(index)
-        #     config.logger.debug(f"Removed editor for ({row}, {col})")
-
     def on_scroll(self):
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
         config.logger.debug("Scroll event")
-        self.create_visible_editors()
-        # self.remove_invisible_editors()
+        self.create_visible_editors()  # self.remove_invisible_editors()
 
     def on_editor_created(self, row, col):
         self.visible_editors.add((row, col))
@@ -506,6 +486,7 @@ class SubtitleTable(QTableView):
         self.visible_editors.discard((row, col))
 
     def verify_visible_editors(self):
+        # 验证 visible_editors，创建的编辑器是否都存在
         visible_rect = self.viewport().rect()
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
@@ -527,14 +508,13 @@ class SubtitleTable(QTableView):
         super().resizeEvent(event)
         config.logger.debug("Resize event")
         self.create_visible_editors()
-        # self.remove_invisible_editors()
 
 
 if __name__ == "__main__":
     import sys
 
-    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    # patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
