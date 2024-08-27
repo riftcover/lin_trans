@@ -1,9 +1,5 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QTableView, QStyledItemDelegate, QPushButton, QWidget, QVBoxLayout, QStyle, QStyleOptionButton, \
-    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal, \
-    QElapsedTimer, QObject, QRunnable, Slot, QThreadPool
-from PySide6.QtGui import QBrush, QColor, QStandardItemModel, QRegion
-import sys
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
+from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
@@ -18,6 +14,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self._persistent_editors = {}
         self.signals = VirtualScrollSignals()
+        self._delete_clicked = None
 
     def createEditor(self, parent, option, index):
         """
@@ -66,6 +63,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         else:
             # 对于其他列，保持原有的逻辑
             pass
+
     # def paint(self, painter, option, index):
     """
     在使用openPersistentEditor时会持久化创建编辑器，就不需要使用print函数了
@@ -149,7 +147,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         delete_button.setToolTip("删除本行字幕")
         delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         delete_button.setObjectName("delete_button")
-        delete_button.clicked.connect(lambda _, r=row:self._delete_row(r))
+        delete_button.clicked.connect(lambda:self._delete_clicked(row))
         add_button = TransparentToolButton(FluentIcon.ADD)
         add_button.setObjectName("add_button")
         add_button.setToolTip("下方添加一行")
@@ -335,7 +333,7 @@ class SubtitleModel(QAbstractTableModel):
             elif col == 5:  # 译文列
                 return self._data[row][3]
         elif role == Qt.UserRole and col == 3:  # 时间列
-                return self._data[row][0], self._data[row][1]
+            return self._data[row][0], self._data[row][1]
 
         return None
 
@@ -351,14 +349,23 @@ class SubtitleModel(QAbstractTableModel):
                 self._data[row] = (self._data[row][0], self._data[row][1], value, self._data[row][3])
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
-        elif role == Qt.UserRole and col == 3: # 时间列
-                self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
+        elif role == Qt.UserRole and col == 3:  # 时间列
+            self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
 
         self.dataChanged.emit(index, index, [role])
         return True
 
     def flags(self, index):
         return super().flags(index) | Qt.ItemIsEditable
+
+    def removeRow(self, row, parent=QModelIndex()):
+        self.beginRemoveRows(parent, row, row)
+        del self._data[row]
+        self.endRemoveRows()
+        config.logger.debug(f"视图刷新:{self.index(row, 2)}")
+        # 通知从被删除行到最后一行的所有行都发生了变化。这将触发这些行的重绘
+        self.dataChanged.emit(self.index(row, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
+        return True
 
 
 class VirtualScrollSignals(QObject):
@@ -415,11 +422,9 @@ class SubtitleTable(QTableView):
         self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
 
         self.init_ui()
+        self.tablet_action()
 
     def init_ui(self):
-
-        # self.delegate.delete_clicked = self.delete_row
-
         # 设置滚动模式
         self.setVerticalScrollMode(QTableView.ScrollPerPixel)
         self.setHorizontalScrollMode(QTableView.ScrollPerPixel)
@@ -436,7 +441,7 @@ class SubtitleTable(QTableView):
         self.setSelectionMode(QTableView.NoSelection)
 
     def delayed_update(self):
-        self.create_visible_editors()  
+        self.create_visible_editors()
 
     def on_scroll(self):
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
@@ -513,10 +518,6 @@ class SubtitleTable(QTableView):
             self.closePersistentEditor(index)
             config.logger.debug(f"Removed editor for ({row}, {col})")
 
-
-    
-
-
     def on_editor_created(self, row, col):
         self.visible_editors.add((row, col))
 
@@ -543,7 +544,42 @@ class SubtitleTable(QTableView):
         # 延迟创建编辑器，防止编辑器还没创建完成就开始编辑
         QTimer.singleShot(0, self.create_visible_editors)
 
+    def tablet_action(self):
+        self.delegate._delete_clicked = self.delete_row
 
+    def delete_row(self, row):
+        print(f"Delete row called for row: {row}")  # 新增调试信息
+        self.model.removeRow(row)
+        self.update_editors()
+
+    def update_editors(self):
+        """
+        更新可见行的编辑器
+        我们首先关闭所有持久化的编辑器，并从 visible_editors 集合中移除它们。
+        然后，我们调用 create_visible_editors() 来重新创建可见区域的编辑器。
+        最后，我们更新可见区域内所有行的行号。我们通过调用 self.update(index) 来触发这些单元格的重绘。
+        """
+        config.logger.debug("Update editors called")
+        # Close all persistent editors
+        for editor_row, col in list(self.visible_editors):
+            self.closePersistentEditor(self.model.index(editor_row, col))
+            self.visible_editors.discard((editor_row, col))
+
+        # Recreate visible editors
+        self.create_visible_editors()
+
+        # Update row numbers for all visible rows
+        visible_rect = self.viewport().rect()
+        top_row = self.rowAt(visible_rect.top())
+        bottom_row = self.rowAt(visible_rect.bottom())
+
+        for update_row in range(top_row, bottom_row + 1):
+            for col in range(self.model.columnCount()):
+                index = self.model.index(update_row, col)
+                self.update(index)
+
+        # Force a full update of the view
+        self.viewport().update()
 
 
 if __name__ == "__main__":
