@@ -55,9 +55,8 @@ class CustomItemDelegate(QStyledItemDelegate):
 
     def destroyEditor(self, editor, index):
         # 用来通知哪个单元格需要销毁编辑器
-        if index.column() == 0:  # 只处理第一列的编辑器
-            super().destroyEditor(editor, index)
-            self.signals.destroyEditor.emit(index.row(), index.column())
+        super().destroyEditor(editor, index)
+        self.signals.destroyEditor.emit(index.row(), index.column())
 
     def paint(self, painter, option, index):
         if index.column() == 2:  # 行号列
