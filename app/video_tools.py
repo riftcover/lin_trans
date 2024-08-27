@@ -24,8 +24,8 @@ class FFmpegJobs:
         ffmpeg_process.run()
 
     @staticmethod
-    def convert_mp4_to_war(input_path: Path, output_path: Path):
-        logger.info(f'convert mp4 to war: {input_path} -> {output_path}')
+    def convert_mp4_to_wav(input_path: Path|str, output_path: Path):
+        logger.info(f'convert mp4 to wav: {input_path} -> {output_path}')
         command = [
             'ffmpeg',
             '-i', input_path,
@@ -45,6 +45,7 @@ if __name__ == '__main__':
     # Example usage
     home_path = '/Users/locodol/Movies/ski/别人的教学视频/big picture/基本姿势'
     input_file = f'{home_path}/How To Use Your Ski Poles - Make Your Skiing Look And Feel Better.webm'
-    output_file = '../data/Ski Pole Use 101.wav'
+    input_file = r'D:\dcode\lin_trans\result\tt2\ces.mp3'
+    output_file = r'D:\dcode\lin_trans\result\tt2\ces.wav'
 
-    FFmpegJobs.convert_mp4_to_war(input_file, output_file)
+    FFmpegJobs.convert_mp4_to_wav(input_file, output_file)

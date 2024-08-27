@@ -81,8 +81,8 @@ def is_valid_srt_file(file_path):
 
 
 if __name__ == "__main__":
-    file_path = "/Users/locodol/Movies/2set.srt"
-    if is_valid_srt_file(file_path):
-        print(f"{file_path} 是一个有效的 .srt 文件。")
+    file_p = "/Users/locodol/Movies/2set.srt"
+    if is_valid_srt_file(file_p):
+        print(f"{file_p} 是一个有效的 .srt 文件。")
     else:
-        print(f"{file_path} 不是")
+        print(f"{file_p} 不是")

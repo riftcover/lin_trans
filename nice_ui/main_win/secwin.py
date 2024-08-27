@@ -1,8 +1,6 @@
-import contextlib
 import copy
 import json
 import os
-import re
 import warnings
 
 from PySide6 import QtCore
@@ -10,6 +8,7 @@ from PySide6.QtCore import QUrl, Qt, QThread
 from PySide6.QtGui import QTextCursor, QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
 
+from agent import translate_api_name
 from nice_ui.task.main_worker import QueueConsumer
 from nice_ui.ui.SingalBridge import save_setting, DataBridge
 from nice_ui.util.code_tools import language_code
@@ -21,8 +20,8 @@ from videotrans import translator
 from nice_ui.configure import config
 from nice_ui.util.tools import StartTools
 
-
 start_tools = StartTools()
+
 
 class ClickableProgressBar(QLabel):
     def __init__(self, parent=None):
@@ -71,8 +70,12 @@ class ClickableProgressBar(QLabel):
 # primary ui
 
 
-class SecWindow():
+class SecWindow:
     def __init__(self, main=None):
+        self.queue_consumer = None
+        self.queue_consumer_thread = None
+        self.worker = None
+        self.worker_thread = None
         self.main = main
         self.usetype = None
         self.data_bridge = DataBridge()
@@ -271,8 +274,7 @@ class SecWindow():
         # if t == '-':
         #     self.main.voice_role.addItems(['No'])
         #     return
-        show_rolelist = tools.get_edge_rolelist() if config.params[
-                                                         'tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
+        show_rolelist = tools.get_edge_rolelist() if config.params['tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
 
         if not show_rolelist:
             show_rolelist = tools.get_edge_rolelist()
@@ -297,23 +299,21 @@ class SecWindow():
     # get video filter mp4
     def get_mp4(self):
 
-        fnames, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                                 "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
+        fnames, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir, "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
         if len(fnames) < 1:
             return
         for (i, it) in enumerate(fnames):
             fnames[i] = it.replace('\\', '/')
 
         if len(fnames) > 0:
-            self.main.source_mp4.setText(f'{len((fnames))} videos')
+            self.main.source_mp4.setText(f'{len(fnames)} videos')
             config.last_opendir = os.path.dirname(fnames[0])
             self.main.settings.setValue("last_dir", config.last_opendir)
             config.queue_mp4 = fnames
 
     # 导入背景声音
     def get_background(self):
-        fname, _ = QFileDialog.getOpenFileName(self.main, 'Background music', config.last_opendir,
-                                               "Audio files(*.mp3 *.wav *.flac)")
+        fname, _ = QFileDialog.getOpenFileName(self.main, 'Background music', config.last_opendir, "Audio files(*.mp3 *.wav *.flac)")
         if not fname:
             return
         fname = fname.replace('\\', '/')
@@ -321,8 +321,7 @@ class SecWindow():
 
     # 从本地导入字幕文件
     def import_sub_fun(self):
-        fname, _ = QFileDialog.getOpenFileName(self.main, config.transobj['selectmp4'], config.last_opendir,
-                                               "Srt files(*.srt *.txt)")
+        fname, _ = QFileDialog.getOpenFileName(self.main, config.transobj['selectmp4'], config.last_opendir, "Srt files(*.srt *.txt)")
         if fname:
             content = ""
             try:
@@ -336,8 +335,7 @@ class SecWindow():
                     self.main.subtitle_area.clear()
                     self.main.subtitle_area.insertPlainText(content.strip())
                 else:
-                    return QMessageBox.critical(self.main, config.transobj['anerror'],
-                                                config.transobj['import src error'])
+                    return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['import src error'])
 
     # 保存目录
     def get_save_dir(self):
@@ -445,20 +443,6 @@ class SecWindow():
 
     # 检测开始状态并启动
     def check_start(self):
-        # todo: proxy设置暂时不做
-        proxy = config.proxy
-        if proxy:
-            if not re.match(r'^(http|sock)', proxy, re.I):
-                proxy = f'http://{proxy}'
-            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup(
-                    '请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-一般代理/vpn格式为 http://127.0.0.1:数字端口号
-如果不知道什么是代理请勿随意填写
-如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
 
         # 加载数据
         self.main.add_queue_mp4()
@@ -467,13 +451,6 @@ class SecWindow():
         config.task_countdown = config.settings['countdown_sec']
         config.settings = config.parse_init()
 
-        with contextlib.suppress(Exception):
-            if config.proxy:
-                # 设置代理
-                tools.set_proxy(config.proxy)
-            else:
-                # 删除代理
-                tools.set_proxy('del')
         # 原始语言
         language_name = self.main.source_language.currentText()
         config.logger.debug(f'==========language_name:{language_name}')
@@ -486,7 +463,6 @@ class SecWindow():
         config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText())['status']
         config.logger.debug(config.params['source_module_status'])
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
-
 
         # 综合判断
         if len(config.queue_mp4) < 1:
@@ -522,15 +498,16 @@ class SecWindow():
 
         # 翻译渠道
         config.params['translate_type'] = self.main.translate_type.currentText()
+
         # 如果需要翻译，再判断是否符合翻译规则
-        if target_language:
-            if not self.dont_translate():
-                rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
-                                                   show_target=config.params['target_language'])
-                if rs is not True:
-                    # 不是True，有错误
-                    QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-                    return False
+        # if target_language:
+        #     if not self.dont_translate():
+        #         rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
+        #                                            show_target=config.params['target_language'])
+        #         if rs is not True:
+        #             # 不是True，有错误
+        #             QMessageBox.critical(self.main, config.transobj['anerror'], rs)
+        #             return False
 
         # 存在视频
         config.params['only_video'] = False
@@ -539,7 +516,7 @@ class SecWindow():
         if len(config.queue_mp4) > 0:
             config.params['only_video'] = True
 
-        save_setting(self.main.setting)
+        save_setting(self.main.settings)
 
         config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
         config.settings = config.parse_init()
@@ -549,17 +526,53 @@ class SecWindow():
         config.logger.debug(config.params)
         config.logger.debug("add_queue_thread")
         queue_mp4_copy = copy.deepcopy(config.queue_mp4)
-        self.add_queue_thread(queue_mp4_copy)
+        self.add_queue_thread(queue_mp4_copy, 'whisper')
+
+        self.update_status('mp4')
+
+    def check_translate(self):
+        self.main.add_queue_srt()
+        # 原始语言
+        language_name = self.main.source_language_combo.currentText()
+        config.logger.debug(f'==========language_name:{language_name}')
+        config.params['source_language'] = language_name
+
+        #翻译语种
+        translate_language_name = self.main.translate_language_combo.currentText()
+        config.logger.debug(f'==========translate_language_name:{translate_language_name}')
+        config.params['target_language'] = translate_language_name
+
+        # 翻译渠道
+        translate_language_key = config.params["translate_type"]
+        translate_language_name = self.main.translate_model.currentText()
+        for key, value in translate_api_name.items():
+            if value == translate_language_name:
+                translate_language_key = key
+        config.logger.debug(f'==========translate_language_name:{translate_language_key}')
+        config.params['translate_type'] = translate_language_key
+
+        prompt_name = self.main.ai_prompt.currentText()
+        config.params['prompt_name'] = prompt_name
+        config.params['prompt_text'] = self.main.prompts_orm.query_data_by_name(prompt_name)
+
+        if len(config.queue_srt) < 1:
+            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+            return False
+
+        save_setting(self.main.settings)
+
+        queue_srt_copy = copy.deepcopy(config.queue_srt)
+        self.add_queue_thread(queue_srt_copy, 'trans')
 
         self.update_status('ing')
 
-    def add_queue_thread(self, data_copy):
+    def add_queue_thread(self, data_copy, work_type):
         # 添加需处理文件到队列的线程
 
         self.worker_thread = QThread()
         self.worker = Worker(data_copy)
         self.worker.moveToThread(self.worker_thread)
-        self.worker_thread.started.connect(self.worker.do_work)
+        self.worker_thread.started.connect(lambda: self.worker.do_work(work_type))
         self.worker.finished.connect(self.worker_thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
@@ -608,8 +621,7 @@ class SecWindow():
             self.main.processbtns[btnkey].progress_bar.setValue(precent)
             self.main.processbtns[btnkey].setText(text)
             return
-        precent = round(self.main.task.tasklist[
-                            btnkey].precent if self.main.task.tasklist and btnkey in self.main.task.tasklist else 0, 1)
+        precent = round(self.main.task.tasklist[btnkey].precent if self.main.task.tasklist and btnkey in self.main.task.tasklist else 0, 1)
         if type == 'succeed' or precent >= 100.0:
 
             target = self.main.task.tasklist[btnkey].obj['output']
@@ -627,10 +639,8 @@ class SecWindow():
             if type == 'error':
                 self.main.processbtns[btnkey].setCursor(Qt.PointingHandCursor)
                 self.main.processbtns[btnkey].setMsg(
-                    text + f'\n\n{config.errorlist[btnkey] if btnkey in config.errorlist and config.errorlist[btnkey] != text else ""}'
-                )
-                self.main.processbtns[btnkey].setToolTip(
-                    '点击查看详细报错' if config.defaulelang == 'zh' else 'Click to view the detailed error report')
+                    text + f'\n\n{config.errorlist[btnkey] if btnkey in config.errorlist and config.errorlist[btnkey] != text else ""}')
+                self.main.processbtns[btnkey].setToolTip('点击查看详细报错' if config.defaulelang == 'zh' else 'Click to view the detailed error report')
                 self.main.processbtns[btnkey].setText(text[:120])
             else:
                 self.main.processbtns[btnkey].setToolTip('')
@@ -647,10 +657,13 @@ class SecWindow():
     def update_status(self, type):
         config.current_status = type
         # 当type为ing时将列表media_table中的内容清空,queue_mp4清空
-        if type == 'ing':
+        if type == 'mp4':
             self.main.table.clear_table(self.main.media_table)
             config.queue_mp4 = []
-            # QMessageBox.information(self.main, config.transobj['running'], config.transobj["Check the progress"])
+
+        if type == 'srt':
+            self.main.table.clear_table(self.main.media_table)
+            config.queue_srt = []
 
     # 更新 UI
     def update_data(self, json_data):
@@ -777,6 +790,3 @@ class SecWindow():
         if step == 'translate_start':
             self.main.subtitle_area.clear()
         return True
-
-
-

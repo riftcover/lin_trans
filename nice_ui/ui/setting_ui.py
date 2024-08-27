@@ -2,21 +2,23 @@ import os
 import re
 import sys
 
-from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QMessageBox, QTableWidget, QAbstractItemView
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit
-from qfluentwidgets import (PushButton, TableWidget, BodyLabel, CaptionLabel, RadioButton, LineEdit, HyperlinkLabel, SubtitleLabel)
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize
+from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
+from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
+    QSizePolicy, QTextEdit
 
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
+from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
+from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, )
 
 
 class LocalModelPage(QWidget):
-    def __init__(self, setting, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = settings
         self.setup_ui()
         self.bind_action()
 
@@ -30,7 +32,9 @@ class LocalModelPage(QWidget):
 
         # "Whisper.Cpp"被点击时显示"Whisper.Cpp 模型列表"，"FasterWhisper"被点击时显示"FasterWhisper 模型列表"
         self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.show_model_list("Whisper.Cpp"))
+        self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.model_type(1))
         self.faster_whisper_card.radioButton.clicked.connect(lambda: self.show_model_list("FasterWhisper"))
+        self.faster_whisper_card.radioButton.clicked.connect(lambda: self.model_type(2))
 
         layout.addWidget(self.appCardContainer)
         # 模型存储路径
@@ -55,6 +59,7 @@ class LocalModelPage(QWidget):
         self.cpp_model_table.setColumnCount(6)
         self.cpp_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
         self.cpp_model_table.verticalHeader().setVisible(False)
+        self.cpp_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         # FasterWhisper 模型列表
         self.faster_model_title = BodyLabel("FasterWhisper 模型列表")
@@ -62,6 +67,7 @@ class LocalModelPage(QWidget):
         self.faster_model_table.setColumnCount(6)
         self.faster_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
         self.faster_model_table.verticalHeader().setVisible(False)
+        self.faster_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         layout.addWidget(self.cpp_model_title)
         layout.addWidget(self.cpp_model_table)
@@ -94,7 +100,7 @@ class LocalModelPage(QWidget):
             self.path_input.setText(new_path)
             # config.logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
-            self.setting.setValue("models_path", config.models_path)
+            self.settings.setValue("models_path", config.models_path)  # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -122,8 +128,9 @@ class LocalModelPage(QWidget):
             self.faster_model_title.hide()
             self.faster_model_table.hide()
             # 填充 Whisper.Cpp 模型数据
-            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5),
-                          ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
+            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+                          ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+                          ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
             self.populate_model_table(self.cpp_model_table, cpp_models)
         else:
             self.cpp_model_title.hide()
@@ -131,24 +138,86 @@ class LocalModelPage(QWidget):
             self.faster_model_title.show()
             self.faster_model_table.show()
             # 填充 FasterWhisper 模型数据
-            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3), ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5),
-                             ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3), ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
+            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+                             ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+                             ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
 
             self.populate_model_table(self.faster_model_table, faster_models)
 
+    def model_type(self, param: int):
+        """
+        设置模型类型，1为Whisper.Cpp，2为FasterWhisper
+        """
+        config.model_type = param
+        config.logger.info(f"设置模型类型: {config.model_type}")
+        self.settings.setValue("model_type", param)
+
+
+class PopupWidget(QWidget):
+    def __init__(self, key_id: int, msg: str, parent=None):
+        super().__init__(parent=parent)
+        self.key_id = key_id
+        self.msg = msg
+        self.setWindowTitle("编辑提示词")
+        self.resize(460, 330)
+        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
+        self.setup_ui()
+
+    # def event(self, event):
+    #     """
+    #     重写事件过滤器，打印窗口大小
+    #     检查事件类型是否为 QEvent.Move，这是窗口移动事件。
+    #     如果是移动事件，调用 self.print_window_size() 方法打印窗口大小。
+    #     调用 super().event(event) 以确保其他事件也能被正确处理。
+    #     """
+    #
+    #     if event.type() == QEvent.Move:
+    #         self.print_window_size()
+    #     return super().event(event)
+    #
+    # def print_window_size(self):
+    #     size = self.size()
+    #     print(f"窗口大小: 宽度={size.width()}, 高度={size.height()}")
+
+    def setup_ui(self):
+        layout = QVBoxLayout()
+        self.label = QTextEdit()
+        self.label.setPlainText(self.msg)
+        close_button = PushButton("取消")
+        close_button.clicked.connect(self.close)
+        enter_button = PrimaryPushButton("确定")
+        enter_button.clicked.connect(self.save_prompt)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(4)
+        button_layout.addWidget(enter_button)
+        button_layout.addWidget(close_button)
+
+        layout.addWidget(self.label)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def save_prompt(self):
+        # 保存提示词到数据库
+        # config.logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
+        new_msg = self.label.toPlainText()
+        config.logger.info(f"修改提示词: {new_msg}")
+        self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
+        self.close()
+        self.parent()._refresh_table_data()
+
 
 class LLMConfigPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
+        self.settings = settings
         self.setup_ui()
         self.prompts_orm = PromptsOrm()
-        # self._init_table()
+        self._init_table()
 
     def setup_ui(self):
         # 创建垂直布局来容纳所有组件
         main_layout = QVBoxLayout()
         card_api_layout = QHBoxLayout()
-
 
         api_key_title = SubtitleLabel("API Key")
         main_layout.addWidget(api_key_title)
@@ -156,13 +225,14 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
 
         # 创建两个 OpenAIApiKeyCard 实例
-        kimi_card = LLMKeySet('kimi api', 'hurl')
-
-        zhipu_card = LLMKeySet('智谱AI api', 'zhipu')
+        kimi_card = LLMKeySet('kimi', 'hurl', self)
+        zhipu_card = LLMKeySet('zhipu', 'zhipu', self)
+        qwen_card = LLMKeySet('qwen', 'qwen', self)
 
         # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
+        cards_layout.addWidget(qwen_card)
         # 添加一些垂直间距
         cards_layout.addStretch(1)
 
@@ -173,29 +243,41 @@ class LLMConfigPage(QWidget):
         card_api_layout.addStretch(1)
 
         main_layout.addLayout(card_api_layout)
+        prompts_layout = QHBoxLayout()
         prompts_title = SubtitleLabel("提示词")
-        main_layout.addWidget(prompts_title)
+        # 刷新提示词
+
+        refresh_btn = ToolButton("刷新")
+        refresh_btn.setIcon(FluentIcon.ROTATE)
+
+        refresh_btn.clicked.connect(self._refresh_table_data)
+        prompts_layout.addWidget(prompts_title)
+        prompts_layout.addWidget(refresh_btn)
+
+        main_layout.addLayout(prompts_layout)
         # 创建一个table
 
-        self.prompts_table = QTableWidget(self)
+        self.prompts_table = TableWidget(self)
         self.prompts_table.setColumnCount(5)
-        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名字", "提示词", "修改", "删除"])
+        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词", "提示词", "修改", "删除"])
         self.prompts_table.verticalHeader().setVisible(False)
+        self.prompts_table.horizontalHeader().setVisible(False)
         self.prompts_table.setColumnWidth(0, 150)  # 设置第一列宽度
         self.prompts_table.setColumnWidth(1, 150)  # 设置第二列宽度
         self.prompts_table.setColumnWidth(2, 150)  # 设置第三列宽度
         self.prompts_table.setColumnWidth(3, 100)  # 设置第四列宽度
         self.prompts_table.setColumnWidth(4, 100)  # 设置第五列宽度
+
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)  # 设置表头的拉伸模式
         self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑状态
         # self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
         main_layout.addWidget(self.prompts_table)
         self.setLayout(main_layout)
 
     def _init_table(self):
-        all_prompts = self.prompts_orm.get_all_data()
+        all_prompts = self.prompts_orm.get_data_with_id_than_one()
         for prompt in all_prompts:
-            self.add_prompt(prompt_id=prompt['id'], prompt_name=prompt['prompt_name'], prompt_content=prompt['prompt_content'])
-
+            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
     def add_prompt(self, prompt_id, prompt_name, prompt_content):
         row = self.prompts_table.rowCount()
@@ -204,31 +286,50 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setItem(row, 1, QTableWidgetItem(str(prompt_name)))
         self.prompts_table.setItem(row, 2, QTableWidgetItem(str(prompt_content)))
         edit_btn = PushButton("修改")
-        edit_btn.clicked.connect(lambda: self._edit_prompt(row))
+        edit_btn.setFixedSize(QSize(80, 30))
+        edit_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+        edit_btn.clicked.connect(self._edit_prompt(edit_btn))
         self.prompts_table.setCellWidget(row, 3, edit_btn)
-        delete_btn = PushButton("删除")
-        delete_btn.clicked.connect(lambda: self._delete_row(row))
+        delete_btn = DeleteButton("删除")
+        delete_btn.setFixedSize(QSize(80, 30))
+        delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+        delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.prompts_table.setCellWidget(row, 4, delete_btn)
 
+    def _refresh_table_data(self):
+        self.prompts_table.setRowCount(0)  # 清空表格
+        all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
+        for prompt in all_prompts:
+            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
 
-    def _delete_row(self, row):
-        config.logger.info(f"删除prompt，所在行:{row} ")
-        self.prompts_table.removeRow(row)
-        key_id = self.prompts_table.item(row, 0).text()
-        self.prompts_orm.delete_table_prompt(key_id)
+    def _delete_row(self, button):
+        def delete_row():
+            button_row = self.prompts_table.indexAt(button.pos()).row()
+            print(f"删除第{button_row}行数据")
+            key_id = self.prompts_table.item(button_row, 0).text()
+            self.prompts_orm.delete_table_prompt(key_id)
+            self.prompts_table.removeRow(button_row)
 
-    def _edit_prompt(self, row):
-        config.logger.info(f"编辑prompt,所在行:{row} ")
-        key_id = self.prompts_table.item(row, 0).text()
-        prompt_name = self.prompts_table.item(row, 1).text()
-        prompt_content = self.prompts_table.item(row, 2).text()
-        # todo: 弹出编辑对话框，修改后回写入数据库
-        # prompt_name, prompt_content = tools.edit_prompt(prompt_name, prompt_content)
+        return delete_row
+
+    def _edit_prompt(self, button):
+        def edit_row():
+            button_row = self.prompts_table.indexAt(button.pos()).row()
+            config.logger.debug(f"编辑prompt,所在行:{button_row} ")
+            key_id = self.prompts_table.item(button_row, 0).text()
+            config.logger.debug(f"编辑prompt,key_id:{key_id} ")
+            prompt_name = self.prompts_table.item(button_row, 1).text()
+            prompt_content = self.prompts_table.item(button_row, 2).text()
+            self.popup = PopupWidget(int(key_id), prompt_content, self)
+            self.popup.show()
+
+        return edit_row
 
 
 class TranslationPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
+        self.settings = settings
         self.setup_ui()
 
     def setup_ui(self):
@@ -246,14 +347,12 @@ class TranslationPage(QWidget):
         title_layout.addWidget(tutorial_link)
         main_layout.addLayout(title_layout)
 
-        self.baidu_key = TranslateKeySet("百度翻译")
-        self.deepl_key = TranslateKeySet("DeepL翻译")
-        self.google_key = TranslateKeySet("谷歌翻译")
-        self.microsoft_key = TranslateKeySet("微软翻译")
+        self.baidu_key = TranslateKeySet("baidu", self)
+        self.deepl_key = TranslateKeySet("deepl", self)
+        self.google_key = TranslateKeySet("google", self)
         main_layout.addWidget(self.baidu_key)
         main_layout.addWidget(self.deepl_key)
         main_layout.addWidget(self.google_key)
-        main_layout.addWidget(self.microsoft_key)
 
         self.setLayout(main_layout)
 
@@ -261,58 +360,155 @@ class TranslationPage(QWidget):
 class ProxyPage(QWidget):
     def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = setting
         self.setup_ui()
 
     def setup_ui(self):
         # 添加代理设置
-        main_layout = QVBoxLayout()
-        self.no_proxy_radio = RadioButton("无代理", self)
-        self.use_proxy_radio = RadioButton("使用代理", self)
-        # self.use_proxy_radio.toggled.connect(self.save_proxy)
+        layout = QVBoxLayout()
 
-        # 默认选中"无代理"
-        self.no_proxy_radio.setChecked(True)
+        # 创建单选框
+        self.no_proxy_radio = RadioButton("无代理")
+        self.use_proxy_radio = RadioButton("使用代理")
 
-        main_layout.addWidget(self.no_proxy_radio)
-        main_layout.addStretch(1)
-        main_layout.addWidget(self.use_proxy_radio)
+        radio_layout = QHBoxLayout()
+        radio_layout.addWidget(self.no_proxy_radio)
+        radio_layout.addWidget(self.use_proxy_radio)
+        layout.addLayout(radio_layout)
 
-        self.proxy_address = LineEdit(self)
-        self.proxy_address.setPlaceholderText("代理地址，比如http://127.0.0.1:8087")
-        self.save_btn = PushButton("保存")
-        self.save_btn.clicked.connect(self.save_proxy)
-        main_layout.addWidget(self.proxy_address)
-        main_layout.addStretch(1)
-        main_layout.addWidget(self.save_btn)
+        # 创建代理输入框
+        self.proxy_input = LineEdit()
+        self.proxy_input.setPlaceholderText("输入代理地址 (例如: http://127.0.0.1:8080)")
+        layout.addWidget(self.proxy_input)
 
-        self.setLayout(main_layout)
+        # 创建应用代理按钮
+        self.apply_button = PushButton("保存")
+        self.apply_button.clicked.connect(self.apply_proxy)
+        layout.addWidget(self.apply_button)
 
-    def save_proxy(self):
-        if self.no_proxy_radio.isChecked():
-            config.proxy = None
+        # 创建显示当前代理设置按钮
+        self.show_settings_button = PushButton("显示当前代理设置")
+        self.show_settings_button.clicked.connect(self.show_current_settings)
+        # layout.addWidget(self.show_settings_button)
+
+        # 添加测试按钮
+        self.test_button = PushButton("测试代理")
+        self.test_button.clicked.connect(self.test_proxy)
+        # layout.addWidget(self.test_button)
+
+        self.setLayout(layout)
+
+        # 加载保存的设置
+        self.load_settings()
+
+        # 连接单选框信号
+        self.no_proxy_radio.toggled.connect(self.toggle_proxy_input)
+        self.use_proxy_radio.toggled.connect(self.toggle_proxy_input)
+
+    def load_settings(self):
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
+        proxy = self.settings.value("proxy", "", type=str)  # 实际使用的
+        proxy_text = self.settings.value("proxy_text", "", type=str)  # 仅做文本显示
+
+        if use_proxy:
+            self.use_proxy_radio.setChecked(True)
         else:
-            proxy = self.proxy_address.text()
+            self.no_proxy_radio.setChecked(True)
+
+        self.proxy_input.setText(proxy_text)
+        self.toggle_proxy_input()
+
+    def toggle_proxy_input(self):
+        self.proxy_input.setEnabled(self.use_proxy_radio.isChecked())
+
+    def apply_proxy(self):
+        use_proxy = self.use_proxy_radio.isChecked()
+
+        if use_proxy:
+            proxy = self.proxy_input.text()
             if not re.match(r'^(http|sock)', proxy, re.I):
                 proxy = f'http://{proxy}'
             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
                 question = tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-            一般代理/vpn格式为 http://127.0.0.1:数字端口号
-            如果不知道什么是代理请勿随意填写
-            如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-                if question != QMessageBox.Yes:
-                    self.update_status('stop')
-                    return
-            config.proxy = proxy
-        self.setting.setValue("proxy", config.proxy)
-        config.logger.info(f"proxy/use_proxy: {self.use_proxy_radio.isChecked()}")
-        config.logger.info(f"proxy/address: {config.proxy}")
+                       一般代理/vpn格式为 http://127.0.0.1:数字端口号
+                       如果不知道什么是代理请勿随意填写
+                       如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
+
+            if not proxy:
+                InfoBar.warning(title="警告", content="请输入有效的代理地址", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                                duration=2000, parent=self, )
+                return
+            self.settings.setValue("use_proxy", use_proxy)
+            self.settings.setValue("proxy", proxy)
+            self.settings.setValue("proxy_text", proxy)
+        else:
+            proxy = ""
+            self.settings.setValue("use_proxy", use_proxy)
+            self.settings.setValue("proxy", proxy)
+        # 保存设置
+
+        # 应用代理设置到应用程序
+        try:
+            if use_proxy:
+                # 解析代理地址
+                protocol, address = proxy.split("://")
+                host, port = address.split(":")
+                port = int(port)
+
+                # 设置全局代理
+                proxy_obj = QNetworkProxy()
+                if protocol.lower() == "http":
+                    proxy_obj.setType(QNetworkProxy.HttpProxy)
+                elif protocol.lower() == "socks5":
+                    proxy_obj.setType(QNetworkProxy.Socks5Proxy)
+                else:
+                    raise ValueError("Unsupported proxy protocol")
+
+                proxy_obj.setHostName(host)
+                proxy_obj.setPort(port)
+                QNetworkProxy.setApplicationProxy(proxy_obj)
+            else:
+                # 这里添加取消代理的代码
+                QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
+
+            InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                            parent=self, )
+        except Exception as e:
+            InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                          parent=self, )
+
+    def show_current_settings(self):
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
+        proxy = self.settings.value("proxy", "", type=str)
+
+        if use_proxy:
+            message = f"当前使用代理: {proxy}"
+        else:
+            message = "当前未使用代理"
+
+        InfoBar.info(title="当前代理设置", content=message, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+
+    def test_proxy(self):
+        manager = QNetworkAccessManager(self)
+        manager.finished.connect(self.handle_response)
+
+        request = QNetworkRequest(QUrl("https://www.google.com/"))
+        manager.get(request)
+
+    def handle_response(self, reply):
+        if reply.error():
+            InfoBar.error(title='错误', content=f"测试失败: {reply.errorString()}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                          duration=3000, parent=self)
+        else:
+            response = reply.readAll().data().decode()
+            InfoBar.success(title='成功', content=f"测试成功: {response}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
+                            parent=self)
 
 
 class SettingInterface(QWidget):
-    def __init__(self, text: str, setting, parent=None):
+    def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
-        self.setting = setting
+        self.settings = settings
         self.setObjectName(text.replace(' ', '-'))
         self.initUI()
 
@@ -320,10 +516,10 @@ class SettingInterface(QWidget):
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
 
-        self.localModelPage = LocalModelPage(setting=self.setting)
-        self.llmConfigPage = LLMConfigPage(self)
-        self.translationPage = TranslationPage(self)
-        self.proxyPage = ProxyPage(setting=self.setting)
+        self.localModelPage = LocalModelPage(settings=self.settings)
+        self.llmConfigPage = LLMConfigPage(settings=self.settings)
+        self.translationPage = TranslationPage(settings=self.settings)
+        self.proxyPage = ProxyPage(setting=self.settings)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
@@ -336,7 +532,7 @@ class SettingInterface(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingInterface('setting', setting=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface('settings', settings=QSettings("Locoweed", "LinLInTrans"))
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())

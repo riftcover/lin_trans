@@ -28,6 +28,24 @@ class ModelInfo(TypedDict):
 
 class ObjFormat(TypedDict):
     # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
+    """
+    {
+  'raw_name': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_dirname': 'F:/ski/国外教学翻译',
+  'raw_basename': 'Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_noextname': 'Top 10 Affordable Ski Resorts in Europe',
+  'raw_ext': 'mp4',
+  'dirname': 'D:/dcode/lin_trans/tmp/f1f54d3c61d87f77344a132e0fac69b8',
+  'basename': 'f1f54d3c61d87f77344a132e0fac69b8.mp4',
+  'noextname': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'ext': 'mp4',
+  'codec_type': 'video',
+  'output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8',
+  'unid': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'source_mp4': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'linshi_output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8'
+}
+    """
     raw_name: str
     raw_dirname: str
     raw_basename: str
@@ -382,7 +400,7 @@ def _extracted_from_get_video_info(mp4_file, nocache):
             else:
                 fps = round(int(fps_split[0]) / int(fps_split[1]), 2)
 
-            result['video_fps'] = fps if fps >= 16 and fps <= 60 else 30
+            result['video_fps'] = fps if 16 <= fps <= 60 else 30
         elif it['codec_type'] == 'audio':
             result['streams_audio'] += 1
             result['audio_codec_name'] = it['codec_name']
@@ -578,8 +596,10 @@ def create_concat_txt(filelist, filename):
 
 
 # 多个视频片段连接 cuda + h264_cuvid
-def concat_multi_mp4(*, filelist=[], out=None, maxsec=None, fps=None):
+def concat_multi_mp4(*, filelist=None, out=None, maxsec=None, fps=None):
     # 创建txt文件
+    if filelist is None:
+        filelist = []
     txt = config.TEMP_DIR + f"/{time.time()}.txt"
     video_codec = config.settings['video_codec']
     create_concat_txt(filelist, txt)
@@ -867,7 +887,7 @@ def is_novoice_mp4(novoice_mp4, noextname):
             raise VideoProcessingError("stop")
         if vail_file(novoice_mp4):
             current_size = os.path.getsize(novoice_mp4)
-            if last_size > 0 and current_size == last_size and t > 600:
+            if 0 < last_size == current_size and t > 600:
                 return True
             last_size = current_size
 
@@ -1148,7 +1168,7 @@ def get_google_url():
                         if res.status_code == 200:
                             return google_url
                     except Exception:
-                        msg = (f'测试失败: {google_url}')
+                        msg = f'测试失败: {google_url}'
                         config.logger.error(msg)
                         continue
                     finally:
