@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QTableView, QStyledItemDelegate, QPushButton, QWidget, QVBoxLayout, QStyle, QStyleOptionButton, \
-    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel
+    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel, QSizePolicy, QHeaderView
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal, \
     QElapsedTimer, QObject, QRunnable, Slot, QThreadPool
 from PySide6.QtGui import QBrush, QColor, QStandardItemModel, QRegion
@@ -38,9 +38,10 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
-        elif index.column() == 2:  # 行号
-            self.signals.createEditor.emit(index.row(), index.column())
-            return self.create_row_number_label(parent, index.row())
+        # elif index.column() == 2:  # 行号
+        #     self.signals.createEditor.emit(index.row(), index.column())
+        #     # return self.create_row_number_label(parent, index.row())
+    
         elif index.column() == 3:  # 时间
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_time_widget(parent)
@@ -59,9 +60,12 @@ class CustomItemDelegate(QStyledItemDelegate):
             self.signals.destroyEditor.emit(index.row(), index.column())
 
     def paint(self, painter, option, index):
-        # 重写paint方法，不执行任何绘制操作
-        pass
-
+        if index.column() == 2:  # 行号列
+            # 使用默认绘制方法
+            super().paint(painter, option, index)
+        else:
+            # 对于其他列，保持原有的逻辑
+            pass
     # def paint(self, painter, option, index):
     """
     在使用openPersistentEditor时会持久化创建编辑器，就不需要使用print函数了
@@ -230,16 +234,16 @@ class CustomItemDelegate(QStyledItemDelegate):
             model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
             # 原文和译文
-            model.setData(index, editor.toText(), Qt.EditRole)
+            model.setData(index, editor.toPlainText(), Qt.EditRole)
         elif index.column() == 6:
             # 编辑按钮
             pass
         else:
             super().setModelData(editor, model, index)
 
-    def sizeHint(self, option, index):
-        # 返回固定大小以提高性能
-        return QSize(50, 80)
+    # def sizeHint(self, option, index):
+    #     # 返回固定大小以提高性能
+    #     return QSize(50, 80)
 
     # def sizeHint(self, option, index):  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
@@ -315,6 +319,8 @@ class SubtitleModel(QAbstractTableModel):
         col = index.column()
 
         if role == Qt.DisplayRole or role == Qt.EditRole:
+            if col == 2:  # 行号列
+                return str(row + 1)  # 行号从1开始
             if col == 3:  # 时间列
                 return f"{self._data[row][0]} - {self._data[row][1]}"
             elif col == 4:  # 原文列
@@ -396,12 +402,19 @@ class SubtitleTable(QTableView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         self.verticalHeader().setDefaultSectionSize(80)
-        column_widths = [50, 250, 50, 200, 300, 300, 50]
+        column_widths = [50, 55, 30, 100, 250, 250, 55]
+        total_width = sum(column_widths)
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
 
-        # self.setEditTriggers(QTableView.NoEditTriggers)
-        # self.setSelectionMode(QTableView.NoSelection)
+        # 设置最后一列自动拉伸
+        self.horizontalHeader().setStretchLastSection(False)
+
+        #  # 设置表格的固定大小
+        # self.setFixedWidth(total_width + self.verticalScrollBar().width() + 20)  # +2 for borders
+
+        self.setEditTriggers(QTableView.NoEditTriggers)
+        self.setSelectionMode(QTableView.NoSelection)
 
         # # 连接滚动信号
         self.verticalScrollBar().valueChanged.connect(self.on_scroll)
@@ -423,15 +436,13 @@ class SubtitleTable(QTableView):
         config.logger.debug(f"Top left index: {top_left.row()}")
         config.logger.debug(f"Bottom right index: {bottom_right.row()}")
 
-        # if not top_left.isValid() or not bottom_right.isValid():
-        #     config.logger.warning("Invalid index range")
-        #     return
-
-        # config.logger.debug(f"Creating editors for rows {top_left.row()} to {bottom_right.row()}")
-
         # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = 0 if not top_left.isValid() else top_left.row()
         end_row = self.model.rowCount() - 1 if not bottom_right.isValid() else bottom_right.row()
+        start_col = max(0, top_left.column())
+        end_col = min(self.model.columnCount() - 1, bottom_right.column())
+
+        config.logger.debug(f"Creating editors for rows {start_row} to {end_row}, columns {start_col} to {end_col}")
 
         # 确保 end_row 不小于 start_row
         end_row = max(start_row, end_row)
@@ -439,19 +450,12 @@ class SubtitleTable(QTableView):
         config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
         config.logger.debug(f"Visible editors: {self.visible_editors}")
 
-        # for row in range(start_row, end_row + 1):
-        #     if row < self.model.rowCount():  # 确保不超出模型的行数
-        #         for col in range(self.model.columnCount()):
-        #             if (row, col) not in self.visible_editors:
-        #                 index = self.model.index(row, col)
-        #                 self.openPersistentEditor(index)
-        #                 config.logger.debug(f"Created editor for ({row}, {col})")
-        for row in range(start_row, end_row + 1):
-            for col in range(self.model.columnCount()):
-                if (row, col) not in self.visible_editors:
+        for row in range(start_row, end_row + 1):  # 判断纵向可见
+            for col in range(start_col, end_col + 1):  # 判断横向可见窗口
+                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
-                    config.logger.debug(f"Created editor for ({row}, 0)")
+                    config.logger.debug(f"Created editor for ({row}, {col})")
 
         # self.verify_visible_editors()
 
