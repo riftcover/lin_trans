@@ -204,11 +204,11 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             times = index.data(Qt.UserRole)
             start_time = editor.findChild(LTimeEdit, "start_time")
+            config.logger.debug(f"start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            # print(index.data(Qt.EditRole))
             editor.setText(index.data(Qt.EditRole))
         elif index.column() == 6:
             # 编辑按钮
@@ -245,7 +245,14 @@ class CustomItemDelegate(QStyledItemDelegate):
     #     # 返回固定大小以提高性能
     #     return QSize(50, 80)
 
-    # def sizeHint(self, option, index):  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
+    # def sizeHint(self, option, index):    # 返回固定大小以提高性能
+    #     if index.column() == 0:
+    #         return QSize(50, 80)
+    #     elif index.column() == 1:
+    #         return QSize(50, 80)
+    #     elif index.column() == 2:
+    #         return QSize(50, 80)
+    #     return super().sizeHint(option, index)
 
 
 class SubtitleModel(QAbstractTableModel):
@@ -327,9 +334,8 @@ class SubtitleModel(QAbstractTableModel):
                 return self._data[row][2]
             elif col == 5:  # 译文列
                 return self._data[row][3]
-        elif role == Qt.UserRole:
-            if col == 3:  # 时间列
-                return (self._data[row][0], self._data[row][1])
+        elif role == Qt.UserRole and col == 3:  # 时间列
+                return self._data[row][0], self._data[row][1]
 
         return None
 
@@ -345,8 +351,7 @@ class SubtitleModel(QAbstractTableModel):
                 self._data[row] = (self._data[row][0], self._data[row][1], value, self._data[row][3])
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
-        elif role == Qt.UserRole:
-            if col == 3:  # 时间列
+        elif role == Qt.UserRole and col == 3: # 时间列
                 self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
 
         self.dataChanged.emit(index, index, [role])
@@ -403,7 +408,6 @@ class SubtitleTable(QTableView):
 
         self.verticalHeader().setDefaultSectionSize(80)
         column_widths = [50, 55, 30, 100, 250, 250, 55]
-        total_width = sum(column_widths)
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
 
