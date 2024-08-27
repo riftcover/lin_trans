@@ -384,51 +384,77 @@ class SubtitleTable(QTableView):
     遗留问题：当前初始化时会同时调用：resizeEvent和initialize_visible_editors，
     导致编辑器创建函数执行2次，但是好的是会去set（visible_editors）中查找，实际编辑器还只创建了一个
 
-
-    在 __init__ 方法中，我们创建了一个 QTimer 对象 self.update_timer。
-        我们添加了一个新的 delayed_update 方法，它会在计时器触发时调用 create_visible_editors。
-        在 on_scroll 和 resizeEvent 方法中，我们不再直接调用 create_visible_editors，而是启动计时器。
-        每次滚动或调整大小时，我们首先停止之前的计时器（如果存在），然后启动一个新的计时器。这确保了在快速连续的滚动或调整大小操作中，只有最后一次操作会触发更新。
+    使用计时器来优化编辑器创建：
+        1.在 __init__ 方法中，我们创建了一个 QTimer 对象 self.update_timer。
+        2.我们添加了一个新的 delayed_update 方法，它会在计时器触发时调用 create_visible_editors。
+        3.在 on_scroll 和 resizeEvent 方法中，我们不再直接调用 create_visible_editors，而是启动计时器。
+        4.每次滚动或调整大小时，我们首先停止之前的计时器（如果存在），然后启动一个新的计时器。这确保了在快速连续的滚动或调整大小操作中，只有最后一次操作会触发更新。
 
     """
 
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        self.model = SubtitleModel(self.file_path)
+        self.delegate = CustomItemDelegate(self)
         self.visible_editors = set()
 
-        # 添加一个计时器
+        # 初始化一个计时器
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.delayed_update)
 
-        self.on_data_loaded()
-
-    def on_data_loaded(self):
-        self.model = SubtitleModel(self.file_path)
+        # 设置模型和代理
         self.setModel(self.model)
-
-        self.delegate = CustomItemDelegate(self)
         self.setItemDelegate(self.delegate)
 
+        # 连接信号
         self.delegate.signals.createEditor.connect(self.on_editor_created)
         self.delegate.signals.destroyEditor.connect(self.on_editor_destroyed)
+        self.verticalScrollBar().valueChanged.connect(self.on_scroll)
+        self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
 
+        self.init_ui()
+
+    def init_ui(self):
+
+        # self.delegate.delete_clicked = self.delete_row
+
+        # 设置滚动模式
         self.setVerticalScrollMode(QTableView.ScrollPerPixel)
         self.setHorizontalScrollMode(QTableView.ScrollPerPixel)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
+        # 设置行高和列宽
         self.verticalHeader().setDefaultSectionSize(80)
         column_widths = [50, 55, 30, 100, 250, 250, 55]
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
 
+        # 设置编辑触发和选择模式
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
 
-        # 连接滚动信号
-        self.verticalScrollBar().valueChanged.connect(self.on_scroll)
-        self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
+    def delayed_update(self):
+        self.create_visible_editors()  
+
+    def on_scroll(self):
+        # on_scroll 方法在滚动时被调用，更新可见的编辑器。
+        config.logger.debug("Scroll event")
+        # 取消之前的计时器（如果存在）
+        self.update_timer.stop()
+        # 启动新的计时器，200毫秒后更新
+        self.update_timer.start(200)
+        # self.create_visible_editors()  
+        # self.remove_invisible_editors()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        config.logger.debug("Resize event")
+        # 取消之前的计时器（如果存在）
+        self.update_timer.stop()
+        # 启动新的计时器，200毫秒后更新
+        self.update_timer.start(200)
 
     def create_visible_editors(self):
         # 只为可见区域创建编辑器。
@@ -441,9 +467,6 @@ class SubtitleTable(QTableView):
         config.logger.debug(f"Visible rect: {visible_rect}")
         config.logger.debug(f"Top left index: {top_left.row()}")
         config.logger.debug(f"Bottom right index: {bottom_right.row()}")
-
-        # if not bottom_right.isValid():
-        #     bottom_right = self.model.index(self.model.rowCount() - 1, self.model.columnCount() - 1)
 
         # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = max(0, top_left.row())
@@ -490,18 +513,9 @@ class SubtitleTable(QTableView):
             self.closePersistentEditor(index)
             config.logger.debug(f"Removed editor for ({row}, {col})")
 
-    def delayed_update(self):
-        self.create_visible_editors()    
+
     
-    def on_scroll(self):
-        # on_scroll 方法在滚动时被调用，更新可见的编辑器。
-        config.logger.debug("Scroll event")
-        # 取消之前的计时器（如果存在）
-        self.update_timer.stop()
-        # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(200)
-        # self.create_visible_editors()  
-        # self.remove_invisible_editors()
+
 
     def on_editor_created(self, row, col):
         self.visible_editors.add((row, col))
@@ -509,7 +523,7 @@ class SubtitleTable(QTableView):
     def on_editor_destroyed(self, row, col):
         self.visible_editors.discard((row, col))
 
-    def verify_visible_editors(self):
+    def _verify_visible_editors(self):
         # 验证 visible_editors，创建的编辑器是否都存在
         visible_rect = self.viewport().rect()
         top_left = self.indexAt(visible_rect.topLeft())
@@ -529,13 +543,7 @@ class SubtitleTable(QTableView):
         # 延迟创建编辑器，防止编辑器还没创建完成就开始编辑
         QTimer.singleShot(0, self.create_visible_editors)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        config.logger.debug("Resize event")
-        # 取消之前的计时器（如果存在）
-        self.update_timer.stop()
-        # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(200)
+
 
 
 if __name__ == "__main__":
