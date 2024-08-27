@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QTableView, QStyledItemDelegate, QPushButton, QWidget, QVBoxLayout, QStyle, QStyleOptionButton, \
-    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel, QSizePolicy, QHeaderView
+    QStyleOptionSpinBox, QStyleOptionViewItem, QTimeEdit, QTextEdit, QLabel
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QRect, QPoint, QTime, QSignalBlocker, QTimer, QAbstractListModel, QThread, Signal, \
     QElapsedTimer, QObject, QRunnable, Slot, QThreadPool
 from PySide6.QtGui import QBrush, QColor, QStandardItemModel, QRegion
@@ -41,7 +41,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         # elif index.column() == 2:  # 行号
         #     self.signals.createEditor.emit(index.row(), index.column())
         #     # return self.create_row_number_label(parent, index.row())
-    
+
         elif index.column() == 3:  # 时间
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_time_widget(parent)
@@ -55,8 +55,9 @@ class CustomItemDelegate(QStyledItemDelegate):
 
     def destroyEditor(self, editor, index):
         # 用来通知哪个单元格需要销毁编辑器
-        super().destroyEditor(editor, index)
-        self.signals.destroyEditor.emit(index.row(), index.column())
+        if index.column() == 0:  # 只处理第一列的编辑器
+            super().destroyEditor(editor, index)
+            self.signals.destroyEditor.emit(index.row(), index.column())
 
     def paint(self, painter, option, index):
         if index.column() == 2:  # 行号列
@@ -389,6 +390,12 @@ class SubtitleTable(QTableView):
         super().__init__()
         self.file_path = file_path
         self.visible_editors = set()
+
+        # 添加一个计时器
+        self.update_timer = QTimer(self)
+        self.update_timer.setSingleShot(True)
+        self.update_timer.timeout.connect(self.delayed_update)
+
         self.on_data_loaded()
 
     def on_data_loaded(self):
@@ -410,54 +417,50 @@ class SubtitleTable(QTableView):
         for col, width in enumerate(column_widths):
             self.setColumnWidth(col, width)
 
-        # 设置最后一列自动拉伸
-        self.horizontalHeader().setStretchLastSection(False)
-
-        #  # 设置表格的固定大小
-        # self.setFixedWidth(total_width + self.verticalScrollBar().width() + 20)  # +2 for borders
-
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
 
-        # # 连接滚动信号
+        # 连接滚动信号
         self.verticalScrollBar().valueChanged.connect(self.on_scroll)
         self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
 
-        QTimer.singleShot(0, self.initialize_visible_editors)
-
-    def initialize_visible_editors(self):
-        # 在表格初始化时创建初始可见的编辑器。
-        config.logger.debug("Initializing visible event")
-        self.create_visible_editors()
-
     def create_visible_editors(self):
         # 只为可见区域创建编辑器。
+        # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
+        # visible_rect.topLeft()返回视口矩形的左上角点的坐标。
+        # 调用将屏幕坐标转换为表格的行和列索引
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
         config.logger.debug(f"Visible rect: {visible_rect}")
         config.logger.debug(f"Top left index: {top_left.row()}")
         config.logger.debug(f"Bottom right index: {bottom_right.row()}")
 
-        # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
-        start_row = 0 if not top_left.isValid() else top_left.row()
-        end_row = self.model.rowCount() - 1 if not bottom_right.isValid() else bottom_right.row()
-        start_col = max(0, top_left.column())
-        end_col = min(self.model.columnCount() - 1, bottom_right.column())
+        # if not bottom_right.isValid():
+        #     bottom_right = self.model.index(self.model.rowCount() - 1, self.model.columnCount() - 1)
 
-        config.logger.debug(f"Creating editors for rows {start_row} to {end_row}, columns {start_col} to {end_col}")
-
-        # 确保 end_row 不小于 start_row
-        end_row = max(start_row, end_row)
+        # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
+        start_row = max(0, top_left.row())
+        end_row = 0
+        if not bottom_right.isValid():
+            config.logger.warning("end_row use self.model.rowCount()")
+            # 如果 bottom_right 无效，我们可以估算可见的行数
+            visible_height = visible_rect.height()
+            row_height = self.rowHeight(0)  # 假设所有行高相同
+            visible_rows = visible_height // row_height
+            end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
+        else:
+            config.logger.debug('end_row use else')
+            end_row = bottom_right.row()
 
         config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
-        config.logger.debug(f"Visible editors: {self.visible_editors}")
 
-        for row in range(start_row, end_row + 1):  # 判断纵向可见
-            for col in range(start_col, end_col + 1):  # 判断横向可见窗口
+        for row in range(start_row, end_row + 1):
+            for col in range(self.model.columnCount()):
                 if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
+                    self.visible_editors.add((row, col))
                     config.logger.debug(f"Created editor for ({row}, {col})")
 
         # self.verify_visible_editors()
@@ -509,6 +512,7 @@ class SubtitleTable(QTableView):
 
     def showEvent(self, event):
         super().showEvent(event)
+        # 延迟创建编辑器，防止编辑器还没创建完成就开始编辑
         QTimer.singleShot(0, self.create_visible_editors)
 
     def resizeEvent(self, event):
@@ -520,8 +524,8 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
-    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    # patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
