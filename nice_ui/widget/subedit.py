@@ -1,5 +1,6 @@
-from typing import Dict, Set, Tuple, Optional, Any, List
+from typing import Dict, Set, Tuple, Optional, Any, List, Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
+
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel
 
 from nice_ui.configure import config
@@ -368,6 +369,17 @@ class SubtitleModel(QAbstractTableModel):
         # 通知从被删除行到最后一行的所有行都发生了变化。这将触发这些行的重绘
         self.dataChanged.emit(self.index(row, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
         return True
+    
+    def insertRow(self, row, parent=QModelIndex()) -> bool:
+        self.beginInsertRows(parent, row, row)
+        # Insert a new empty subtitle entry
+        new_text = f"第{row+2}行"
+        new_entry = ('00:00:00,000', '00:00:00,000', new_text, "")
+        self._data.insert(row + 1, new_entry)
+        self.endInsertRows()
+        # Notify that all rows below the inserted row have changed (for row numbers)
+        self.dataChanged.emit(self.index(row + 1, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
+        return True
 
 
 
@@ -549,10 +561,43 @@ class SubtitleTable(QTableView):
 
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
+        self.delegate._insert_clicked = self.insert_row  # Add this line
 
     def delete_row(self, row: int) -> None:
-        print(f"Delete row called for row: {row}")  # 新增调试信息
+        config.logger.info(f"Delete row called for row: {row}")  # 新增调试信息
         self.model.removeRow(row)
+        self.update_editors()
+
+    def insert_row(self, row: int) -> None:
+        # todo: bug
+        # 当插入的行是最后一行时，行号引用错误，使用的是最初的行号
+        config.logger.info(f"Insert row called for row: {row}")  # 新增调试信息
+        config.logger.info(f'self.visible_editors old:{self.visible_editors}')
+        self.model.insertRow(row)
+        # 更新visible_editors
+        # self.update_visible_editors_after_insert(row)
+        config.logger.info(f'self.visible_editors new:{self.visible_editors}')
+        config.logger.info(f'model.rowCount:{self.model.rowCount()}')
+        self.update_editors()
+
+    def update_visible_editors_after_insert(self, inserted_row: int) -> None:
+        # 更新visible_editors集合
+        updated_editors = set()
+        for visible_row in self.visible_editors:
+            if visible_row > inserted_row:
+                # 对于插入行之后的行，行号加1
+                updated_editors.add(visible_row + 1)
+            else:
+                # 对于插入行之前的行，保持不变
+                updated_editors.add(visible_row)
+        
+        # 添加新插入的行
+        updated_editors.add(inserted_row + 1)
+        
+        # 更新visible_editors
+        self.visible_editors = updated_editors
+
+        # 重新创建所有可见行的编辑器
         self.update_editors()
 
     def update_editors(self) -> None:
@@ -563,6 +608,7 @@ class SubtitleTable(QTableView):
         最后，我们更新可见区域内所有行的行号。我们通过调用 self.update(index) 来触发这些单元格的重绘。
         """
         config.logger.debug("Update editors called")
+        config.logger.info(f"self.visible_editors len: {len(self.visible_editors)}")
         # Close all persistent editors
         for editor_row, col in list(self.visible_editors):
             self.closePersistentEditor(self.model.index(editor_row, col))
@@ -576,20 +622,20 @@ class SubtitleTable(QTableView):
         top_row = self.rowAt(visible_rect.top())
         bottom_row = self.rowAt(visible_rect.bottom())
 
-        for update_row in range(top_row, bottom_row + 1):
+        for update_row in range(top_row, bottom_row):
             for col in range(self.model.columnCount()):
                 index = self.model.index(update_row, col)
                 self.update(index)
 
         # Force a full update of the view
-        self.viewport().update()
+        # self.viewport().update()
 
 
 if __name__ == "__main__":
     import sys
 
-    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    # patt =r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    patt =r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
