@@ -205,7 +205,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             times = index.data(Qt.UserRole)
             start_time = editor.findChild(LTimeEdit, "start_time")
-            config.logger.debug(f"start_time: {start_time}, times: {times}")
+            # config.logger.debug(f"start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
@@ -484,9 +484,9 @@ class SubtitleTable(QTableView):
         # 调用将屏幕坐标转换为表格的行和列索引
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
-        config.logger.debug(f"Visible rect: {visible_rect}")
-        config.logger.debug(f"Top left index: {top_left.row()}")
-        config.logger.debug(f"Bottom right index: {bottom_right.row()}")
+        # config.logger.debug(f"Visible rect: {visible_rect}")
+        # config.logger.debug(f"Top left index: {top_left.row()}")
+        # config.logger.debug(f"Bottom right index: {bottom_right.row()}")
 
         # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = max(0, top_left.row())
@@ -510,7 +510,8 @@ class SubtitleTable(QTableView):
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-                    config.logger.debug(f"Created editor for ({row}, {col})")
+        config.logger.debug(f"create finished Visible editors: {self.visible_editors}")
+        config.logger.debug(f"create finished Visible editors len: {len(self.visible_editors)}")
 
         # self.verify_visible_editors()
 
@@ -573,11 +574,14 @@ class SubtitleTable(QTableView):
         # 当插入的行是最后一行时，行号引用错误，使用的是最初的行号
         config.logger.info(f"Insert row called for row: {row}")  # 新增调试信息
         config.logger.info(f'self.visible_editors old:{self.visible_editors}')
+        config.logger.info(f'self.visible_editors old len: {len(self.visible_editors)}')
+        config.logger.info(f'model.rowCount old:{self.model.rowCount()}')
         self.model.insertRow(row)
-        # 更新visible_editors
-        # self.update_visible_editors_after_insert(row)
+
+
         config.logger.info(f'self.visible_editors new:{self.visible_editors}')
-        config.logger.info(f'model.rowCount:{self.model.rowCount()}')
+        config.logger.info(f'self.visible_editors new len: {len(self.visible_editors)}')
+        config.logger.info(f'model.rowCount new:{self.model.rowCount()}')
         self.update_editors()
 
     def update_visible_editors_after_insert(self, inserted_row: int) -> None:
@@ -621,6 +625,7 @@ class SubtitleTable(QTableView):
         visible_rect = self.viewport().rect()
         top_row = self.rowAt(visible_rect.top())
         bottom_row = self.rowAt(visible_rect.bottom())
+        config.logger.debug(f"Top row: {top_row}, Bottom row: {bottom_row}")
 
         for update_row in range(top_row, bottom_row):
             for col in range(self.model.columnCount()):
