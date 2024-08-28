@@ -1,7 +1,7 @@
 from typing import Dict, Set, Tuple, Optional, Any, List, Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
 
-from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
@@ -135,9 +135,16 @@ class CustomItemDelegate(QStyledItemDelegate):
         return widget
 
     def create_text_edit(self, parent) -> LinLineEdit:
-        text_edit = LinLineEdit(parent)
-        text_edit.setFixedSize(QSize(190, 50))
-        return text_edit
+        container = QWidget(parent)
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(5, 10, 5, 10)  # 左右各留5像素的边距,上下各10像素边距
+        layout.setSpacing(0)
+
+        text_edit = LinLineEdit(container)
+        text_edit.setObjectName("text_edit")
+        layout.addWidget(text_edit)
+
+        return container
 
     def create_edit_widget(self, parent, row) -> QWidget:
         widget = QWidget(parent)
@@ -210,7 +217,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            editor.setText(index.data(Qt.EditRole))
+            editor.findChild(LinLineEdit, "text_edit").setText(index.data(Qt.EditRole))
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -235,7 +242,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
             # 原文和译文
-            model.setData(index, editor.toPlainText(), Qt.EditRole)
+            model.findChild(LinLineEdit, "text_edit").setData(index, editor.toPlainText(), Qt.EditRole)
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -317,6 +324,13 @@ class SubtitleModel(QAbstractTableModel):
 
     def columnCount(self, parent=QModelIndex()) -> int:
         return 7
+    
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        # 设置表头
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            headers = ["选择", "操作", "行号", "时间", "原文", "译文", "编辑"]
+            return headers[section]
+        return super().headerData(section, orientation, role)
 
     def data(self, index, role=Qt.DisplayRole) -> Any:
         # 定义数据获取方式
@@ -445,15 +459,43 @@ class SubtitleTable(QTableView):
         self.setHorizontalScrollMode(QTableView.ScrollPerPixel)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        # 设置行高和列宽
+        # 隐藏垂直表头
+        self.verticalHeader().hide()
+
+        # 设置表头
+        self.setHorizontalHeaderLabels()
+
+        # 设置行高
         self.verticalHeader().setDefaultSectionSize(80)
-        column_widths = [50, 55, 30, 100, 250, 250, 55]
-        for col, width in enumerate(column_widths):
-            self.setColumnWidth(col, width)
+
 
         # 设置编辑触发和选择模式
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
+
+    def setHorizontalHeaderLabels(self):
+        # 设置表头样式
+        header = self.horizontalHeader()
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #f0f0f0;
+                padding: 4px;
+                border: 1px solid #d0d0d0;
+                font-weight: bold;
+            }
+        """)
+
+        # 设置表头高度
+        header.setFixedHeight(30)
+
+        # 设置固定宽度的列
+        fixed_widths = [40, 40, 40, 120, 0, 0, 40]  # 0 表示自适应宽度
+        for col, width in enumerate(fixed_widths):
+            if width > 0:
+                header.resizeSection(col, width)
+            else:
+                header.setSectionResizeMode(col, QHeaderView.Stretch)
+
 
     def delayed_update(self)-> None:
         self.create_visible_editors()
