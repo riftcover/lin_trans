@@ -396,6 +396,23 @@ class SubtitleModel(QAbstractTableModel):
         return True
 
 
+    def save_subtitle(self) -> None:
+        subtitles = []
+        for row in range(self.rowCount()):
+            start_time_edit = self.index(row, 3).data(Qt.UserRole)
+            your_text = self.index(row, 4).data(Qt.EditRole)
+            translated_text = self.index(row, 5).data(Qt.EditRole)
+            subtitles.append((f"{start_time_edit[0]} --> {start_time_edit[1]}", your_text, translated_text))
+        patht  =r'D:\dcode\lin_trans\result\tt1\xdd.srt'
+        # with open(self.file_path, 'w', encoding='utf-8') as f:
+        with open(patht, 'w', encoding='utf-8') as f:
+            for i, j in enumerate(subtitles):
+                f.write(f"{i+1}\n")
+                f.write(f"{j[0]}\n")
+                f.write(f"{j[1]}\n")
+                f.write(f"{j[2]}\n\n")
+
+
 
 class VirtualScrollSignals(QObject):
     # 使用 VirtualScrollDelegate 来管理编辑器的创建和销毁。
@@ -431,6 +448,7 @@ class SubtitleTable(QTableView):
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        self.subtitles = []
         self.model = SubtitleModel(self.file_path)
         self.delegate = CustomItemDelegate(self)
         self.visible_editors = set()
@@ -677,6 +695,8 @@ class SubtitleTable(QTableView):
         # Force a full update of the view
         # self.viewport().update()
 
+    def srt_save(self):
+        self.model.save_subtitle()
 
 if __name__ == "__main__":
     import sys
@@ -685,6 +705,7 @@ if __name__ == "__main__":
     patt =r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
+    table.srt_save()
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
