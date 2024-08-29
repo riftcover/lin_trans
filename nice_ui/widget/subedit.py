@@ -701,6 +701,8 @@ class SubtitleTable(QTableView):
 
     def move_row_down_more(self):
         config.logger.debug(f"move_row_down_more {self.model.checked_rows}")
+        for row in self.model.checked_rows:
+            self.model.move_edit_down(row)
 
     def move_row_up(self):
         # 移动原文到上一行
@@ -708,7 +710,9 @@ class SubtitleTable(QTableView):
         self.model.move_edit_up(row)
 
     def move_row_up_more(self):
-        pass
+        config.logger.debug(f"move_row_up_more {self.model.checked_rows}")
+        for row in self.model.checked_rows:
+            self.model.move_edit_up(row)
 
     def save_subtitle(self):
         self.model.save_subtitle()
