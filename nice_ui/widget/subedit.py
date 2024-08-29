@@ -1,5 +1,6 @@
 from typing import Dict, Set, Tuple, Optional, Any, List, Callable
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QPoint
+from PySide6.QtGui import QColor
 
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout
 
@@ -60,12 +61,27 @@ class CustomItemDelegate(QStyledItemDelegate):
             self.signals.destroyEditor.emit(index.row(), index.column())
 
     def paint(self, painter, option, index):
+        # 保存painter的状态
+        painter.save()
+
+        # 调用原有的绘制逻辑
         if index.column() == 2:  # 行号列
             # 使用默认绘制方法
             super().paint(painter, option, index)
         else:
             # 对于其他列，保持原有的逻辑
-            pass
+            pass  # 这里应该是你原有的绘制逻辑
+
+        # 在原有绘制逻辑之后，为所有列添加红色底部边框
+        painter.setPen(QColor("#d0d0d0"))
+        if index.column() == 1:  # 第二列
+            # 为第二列特别处理，确保边框被绘制
+            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight() + QPoint(1, 0))
+        else:
+            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+
+        # 恢复painter的状态
+        painter.restore()
 
     def create_checkbox(self, parent) -> CheckBox:
         return CheckBox(parent)
@@ -492,6 +508,8 @@ class SubtitleTable(QTableView):
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
 
+        # 隐藏网格线
+        self.setShowGrid(False)
     def setHorizontalHeaderLabels(self):
         # 设置表头样式
         header = self.horizontalHeader()
@@ -499,7 +517,9 @@ class SubtitleTable(QTableView):
             QHeaderView::section {
                 background-color: #f0f0f0;
                 padding: 4px;
-                border: 1px solid #d0d0d0;
+                border: none;
+                border-bottom: 1px solid #d0d0d0;
+                border-right: none;
                 font-weight: bold;
             }
         """)
