@@ -349,6 +349,7 @@ class SubtitleModel(QAbstractTableModel):
 
     def setData(self, index, value, role=Qt.EditRole) -> bool:
         if not index.isValid():
+
             return False
 
         row = index.row()
@@ -385,8 +386,6 @@ class SubtitleModel(QAbstractTableModel):
         new_entry = ('00:00:00,000', '00:00:00,000', new_text, "")
         self._data.insert(row + 1, new_entry)
         self.endInsertRows()
-        # Notify that all rows below the inserted row have changed (for row numbers)
-        self.dataChanged.emit(self.index(row + 1, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
         return True
 
     def save_subtitle(self) -> None:
@@ -558,8 +557,7 @@ class SubtitleTable(QTableView):
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-        config.logger.debug(f"create finished Visible editors: {self.visible_editors}")
-        config.logger.debug(f"create finished Visible editors len: {len(self.visible_editors)}")
+        self.read_visible_editors()
 
         # self.verify_visible_editors()
 
@@ -611,51 +609,54 @@ class SubtitleTable(QTableView):
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
         self.delegate._insert_clicked = self.insert_row  # Add this line
+
     def get_edior_row(self):
         button = self.sender()
         index = self.indexAt(button.parent().pos())  # 由于按钮是放在QWidget中，所以需要调用父组件的pos()方法获取行号
         row = index.row()
         return row
+    def read_visible_editors(self):
+        # 获取visible_editors存储编辑器的所有行号
+        r_list = set()
+        for r, c in self.visible_editors:
+            r_list.add(r)
+        config.logger.info(f"read_visible_editors: {r_list}")
+        return r_list
     def delete_row(self) -> None:
         row = self.get_edior_row()
+
+        new_visible_editors = set()
+        for r, c in self.visible_editors:
+            # 从visible_editors中移除被删除行的编辑器
+            # 对被删除行以下的编辑器的行号进行调整
+            if r < row:
+                new_visible_editors.add((r, c))
+            elif r > row:
+                new_visible_editors.add((r - 1, c))
+        self.visible_editors = new_visible_editors
+        # 此时visible_editors移除了删除行对应的坐标，但是重新创建编辑器时还是会正确的被创建，没有出现串行，漏行。看不懂？？
+        self.read_visible_editors()
         config.logger.info(f"Delete row called for row: {row}")  # 新增调试信息
-        self.model.removeRow(row)  # self.update_editors()
 
+        self.model.removeRow(row)
+        # 删除后更新可见的编辑器
+        self.create_visible_editors()
 
+    def insert_row(self) -> None:
+        row = self.get_edior_row()
 
-    def insert_row(self, row: int) -> None:
-        # todo: bug
-        # 当插入的行是最后一行时，行号引用错误，使用的是最初的行号
-        config.logger.info(f"Insert row called for row: {row}")  # 新增调试信息
-        config.logger.info(f'self.visible_editors old:{self.visible_editors}')
-        config.logger.info(f'self.visible_editors old len: {len(self.visible_editors)}')
-        config.logger.info(f'model.rowCount old:{self.model.rowCount()}')
+        # 添加下面self.visible_editors重新赋值就会重复创建相同的编辑器，所以注释掉。使用在新增后uodate_editors更新可见的编辑器。
+
+        # new_visible_editors = set()
+        # for r, c in self.visible_editors:
+        #     # 从visible_editors中移除被删除行的编辑器
+        #     # 对被删除行以下的编辑器的行号进行调整
+        #     if r < row:
+        #         new_visible_editors.add((r, c))
+        #     elif r > row:
+        #         new_visible_editors.add((r + 1, c))
+        # self.visible_editors = new_visible_editors
         self.model.insertRow(row)
-
-
-        config.logger.info(f'self.visible_editors new:{self.visible_editors}')
-        config.logger.info(f'self.visible_editors new len: {len(self.visible_editors)}')
-        config.logger.info(f'model.rowCount new:{self.model.rowCount()}')
-        self.update_editors()
-
-    def update_visible_editors_after_insert(self, inserted_row: int) -> None:
-        # 更新visible_editors集合
-        updated_editors = set()
-        for visible_row in self.visible_editors:
-            if visible_row > inserted_row:
-                # 对于插入行之后的行，行号加1
-                updated_editors.add(visible_row + 1)
-            else:
-                # 对于插入行之前的行，保持不变
-                updated_editors.add(visible_row)
-
-        # 添加新插入的行
-        updated_editors.add(inserted_row + 1)
-
-        # 更新visible_editors
-        self.visible_editors = updated_editors
-
-        # 重新创建所有可见行的编辑器
         self.update_editors()
 
     def update_editors(self) -> None:
@@ -664,9 +665,10 @@ class SubtitleTable(QTableView):
         我们首先关闭所有持久化的编辑器，并从 visible_editors 集合中移除它们。
         然后，我们调用 create_visible_editors() 来重新创建可见区域的编辑器。
         最后，我们更新可见区域内所有行的行号。我们通过调用 self.update(index) 来触发这些单元格的重绘。
+
+        存在bug：
+        在点击最后一行时，创建的行在倒数第二行。
         """
-        config.logger.debug("Update editors called")
-        config.logger.info(f"self.visible_editors len: {len(self.visible_editors)}")
         # Close all persistent editors
         for editor_row, col in list(self.visible_editors):
             self.closePersistentEditor(self.model.index(editor_row, col))
@@ -674,19 +676,6 @@ class SubtitleTable(QTableView):
 
         # Recreate visible editors
         self.create_visible_editors()
-
-        # Update row numbers for all visible rows
-        visible_rect = self.viewport().rect()
-        top_row = self.rowAt(visible_rect.top())
-        bottom_row = self.rowAt(visible_rect.bottom())
-        config.logger.debug(f"Top row: {top_row}, Bottom row: {bottom_row}")
-
-        for update_row in range(top_row, bottom_row):
-            for col in range(self.model.columnCount()):
-                index = self.model.index(update_row, col)
-                self.update(index)
-
-        # Force a full update of the view  # self.viewport().update()
 
     def srt_save(self):
         self.model.save_subtitle()
