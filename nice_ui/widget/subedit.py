@@ -14,6 +14,8 @@ class CustomItemDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         # 构造函数，初始化父类，创建一个持久化编辑器字典
         super().__init__(parent)
+        self._move_row_up = None
+        self._move_row_down = None
         self._persistent_editors = {}
         self.signals = VirtualScrollSignals()
         self._delete_clicked = None
@@ -49,7 +51,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_text_edit(parent)
         elif index.column() == 6:  # 编辑按钮
-            return self.create_edit_widget(parent, index.row())
+            return self.create_edit_widget(parent, index)
 
         return super().createEditor(parent, option, index)
 
@@ -146,7 +148,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         return container
 
-    def create_edit_widget(self, parent, row) -> QWidget:
+    def create_edit_widget(self, parent, index) -> QWidget:
         widget = QWidget(parent)
         button_size = QSize(15, 15)
         edit_layout = QVBoxLayout(widget)
@@ -157,12 +159,12 @@ class CustomItemDelegate(QStyledItemDelegate):
         delete_button.setToolTip("删除本行字幕")
         delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         delete_button.setObjectName("delete_button")
-        delete_button.clicked.connect(lambda:self._delete_clicked(row))
+        delete_button.clicked.connect(self._delete_clicked)
         add_button = TransparentToolButton(FluentIcon.ADD)
         add_button.setObjectName("add_button")
         add_button.setToolTip("下方添加一行")
         add_button.installEventFilter(ToolTipFilter(add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        add_button.clicked.connect(lambda:self._insert_clicked(row))
+        add_button.clicked.connect(self._insert_clicked)
 
         delete_button.setFixedSize(button_size)
         add_button.setFixedSize(button_size)
@@ -172,12 +174,12 @@ class CustomItemDelegate(QStyledItemDelegate):
         down_row_button.setObjectName("down_button")
         down_row_button.setToolTip("移动译文到下一行")
         down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        down_row_button.clicked.connect(lambda _, r=row:self._move_row_down(r))
+        down_row_button.clicked.connect(self._move_row_down)
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("up_button")
         up_row_button.setToolTip("移动译文到上一行")
         up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        up_row_button.clicked.connect(lambda _, r=row:self._move_row_up(r))
+        up_row_button.clicked.connect(self._move_row_up)
 
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
@@ -249,18 +251,9 @@ class CustomItemDelegate(QStyledItemDelegate):
         else:
             super().setModelData(editor, model, index)
 
-    # def sizeHint(self, option, index):
-    #     # 返回固定大小以提高性能
-    #     return QSize(50, 80)
+    # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
 
-    # def sizeHint(self, option, index):    # 返回固定大小以提高性能
-    #     if index.column() == 0:
-    #         return QSize(50, 80)
-    #     elif index.column() == 1:
-    #         return QSize(50, 80)
-    #     elif index.column() == 2:
-    #         return QSize(50, 80)
-    #     return super().sizeHint(option, index)
+    # def sizeHint(self, option, index):    # 返回固定大小以提高性能  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
 
 class SubtitleModel(QAbstractTableModel):
@@ -324,7 +317,7 @@ class SubtitleModel(QAbstractTableModel):
 
     def columnCount(self, parent=QModelIndex()) -> int:
         return 7
-    
+
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         # 设置表头
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -376,25 +369,25 @@ class SubtitleModel(QAbstractTableModel):
         return super().flags(index) | Qt.ItemIsEditable
 
     def removeRow(self, row, parent=QModelIndex()) -> bool:
-        self.beginRemoveRows(parent, row, row)
-        del self._data[row]
-        self.endRemoveRows()
-        config.logger.debug(f"视图刷新:{self.index(row, 2)}")
-        # 通知从被删除行到最后一行的所有行都发生了变化。这将触发这些行的重绘
-        self.dataChanged.emit(self.index(row, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
-        return True
-    
+        # 删除指定行
+        config.logger.debug(f"SubtitleModel.removeRow: 删除行: {row}")
+        if 0 <= row < self.rowCount():
+            self.beginRemoveRows(parent, row, row)
+            del self._data[row]
+            self.endRemoveRows()
+            return True
+        return False
+
     def insertRow(self, row, parent=QModelIndex()) -> bool:
         self.beginInsertRows(parent, row, row)
         # Insert a new empty subtitle entry
-        new_text = f"第{row+2}行"
+        new_text = f"第{row + 2}行"
         new_entry = ('00:00:00,000', '00:00:00,000', new_text, "")
         self._data.insert(row + 1, new_entry)
         self.endInsertRows()
         # Notify that all rows below the inserted row have changed (for row numbers)
         self.dataChanged.emit(self.index(row + 1, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
         return True
-
 
     def save_subtitle(self) -> None:
         subtitles = []
@@ -403,15 +396,14 @@ class SubtitleModel(QAbstractTableModel):
             your_text = self.index(row, 4).data(Qt.EditRole)
             translated_text = self.index(row, 5).data(Qt.EditRole)
             subtitles.append((f"{start_time_edit[0]} --> {start_time_edit[1]}", your_text, translated_text))
-        patht  =r'D:\dcode\lin_trans\result\tt1\xdd.srt'
+        patht = r'D:\dcode\lin_trans\result\tt1\xdd.srt'
         # with open(self.file_path, 'w', encoding='utf-8') as f:
         with open(patht, 'w', encoding='utf-8') as f:
             for i, j in enumerate(subtitles):
-                f.write(f"{i+1}\n")
+                f.write(f"{i + 1}\n")
                 f.write(f"{j[0]}\n")
                 f.write(f"{j[1]}\n")
                 f.write(f"{j[2]}\n\n")
-
 
 
 class VirtualScrollSignals(QObject):
@@ -486,7 +478,6 @@ class SubtitleTable(QTableView):
         # 设置行高
         self.verticalHeader().setDefaultSectionSize(80)
 
-
         # 设置编辑触发和选择模式
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
@@ -514,21 +505,18 @@ class SubtitleTable(QTableView):
             else:
                 header.setSectionResizeMode(col, QHeaderView.Stretch)
 
-
-    def delayed_update(self)-> None:
+    def delayed_update(self) -> None:
         self.create_visible_editors()
 
-    def on_scroll(self)-> None:
+    def on_scroll(self) -> None:
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
         config.logger.debug("Scroll event")
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(200)
-        # self.create_visible_editors()  
-        # self.remove_invisible_editors()
+        self.update_timer.start(200)  # self.create_visible_editors()    # self.remove_invisible_editors()
 
-    def resizeEvent(self, event)-> None:
+    def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         config.logger.debug("Resize event")
         # 取消之前的计时器（如果存在）
@@ -536,7 +524,7 @@ class SubtitleTable(QTableView):
         # 启动新的计时器，200毫秒后更新
         self.update_timer.start(200)
 
-    def create_visible_editors(self)-> None:
+    def create_visible_editors(self) -> None:
         # 只为可见区域创建编辑器。
         # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
@@ -575,7 +563,7 @@ class SubtitleTable(QTableView):
 
         # self.verify_visible_editors()
 
-    def remove_invisible_editors(self)-> None:
+    def remove_invisible_editors(self) -> None:
         # remove_invisible_editors 方法移除不再可见的编辑器。
         # 当前如果使用该函数，向下滚动时会销毁编辑器，但是往回滚动时不会重新创建编辑器。所以先屏蔽掉
         visible_rect = self.viewport().rect()
@@ -623,11 +611,17 @@ class SubtitleTable(QTableView):
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
         self.delegate._insert_clicked = self.insert_row  # Add this line
-
-    def delete_row(self, row: int) -> None:
+    def get_edior_row(self):
+        button = self.sender()
+        index = self.indexAt(button.parent().pos())  # 由于按钮是放在QWidget中，所以需要调用父组件的pos()方法获取行号
+        row = index.row()
+        return row
+    def delete_row(self) -> None:
+        row = self.get_edior_row()
         config.logger.info(f"Delete row called for row: {row}")  # 新增调试信息
-        self.model.removeRow(row)
-        self.update_editors()
+        self.model.removeRow(row)  # self.update_editors()
+
+
 
     def insert_row(self, row: int) -> None:
         # todo: bug
@@ -654,10 +648,10 @@ class SubtitleTable(QTableView):
             else:
                 # 对于插入行之前的行，保持不变
                 updated_editors.add(visible_row)
-        
+
         # 添加新插入的行
         updated_editors.add(inserted_row + 1)
-        
+
         # 更新visible_editors
         self.visible_editors = updated_editors
 
@@ -692,17 +686,17 @@ class SubtitleTable(QTableView):
                 index = self.model.index(update_row, col)
                 self.update(index)
 
-        # Force a full update of the view
-        # self.viewport().update()
+        # Force a full update of the view  # self.viewport().update()
 
     def srt_save(self):
         self.model.save_subtitle()
+
 
 if __name__ == "__main__":
     import sys
 
     # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    patt =r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.srt_save()
