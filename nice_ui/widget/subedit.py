@@ -20,6 +20,8 @@ class CustomItemDelegate(QStyledItemDelegate):
         self._insert_clicked = None
         self._move_row_up = None
         self._move_row_down = None
+        self._move_row_up_more = None
+        self._move_row_down_more = None
 
     def createEditor(self, parent, option, index):
         """
@@ -40,10 +42,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
-        # elif index.column() == 2:  # 行号
-        #     self.signals.createEditor.emit(index.row(), index.column())
-        #     # return self.create_row_number_label(parent, index.row())
-
         elif index.column() == 3:  # 时间
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_time_widget(parent)
@@ -80,11 +78,12 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         button_size = QSize(15, 15)
         play_button = TransparentToolButton(FluentIcon.PLAY)
+        play_button.clicked.connect(self._move_row_down_more)
         cut_button = TransparentToolButton(FluentIcon.CUT)
         play_button.setFixedSize(button_size)
         cut_button.setFixedSize(button_size)
 
-        layout.addWidget(play_button, alignment=Qt.AlignCenter) #设置水平居中
+        layout.addWidget(play_button, alignment=Qt.AlignCenter)  #设置水平居中
         layout.addWidget(cut_button, alignment=Qt.AlignCenter)
         return widget
 
@@ -324,6 +323,14 @@ class SubtitleModel(QAbstractTableModel):
         row = index.row()
         col = index.column()
 
+        if role == Qt.CheckStateRole and col == 0:
+            if value == Qt.Checked:
+                self.checked_rows.add(row)
+            else:
+                self.checked_rows.discard(row)
+            self.dataChanged.emit(index, index, [role])
+            return True
+
         if role == Qt.EditRole:
             if col == 4:  # 原文列
                 self._data[row] = (self._data[row][0], self._data[row][1], value, self._data[row][3])
@@ -437,10 +444,12 @@ class SubtitleTable(QTableView):
         4.每次滚动或调整大小时，我们首先停止之前的计时器（如果存在），然后启动一个新的计时器。这确保了在快速连续的滚动或调整大小操作中，只有最后一次操作会触发更新。
 
     """
+    tableChanged = Signal(list)
 
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        # 预处理字幕数据 用于和播放器连接给他字幕的
         self.subtitles = []
         self.model = SubtitleModel(self.file_path)
         self.delegate = CustomItemDelegate(self)
@@ -613,8 +622,10 @@ class SubtitleTable(QTableView):
         self.delegate._insert_clicked = self.insert_row  # Add this line
         self.delegate._move_row_down = self.move_row_down
         self.delegate._move_row_up = self.move_row_up
+        self.delegate._move_row_down_more = self.move_row_down_more
+        self.delegate._move_row_up_more = self.move_row_up_more
 
-    def get_edior_row(self):
+    def get_editor_row(self):
         button = self.sender()
         index = self.indexAt(button.parent().pos())  # 由于按钮是放在QWidget中，所以需要调用父组件的pos()方法获取行号
         row = index.row()
@@ -629,7 +640,7 @@ class SubtitleTable(QTableView):
         return r_list
 
     def delete_row(self) -> None:
-        row = self.get_edior_row()
+        row = self.get_editor_row()
 
         new_visible_editors = set()
         for r, c in self.visible_editors:
@@ -649,7 +660,7 @@ class SubtitleTable(QTableView):
         self.create_visible_editors()
 
     def insert_row(self) -> None:
-        row = self.get_edior_row()
+        row = self.get_editor_row()
 
         # 添加下面self.visible_editors重新赋值就会重复创建相同的编辑器，所以注释掉。使用在新增后uodate_editors更新可见的编辑器。
 
@@ -685,26 +696,58 @@ class SubtitleTable(QTableView):
 
     def move_row_down(self):
         # 移动原文到下一行
-        row = self.get_edior_row()
+        row = self.get_editor_row()
         self.model.move_edit_down(row)
+
+    def move_row_down_more(self):
+        config.logger.debug(f"move_row_down_more {self.model.checked_rows}")
 
     def move_row_up(self):
         # 移动原文到上一行
-        row = self.get_edior_row()
+        row = self.get_editor_row()
         self.model.move_edit_up(row)
 
-    def srt_save(self):
+    def move_row_up_more(self):
+        pass
+
+    def save_subtitle(self):
         self.model.save_subtitle()
+
+    def process_subtitles(self):
+        """ 预处理字幕数据，用于给播放器连接字幕 """
+        # todo 还没适配
+        self.subtitles.clear()
+        config.logger.debug("预处理字幕")
+        for row in range(self.rowCount()):
+            try:
+                time_widget = self.cellWidget(row, 3)
+                # config.logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
+                start_time = time_widget.findChild(LTimeEdit, "start_time")
+                end_time = time_widget.findChild(LTimeEdit, "end_time")
+
+                start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
+                end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
+
+                subtitle_widget = self.cellWidget(row, 4)
+                subtitle_text = subtitle_widget.toPlainText()
+
+                self.subtitles.append((start_ms, end_ms, subtitle_text))
+            except AttributeError as e:
+                config.logger.error(f"字幕rowCount:{row} 错误：{e}")
+
+        # 按开始时间排序
+        self.subtitles.sort(key=lambda x:x[0])
 
 
 if __name__ == "__main__":
     import sys
 
     # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
+    b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
-    table.srt_save()
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
