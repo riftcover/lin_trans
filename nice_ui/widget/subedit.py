@@ -84,8 +84,8 @@ class CustomItemDelegate(QStyledItemDelegate):
         play_button.setFixedSize(button_size)
         cut_button.setFixedSize(button_size)
 
-        layout.addWidget(play_button)
-        layout.addWidget(cut_button)
+        layout.addWidget(play_button, alignment=Qt.AlignCenter) #设置水平居中
+        layout.addWidget(cut_button, alignment=Qt.AlignCenter)
         return widget
 
     def create_row_number_label(self, parent, row) -> QLabel:
@@ -153,12 +153,11 @@ class CustomItemDelegate(QStyledItemDelegate):
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
 
-        edit_layout.addWidget(down_row_button)
-        edit_layout.addWidget(up_row_button)
+        edit_layout.addWidget(down_row_button, alignment=Qt.AlignCenter)
+        edit_layout.addWidget(up_row_button, alignment=Qt.AlignCenter)
 
-        edit_layout.addWidget(delete_button)
-        edit_layout.addWidget(add_button)
-        # edit_layout.addStretch()
+        edit_layout.addWidget(delete_button, alignment=Qt.AlignCenter)
+        edit_layout.addWidget(add_button, alignment=Qt.AlignCenter)
 
         return widget
 
@@ -199,7 +198,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 编辑器数据保存
         if index.column() == 0:
             # 勾选框
-            model.setData(index, editor.isChecked(), Qt.CheckStateRole)
+            model.setData(index, Qt.Checked if editor.isChecked() else Qt.Unchecked, Qt.CheckStateRole)
         elif index.column() == 1:
             # 操作按钮
             pass
@@ -218,8 +217,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 编辑按钮
             pass
         else:
-            super().setModelData(editor, model, index)
-    # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
+            super().setModelData(editor, model, index)  # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
 
     # def sizeHint(self, option, index):    # 返回固定大小以提高性能  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
@@ -230,6 +228,7 @@ class SubtitleModel(QAbstractTableModel):
         super().__init__(parent)
         self.file_path = file_path
         self._data = self.load_subtitle()
+        self.checked_rows = set()  # 新增：用于存储被选中的行
 
     def load_subtitle(self) -> List[Tuple[str, str, str, str]]:
         """
@@ -301,6 +300,9 @@ class SubtitleModel(QAbstractTableModel):
         row = index.row()
         col = index.column()
 
+        if role == Qt.CheckStateRole and col == 0:
+            return Qt.Checked if row in self.checked_rows else Qt.Unchecked
+
         if role == Qt.DisplayRole or role == Qt.EditRole:
             if col == 2:  # 行号列
                 return str(row + 1)  # 行号从1开始
@@ -317,7 +319,6 @@ class SubtitleModel(QAbstractTableModel):
 
     def setData(self, index, value, role=Qt.EditRole) -> bool:
         if not index.isValid():
-
             return False
 
         row = index.row()
@@ -335,6 +336,8 @@ class SubtitleModel(QAbstractTableModel):
         return True
 
     def flags(self, index) -> Qt.ItemFlags:
+        if index.column() == 0:
+            return super().flags(index) | Qt.ItemIsUserCheckable
         return super().flags(index) | Qt.ItemIsEditable
 
     def removeRow(self, row, parent=QModelIndex()) -> bool:
@@ -363,10 +366,10 @@ class SubtitleModel(QAbstractTableModel):
 
             # Move current row's text to next row
             self.setData(self.index(row + 1, 4), current_text, Qt.EditRole)
-            
+
             # Clear current row's text
             self.setData(self.index(row, 4), "", Qt.EditRole)
-            
+
             self.dataChanged.emit(self.index(row, 4), self.index(row + 1, 4), [Qt.EditRole])
             return True
         return False
@@ -377,12 +380,12 @@ class SubtitleModel(QAbstractTableModel):
             current_text = self.data(self.index(row, 4), Qt.EditRole)
 
             # Move current row's text to next row
-            self.setData(self.index(row -1, 4), current_text, Qt.EditRole)
+            self.setData(self.index(row - 1, 4), current_text, Qt.EditRole)
 
             # Clear current row's text
             self.setData(self.index(row, 4), "", Qt.EditRole)
 
-            self.dataChanged.emit(self.index(row -1, 4), self.index(row, 4), [Qt.EditRole])
+            self.dataChanged.emit(self.index(row - 1, 4), self.index(row, 4), [Qt.EditRole])
             return True
         return False
 
@@ -616,6 +619,7 @@ class SubtitleTable(QTableView):
         index = self.indexAt(button.parent().pos())  # 由于按钮是放在QWidget中，所以需要调用父组件的pos()方法获取行号
         row = index.row()
         return row
+
     def read_visible_editors(self):
         # 获取visible_editors存储编辑器的所有行号
         r_list = set()
@@ -623,6 +627,7 @@ class SubtitleTable(QTableView):
             r_list.add(r)
         config.logger.info(f"read_visible_editors: {r_list}")
         return r_list
+
     def delete_row(self) -> None:
         row = self.get_edior_row()
 
