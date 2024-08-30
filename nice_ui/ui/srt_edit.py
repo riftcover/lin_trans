@@ -1,7 +1,7 @@
 import sys
 
-from PySide6.QtCore import QUrl
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget)
 
 from nice_ui.ui.style import SubtitleTable
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
@@ -15,8 +15,18 @@ class SubtitleEditPage(CardWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
+        # 创建主布局
+        main_layout = QHBoxLayout(self)
+
+        left_widget = QWidget()
+        layout = QVBoxLayout(left_widget)
+
+        # 创建分割器
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(2)  # 设置分割线宽度为2像素
+        splitter.setStyleSheet("QSplitter::handle { background-color: gray; }")
         self.subtitleTable = SubtitleTable(self.patt)
+
         # 创建并添加CardWidget
         top_card = CardWidget()
         top_layout = QHBoxLayout(top_card)
@@ -47,7 +57,8 @@ class SubtitleEditPage(CardWidget):
         top_layout.addWidget(save_button)
         top_layout.addWidget(export_button)
 
-        video_layout = QVBoxLayout()
+        right_widget = QWidget()
+        video_layout = QVBoxLayout(right_widget)
         self.videoWidget = LinVideoWidget(self.subtitleTable,self.subtitleTable.subtitles,self)
         # self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
         self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
@@ -59,13 +70,17 @@ class SubtitleEditPage(CardWidget):
         video_layout.addWidget(self.videoWidget)
         video_layout.addItem(spacer)
 
-        # 水平布局
-        h_layout = QHBoxLayout()
-        h_layout.addLayout(layout,3)
-        h_layout.addLayout(video_layout,1)
+        # # 水平布局
+        # h_layout = QHBoxLayout()
+        # h_layout.addLayout(layout,3)
+        # h_layout.addLayout(video_layout,1)
 
-        #设置布局
-        self.setLayout(h_layout)
+        # 将左右部件添加到分割器
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+
+        main_layout.addWidget(splitter)
+
 
         export_button.setToolTip("导出srt格式字幕文件")
         export_button.installEventFilter(ToolTipFilter(export_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
