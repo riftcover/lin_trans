@@ -161,9 +161,6 @@ dmypy.json
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-!/logs/
-!/xc.py
-!/xd.py
-!/result/
+
 ffmpeg_output/
 orm/linlin.db

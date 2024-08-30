@@ -1,5 +1,6 @@
 from typing import Dict, Set, Tuple, Optional, Any, List, Callable
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QPoint
+from PySide6.QtGui import QColor
 
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout
 
@@ -14,12 +15,14 @@ class CustomItemDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         # 构造函数，初始化父类，创建一个持久化编辑器字典
         super().__init__(parent)
-        self._move_row_up = None
-        self._move_row_down = None
         self._persistent_editors = {}
         self.signals = VirtualScrollSignals()
         self._delete_clicked = None
         self._insert_clicked = None
+        self._move_row_up = None
+        self._move_row_down = None
+        self._move_row_up_more = None
+        self._move_row_down_more = None
 
     def createEditor(self, parent, option, index):
         """
@@ -40,10 +43,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
-        # elif index.column() == 2:  # 行号
-        #     self.signals.createEditor.emit(index.row(), index.column())
-        #     # return self.create_row_number_label(parent, index.row())
-
         elif index.column() == 3:  # 时间
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_time_widget(parent)
@@ -62,43 +61,27 @@ class CustomItemDelegate(QStyledItemDelegate):
             self.signals.destroyEditor.emit(index.row(), index.column())
 
     def paint(self, painter, option, index):
+        # 保存painter的状态
+        painter.save()
+
+        # 调用原有的绘制逻辑
         if index.column() == 2:  # 行号列
             # 使用默认绘制方法
             super().paint(painter, option, index)
         else:
             # 对于其他列，保持原有的逻辑
-            pass
+            pass  # 这里应该是你原有的绘制逻辑
 
-    # def paint(self, painter, option, index):
-    """
-    在使用openPersistentEditor时会持久化创建编辑器，就不需要使用print函数了
-    使用print函数会导致窗口闪烁
-    """
+        # 在原有绘制逻辑之后，为所有列添加红色底部边框
+        painter.setPen(QColor("#d0d0d0"))
+        if index.column() == 1:  # 第二列
+            # 为第二列特别处理，确保边框被绘制
+            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight() + QPoint(1, 0))
+        else:
+            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
 
-    #     # 绘制单元格
-    #     timer = QElapsedTimer()
-    #     timer.start()
-    #
-    #     table_view = self.parent()
-    #     visible_range = table_view.viewport().rect()
-    #     row_height = table_view.rowHeight(0)
-    #
-    #     # 计算可见行的范围
-    #     first_visible_row = table_view.rowAt(visible_range.top())
-    #     last_visible_row = table_view.rowAt(visible_range.bottom())
-    #     config.logger.debug(f"index: {index.row()}, first_visible_row: {first_visible_row}, last_visible_row: {last_visible_row}")
-    #     if index.column() in [0, 1, 2, 3, 4, 5, 6]:
-    #         if index not in self._persistent_editors:
-    #             editor = self.createEditor(self.parent(), option, index)
-    #             self.setEditorData(editor, index)
-    #             self.parent().setIndexWidget(index, editor)
-    #             self._persistent_editors[index] = editor
-    #     else:
-    #         super().paint(painter, option,index)
-    #         # print('======')
-    #         # print(len(self._persistent_editors))
-    #         # print(self._persistent_editors)
-    #         # print(f"Paint time: {timer.elapsed()} ms")
+        # 恢复painter的状态
+        painter.restore()
 
     def create_checkbox(self, parent) -> CheckBox:
         return CheckBox(parent)
@@ -111,12 +94,13 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         button_size = QSize(15, 15)
         play_button = TransparentToolButton(FluentIcon.PLAY)
+        play_button.clicked.connect(self._move_row_down_more)
         cut_button = TransparentToolButton(FluentIcon.CUT)
         play_button.setFixedSize(button_size)
         cut_button.setFixedSize(button_size)
 
-        layout.addWidget(play_button)
-        layout.addWidget(cut_button)
+        layout.addWidget(play_button, alignment=Qt.AlignCenter)  #设置水平居中
+        layout.addWidget(cut_button, alignment=Qt.AlignCenter)
         return widget
 
     def create_row_number_label(self, parent, row) -> QLabel:
@@ -184,12 +168,11 @@ class CustomItemDelegate(QStyledItemDelegate):
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
 
-        edit_layout.addWidget(down_row_button)
-        edit_layout.addWidget(up_row_button)
+        edit_layout.addWidget(down_row_button, alignment=Qt.AlignCenter)
+        edit_layout.addWidget(up_row_button, alignment=Qt.AlignCenter)
 
-        edit_layout.addWidget(delete_button)
-        edit_layout.addWidget(add_button)
-        # edit_layout.addStretch()
+        edit_layout.addWidget(delete_button, alignment=Qt.AlignCenter)
+        edit_layout.addWidget(add_button, alignment=Qt.AlignCenter)
 
         return widget
 
@@ -230,7 +213,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 编辑器数据保存
         if index.column() == 0:
             # 勾选框
-            model.setData(index, editor.isChecked(), Qt.CheckStateRole)
+            model.setData(index, Qt.Checked if editor.isChecked() else Qt.Unchecked, Qt.CheckStateRole)
         elif index.column() == 1:
             # 操作按钮
             pass
@@ -249,9 +232,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 编辑按钮
             pass
         else:
-            super().setModelData(editor, model, index)
-
-    # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
+            super().setModelData(editor, model, index)  # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
 
     # def sizeHint(self, option, index):    # 返回固定大小以提高性能  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
@@ -262,6 +243,7 @@ class SubtitleModel(QAbstractTableModel):
         super().__init__(parent)
         self.file_path = file_path
         self._data = self.load_subtitle()
+        self.checked_rows = set()  # 新增：用于存储被选中的行
 
     def load_subtitle(self) -> List[Tuple[str, str, str, str]]:
         """
@@ -333,6 +315,9 @@ class SubtitleModel(QAbstractTableModel):
         row = index.row()
         col = index.column()
 
+        if role == Qt.CheckStateRole and col == 0:
+            return Qt.Checked if row in self.checked_rows else Qt.Unchecked
+
         if role == Qt.DisplayRole or role == Qt.EditRole:
             if col == 2:  # 行号列
                 return str(row + 1)  # 行号从1开始
@@ -349,11 +334,18 @@ class SubtitleModel(QAbstractTableModel):
 
     def setData(self, index, value, role=Qt.EditRole) -> bool:
         if not index.isValid():
-
             return False
 
         row = index.row()
         col = index.column()
+
+        if role == Qt.CheckStateRole and col == 0:
+            if value == Qt.Checked:
+                self.checked_rows.add(row)
+            else:
+                self.checked_rows.discard(row)
+            self.dataChanged.emit(index, index, [role])
+            return True
 
         if role == Qt.EditRole:
             if col == 4:  # 原文列
@@ -367,6 +359,8 @@ class SubtitleModel(QAbstractTableModel):
         return True
 
     def flags(self, index) -> Qt.ItemFlags:
+        if index.column() == 0:
+            return super().flags(index) | Qt.ItemIsUserCheckable
         return super().flags(index) | Qt.ItemIsEditable
 
     def removeRow(self, row, parent=QModelIndex()) -> bool:
@@ -388,6 +382,36 @@ class SubtitleModel(QAbstractTableModel):
         self.endInsertRows()
         return True
 
+    def move_edit_down(self, row) -> bool:
+        # 移动原文到下一行
+        if row < self.rowCount() - 1:
+            current_text = self.data(self.index(row, 4), Qt.EditRole)
+
+            # Move current row's text to next row
+            self.setData(self.index(row + 1, 4), current_text, Qt.EditRole)
+
+            # Clear current row's text
+            self.setData(self.index(row, 4), "", Qt.EditRole)
+
+            self.dataChanged.emit(self.index(row, 4), self.index(row + 1, 4), [Qt.EditRole])
+            return True
+        return False
+
+    def move_edit_up(self, row) -> bool:
+        # 移动原文到上一行
+        if row > 0:
+            current_text = self.data(self.index(row, 4), Qt.EditRole)
+
+            # Move current row's text to next row
+            self.setData(self.index(row - 1, 4), current_text, Qt.EditRole)
+
+            # Clear current row's text
+            self.setData(self.index(row, 4), "", Qt.EditRole)
+
+            self.dataChanged.emit(self.index(row - 1, 4), self.index(row, 4), [Qt.EditRole])
+            return True
+        return False
+
     def save_subtitle(self) -> None:
         subtitles = []
         for row in range(self.rowCount()):
@@ -395,6 +419,7 @@ class SubtitleModel(QAbstractTableModel):
             your_text = self.index(row, 4).data(Qt.EditRole)
             translated_text = self.index(row, 5).data(Qt.EditRole)
             subtitles.append((f"{start_time_edit[0]} --> {start_time_edit[1]}", your_text, translated_text))
+        # todo: 保存文件路径调整
         patht = r'D:\dcode\lin_trans\result\tt1\xdd.srt'
         # with open(self.file_path, 'w', encoding='utf-8') as f:
         with open(patht, 'w', encoding='utf-8') as f:
@@ -435,10 +460,12 @@ class SubtitleTable(QTableView):
         4.每次滚动或调整大小时，我们首先停止之前的计时器（如果存在），然后启动一个新的计时器。这确保了在快速连续的滚动或调整大小操作中，只有最后一次操作会触发更新。
 
     """
+    tableChanged = Signal(list)
 
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        # 预处理字幕数据 用于和播放器连接给他字幕的
         self.subtitles = []
         self.model = SubtitleModel(self.file_path)
         self.delegate = CustomItemDelegate(self)
@@ -481,6 +508,8 @@ class SubtitleTable(QTableView):
         self.setEditTriggers(QTableView.NoEditTriggers)
         self.setSelectionMode(QTableView.NoSelection)
 
+        # 隐藏网格线
+        self.setShowGrid(False)
     def setHorizontalHeaderLabels(self):
         # 设置表头样式
         header = self.horizontalHeader()
@@ -488,7 +517,9 @@ class SubtitleTable(QTableView):
             QHeaderView::section {
                 background-color: #f0f0f0;
                 padding: 4px;
-                border: 1px solid #d0d0d0;
+                border: none;
+                border-bottom: 1px solid #d0d0d0;
+                border-right: none;
                 font-weight: bold;
             }
         """)
@@ -609,12 +640,17 @@ class SubtitleTable(QTableView):
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
         self.delegate._insert_clicked = self.insert_row  # Add this line
+        self.delegate._move_row_down = self.move_row_down
+        self.delegate._move_row_up = self.move_row_up
+        self.delegate._move_row_down_more = self.move_row_down_more
+        self.delegate._move_row_up_more = self.move_row_up_more
 
-    def get_edior_row(self):
+    def get_editor_row(self):
         button = self.sender()
         index = self.indexAt(button.parent().pos())  # 由于按钮是放在QWidget中，所以需要调用父组件的pos()方法获取行号
         row = index.row()
         return row
+
     def read_visible_editors(self):
         # 获取visible_editors存储编辑器的所有行号
         r_list = set()
@@ -622,8 +658,9 @@ class SubtitleTable(QTableView):
             r_list.add(r)
         config.logger.info(f"read_visible_editors: {r_list}")
         return r_list
+
     def delete_row(self) -> None:
-        row = self.get_edior_row()
+        row = self.get_editor_row()
 
         new_visible_editors = set()
         for r, c in self.visible_editors:
@@ -643,7 +680,7 @@ class SubtitleTable(QTableView):
         self.create_visible_editors()
 
     def insert_row(self) -> None:
-        row = self.get_edior_row()
+        row = self.get_editor_row()
 
         # 添加下面self.visible_editors重新赋值就会重复创建相同的编辑器，所以注释掉。使用在新增后uodate_editors更新可见的编辑器。
 
@@ -677,18 +714,64 @@ class SubtitleTable(QTableView):
         # Recreate visible editors
         self.create_visible_editors()
 
-    def srt_save(self):
+    def move_row_down(self):
+        # 移动原文到下一行
+        row = self.get_editor_row()
+        self.model.move_edit_down(row)
+
+    def move_row_down_more(self):
+        config.logger.debug(f"move_row_down_more {self.model.checked_rows}")
+        for row in self.model.checked_rows:
+            self.model.move_edit_down(row)
+
+    def move_row_up(self):
+        # 移动原文到上一行
+        row = self.get_editor_row()
+        self.model.move_edit_up(row)
+
+    def move_row_up_more(self):
+        config.logger.debug(f"move_row_up_more {self.model.checked_rows}")
+        for row in self.model.checked_rows:
+            self.model.move_edit_up(row)
+
+    def save_subtitle(self):
         self.model.save_subtitle()
+
+    def process_subtitles(self):
+        """ 预处理字幕数据，用于给播放器连接字幕 """
+        # todo 还没适配
+        self.subtitles.clear()
+        config.logger.debug("预处理字幕")
+        for row in range(self.rowCount()):
+            try:
+                time_widget = self.cellWidget(row, 3)
+                # config.logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
+                start_time = time_widget.findChild(LTimeEdit, "start_time")
+                end_time = time_widget.findChild(LTimeEdit, "end_time")
+
+                start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
+                end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
+
+                subtitle_widget = self.cellWidget(row, 4)
+                subtitle_text = subtitle_widget.toPlainText()
+
+                self.subtitles.append((start_ms, end_ms, subtitle_text))
+            except AttributeError as e:
+                config.logger.error(f"字幕rowCount:{row} 错误：{e}")
+
+        # 按开始时间排序
+        self.subtitles.sort(key=lambda x:x[0])
 
 
 if __name__ == "__main__":
     import sys
 
     # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
+    b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
-    table.srt_save()
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
