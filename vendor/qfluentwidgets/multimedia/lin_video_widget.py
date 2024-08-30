@@ -144,15 +144,22 @@ class LinVideoWidget(QWidget):
         with open(srt_file_path, 'r', encoding='utf-8') as file:
             content = file.read()
 
-        subtitle_pattern = re.compile(r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n((?:.*\n?)*?)(?:\n\n|$)')
+        """
+        1.添加了re.DOTALL标志，使得.可以匹配换行符。
+        2.使用(?:\n\n|\Z)作为每个字幕块的结束标记，其中\Z表示字符串的结尾。
+        3.这个新的正则表达式将能够匹配新的字幕格式，即使字幕文本只有一行。它会捕获字幕序号、开始时间、结束时间和字幕文本，无论文本是单行还是多行。
+        """
+        subtitle_pattern = re.compile(r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n(.*?)(?:\n\n|\Z)', re.DOTALL)
         subtitles = []
 
         for match in subtitle_pattern.finditer(content):
             # 格式：
             # <re.Match object; span=(0, 60), match="1\n00:00:00,166 --> 00:00:01,166\nwe're going to >
+            # config.logger.debug(f'match={match}')
             start_time = self.time_to_milliseconds(match.group(2))
             end_time = self.time_to_milliseconds(match.group(3))
             text = match.group(4).strip()
+            # config.logger.debug(f'text={text}')
             subtitles.append((start_time, end_time, text))
 
         return subtitles
