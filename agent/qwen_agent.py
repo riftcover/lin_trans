@@ -84,5 +84,5 @@ def translate_document(in_document, out_document, chunk_size=40):
 if __name__ == '__main__':
     filter = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.txt'
     out_file = r'D:\dcode\lin_trans\result\tt1\finish-qwen2-57b-a14b-instruct.srt'
-    translation = translate_document(filter, out_file)
+    translate_document(filter, out_file)
     # chat_translate(local_content, tt)

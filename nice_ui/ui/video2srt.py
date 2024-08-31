@@ -216,7 +216,6 @@ class TableWindow:
         row_position = ui_table.rowCount()
 
         ui_table.insertRow(row_position)
-        # file_duration = "00:00:00"  # todo: 可以使用一个方法来获取实际时长
         file_duration = self.get_video_duration(file_path)
         # self.table_set_item(ui_table, row_position, file_path, file_duration, "0.00")
         file_name = os.path.basename(file_path)
