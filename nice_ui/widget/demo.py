@@ -46,11 +46,13 @@ class Demo2(QWidget):
         super().__init__()
         self.vBoxLayout = QVBoxLayout(self)
         self.videoWidget = LinVideoWidget()
+        # self.videoWidget = VideoWidget()
 
         self.videoWidget.setVideo(QUrl(
-            '/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
+            'D:/dcode/lin_trans/result/tt1/tt.mp4'))
         # self.videoWidget.play()
-        self.videoWidget.setSrtFile('/Users/locodol/my_own/code/lin_trans/result/tt1/tt.srt')
+        # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/tt.srt')
+        # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/dd.srt')
 
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.addWidget(self.videoWidget)

@@ -1,4 +1,5 @@
 import sys
+
 from PySide6 import QtWidgets
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget)
@@ -23,11 +24,11 @@ class SubtitleEditPage(CardWidget):
         layout = QVBoxLayout(left_widget)
 
         # 创建分割器
-        splitter = QtWidgets.QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Horizontal)
         splitter.setFrameShape(QtWidgets.QFrame.NoFrame)
         splitter.setFrameShadow(QtWidgets.QFrame.Sunken)
         splitter.setLineWidth(2)
-        subtitleTable = SubtitleTable(self.patt)
+        subtitle_table = SubtitleTable(self.patt)
 
         # 创建并添加CardWidget
         top_card = CardWidget()
@@ -38,14 +39,14 @@ class SubtitleEditPage(CardWidget):
         export_button = TransparentToolButton(FluentIcon.EMBED)
         export_button.clicked.connect(self.export_srt)
         save_button = TransparentToolButton(FluentIcon.SAVE)
-        save_button.clicked.connect(subtitleTable.save_subtitle)
+        save_button.clicked.connect(subtitle_table.save_subtitle)
 
         # 向下移动按钮
         down_rows = TransparentToolButton(FluentIcon.DOWN)
-        down_rows.clicked.connect(subtitleTable.move_row_down_more)
+        down_rows.clicked.connect(subtitle_table.move_row_down_more)
         # 向上移动按钮
         up_rows = TransparentToolButton(FluentIcon.UP)
-        up_rows.clicked.connect(subtitleTable.move_row_up_more)
+        up_rows.clicked.connect(subtitle_table.move_row_up_more)
         # 导入译文
 
         import_button = TransparentToolButton(FluentIcon.LABEL)
@@ -61,21 +62,16 @@ class SubtitleEditPage(CardWidget):
 
         right_widget = QWidget()
         video_layout = QVBoxLayout(right_widget)
-        self.videoWidget = LinVideoWidget(subtitleTable,subtitleTable.subtitles,self)
+        self.videoWidget = LinVideoWidget(subtitle_table,subtitle_table.subtitles,self)
         # self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
         self.videoWidget.setVideo(QUrl('D:/dcode/lin_trans/result/tt1/tt.mp4'))
         spacer = QSpacerItem(20, 500, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         layout.addWidget(top_card)
-        layout.addWidget(subtitleTable)
+        layout.addWidget(subtitle_table)
 
         video_layout.addWidget(self.videoWidget)
         video_layout.addItem(spacer)
-
-        # # 水平布局
-        # h_layout = QHBoxLayout()
-        # h_layout.addLayout(layout,3)
-        # h_layout.addLayout(video_layout,1)
 
         # 将左右部件添加到分割器
         splitter.addWidget(left_widget)

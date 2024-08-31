@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PySide6.QtCore import (Qt, Slot, QSize)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QFileDialog,QFormLayout, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem)
+from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem)
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
