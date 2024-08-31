@@ -721,7 +721,8 @@ class SubtitleTable(QTableView):
 
     def move_row_down_more(self):
         config.logger.debug(f"move_row_down_more {self.model.checked_rows}")
-        for row in self.model.checked_rows:
+        # Iterate over checked rows in reverse order
+        for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_down(row)
 
     def move_row_up(self):
@@ -731,7 +732,7 @@ class SubtitleTable(QTableView):
 
     def move_row_up_more(self):
         config.logger.debug(f"move_row_up_more {self.model.checked_rows}")
-        for row in self.model.checked_rows:
+        for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_up(row)
 
     def save_subtitle(self):
