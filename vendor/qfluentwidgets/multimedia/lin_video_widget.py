@@ -59,6 +59,8 @@ class LinVideoWidget(QWidget):
         self.subtitle_table = subtitle_table
         self.subtitles = subtitles
         self.vBoxLayout = QVBoxLayout(self)
+        self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
+        self.vBoxLayout.setSpacing(0)  # 移除部件之间的间距
         self.graphicsView = QGraphicsView(self)
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
@@ -88,12 +90,7 @@ class LinVideoWidget(QWidget):
 
         self.graphicsScene.addItem(self.subtitleItem)
 
-        # 创建一个弹性空间，它会吸收额外的垂直空间
-        spacer = QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
         self.vBoxLayout.addWidget(self.graphicsView)
-        # self.vBoxLayout.addLayout(self.videoItem)
-        self.vBoxLayout.addSpacing(0)
         self.vBoxLayout.addWidget(self.playBar)
         # self.vBoxLayout.addSpacerItem(spacer)  # 添加固定间距
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
@@ -109,10 +106,48 @@ class LinVideoWidget(QWidget):
         # 目前巨快，如果性能不好尝试降低
         self.player.positionChanged.connect(self.update_subtitle_from_table)
 
-        # # 监听 SubtitleTable 的变化
+        # 监听 SubtitleTable 的变化
         self.setup_subtitle_change_listeners()
 
+    def fitInView(self):
+        """
+        这个方法的目的是确保视频在图形视图中正确显示，填满可用空间，同时保持其原始宽高比。
+        这对于响应窗口大小变化或初始化视频显示时非常有用，可以保证视频始终以最佳方式呈现。
 
+        在某些情况下，没有 fitInView 方法，视频也可能看起来匹配。但是，添加这段代码有几个重要的好处：
+        1. 确保视频比例正确：
+            Qt.KeepAspectRatio 参数保证视频不会被拉伸或压缩，始终保持正确的宽高比。
+            没有这个方法，视频可能会在某些窗口大小下变形。
+        2. 适应不同大小的视频：
+            对于不同分辨率和比例的视频，这个方法可以自动调整显示，确保视频始终完整可见。
+        3. 响应窗口大小变化：
+            当用户调整窗口大小时，fitInView 可以确保视频正确重新缩放和定位。
+        4. 处理高DPI显示：
+        在高DPI显示器上，这个方法有助于正确计算和显示视频大小。
+        5. 优化性能：
+            通过精确设置场景矩形（setSceneRect），可以优化渲染性能，因为QGraphicsView只需要关注必要的区域。
+        6. 一致的用户体验：
+        无论视频源如何，都能提供一致的显示效果，增强用户体验。
+        7. 处理边缘情况：
+            对于特别小或特别大的视频，或者非标准比例的视频，这个方法可以确保它们都能正确显示。
+        """
+
+        # 设置 videoItem（视频项）的大小，使其与 graphicsView（图形视图）的大小相同。
+        # QSizeF 创建一个浮点精度的大小对象，基于 graphicsView 的当前大小。
+        # 这确保视频项填满整个图形视图区域。
+        self.videoItem.setSize(QSizeF(self.graphicsView.size()))
+        """
+        设置图形视图的场景矩形，使其与视频项的边界矩形相匹配。
+        boundingRect() 返回视频项的边界矩形。
+        这确保场景大小正好包含整个视频项。
+        """
+        self.graphicsView.setSceneRect(self.videoItem.boundingRect())
+        """
+        调整图形视图的视口，使视频项完全可见。
+        Qt.KeepAspectRatio 参数确保在缩放时保持视频的原始宽高比。
+        这样可以防止视频被拉伸或压缩，保持正确的显示比例。
+        """
+        self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
 
     def setup_subtitle_change_listeners(self):
         """ 监听 SubtitleTable 内容变化：字幕改变，字幕行变化，字幕时间变化 """
