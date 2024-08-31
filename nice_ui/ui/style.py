@@ -197,9 +197,9 @@ class LTimeEdit(QTimeEdit):
 
     def stepBy(self, steps):
         current_time: QTime = self.time()
-        config.logger.debug(f"当前时间：{current_time}, steps:{steps}")
+        # config.logger.debug(f"当前时间：{current_time}, steps:{steps}")
         new_time = current_time.addMSecs(steps * 500)  # 每次调整500毫秒
-        config.logger.debug(f"调整后的时间：{new_time}")
+        # config.logger.debug(f"调整后的时间：{new_time}")
         # 在时间边界时调整时间，使其不会超出范围
         if steps < 0 and new_time > current_time:
             new_time = QTime(0, 0, 0, 000)
@@ -665,7 +665,7 @@ class SubtitleTable(QTableWidget):
 if __name__ == '__main__':
     import sys
 
-    # patt = r'D:\dcode\lin_trans\result\tt1\tt1.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\dd1.srt'
     patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
     app = QApplication(sys.argv)
     card = SubtitleTable(patt)

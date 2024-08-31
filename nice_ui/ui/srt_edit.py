@@ -1,9 +1,10 @@
 import sys
+from PySide6 import QtWidgets
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget)
 
-from PySide6.QtCore import QUrl
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
-
-from nice_ui.ui.style import SubtitleTable
+from nice_ui.widget.subedit import SubtitleTable
+# from nice_ui.ui.style import SubtitleTable
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
@@ -15,8 +16,19 @@ class SubtitleEditPage(CardWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
-        self.subtitleTable = SubtitleTable(self.patt)
+        # 创建主布局
+        main_layout = QHBoxLayout(self)
+
+        left_widget = QWidget()
+        layout = QVBoxLayout(left_widget)
+
+        # 创建分割器
+        splitter = QtWidgets.QSplitter(Qt.Horizontal)
+        splitter.setFrameShape(QtWidgets.QFrame.NoFrame)
+        splitter.setFrameShadow(QtWidgets.QFrame.Sunken)
+        splitter.setLineWidth(2)
+        subtitleTable = SubtitleTable(self.patt)
+
         # 创建并添加CardWidget
         top_card = CardWidget()
         top_layout = QHBoxLayout(top_card)
@@ -26,14 +38,14 @@ class SubtitleEditPage(CardWidget):
         export_button = TransparentToolButton(FluentIcon.EMBED)
         export_button.clicked.connect(self.export_srt)
         save_button = TransparentToolButton(FluentIcon.SAVE)
-        save_button.clicked.connect(self.subtitleTable.save_subtitle)
+        save_button.clicked.connect(subtitleTable.save_subtitle)
 
         # 向下移动按钮
         down_rows = TransparentToolButton(FluentIcon.DOWN)
-        down_rows.clicked.connect(self.subtitleTable.move_row_down_more)
+        down_rows.clicked.connect(subtitleTable.move_row_down_more)
         # 向上移动按钮
         up_rows = TransparentToolButton(FluentIcon.UP)
-        up_rows.clicked.connect(self.subtitleTable.move_row_up_more)
+        up_rows.clicked.connect(subtitleTable.move_row_up_more)
         # 导入译文
 
         import_button = TransparentToolButton(FluentIcon.LABEL)
@@ -47,25 +59,33 @@ class SubtitleEditPage(CardWidget):
         top_layout.addWidget(save_button)
         top_layout.addWidget(export_button)
 
-        video_layout = QVBoxLayout()
-        self.videoWidget = LinVideoWidget(self.subtitleTable,self.subtitleTable.subtitles,self)
+        right_widget = QWidget()
+        video_layout = QVBoxLayout(right_widget)
+        self.videoWidget = LinVideoWidget(subtitleTable,subtitleTable.subtitles,self)
         # self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4'))
-        self.videoWidget.setVideo(QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/tt1.mp4'))
+        self.videoWidget.setVideo(QUrl('D:/dcode/lin_trans/result/tt1/tt.mp4'))
         spacer = QSpacerItem(20, 500, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         layout.addWidget(top_card)
-        layout.addWidget(self.subtitleTable)
+        layout.addWidget(subtitleTable)
 
         video_layout.addWidget(self.videoWidget)
         video_layout.addItem(spacer)
 
-        # 水平布局
-        h_layout = QHBoxLayout()
-        h_layout.addLayout(layout,3)
-        h_layout.addLayout(video_layout,1)
+        # # 水平布局
+        # h_layout = QHBoxLayout()
+        # h_layout.addLayout(layout,3)
+        # h_layout.addLayout(video_layout,1)
 
-        #设置布局
-        self.setLayout(h_layout)
+        # 将左右部件添加到分割器
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+        # 设置左侧占2/3，右侧占1/3
+        splitter.setStretchFactor(0, 2)  # 左侧部件索引为0，比例为2
+        splitter.setStretchFactor(1, 1)  # 右侧部件索引为1，比例为1
+
+        main_layout.addWidget(splitter)
+
 
         export_button.setToolTip("导出srt格式字幕文件")
         export_button.installEventFilter(ToolTipFilter(export_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
@@ -91,7 +111,8 @@ class SubtitleEditPage(CardWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SubtitleEditPage(patt='/Users/locodol/my_own/code/lin_trans/result/tt1/tt.srt')
+    window = SubtitleEditPage(patt= r'D:\dcode\lin_trans\result\tt1\tt.srt')
+    # window = SubtitleEditPage(patt=r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt')
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())
