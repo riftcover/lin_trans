@@ -1,12 +1,9 @@
 import sys
 
-from PySide6 import QtWidgets
 from PySide6.QtCore import QUrl, Qt
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget)
 
 from nice_ui.widget.subedit import SubtitleTable
-# from nice_ui.ui.style import SubtitleTable
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
@@ -23,9 +20,10 @@ class AspectRatioWidget(QWidget):
         # 视频媒体部分为16：9，底部bar自身高度为40，
         # 为了保证在编辑器中bar不会超出媒体部分，所以+50
         width = self.width()
-        height = int(width / self.aspect_ratio)+50
+        height = int(width / self.aspect_ratio) + 50
         self.setFixedHeight(height)
         super().resizeEvent(event)
+
 
 class SubtitleEditPage(CardWidget):
     def __init__(self, patt):
@@ -73,11 +71,10 @@ class SubtitleEditPage(CardWidget):
 
         # 添加按钮
         buttons = [
-            (TransparentToolButton(FluentIcon.DOWN), self.subtitle_table.move_row_down_more, "将勾选的译文整体向下移动"),
-            (TransparentToolButton(FluentIcon.UP), self.subtitle_table.move_row_up_more, "将勾选的译文向上移动译文"),
+            (TransparentToolButton(FluentIcon.DOWN), self.move_row_down_more, "将勾选的译文整体向下移动"),
+            (TransparentToolButton(FluentIcon.UP), self.move_row_up_more, "将勾选的译文向上移动译文"),
             (TransparentToolButton(FluentIcon.SAVE), self.subtitle_table.save_subtitle, "保存到本地，以免丢失"),
-            (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"),
-        ]
+            (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"), ]
 
         top_layout.addStretch(1)
         for button, callback, tooltip in buttons:
@@ -102,8 +99,26 @@ class SubtitleEditPage(CardWidget):
 
         # 视频部件
 
-
         return right_widget
+
+    def clear_table_focus(self):
+        """
+        在这个Widget中点击按钮（上下移动，保存等）时，subtitle_table 中的所有编辑器的焦点默认不会被清除，
+        导致进行上下移动等操作，subtitle_table中最后一条没有被setdata
+        因此，需要在按钮点击时，先清除所有编辑器的焦点，然后再重新设置焦点到 ListTableView。
+        1. connect_buttons 方法：在 MainWindow 初始化时，连接按钮的点击信号到 clear_table_focus 槽函数。
+        2. clear_table_focus 方法：清除 ListTableView 中的所有编辑器的焦点，并重新设置焦点到 ListTableView。
+        """
+        self.subtitle_table.clearFocus()
+        self.subtitle_table.setFocus(Qt.OtherFocusReason)
+
+    def move_row_down_more(self):
+        self.clear_table_focus()
+        self.subtitle_table.move_row_down_more()
+
+    def move_row_up_more(self):
+        self.clear_table_focus()
+        self.subtitle_table.move_row_up_more()
 
     def export_srt(self):
         # todo：导出srt文件
@@ -116,7 +131,7 @@ class SubtitleEditPage(CardWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SubtitleEditPage(patt= r'D:\dcode\lin_trans\result\tt1\tt.srt')
+    window = SubtitleEditPage(patt=r'D:\dcode\lin_trans\result\tt1\tt.srt')
     # window = SubtitleEditPage(patt=r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt')
     window.resize(1300, 800)
     window.show()

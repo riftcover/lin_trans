@@ -2,7 +2,8 @@ from typing import Dict, Set, Tuple, Optional, Any, List, Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QPoint
 from PySide6.QtGui import QColor
 
-from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout, QCheckBox, \
+    QAbstractItemDelegate
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
@@ -39,7 +40,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         """
         if index.column() == 0:  # 勾选框
             self.signals.createEditor.emit(index.row(), index.column())
-            return self.create_checkbox(parent)
+            return self.create_checkbox(parent,index)
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
@@ -83,8 +84,10 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 恢复painter的状态
         painter.restore()
 
-    def create_checkbox(self, parent) -> CheckBox:
-        return CheckBox(parent)
+    def create_checkbox(self, parent,index) -> CheckBox:
+        editor = CheckBox(parent)
+        # editor.stateChanged.connect(lambda:self.commitAndCloseEditor(editor, index))
+        return editor
 
     def create_operation_widget(self, parent) -> QWidget:
         widget = QWidget(parent)
@@ -197,12 +200,12 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             times = index.data(Qt.UserRole)
             start_time = editor.findChild(LTimeEdit, "start_time")
-            config.logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
+            # config.logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
             editor.setText(index.data(Qt.EditRole))
         elif index.column() == 6:
             # 编辑按钮
@@ -238,6 +241,10 @@ class CustomItemDelegate(QStyledItemDelegate):
             pass
         else:
             super().setModelData(editor, model, index)  # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
+
+    def commitAndCloseEditor(self, editor, index):
+        self.commitData.emit(editor)
+        self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
 
     # def sizeHint(self, option, index):    # 返回固定大小以提高性能  #     if index.column() == 0:  #         return QSize(50, 80)  #     elif index.column() == 1:  #         return QSize(50, 80)  #     elif index.column() == 2:  #         return QSize(50, 80)  #     return super().sizeHint(option, index)
 
@@ -343,11 +350,13 @@ class SubtitleModel(QAbstractTableModel):
 
         row = index.row()
         col = index.column()
-
+        # config.logger.debug(f"setData: {row}, {col}")
         if role == Qt.CheckStateRole and col == 0:
             if value == Qt.Checked:
+                # config.logger.debug(f"setData: 勾选行: {row}")
                 self.checked_rows.add(row)
             else:
+                # config.logger.debug(f"setData: 取消勾选行: {row}")
                 self.checked_rows.discard(row)
             self.dataChanged.emit(index, index, [role])
             return True
@@ -355,13 +364,12 @@ class SubtitleModel(QAbstractTableModel):
         if role == Qt.EditRole:
             if col == 4:  # 原文列
                 set_data = (self._data[row][0], self._data[row][1], value, self._data[row][3])
-                config.logger.debug(f"原文列 setData: {self._data[row]}")
                 self._data[row] = set_data
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
         elif role == Qt.UserRole and col == 3:  # 时间列
             self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
-        config.logger.info(f"setData 触发信号 dataChanged: {index}")
+        # config.logger.debug(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
 
@@ -517,6 +525,7 @@ class SubtitleTable(QTableView):
 
         # 隐藏网格线
         self.setShowGrid(False)
+
     def setHorizontalHeaderLabels(self):
         # 设置表头样式
         header = self.horizontalHeader()
@@ -769,7 +778,6 @@ class SubtitleTable(QTableView):
 
         # 按开始时间排序
         self.subtitles.sort(key=lambda x:x[0])
-
 
 if __name__ == "__main__":
     import sys
