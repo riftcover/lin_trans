@@ -121,16 +121,16 @@ class CustomItemDelegate(QStyledItemDelegate):
         return widget
 
     def create_text_edit(self, parent) -> LinLineEdit:
-        container = QWidget(parent)
-        layout = QHBoxLayout(container)
-        layout.setContentsMargins(5, 10, 5, 10)  # 左右各留5像素的边距,上下各10像素边距
-        layout.setSpacing(0)
+        # container = QWidget(parent)
+        # layout = QHBoxLayout(container)
+        # layout.setContentsMargins(5, 10, 5, 10)  # 左右各留5像素的边距,上下各10像素边距
+        # layout.setSpacing(0)
 
-        text_edit = LinLineEdit(container)
+        text_edit = LinLineEdit(parent)
         text_edit.setObjectName("text_edit")
-        layout.addWidget(text_edit)
+        # layout.addWidget(text_edit)
 
-        return container
+        return text_edit
 
     def create_edit_widget(self, parent, index) -> QWidget:
         widget = QWidget(parent)
@@ -197,12 +197,13 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             times = index.data(Qt.UserRole)
             start_time = editor.findChild(LTimeEdit, "start_time")
-            # config.logger.debug(f"start_time: {start_time}, times: {times}")
+            config.logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            editor.findChild(LinLineEdit, "text_edit").setText(index.data(Qt.EditRole))
+            config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            editor.setText(index.data(Qt.EditRole))
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -224,10 +225,14 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             start_time = editor.findChild(LTimeEdit, "start_time").time().toString()
             end_time = editor.findChild(LTimeEdit, "end_time").time().toString()
+            config.logger.debug(f"setModelData:start_time: {start_time}, end_time: {end_time}")
             model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
+            config.logger.debug('begin to setModelData')
             # 原文和译文
-            model.findChild(LinLineEdit, "text_edit").setData(index, editor.toPlainText(), Qt.EditRole)
+            value = editor.toPlainText()
+            config.logger.debug(f"setModelData: {value}")
+            model.setData(index, value, Qt.EditRole)
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -318,7 +323,7 @@ class SubtitleModel(QAbstractTableModel):
         if role == Qt.CheckStateRole and col == 0:
             return Qt.Checked if row in self.checked_rows else Qt.Unchecked
 
-        if role == Qt.DisplayRole or role == Qt.EditRole:
+        if role in [Qt.DisplayRole, Qt.EditRole]:
             if col == 2:  # 行号列
                 return str(row + 1)  # 行号从1开始
             if col == 3:  # 时间列
@@ -349,12 +354,14 @@ class SubtitleModel(QAbstractTableModel):
 
         if role == Qt.EditRole:
             if col == 4:  # 原文列
-                self._data[row] = (self._data[row][0], self._data[row][1], value, self._data[row][3])
+                set_data = (self._data[row][0], self._data[row][1], value, self._data[row][3])
+                config.logger.debug(f"原文列 setData: {self._data[row]}")
+                self._data[row] = set_data
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
         elif role == Qt.UserRole and col == 3:  # 时间列
             self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
-
+        config.logger.info(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
 
@@ -479,6 +486,7 @@ class SubtitleTable(QTableView):
         # 设置模型和代理
         self.setModel(self.model)
         self.setItemDelegate(self.delegate)
+        config.logger.debug("Set CustomItemDelegate for SubtitleTable")
 
         # 连接信号
         self.delegate.signals.createEditor.connect(self.on_editor_created)
@@ -504,8 +512,7 @@ class SubtitleTable(QTableView):
         # 设置行高
         self.verticalHeader().setDefaultSectionSize(80)
 
-        # 设置编辑触发和选择模式
-        self.setEditTriggers(QTableView.NoEditTriggers)
+        # 设置编辑器选择模式：禁用所有选择
         self.setSelectionMode(QTableView.NoSelection)
 
         # 隐藏网格线
@@ -664,8 +671,8 @@ class SubtitleTable(QTableView):
 
         new_visible_editors = set()
         for r, c in self.visible_editors:
-            # 从visible_editors中移除被删除行的编辑器
-            # 对被删除行以下的编辑器的行号进行调整
+
+            # 从visible_editors中移除被删除行的编辑器，对被删除行以下的编辑器的行号进行调整
             if r < row:
                 new_visible_editors.add((r, c))
             elif r > row:
