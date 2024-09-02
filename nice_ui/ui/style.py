@@ -359,7 +359,6 @@ class SubtitleTable(QTableWidget):
 
     def _add_row(self, row_position: int = None, srt_data: tuple = None):
 
-        # self.insertRow(row_position)
         # 第一列:勾选框
         chk = CheckBox()
         self.setCellWidget(row_position, 0, chk)
@@ -519,12 +518,12 @@ class SubtitleTable(QTableWidget):
             current_row_end_time = QTime(0, 0)
             config.logger.error("Warning: Could not find endTime widget")
         # 将结束时间转换为字符串
-        start_time_str = current_row_end_time.toString("hh:mm:ss,zzz")
+        start_time_str = current_row_end_time.toString(HH_MM_SS_ZZZ)
         config.logger.debug(f"start_time_str: {start_time_str}")
 
         # 计算新的结束时间（加500毫秒）
         new_end_time = current_row_end_time.addMSecs(500)
-        end_time_str = new_end_time.toString("hh:mm:ss,zzz")
+        end_time_str = new_end_time.toString(HH_MM_SS_ZZZ)
 
         # 创建新的srt_data元组
         new_srt_data = (start_time_str, end_time_str, '', '')
@@ -627,13 +626,13 @@ class SubtitleTable(QTableWidget):
             time_widget = self.cellWidget(row, 3)
             start_time_edit = time_widget.findChild(LTimeEdit, "start_time")
             if start_time_edit:
-                start_time_str = start_time_edit.time().toString("hh:mm:ss,zzz")
+                start_time_str = start_time_edit.time().toString(HH_MM_SS_ZZZ)
             else:
                 raise ValueError("Could not find startTime widget")
             # 第三列结束时间
             end_time_edit = time_widget.findChild(LTimeEdit, "end_time")
             if end_time_edit:
-                end_time_str = end_time_edit.time().toString("hh:mm:ss,zzz")
+                end_time_str = end_time_edit.time().toString(HH_MM_SS_ZZZ)
             else:
                 raise ValueError("Could not find startTime widget")
             # 第五列原文

@@ -266,7 +266,7 @@ class LinVideoWidget(QWidget):
     def fitInView(self):
         # 调整 graphicsView 的大小以填充除了 playBar 和间距之外的所有空间
         # available_height = self.height() - self.playBar.height() - 5  # 5 是间距高度
-        config.logger.debug(f'self.graphicsView.size()={self.graphicsView.size()}')
+        # config.logger.debug(f'self.graphicsView.size()={self.graphicsView.size()}')
         self.videoItem.setSize(QSizeF(self.graphicsView.size()))
         # self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
 

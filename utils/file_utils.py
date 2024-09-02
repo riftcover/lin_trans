@@ -47,8 +47,6 @@ def is_cjk(char):
     return 'CJK' in unicodedata.name(char, '')
 
 def split_sentence(sentence):
-    # 使用正则表达式分割句子
-    # words = re.findall(r'\w+|[^\w\s]', sentence)
     words = sentence.split()
     result = []
     for word in words:
