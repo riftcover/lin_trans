@@ -1,10 +1,11 @@
 import sys
 
-from PySide6.QtCore import QUrl, Qt
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget)
+from PySide6.QtCore import QUrl, Qt, QSize
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget, QLineEdit, QPushButton, QRadioButton,
+                               QButtonGroup, QFileDialog, QDialog, QLabel)
 
 from nice_ui.widget.subedit import SubtitleTable
-from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon
+from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
 
@@ -122,7 +123,8 @@ class SubtitleEditPage(CardWidget):
 
     def export_srt(self):
         # todo：导出srt文件
-        pass
+        dialog = ExportSubtitleDialog(self)
+        dialog.exec()
 
     def save_srt(self):
         self.clear_table_focus()
@@ -132,6 +134,60 @@ class SubtitleEditPage(CardWidget):
         # todo：导入译文
         print("import subtitle")
 
+
+class ExportSubtitleDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("导出字幕")
+        self.setFixedSize(400, 200)
+
+        layout = QVBoxLayout(self)
+
+        # 第一行：字幕格式
+        format_layout = QHBoxLayout()
+        format_label = QLabel("字幕格式:")
+        self.srt_radio = QRadioButton("SRT")
+        self.txt_radio = QRadioButton("TXT")
+        self.srt_radio.setChecked(True)  # 默认选择SRT
+
+        format_layout.addWidget(format_label)
+        format_layout.addWidget(self.srt_radio)
+        format_layout.addWidget(self.txt_radio)
+        format_layout.addStretch(1)  # 添加伸缩空间
+        layout.addLayout(format_layout)
+
+        # 第二行：导出路径
+        path_layout = QHBoxLayout()
+        path_label = QLabel("导出路径:")
+        self.path_input = QLineEdit("D:\\dcode\\lin_trans\\result\\tt1")
+        choose_button = QPushButton("选择路径")
+        choose_button.clicked.connect(self.choose_path)
+
+        path_layout.addWidget(path_label)
+        path_layout.addWidget(self.path_input)
+        path_layout.addWidget(choose_button)
+        layout.addLayout(path_layout)
+
+        # 第三行：导出按钮
+        button_layout = QHBoxLayout()
+        export_button = PushButton("导出字幕")
+        export_button.setFixedSize(QSize(100, 40))  # 设置按钮大小
+        export_button.clicked.connect(self.export_subtitle)
+        button_layout.addStretch(1)
+        button_layout.addWidget(export_button)
+        button_layout.addStretch(1)
+        layout.addLayout(button_layout)
+
+    def choose_path(self):
+        if path := QFileDialog.getExistingDirectory(self, "选择导出路径"):
+            self.path_input.setText(path)
+
+    def export_subtitle(self):
+        # 实现导出逻辑
+        format_selected = "SRT" if self.srt_radio.isChecked() else "TXT"
+        export_path = self.path_input.text()
+        print(f"导出字幕格式: {format_selected} 到路径: {export_path}")
+        self.accept()  # 关闭对话框
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
