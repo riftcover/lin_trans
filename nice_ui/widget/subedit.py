@@ -124,15 +124,8 @@ class CustomItemDelegate(QStyledItemDelegate):
         return widget
 
     def create_text_edit(self, parent) -> LinLineEdit:
-        # container = QWidget(parent)
-        # layout = QHBoxLayout(container)
-        # layout.setContentsMargins(5, 10, 5, 10)  # 左右各留5像素的边距,上下各10像素边距
-        # layout.setSpacing(0)
-
         text_edit = LinLineEdit(parent)
         text_edit.setObjectName("text_edit")
-        # layout.addWidget(text_edit)
-
         return text_edit
 
     def create_edit_widget(self, parent, index) -> QWidget:
@@ -199,14 +192,14 @@ class CustomItemDelegate(QStyledItemDelegate):
         elif index.column() == 3:
             # 时间
             times = index.data(Qt.UserRole)
-            start_time = editor.findChild(LTimeEdit, "start_time")
+            editor.findChild(LTimeEdit, "start_time")
             # config.logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
             editor.setText(index.data(Qt.EditRole))
+            # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -435,9 +428,9 @@ class SubtitleModel(QAbstractTableModel):
             translated_text = self.index(row, 5).data(Qt.EditRole)
             subtitles.append((f"{start_time_edit[0]} --> {start_time_edit[1]}", your_text, translated_text))
         # todo: 保存文件路径调整
-        patht = r'D:\dcode\lin_trans\result\tt1\xdd.srt'
-        # with open(self.file_path, 'w', encoding='utf-8') as f:
-        with open(patht, 'w', encoding='utf-8') as f:
+        with open(self.file_path, 'w', encoding='utf-8') as f:
+        # patht = r'D:\dcode\lin_trans\result\tt1\xdd.srt'
+        # with open(patht, 'w', encoding='utf-8') as f:
             for i, j in enumerate(subtitles):
                 f.write(f"{i + 1}\n")
                 f.write(f"{j[0]}\n")

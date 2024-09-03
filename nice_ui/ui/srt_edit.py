@@ -73,7 +73,7 @@ class SubtitleEditPage(CardWidget):
         buttons = [
             (TransparentToolButton(FluentIcon.DOWN), self.move_row_down_more, "将勾选的译文整体向下移动"),
             (TransparentToolButton(FluentIcon.UP), self.move_row_up_more, "将勾选的译文向上移动译文"),
-            (TransparentToolButton(FluentIcon.SAVE), self.subtitle_table.save_subtitle, "保存到本地，以免丢失"),
+            (TransparentToolButton(FluentIcon.SAVE), self.save_srt, "保存到本地，以免丢失"),
             (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"), ]
 
         top_layout.addStretch(1)
@@ -122,7 +122,11 @@ class SubtitleEditPage(CardWidget):
 
     def export_srt(self):
         # todo：导出srt文件
-        print("export srt")
+        pass
+
+    def save_srt(self):
+        self.clear_table_focus()
+        self.subtitle_table.save_subtitle()
 
     def import_subtitle(self):
         # todo：导入译文
