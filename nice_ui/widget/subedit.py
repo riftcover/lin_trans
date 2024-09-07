@@ -429,13 +429,14 @@ class SubtitleModel(QAbstractTableModel):
             subtitles.append((f"{start_time_edit[0]} --> {start_time_edit[1]}", your_text, translated_text))
         # todo: 保存文件路径调整
         with open(self.file_path, 'w', encoding='utf-8') as f:
-        # patht = r'D:\dcode\lin_trans\result\tt1\xdd.srt'
-        # with open(patht, 'w', encoding='utf-8') as f:
             for i, j in enumerate(subtitles):
                 f.write(f"{i + 1}\n")
                 f.write(f"{j[0]}\n")
-                f.write(f"{j[1]}\n")
-                f.write(f"{j[2]}\n\n")
+                if j[2]:
+                    f.write(f"{j[1]}\n")
+                    f.write(f"{j[2]}\n\n")
+                else:
+                    f.write(f"{j[1]}\n\n")
 
 
 class VirtualScrollSignals(QObject):
