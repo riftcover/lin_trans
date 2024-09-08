@@ -1,3 +1,4 @@
+import os
 import sys
 import shutil
 
@@ -75,9 +76,9 @@ class SubtitleEditPage(CardWidget):
 
         # 添加按钮
         buttons = [(TransparentToolButton(FluentIcon.DOWN), self.move_row_down_more, "将勾选的译文整体向下移动"),
-            (TransparentToolButton(FluentIcon.UP), self.move_row_up_more, "将勾选的译文向上移动译文"),
-            (TransparentToolButton(FluentIcon.SAVE), self.save_srt, "保存到本地，以免丢失"),
-            (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"), ]
+                   (TransparentToolButton(FluentIcon.UP), self.move_row_up_more, "将勾选的译文向上移动译文"),
+                   (TransparentToolButton(FluentIcon.SAVE), self.save_srt, "保存到本地，以免丢失"),
+                   (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"), ]
 
         top_layout.addStretch(1)
         for button, callback, tooltip in buttons:
@@ -124,7 +125,6 @@ class SubtitleEditPage(CardWidget):
         self.subtitle_table.move_row_up_more()
 
     def export_srt(self):
-        # todo：导出srt文件
         dialog = ExportSubtitleDialog(self.patt, self)
         dialog.exec()
 
@@ -164,7 +164,7 @@ class ExportSubtitleDialog(QDialog):
         path_layout = QHBoxLayout()
         path_label = QLabel("导出路径:")
         # todo 默认路径设置
-        last_export_path = self.settings.value("last_export_path", "D:\\dcode\\lin_trans\\result\\tt1")
+        last_export_path = self.settings.value("last_export_path", self.patt)
         self.path_input = QLineEdit(last_export_path)
         choose_button = QPushButton("选择路径")
         choose_button.clicked.connect(self.choose_path)
@@ -193,30 +193,57 @@ class ExportSubtitleDialog(QDialog):
         # 实现导出逻辑
         export_path = self.path_input.text()
 
-
         if self.srt_radio.isChecked():
             shutil.copy(self.patt, export_path)  # 复制文件
         else:
-            # 实现单语种文本提取
-            with open(self.patt, 'r', encoding='utf-8') as src_file:
-                lines = src_file.readlines()
-
-            # 提取文本（假设每行是字幕内容）
-            text_lines = [line.strip() for line in lines if line.strip() and not line[0].isdigit()]
-
-            # 保存提取的文本到 export_path
-            # todo：这里导出的文件名拼接
-            with open(f'{export_path}/tt[双语].txt', 'w', encoding='utf-8') as dest_file:
-                dest_file.write('\n'.join(text_lines))  # 将文本写入文件
-        print(f"导出字幕到路径: {export_path}")
+            self._export_txt(export_path)
         self.accept()  # 关闭对话框
+
+    def _export_txt(self,export_path):
+        # 实现单语种文本提取
+        with open(self.patt, 'r', encoding='utf-8') as src_file:
+            lines = src_file.readlines()
+
+        # 提取第一行和第二行字幕
+        first_line_subtitles = []
+        second_line_subtitles = []
+
+        i = 0
+        while i < len(lines):
+            # 跳过序号行和时间戳行
+            i += 2
+
+            # 读取第一行字幕
+            if i < len(lines) and lines[i].strip():
+                first_line_subtitles.append(lines[i].strip())
+                i += 1
+
+            # 检查是否有第二行字幕
+            if i < len(lines) and lines[i].strip():
+                second_line_subtitles.append(lines[i].strip())
+                i += 1
+
+            # 跳过空行
+            while i < len(lines) and not lines[i].strip():
+                i += 1
+
+        config.logger.info(first_line_subtitles)
+        config.logger.info(second_line_subtitles)
+        # 保存提取的文本到 export_path
+        export_name = os.path.splitext(os.path.basename(self.patt))[0]
+        with open(f'{export_path}/{export_name}[双语].txt', 'w', encoding='utf-8') as dest_file:
+            # 写入第一行字幕
+            dest_file.write('\n'.join(first_line_subtitles) + '\n')
+            # 写入第二行字幕（如果存在）
+            if second_line_subtitles:
+                dest_file.write('\n'.join(second_line_subtitles) + '\n')
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
-    window = SubtitleEditPage(patt=r'D:\dcode\lin_trans\result\tt1\tt.srt', settings=settings)
-    # window = SubtitleEditPage(patt=r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt')
+    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
+    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())
