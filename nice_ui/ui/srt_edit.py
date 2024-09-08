@@ -245,8 +245,8 @@ class ExportSubtitleDialog(QDialog):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
-    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
+    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
+    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())
