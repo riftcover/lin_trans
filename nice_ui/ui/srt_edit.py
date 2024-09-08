@@ -138,6 +138,7 @@ class SubtitleEditPage(CardWidget):
 
 
 class ExportSubtitleDialog(QDialog):
+    # 导出字幕弹窗
     def __init__(self, path: str, parent=None):
         super().__init__(parent)
         self.patt = path
@@ -185,6 +186,7 @@ class ExportSubtitleDialog(QDialog):
         layout.addLayout(button_layout)
 
     def choose_path(self):
+        # 选择导出路径
         if path := QFileDialog.getExistingDirectory(self, "选择导出路径"):
             self.path_input.setText(path)
         self.settings.setValue("last_export_path", self.path_input.text())
@@ -199,8 +201,8 @@ class ExportSubtitleDialog(QDialog):
             self._export_txt(export_path)
         self.accept()  # 关闭对话框
 
-    def _export_txt(self,export_path):
-        # 实现单语种文本提取
+    def _export_txt(self,export_path:str):
+        # 实现语种文本提取
         with open(self.patt, 'r', encoding='utf-8') as src_file:
             lines = src_file.readlines()
 

@@ -224,10 +224,8 @@ class CustomItemDelegate(QStyledItemDelegate):
             config.logger.debug(f"setModelData:start_time: {start_time}, end_time: {end_time}")
             model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
-            config.logger.debug('begin to setModelData')
             # 原文和译文
             value = editor.toPlainText()
-            config.logger.debug(f"setModelData: {value}")
             model.setData(index, value, Qt.EditRole)
         elif index.column() == 6:
             # 编辑按钮
@@ -550,7 +548,7 @@ class SubtitleTable(QTableView):
 
     def on_scroll(self) -> None:
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
-        config.logger.debug("Scroll event")
+        # config.logger.debug("Scroll event")
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
@@ -587,7 +585,6 @@ class SubtitleTable(QTableView):
             visible_rows = visible_height // row_height
             end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
         else:
-            config.logger.debug('end_row use else')
             end_row = bottom_right.row()
 
         config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
@@ -666,7 +663,7 @@ class SubtitleTable(QTableView):
         r_list = set()
         for r, c in self.visible_editors:
             r_list.add(r)
-        config.logger.info(f"read_visible_editors: {r_list}")
+        # config.logger.info(f"read_visible_editors: {r_list}")
         return r_list
 
     def delete_row(self) -> None:
