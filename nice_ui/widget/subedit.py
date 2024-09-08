@@ -765,7 +765,7 @@ class SubtitleTable(QTableView):
     def process_subtitles(self):
         """ 预处理字幕数据，用于给播放器连接字幕 """
         self.subtitles.clear()  # 清空现有字幕
-
+        config.logger.error('字幕更新')
         # 从 SubtitleModel 中读取字幕数据
         for row in range(self.model.rowCount()):
             start_time, end_time, first_text, second_text = self.model._data[row]

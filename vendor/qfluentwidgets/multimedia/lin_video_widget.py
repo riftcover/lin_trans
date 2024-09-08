@@ -151,6 +151,7 @@ class LinVideoWidget(QWidget):
 
     def setup_subtitle_change_listeners(self):
         """ 监听 SubtitleTable 内容变化：字幕改变，字幕行变化，字幕时间变化 """
+        # todo：调整为新的tableChanged信号
         if self.subtitle_table is None:
             return
         self.subtitle_table.tableChanged.connect(self.on_subtitle_changed)
@@ -217,7 +218,6 @@ class LinVideoWidget(QWidget):
     def update_subtitle_from_table(self, position):
         """ 根据当前播放位置更新字幕，这个是读取table中的字幕数据使用的 """
         position_ms = position
-
         # 使用二分查找找到当前时间对应的字幕
         index = bisect_right(self.subtitles, (position_ms,)) - 1
         if 0 <= index < len(self.subtitles):
