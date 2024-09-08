@@ -7,8 +7,7 @@ from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerIt
                                QButtonGroup, QFileDialog, QDialog, QLabel)
 
 from nice_ui.configure import config
-from nice_ui.ui.style import SubtitleTable
-# from nice_ui.widget.subedit import SubtitleTable
+from nice_ui.widget.subedit import SubtitleTable
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 

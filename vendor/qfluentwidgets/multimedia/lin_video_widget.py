@@ -106,9 +106,6 @@ class LinVideoWidget(QWidget):
         # 目前巨快，如果性能不好尝试降低
         self.player.positionChanged.connect(self.update_subtitle_from_table)
 
-        # 监听 SubtitleTable 的变化
-        self.setup_subtitle_change_listeners()
-
     def fitInView(self):
         """
         这个方法的目的是确保视频在图形视图中正确显示，填满可用空间，同时保持其原始宽高比。
@@ -148,14 +145,6 @@ class LinVideoWidget(QWidget):
         这样可以防止视频被拉伸或压缩，保持正确的显示比例。
         """
         self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
-
-    def setup_subtitle_change_listeners(self):
-        """ 监听 SubtitleTable 内容变化：字幕改变，字幕行变化，字幕时间变化 """
-        # todo：调整为新的tableChanged信号
-        if self.subtitle_table is None:
-            return
-        self.subtitle_table.tableChanged.connect(self.on_subtitle_changed)
-
     def on_subtitle_changed(self, new_srt):
         """ 当字幕改变时调用 """
         config.logger.debug("on_subtitle_changed")
