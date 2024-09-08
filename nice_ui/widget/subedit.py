@@ -241,6 +241,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
 
 class SubtitleModel(QAbstractTableModel):
+    dataChangedSignal = Signal()
     # 定义数据模型
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
@@ -358,8 +359,15 @@ class SubtitleModel(QAbstractTableModel):
                 self._data[row] = set_data
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
+            
+            # 发出信号通知数据变化
+            self.dataChangedSignal.emit()
         elif role == Qt.UserRole and col == 3:  # 时间列
             self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
+
+            # 发出信号通知数据变化
+            self.dataChangedSignal.emit()
+ 
         # config.logger.debug(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
@@ -474,10 +482,14 @@ class SubtitleTable(QTableView):
         self.file_path = file_path
         # 预处理字幕数据 用于和播放器连接给他字幕的
         self.subtitles = []
+
         self.model = SubtitleModel(self.file_path)
         self.delegate = CustomItemDelegate(self)
         self.visible_editors = set()
 
+        # 预处理字幕数据
+        self.subtitles = self.model.load_subtitle()  # Load subtitles from model
+        
         # 初始化一个计时器
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(True)
@@ -496,6 +508,11 @@ class SubtitleTable(QTableView):
 
         self.init_ui()
         self.tablet_action()
+
+        self.process_subtitles()
+
+        # 连接信号
+        self.model.dataChangedSignal.connect(self.process_subtitles)
 
     def init_ui(self) -> None:
         # 设置滚动模式
@@ -747,28 +764,27 @@ class SubtitleTable(QTableView):
 
     def process_subtitles(self):
         """ 预处理字幕数据，用于给播放器连接字幕 """
-        # todo 还没适配
-        self.subtitles.clear()
-        config.logger.debug("预处理字幕")
-        for row in range(self.rowCount()):
-            try:
-                time_widget = self.cellWidget(row, 3)
-                # config.logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
-                start_time = time_widget.findChild(LTimeEdit, "start_time")
-                end_time = time_widget.findChild(LTimeEdit, "end_time")
+        self.subtitles.clear()  # 清空现有字幕
 
-                start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
-                end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
-
-                subtitle_widget = self.cellWidget(row, 4)
-                subtitle_text = subtitle_widget.toPlainText()
-
-                self.subtitles.append((start_ms, end_ms, subtitle_text))
-            except AttributeError as e:
-                config.logger.error(f"字幕rowCount:{row} 错误：{e}")
+        # 从 SubtitleModel 中读取字幕数据
+        for row in range(self.model.rowCount()):
+            start_time, end_time, first_text, second_text = self.model._data[row]
+            
+            # 将时间转换为毫秒
+            start_time_ms = self.time_to_milliseconds(start_time)
+            end_time_ms = self.time_to_milliseconds(end_time)
+            full_text = f'{first_text}\n{second_text}'
+            # 添加到字幕列表，选择需要的文本（例如英文文本）
+            self.subtitles.append((start_time_ms, end_time_ms, full_text))
 
         # 按开始时间排序
-        self.subtitles.sort(key=lambda x:x[0])
+        self.subtitles.sort(key=lambda x: x[0])
+
+    def time_to_milliseconds(self, time_str):
+        """ 将时间字符串转换为毫秒 """
+        h, m, s = time_str.split(':')
+        s, ms = s.split(',')
+        return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
 if __name__ == "__main__":
     import sys
