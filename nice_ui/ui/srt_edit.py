@@ -7,7 +7,8 @@ from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerIt
                                QButtonGroup, QFileDialog, QDialog, QLabel)
 
 from nice_ui.configure import config
-from nice_ui.widget.subedit import SubtitleTable
+from nice_ui.ui.style import SubtitleTable
+# from nice_ui.widget.subedit import SubtitleTable
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
@@ -35,6 +36,7 @@ class SubtitleEditPage(CardWidget):
         self.settings = settings
         self.patt = patt
         self.subtitle_table = SubtitleTable(self.patt)
+        
         self.initUI()
 
     def initUI(self):
@@ -94,7 +96,7 @@ class SubtitleEditPage(CardWidget):
         video_layout = QVBoxLayout(right_widget)
         video_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.videoWidget = LinVideoWidget(self.subtitle_table, self.subtitle_table.subtitles, self)
+        self.videoWidget = LinVideoWidget(self.subtitle_table, self.subtitle_table.subtitles, self)  # Pass subtitles here
         self.videoWidget.setVideo(QUrl('D:/dcode/lin_trans/result/tt1/tt.mp4'))
         video_container = AspectRatioWidget(self.videoWidget, 16 / 9)
 
@@ -244,8 +246,8 @@ class ExportSubtitleDialog(QDialog):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
-    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
+    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
+    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())

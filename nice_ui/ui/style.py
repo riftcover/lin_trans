@@ -257,6 +257,7 @@ class SubtitleTable(QTableWidget):
         # 预处理字幕数据
         self.subtitles = []
         self.process_subtitles()
+        config.logger.debug(f"字幕文件行数: {self.subtitles}")
         # 连接 itemChanged 信号到我们的处理方法
         self.itemChanged.connect(self._on_item_changed)
 
@@ -665,7 +666,8 @@ if __name__ == '__main__':
     import sys
 
     # patt = r'D:\dcode\lin_trans\result\tt1\dd1.srt'
-    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    patt = 'D:/dcode/lin_trans/result/tt1/tt.srt'
     app = QApplication(sys.argv)
     card = SubtitleTable(patt)
     card.show()

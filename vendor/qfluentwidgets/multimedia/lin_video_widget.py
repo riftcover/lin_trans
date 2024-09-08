@@ -8,10 +8,11 @@ from PySide6.QtGui import QPainter, QFont
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
 from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QSpacerItem, QSizePolicy, QGraphicsTextItem, QGraphicsDropShadowEffect
 
-from nice_ui.ui.style import SubtitleTable
+from nice_ui.widget.subedit import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
 from .media_play_bar import LinMediaPlayBar
 from nice_ui.configure import config
+
 
 class SrtParser:
     def __init__(self, srt_file):
@@ -54,7 +55,7 @@ class SrtParser:
 class LinVideoWidget(QWidget):
     """ Video widget """
 
-    def __init__(self,subtitle_table:SubtitleTable=None,subtitles=None, parent=None):
+    def __init__(self, subtitle_table: SubtitleTable = None, subtitles=None, parent=None):
         super().__init__(parent)
         self.subtitle_table = subtitle_table
         self.subtitles = subtitles
@@ -154,12 +155,10 @@ class LinVideoWidget(QWidget):
             return
         self.subtitle_table.tableChanged.connect(self.on_subtitle_changed)
 
-
-    def on_subtitle_changed(self,new_srt):
+    def on_subtitle_changed(self, new_srt):
         """ 当字幕改变时调用 """
         config.logger.debug("on_subtitle_changed")
         self.subtitles = new_srt
-
 
     def setVideo(self, url: QUrl):
         """ set the video to play
@@ -225,11 +224,6 @@ class LinVideoWidget(QWidget):
             start_ms, end_ms, subtitle_text = self.subtitles[index]
             if start_ms <= position_ms <= end_ms:
                 self.subtitleItem.setPlainText(subtitle_text)
-            # else:
-            #     self.subtitleItem.setPlainText("")
-        # else:
-        #     self.subtitleItem.setPlainText("")
-
         self.position_subtitle()
 
     def position_subtitle(self):
@@ -262,13 +256,6 @@ class LinVideoWidget(QWidget):
     def resizeEvent(self, e):
         super().resizeEvent(e)
         self.fitInView()
-
-    def fitInView(self):
-        # 调整 graphicsView 的大小以填充除了 playBar 和间距之外的所有空间
-        # available_height = self.height() - self.playBar.height() - 5  # 5 是间距高度
-        # config.logger.debug(f'self.graphicsView.size()={self.graphicsView.size()}')
-        self.videoItem.setSize(QSizeF(self.graphicsView.size()))
-        # self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
 
     @property
     def player(self):
