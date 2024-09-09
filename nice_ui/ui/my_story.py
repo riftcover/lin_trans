@@ -13,7 +13,8 @@ from nice_ui.ui.srt_edit import SubtitleEditPage
 from nice_ui.util import tools
 from nice_ui.util.tools import ObjFormat
 from orm.queries import ToSrtOrm, ToTranslationOrm
-from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton)
+from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
+                                   ToolTipPosition, ToolTipFilter)
 
 button_size = QSize(32, 30)
 
@@ -139,10 +140,7 @@ class TableApp(CardWidget):
             srt_edit_dict: 字幕编辑器的字典
             filename_without_extension: 无扩展的文件名
         """
-        srt_edit_dict ={
-            "media_path":"",
-            "srt_path":""
-        }
+        srt_edit_dict = {"media_path":"", "srt_path":""}
         srt_path = None
         # file_path 在srt_orm是mp4，mp3名，在trans_orm是srt名
 
@@ -180,7 +178,7 @@ class TableApp(CardWidget):
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setToolTip(tooltip)
         # 设置工具提示立即显示
-        button.setToolTipDuration(0)
+        button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         button.clicked.connect(callback)
         return button
 
@@ -231,7 +229,6 @@ class TableApp(CardWidget):
     def _update_job_status(self, item):
         new_status = 0
         self.srt_orm.update_table_unid(item.unid, job_status=new_status)
-
 
     def table_row_init(self, obj_format: dict, job_status: int = 1):
         if job_status == 1:
@@ -457,10 +454,16 @@ class TableApp(CardWidget):
 
     def _edit_row(self, row):
         """打开字幕编辑页面"""
-        file_path = self.table.cellWidget(row, 5).text()  # 获取文件名
+        file_path = eval(self.table.cellWidget(row, 5).text())  # 获取文件名
+        if not os.path.isfile(file_path['srt_path']):
+            config.logger.error(f"The file {file_path['srt_path']} does not exist.")
+            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                            parent=self)
+            raise FileNotFoundError(f"The file {file_path['srt_path']} does not exist.")
+
         config.logger.info(f"打开文件:{file_path}的字幕编辑页面")
         # 创建并显示字幕编辑页面
-        edit_page = SubtitleEditPage(file_path, self.settings, parent=self)
+        edit_page = SubtitleEditPage(file_path['srt_path'], file_path['media_path'], self.settings, parent=self)
         edit_page.show()
 
 
