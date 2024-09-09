@@ -2,18 +2,28 @@ import json
 import os
 import shutil
 import sys
+from enum import Enum, auto
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget
 
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.util import tools
 from nice_ui.util.tools import ObjFormat
 from orm.queries import ToSrtOrm, ToTranslationOrm
-from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit)
+from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton)
 
-button_size = QSize(80, 30)
+button_size = QSize(32, 30)
+
+
+class ButtonType(Enum):
+    START = auto()
+    EXPORT = auto()
+    EDIT = auto()
+    DELETE = auto()
+
+
 class TableApp(CardWidget):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
@@ -58,7 +68,8 @@ class TableApp(CardWidget):
         layout.addWidget(topCard)
         self._setup_table(layout)
 
-    def _create_button(self, text, icon, callback):
+    @staticmethod
+    def _create_button(text, icon, callback):
         button = PushButton(text)
         button.setFixedSize(QSize(110, 30))
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -77,16 +88,16 @@ class TableApp(CardWidget):
 
     def _setup_table(self, layout):
         self.table = TableWidget()
-        self.table.setColumnCount(7)
+        self.table.setColumnCount(5)
         self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self._set_column_widths()
-        # self.table.setColumnHidden(7, True)
+        # self.table.setColumnHidden(8, True)
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
-        widths = [50, 200, 200, 100, 100, 100, 200]
+        widths = [50, 200, 150, 150, 200]  # 调整列宽
         for i, width in enumerate(widths):
             self.table.setColumnWidth(i, width)
 
@@ -108,11 +119,46 @@ class TableApp(CardWidget):
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, filename_without_extension)
 
+    @staticmethod
+    def _create_action_button(icon, tooltip, callback, size=button_size):
+        button = ToolButton(icon)
+        button.setFixedSize(size)
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setToolTip(tooltip)
+        # 设置工具提示立即显示
+        button.setToolTipDuration(0)
+        button.clicked.connect(callback)
+        return button
+
+    def _set_row_buttons(self, row, button_types):
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(2)  # 设置按钮之间的间距
+        button_layout.setContentsMargins(0, 0, 0, 0)
+
+        # 添加一个伸缩项,将按钮推到右侧
+        button_layout.addStretch()
+
+        for button_type in button_types:
+
+            if button_type == ButtonType.EXPORT:
+                button = self._create_action_button(FluentIcon.DOWN, "导出字幕", lambda:self._export_row(row))
+            elif button_type == ButtonType.EDIT:
+                button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", lambda:self._edit_row(row))
+            elif button_type == ButtonType.START:
+                button = self._create_action_button(FluentIcon.PLAY, "开始任务", lambda:self._start_row(row))
+            elif button_type == ButtonType.DELETE:
+                button = self._create_action_button(FluentIcon.DELETE, "删除字幕", self._delete_row(row))
+            button_layout.addWidget(button)
+
+        button_widget = QWidget()
+        button_widget.setLayout(button_layout)
+        self.table.setCellWidget(row, 3, button_widget)
+
     def _process_item(self, item, filename_without_extension):
         if item.job_status in (0, 1):
             if item.job_status == 1:
                 self._update_job_status(item)
-            obj_format = {'raw_noextname': filename_without_extension, 'unid': item.unid}
+            obj_format = {'raw_noextname':filename_without_extension, 'unid':item.unid}
             self.table_row_init(obj_format, 0)
         elif item.job_status == 2:
             self.addRow_init_all(filename_without_extension, item.unid)
@@ -151,18 +197,13 @@ class TableApp(CardWidget):
             chk.setEnabled(False)
             file_status.setText("处理失败")
             file_status.setStyleSheet("color: #FF6C64;")
-            startBtn = PushButton("开始")
-            startBtn.setFixedSize(button_size)
-            startBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            startBtn.setIcon(FluentIcon.PLAY)
-            startBtn.clicked.connect(lambda: self._start_row(row_position))
-            self.table.setCellWidget(row_position, 3, startBtn)
+            self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
         file_status.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, 2, file_status)
 
         file_unid = QLabel()
         file_unid.setText(unid)
-        self.table.setCellWidget(row_position, 6, file_unid)
+        self.table.setCellWidget(row_position, 7, file_unid)
 
     def table_row_working(self, unid, progress: float):
         if unid in self.row_cache:
@@ -199,27 +240,7 @@ class TableApp(CardWidget):
             self.srt_orm.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
-                startBtn = PushButton("开始")
-                startBtn.setFixedSize(button_size)
-                startBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-                startBtn.setIcon(FluentIcon.PLAY)
-                startBtn.clicked.connect(lambda: self._start_row(row))
-                self.table.setCellWidget(row, 3, startBtn)
-
-                exportBtn = PushButton("导出")
-                exportBtn.setFixedSize((button_size))
-                exportBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-                exportBtn.setIcon(FluentIcon.DOWN)
-                exportBtn.clicked.connect(lambda: self._export_row(row))
-                self.table.setCellWidget(row, 4, exportBtn)
-
-                deleteBtn = PushButton("删除")
-                deleteBtn.setFixedSize(button_size)
-                deleteBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-                deleteBtn.setIcon(FluentIcon.DELETE)
-                deleteBtn.clicked.connect(self._delete_row(deleteBtn))
-                self.table.setCellWidget(row, 5, deleteBtn)
-
+                self._set_row_buttons(row, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
             else:
                 config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
@@ -242,25 +263,7 @@ class TableApp(CardWidget):
         file_name.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, 2, file_name)
 
-        start_btn = PushButton("开始")
-        start_btn.setFixedSize(button_size)
-        start_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        start_btn.setIcon(FluentIcon.PLAY)
-        self.table.setCellWidget(row_position, 3, start_btn)
-
-        export_btn = PushButton("导出")
-        export_btn.setFixedSize(button_size)
-        export_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        export_btn.setIcon(FluentIcon.DOWN)
-        export_btn.clicked.connect(lambda: self._export_row(row_position))
-        self.table.setCellWidget(row_position, 4, export_btn)
-
-        delete_btn = PushButton("删除")
-        delete_btn.setFixedSize(button_size)
-        delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        delete_btn.setIcon(FluentIcon.DELETE)
-        delete_btn.clicked.connect(self._delete_row(delete_btn))
-        self.table.setCellWidget(row_position, 5, delete_btn)
+        self._set_row_buttons(row_position, [ButtonType.EXPORT, ButtonType.EDIT, ButtonType.START, ButtonType.DELETE])
 
         # 隐藏列数据:unid
         file_unid = QLabel()
@@ -272,7 +275,7 @@ class TableApp(CardWidget):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
         # 1.和consume_mp4_queue接受的一样
         # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
-        unid_item = self.table.cellWidget(row, 6)
+        unid_item = self.table.cellWidget(row, 7)
         job_path = self.srt_orm.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
@@ -286,7 +289,7 @@ class TableApp(CardWidget):
         def delete_row_callback():
             button_row = self.table.indexAt(button.pos()).row()
             config.logger.info(f"删除文件所在行:{button_row} ")
-            unid_item = self.table.cellWidget(button_row, 6)
+            unid_item = self.table.cellWidget(button_row, 7)
 
             # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
             # 删除result中对应文件
@@ -327,14 +330,14 @@ class TableApp(CardWidget):
 
     def _export_batch(self):
         # 打开系统文件夹选择框
-        job_path,file_path =None,None
+        job_path, file_path = None, None
         options = QFileDialog.Options()
         file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
 
         for row in range(self.table.rowCount()):
             print(f"{row}:{self.table.cellWidget(row, 4)}")
             if self.table.cellWidget(row, 4):
-                unid_item = self.table.cellWidget(row, 6)
+                unid_item = self.table.cellWidget(row, 7)
 
                 job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
                 config.logger.info(f"job_obj:{job_obj}")
@@ -359,7 +362,7 @@ class TableApp(CardWidget):
         export_name = f"{item.text()}.srt"
         file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
-            unid_item = self.table.cellWidget(row, 6)
+            unid_item = self.table.cellWidget(row, 7)
             config.logger.info(f"unid_item:{unid_item}")
             config.logger.info(f"导出文件:{unid_item.text()} 成功")
             job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
@@ -376,6 +379,9 @@ class TableApp(CardWidget):
         self.deleteBtn.setVisible(any_checked)
         self.exportBtn.setVisible(any_checked)
 
+    def _edit_row(self, row):
+        pass
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -386,6 +392,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
+    print("我的创作列表")
     app = QApplication(sys.argv)
     ex = MainWindow()
     ex.show()

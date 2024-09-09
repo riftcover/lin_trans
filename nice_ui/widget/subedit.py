@@ -498,7 +498,6 @@ class SubtitleTable(QTableView):
         # 设置模型和代理
         self.setModel(self.model)
         self.setItemDelegate(self.delegate)
-        config.logger.debug("Set CustomItemDelegate for SubtitleTable")
 
         # 连接信号
         self.delegate.signals.createEditor.connect(self.on_editor_created)
@@ -573,11 +572,11 @@ class SubtitleTable(QTableView):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        config.logger.debug("Resize event")
+        # config.logger.debug("Resize event")
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(200)
+        self.update_timer.start(30)
 
     def create_visible_editors(self) -> None:
         # 只为可见区域创建编辑器。
@@ -604,7 +603,7 @@ class SubtitleTable(QTableView):
         else:
             end_row = bottom_right.row()
 
-        config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
+        # config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
 
         for row in range(start_row, end_row + 1):
             for col in range(self.model.columnCount()):
@@ -765,7 +764,6 @@ class SubtitleTable(QTableView):
     def process_subtitles(self):
         """ 预处理字幕数据，用于给播放器连接字幕 """
         self.subtitles.clear()  # 清空现有字幕
-        config.logger.error('字幕更新')
         # 从 SubtitleModel 中读取字幕数据
         for row in range(self.model.rowCount()):
             start_time, end_time, first_text, second_text = self.model._data[row]
@@ -789,10 +787,10 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
-    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
-    b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
-    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    # a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
+    # b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
