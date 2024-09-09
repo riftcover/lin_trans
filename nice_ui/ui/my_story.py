@@ -93,7 +93,7 @@ class TableApp(CardWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self._set_column_widths()
-        # self.table.setColumnHidden(8, True)
+        self.table.setColumnHidden(4, True)
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
