@@ -54,23 +54,23 @@ class TableApp(CardWidget):
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        topCard = CardWidget()
-        topLayout = QHBoxLayout(topCard)
-        topLayout.setSpacing(10)
-        topLayout.setContentsMargins(10, 10, 10, 10)
+        top_card = CardWidget()
+        top_layout = QHBoxLayout(top_card)
+        top_layout.setSpacing(10)
+        top_layout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
         self.exportBtn = self._create_button("批量导出", FluentIcon.DOWN, self._export_batch)
         self.deleteBtn = self._create_button("批量删除", FluentIcon.DELETE, self._delete_batch)
         self.searchInput = self._create_search_input()
 
-        topLayout.addWidget(self.selectAllBtn)
-        topLayout.addWidget(self.exportBtn)
-        topLayout.addWidget(self.deleteBtn)
-        topLayout.addStretch()
-        topLayout.addWidget(self.searchInput)
+        top_layout.addWidget(self.selectAllBtn)
+        top_layout.addWidget(self.exportBtn)
+        top_layout.addWidget(self.deleteBtn)
+        top_layout.addStretch()
+        top_layout.addWidget(self.searchInput)
 
-        layout.addWidget(topCard)
+        layout.addWidget(top_card)
         self._setup_table(layout)
 
     @staticmethod
@@ -232,10 +232,6 @@ class TableApp(CardWidget):
         new_status = 0
         self.srt_orm.update_table_unid(item.unid, job_status=new_status)
 
-    def _addNewRow(self):
-        self.addRow_init_all("新文件", "tt1")
-        InfoBar.success(title='成功', content="新文件已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                        parent=self)
 
     def table_row_init(self, obj_format: dict, job_status: int = 1):
         if job_status == 1:
@@ -358,7 +354,7 @@ class TableApp(CardWidget):
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
-        obj_format = tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
+        tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self, button):
@@ -369,8 +365,10 @@ class TableApp(CardWidget):
             config.logger.info(f"删除文件所在行:{button_row} ")
             unid_item = self.table.cellWidget(button_row, 7)
 
-            # 删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
-            # 删除result中对应文件
+            """
+            删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
+            删除result中对应文件
+            """
             text = unid_item.text()
             if text:
                 job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
