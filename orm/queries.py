@@ -66,9 +66,9 @@ class ToSrtOrm:
         return session.query(ToSrt).all()
 
     @session_manager
-    def query_data_format_unid_path(self, session=None):
+    def query_data_format_unid_path(self, session=None) -> list[tuple[ToSrt.unid, ToSrt.path, ToSrt.job_status, ToSrt.obj]]:
         # 输出所有行的unid和path
-        return session.query(ToSrt.unid, ToSrt.path, ToSrt.job_status).all()
+        return session.query(ToSrt.unid, ToSrt.path, ToSrt.job_status, ToSrt.obj).all()
 
     @session_manager
     def update_table_unid(self, unid, session=None, **kwargs):
@@ -119,10 +119,10 @@ class ToTranslationOrm:
             return None
 
     @session_manager
-    def query_data_format_unid_path(self, session=None):
+    def query_data_format_unid_path(self, session=None) -> list[tuple[ToTranslation.unid, ToTranslation.path, ToTranslation.job_status, ToTranslation.obj]]:
 
         # 输出所有行的unid和path
-        return session.query(ToTranslation.unid, ToTranslation.path, ToTranslation.job_status).filter(ToTranslation.job_type == 2).all()
+        return session.query(ToTranslation.unid, ToTranslation.path, ToTranslation.job_status, ToTranslation.obj).all()
 
 
     @session_manager

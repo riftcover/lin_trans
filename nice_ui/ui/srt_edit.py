@@ -1,10 +1,10 @@
 import os
-import sys
 import shutil
+import sys
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget, QLineEdit, QPushButton, QRadioButton,
-                               QButtonGroup, QFileDialog, QDialog, QLabel)
+                               QFileDialog, QDialog, QLabel)
 
 from nice_ui.configure import config
 from nice_ui.widget.subedit import SubtitleTable
@@ -29,9 +29,9 @@ class AspectRatioWidget(QWidget):
         super().resizeEvent(event)
 
 
-class SubtitleEditPage(CardWidget):
-    def __init__(self, patt: str, settings: QSettings = None):
-        super().__init__()
+class SubtitleEditPage(QWidget):
+    def __init__(self, patt: str, settings: QSettings = None,parent=None):
+        super().__init__(parent=parent)
         self.settings = settings
         self.patt = patt
         self.subtitle_table = SubtitleTable(self.patt)

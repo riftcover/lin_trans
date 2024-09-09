@@ -41,7 +41,7 @@ class Window(FluentWindow):
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
         self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
         self.edit_srt = Widget('字幕编辑', self)
-        self.my_story = TableApp('我的创作', self)
+        self.my_story = TableApp('我的创作', self,self.settings)
         self.settingInterface = SettingInterface('设置', self, self.settings)
 
         self.initNavigation()

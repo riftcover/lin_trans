@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindo
 
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
+from nice_ui.ui.srt_edit import SubtitleEditPage
 from nice_ui.util import tools
 from nice_ui.util.tools import ObjFormat
 from orm.queries import ToSrtOrm, ToTranslationOrm
@@ -25,8 +26,9 @@ class ButtonType(Enum):
 
 
 class TableApp(CardWidget):
-    def __init__(self, text: str, parent=None):
+    def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
+        self.settings = settings
         self.setObjectName(text.replace(' ', '-'))
         self.setupUi()
         self.data_bridge = config.data_bridge
@@ -37,6 +39,9 @@ class TableApp(CardWidget):
         self._init_table()
 
     def _connect_signals(self):
+        """
+        连接信号槽
+        """
         self.data_bridge.update_table.connect(self.table_row_init)
         self.data_bridge.whisper_working.connect(self.table_row_working)
         self.data_bridge.whisper_finished.connect(self.table_row_finish)
@@ -70,6 +75,9 @@ class TableApp(CardWidget):
 
     @staticmethod
     def _create_button(text, icon, callback):
+        """
+        生成顶部空间中的按钮
+        """
         button = PushButton(text)
         button.setFixedSize(QSize(110, 30))
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -79,6 +87,11 @@ class TableApp(CardWidget):
         return button
 
     def _create_search_input(self):
+        """
+
+        Returns:生成顶部空间中的搜索框
+
+        """
         search_input = SearchLineEdit()
         search_input.setPlaceholderText("搜索文件")
         search_input.setFixedWidth(200)
@@ -86,14 +99,17 @@ class TableApp(CardWidget):
         search_input.textChanged.connect(self.searchFiles)
         return search_input
 
-    def _setup_table(self, layout):
+    def _setup_table(self, layout: QVBoxLayout):
+        """
+        Returns:设置表格
+        """
         self.table = TableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(6)
         self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self._set_column_widths()
-        self.table.setColumnHidden(4, True)
+        # self.table.setColumnHidden(4, True)
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
@@ -108,19 +124,57 @@ class TableApp(CardWidget):
                 chk.setChecked(self.selectAllBtn.isChecked())
 
     def _init_table(self):
-        self._load_data(self.srt_orm)
-        self._load_data(self.trans_orm)
+        # 初始化列表数据：srt文件任务和翻译字幕任务
+        self._load_data(self.srt_orm, 0)
+        self._load_data(self.trans_orm, 1)
 
-    def _load_data(self, orm):
+    def _load_data(self, orm, st: int):
+        """
+        加载数据到表格
+        Args:
+            orm: 表名
+
+        Returns:
+            item: 数据库查询返回的项目对象
+            srt_edit_dict: 字幕编辑器的字典
+            filename_without_extension: 无扩展的文件名
+        """
+        srt_edit_dict ={
+            "media_path":"",
+            "srt_path":""
+        }
+        srt_path = None
+        # file_path 在srt_orm是mp4，mp3名，在trans_orm是srt名
+
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
-            filename = os.path.basename(item.path)
-            filename_without_extension = os.path.splitext(filename)[0]
+            obj_data: dict = json.loads(item.obj)
+            if st == 0:
+                srt_edit_dict["srt_edit_dict"] = item.path
+                # todo: 没有拼接完
+                srt_path = obj_data.get('output', '')
+                srt_edit_dict["srt_path"] = srt_path
+            elif st == 1:
+                srt_edit_dict["srt_path"] = item.path
+
+            filename_without_extension: str = obj_data.get('raw_noextname', '')
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
-            self._process_item(item, filename_without_extension)
+            self._process_item(item, srt_edit_dict, filename_without_extension)
 
     @staticmethod
     def _create_action_button(icon, tooltip, callback, size=button_size):
+        """
+        创建一个工具按钮，并设置其图标、提示和点击事件。
+        参数:
+            icon: 按钮的图标。
+            tooltip: 鼠标悬停时显示的提示信息。
+            callback: 按钮被点击时调用的回调函数。
+            size: 按钮的大小，默认值为变量 button_size。
+
+        返回:
+            ToolButton 对象，该对象根据提供的参数进行了初始化。
+
+        """
         button = ToolButton(icon)
         button.setFixedSize(size)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -131,6 +185,7 @@ class TableApp(CardWidget):
         return button
 
     def _set_row_buttons(self, row, button_types):
+        # 4个按钮创建并添加到表格的第4列
         button_layout = QHBoxLayout()
         button_layout.setSpacing(2)  # 设置按钮之间的间距
         button_layout.setContentsMargins(0, 0, 0, 0)
@@ -154,14 +209,24 @@ class TableApp(CardWidget):
         button_widget.setLayout(button_layout)
         self.table.setCellWidget(row, 3, button_widget)
 
-    def _process_item(self, item, filename_without_extension):
+    def _process_item(self, item, edit_dict: dict, filename_without_extension: str):
+        """
+        处理单个项目并更新表格。
+
+        :param item: 数据库查询返回的项目对象
+        :param file_path: 列表中显示创作文件的路径，srt_orm中是mp4，mp3名，trans_orm中是srt名
+        :param media_path: 媒体文件路径
+        :param srt_path: 字幕文件路径
+        :param filename_without_extension: 无扩展的文件名
+        """
+
         if item.job_status in (0, 1):
             if item.job_status == 1:
                 self._update_job_status(item)
-            obj_format = {'raw_noextname':filename_without_extension, 'unid':item.unid}
+            obj_format = {'edit_dict':edit_dict, 'raw_noextname':filename_without_extension, 'unid':item.unid}
             self.table_row_init(obj_format, 0)
         elif item.job_status == 2:
-            self.addRow_init_all(filename_without_extension, item.unid)
+            self.addRow_init_all(edit_dict, filename_without_extension, item.unid)
 
     def _update_job_status(self, item):
         new_status = 0
@@ -172,7 +237,7 @@ class TableApp(CardWidget):
         InfoBar.success(title='成功', content="新文件已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                         parent=self)
 
-    def table_row_init(self, obj_format: ObjFormat, job_status: int = 1):
+    def table_row_init(self, obj_format: dict, job_status: int = 1):
         if job_status == 1:
             config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
         filename = obj_format['raw_noextname']
@@ -203,14 +268,21 @@ class TableApp(CardWidget):
 
         file_unid = QLabel()
         file_unid.setText(unid)
-        self.table.setCellWidget(row_position, 7, file_unid)
+        file_unid.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 4, file_unid)
+
+        # 隐藏列数据:文件名
+        file_full = QLabel()
+        file_full.setText(str(obj_format))
+        file_full.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 5, file_full)
 
     def table_row_working(self, unid, progress: float):
         if unid in self.row_cache:
             row = self.row_cache[unid]
             config.logger.debug(f"找到文件:{unid}的行索引:{row}")
         else:
-            config.logger.info(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
+            config.logger.warning(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
                 self.row_cache[unid] = row
@@ -234,7 +306,7 @@ class TableApp(CardWidget):
 
         if unid in self.row_cache:
             row = self.row_cache[unid]
-            item = self.table.cellWidget(row, 6)
+            item = self.table.cellWidget(row, 4)
             progress_bar = self.table.cellWidget(row, 2)
             progress_bar.setText("已完成")
             self.srt_orm.update_table_unid(unid, job_status=2)
@@ -244,8 +316,8 @@ class TableApp(CardWidget):
             else:
                 config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
-    def addRow_init_all(self, filename, unid):
-        config.logger.info(f"添加已完成:{filename} 到我的创作列表")
+    def addRow_init_all(self, edit_dict: dict, filename_without_extension: str, unid: str):
+        config.logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
@@ -254,14 +326,14 @@ class TableApp(CardWidget):
         self.table.setCellWidget(row_position, 0, chk)
 
         file_name = QLabel()
-        file_name.setText(filename)
+        file_name.setText(filename_without_extension)
         file_name.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, 1, file_name)
 
-        file_name = QLabel()
-        file_name.setText("已完成")
-        file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 2, file_name)
+        file_stat = QLabel()
+        file_stat.setText("已完成")
+        file_stat.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 2, file_stat)
 
         self._set_row_buttons(row_position, [ButtonType.EXPORT, ButtonType.EDIT, ButtonType.START, ButtonType.DELETE])
 
@@ -269,13 +341,19 @@ class TableApp(CardWidget):
         file_unid = QLabel()
         file_unid.setText(unid)
         file_unid.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 7, file_unid)
+        self.table.setCellWidget(row_position, 4, file_unid)
+
+        # 隐藏列数据:文件名
+        file_full = QLabel()
+        file_full.setText(str(edit_dict))
+        file_full.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, 5, file_full)
 
     def _start_row(self, row):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
         # 1.和consume_mp4_queue接受的一样
         # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
-        unid_item = self.table.cellWidget(row, 7)
+        unid_item = self.table.cellWidget(row, 4)
         job_path = self.srt_orm.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
@@ -380,7 +458,12 @@ class TableApp(CardWidget):
         self.exportBtn.setVisible(any_checked)
 
     def _edit_row(self, row):
-        pass
+        """打开字幕编辑页面"""
+        file_path = self.table.cellWidget(row, 5).text()  # 获取文件名
+        config.logger.info(f"打开文件:{file_path}的字幕编辑页面")
+        # 创建并显示字幕编辑页面
+        edit_page = SubtitleEditPage(file_path, self.settings, parent=self)
+        edit_page.show()
 
 
 class MainWindow(QMainWindow):
