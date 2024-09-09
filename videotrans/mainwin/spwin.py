@@ -4,7 +4,7 @@ from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow
 
-from nice_ui.ui.SingalBridge import get_setting_cache
+from nice_ui.configure.setting_cache import get_setting_cache
 
 warnings.filterwarnings('ignore')
 
