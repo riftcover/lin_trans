@@ -30,10 +30,19 @@ class AspectRatioWidget(QWidget):
 
 
 class SubtitleEditPage(QWidget):
-    def __init__(self, patt: str, settings: QSettings = None,parent=None):
+    def __init__(self, patt: str,med_path: str, settings: QSettings = None,parent=None):
+        """
+
+        Args:
+            patt: srt文件路径
+            med_path: 视频文件路径
+            settings: settings
+            parent:
+        """
         super().__init__(parent=parent)
         self.settings = settings
         self.patt = patt
+        self.media_path = med_path
         self.subtitle_table = SubtitleTable(self.patt)
         
         self.initUI()
@@ -96,7 +105,7 @@ class SubtitleEditPage(QWidget):
         video_layout.setContentsMargins(0, 0, 0, 0)
 
         self.videoWidget = LinVideoWidget(self.subtitle_table, self.subtitle_table.subtitles, self)  # Pass subtitles here
-        self.videoWidget.setVideo(QUrl('D:/dcode/lin_trans/result/tt1/tt.mp4'))
+        self.videoWidget.setVideo(QUrl(self.media_path))
         video_container = AspectRatioWidget(self.videoWidget, 16 / 9)
 
         video_layout.addWidget(video_container)
@@ -246,7 +255,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
     # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',settings=settings)
+    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',med_path='D:/dcode/lin_trans/result/tt1/tt.mp4',settings=settings)
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())
