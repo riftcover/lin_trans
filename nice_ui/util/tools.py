@@ -14,6 +14,7 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict
+from pydantic import BaseModel, Field
 
 import requests
 
@@ -26,45 +27,6 @@ class ModelInfo(TypedDict):
     model_name: str
 
 
-class VideoFormatInfo(TypedDict):
-    # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
-    """
-    {
-  'raw_name': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'raw_dirname': 'F:/ski/国外教学翻译',
-  'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
-  'raw_ext': 'mp4',
-  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
-  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
-  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
-  'ext': 'mp4',
-  'codec_type': 'video',
-  'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
-  'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
-  'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
-  'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
-  'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'job_type': 'srt'
-}
-    """
-    raw_name: str
-    raw_dirname: str
-    raw_basename: str
-    raw_noextname: str
-    raw_ext: str
-    dirname: str
-    basename: str
-    noextname: str
-    ext: str
-    codec_type: str
-    output: str
-    wav_dirname: str
-    srt_dirname: str
-    unid: str
-    source_mp4: str
-
-
 class StartTools:
 
     @staticmethod
@@ -73,7 +35,6 @@ class StartTools:
 
     def check_file(self):
         pass
-
 
 
 #  get role by edge tts
@@ -978,6 +939,45 @@ def detect_media_type(file_path: Path):
         return 'unknown'
 
 
+class VideoFormatInfo(BaseModel):
+    # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
+    """
+    {
+  'raw_name': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'raw_dirname': 'F:/ski/国外教学翻译',
+  'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
+  'raw_ext': 'mp4',
+  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
+  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
+  'ext': 'mp4',
+  'codec_type': 'video',
+  'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
+  'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
+  'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
+  'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'job_type': 'srt'
+}
+    """
+    raw_name: str
+    raw_dirname: str
+    raw_basename: str
+    raw_noextname: str
+    raw_ext: str
+    dirname: str
+    basename: str
+    noextname: str
+    ext: str
+    codec_type: str
+    output: str
+    wav_dirname: str
+    srt_dirname: str
+    unid: str
+    source_mp4: str
+
+
 # 格式化视频信息
 def format_video(name: str, out: Path) -> VideoFormatInfo:
     """
@@ -1024,30 +1024,31 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
 
     unid = h.hexdigest()
     config.logger.info(f'out: {out}')
-    output_path:Path = out / unid
-    wav_path = output_path/f'{raw_noextname}.wav'
-    srt_path = output_path/f'{raw_noextname}.srt'
+    output_path: Path = out / unid
+    wav_path = output_path / f'{raw_noextname}.wav'
+    srt_path = output_path / f'{raw_noextname}.srt'
     config.logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
-    obj = {  # 原始视频路径
-        "raw_name":name,  # 原始视频所在原始目录
-        "raw_dirname":raw_dirname,  # 原始视频原始名字带后缀
-        "raw_basename":raw_basename,  # 原始视频名字不带后缀
-        "raw_noextname":raw_noextname,  # 原始后缀不带 .
-        "raw_ext":ext[1:],  # 处理后 移动后符合规范的目录名
-        "dirname":"",  # 符合规范的基本名带后缀
-        "basename":"",  # 符合规范的不带后缀
-        "noextname":"",  # 扩展名
-        "ext":ext[1:],  # 视频或音频
-        "codec_type":media_type,  # 最终存放目标位置，直接存到这里
-        "output":output_path.as_posix(),
-        "wav_dirname":wav_path.as_posix(),
-        "srt_dirname":srt_path.as_posix(),
-        "unid":unid,
-        "source_mp4":name, }
+    obj = {
+        "raw_name":name,  # 原始视频路径
+        "raw_dirname":raw_dirname,  # 原始视频所在原始目录
+        "raw_basename":raw_basename,  # 原始视频原始名字带后缀
+        "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
+        "raw_ext":ext[1:],  # 原始后缀不带 .
+        "dirname":"",  # 处理后 移动后符合规范的目录名
+        "basename":"",  # 符合规范的基本名带后缀
+        "noextname":"", # 符合规范的不带后缀
+        "ext":ext[1:],   # 扩展名
+        "codec_type":media_type,  # 视频或音频
+        "output":output_path.as_posix(),  # 最终存放的路径
+        "wav_dirname":wav_path.as_posix(), # ff处理完wav文件路径
+        "srt_dirname":srt_path.as_posix(), # funasr处理完srt文件路径
+        "unid":unid,  # 文件指纹
+        "source_mp4":name, # 任务视频路径，原始视频路径
+    }
 
     if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
         # 符合规则，原始和目标相同
