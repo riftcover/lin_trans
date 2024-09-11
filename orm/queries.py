@@ -28,7 +28,7 @@ def session_manager(func):
             session.rollback()
             raise e
         finally:
-            session.close()
+            SessionLocal.remove()
 
     return wrapper
 
@@ -54,10 +54,11 @@ class ToSrtOrm:
     @session_manager
     def query_data_by_unid(self, unid, session=None):
         try:
-            logger.info('找到数据')
-            logger.debug(f'{session.query(ToSrt).filter(ToSrt.unid==unid).first()}')
-            return session.query(ToSrt).filter(ToSrt.unid==unid).first()
-
+            result = session.query(ToSrt).filter(ToSrt.unid == unid).first()
+            if result:
+                logger.info('找到数据')
+                session.expunge(result)  # 从会话中分离对象，但保留其状态
+            return result
         except NoResultFound:
             return None
 

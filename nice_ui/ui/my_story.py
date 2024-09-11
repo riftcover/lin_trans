@@ -379,7 +379,6 @@ class TableApp(CardWidget):
         if text:
             job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
             result_dir = job_obj["output"]
-            config.logger.info(f"删除目录:{text} 成功")
             try:
                 shutil.rmtree(result_dir)
                 config.logger.info(f"删除目录:{result_dir} 成功")
