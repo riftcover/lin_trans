@@ -10,10 +10,10 @@ from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHB
 
 from agent import translate_api_name
 from nice_ui.task.main_worker import QueueConsumer
-from nice_ui.ui.SingalBridge import save_setting, DataBridge
+from nice_ui.ui.SingalBridge import DataBridge
+from nice_ui.configure.setting_cache import save_setting
 from nice_ui.util.code_tools import language_code
 
-warnings.filterwarnings('ignore')
 from nice_ui.task.main_worker import Worker
 from nice_ui.util import tools
 from videotrans import translator
@@ -572,7 +572,7 @@ class SecWindow:
         self.worker_thread = QThread()
         self.worker = Worker(data_copy)
         self.worker.moveToThread(self.worker_thread)
-        self.worker_thread.started.connect(lambda: self.worker.do_work(work_type))
+        self.worker_thread.started.connect(lambda:self.worker.do_work(work_type))
         self.worker.finished.connect(self.worker_thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
@@ -736,7 +736,7 @@ class SecWindow:
                 self.usetype = QPushButton()
                 self.usetype.setStyleSheet('color:#ffff00;border:0')
                 self.usetype.setCursor(QtCore.Qt.PointingHandCursor)
-                self.usetype.clicked.connect(lambda: self.open_url('download'))
+                self.usetype.clicked.connect(lambda:self.open_url('download'))
                 self.main.container.addWidget(self.usetype)
             self.usetype.setText(d['text'])
 

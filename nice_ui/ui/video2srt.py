@@ -289,9 +289,12 @@ class TableWindow:
 
 
 if __name__ == '__main__':
-    # app = QApplication(sys.argv)
-    # window = Video2SRT('字幕翻译', settings=QSettings("Locoweed", "LinLInTrans"))
-    # window.show()
-    # sys.exit(app.exec())
-    a =TableWindow(None, None)
-    print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings
+    app = QApplication(sys.argv)
+    window = Video2SRT('字幕翻译', settings=QSettings("Locoweed", "LinLInTrans"))
+    window.show()
+    sys.exit(app.exec())
+    # a =TableWindow(None, None)
+    # print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))

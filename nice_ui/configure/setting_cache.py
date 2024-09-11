@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtCore import QSettings
 
 from nice_ui.configure import config
