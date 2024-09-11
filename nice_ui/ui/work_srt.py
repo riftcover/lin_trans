@@ -279,6 +279,6 @@ class LTableWindow:
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = WorkSrt("字幕翻译",settings=QSettings("Locoweed", "LinLInTrans"))
+    window = WorkSrt("字幕翻译", setting=QSettings("Locoweed", "LinLInTrans"))
     window.show()
     sys.exit(app.exec())

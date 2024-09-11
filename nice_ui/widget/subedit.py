@@ -40,7 +40,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         """
         if index.column() == 0:  # 勾选框
             self.signals.createEditor.emit(index.row(), index.column())
-            return self.create_checkbox(parent, index)
+            return self.create_checkbox(parent,index)
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
@@ -84,9 +84,10 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 恢复painter的状态
         painter.restore()
 
-    def create_checkbox(self, parent) -> CheckBox:
+    def create_checkbox(self, parent,index) -> CheckBox:
+        editor = CheckBox(parent)
         # editor.stateChanged.connect(lambda:self.commitAndCloseEditor(editor, index))
-        return CheckBox(parent)
+        return editor
 
     def create_operation_widget(self, parent) -> QWidget:
         widget = QWidget(parent)
@@ -127,7 +128,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         text_edit.setObjectName("text_edit")
         return text_edit
 
-    def create_edit_widget(self, parent) -> QWidget:
+    def create_edit_widget(self, parent, index) -> QWidget:
         widget = QWidget(parent)
         button_size = QSize(15, 15)
         edit_layout = QVBoxLayout(widget)
@@ -171,7 +172,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         return widget
 
-    def create_tool_button(self, icon, tooltip: str) -> TransparentToolButton:
+    def create_tool_button(self, icon, tooltip: str, row: int) -> TransparentToolButton:
         button = TransparentToolButton(icon)
         button.setToolTip(tooltip)
         button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
@@ -197,7 +198,8 @@ class CustomItemDelegate(QStyledItemDelegate):
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            editor.setText(index.data(Qt.EditRole))  # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            editor.setText(index.data(Qt.EditRole))
+            # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -231,7 +233,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         else:
             super().setModelData(editor, model, index)  # def sizeHint(self, option, index):  #     # 返回固定大小以提高性能  #     return QSize(50, 80)
 
-    def commitAndCloseEditor(self, editor):
+    def commitAndCloseEditor(self, editor, index):
         self.commitData.emit(editor)
         self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
 
@@ -240,7 +242,6 @@ class CustomItemDelegate(QStyledItemDelegate):
 
 class SubtitleModel(QAbstractTableModel):
     dataChangedSignal = Signal()
-
     # 定义数据模型
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
@@ -358,7 +359,7 @@ class SubtitleModel(QAbstractTableModel):
                 self._data[row] = set_data
             elif col == 5:  # 译文列
                 self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
-
+            
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
         elif role == Qt.UserRole and col == 3:  # 时间列
@@ -366,7 +367,7 @@ class SubtitleModel(QAbstractTableModel):
 
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
-
+ 
         # config.logger.debug(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
@@ -443,11 +444,7 @@ class SubtitleModel(QAbstractTableModel):
                 else:
                     f.write(f"{j[1]}\n\n")
 
-    def get_subtitle_data(self, row):
-        """安全地获取指定行的字幕数据"""
-        if 0 <= row < len(self._data):
-            return self._data[row]
-        return None
+
 class VirtualScrollSignals(QObject):
     # 使用 VirtualScrollDelegate 来管理编辑器的创建和销毁。
     createEditor = Signal(int, int)
@@ -490,9 +487,9 @@ class SubtitleTable(QTableView):
         self.delegate = CustomItemDelegate(self)
         self.visible_editors = set()
 
-        # # 预处理字幕数据,这个貌似赋值错了
-        # self.subtitles = self.model.load_subtitle()  # Load subtitles from model
-
+        # 预处理字幕数据
+        self.subtitles = self.model.load_subtitle()  # Load subtitles from model
+        
         # 初始化一个计时器
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(True)
@@ -769,8 +766,8 @@ class SubtitleTable(QTableView):
         self.subtitles.clear()  # 清空现有字幕
         # 从 SubtitleModel 中读取字幕数据
         for row in range(self.model.rowCount()):
-            start_time, end_time, first_text, second_text = self.model.get_subtitle_data(row)
-            config.logger.error(f'_data:{(start_time,end_time,first_text)}')
+            start_time, end_time, first_text, second_text = self.model._data[row]
+            
             # 将时间转换为毫秒
             start_time_ms = self.time_to_milliseconds(start_time)
             end_time_ms = self.time_to_milliseconds(end_time)
@@ -779,14 +776,13 @@ class SubtitleTable(QTableView):
             self.subtitles.append((start_time_ms, end_time_ms, full_text))
 
         # 按开始时间排序
-        self.subtitles.sort(key=lambda x:x[0])
+        self.subtitles.sort(key=lambda x: x[0])
 
     def time_to_milliseconds(self, time_str):
         """ 将时间字符串转换为毫秒 """
         h, m, s = time_str.split(':')
         s, ms = s.split(',')
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
-
 
 if __name__ == "__main__":
     import sys

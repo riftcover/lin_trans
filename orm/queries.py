@@ -126,7 +126,7 @@ class ToTranslationOrm:
 
 
     @session_manager
-    def update_table_unid(self, unid, session=None, **kwargs):
+    def update_table_unid(self, unid,new_status, session=None, **kwargs):
         if entry := session.query(ToTranslation).filter(ToTranslation.unid == unid).first():
             for key, value in kwargs.items():
                 setattr(entry, key, value)

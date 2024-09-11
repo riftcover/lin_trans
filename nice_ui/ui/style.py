@@ -180,7 +180,7 @@ class TranslateKeySet(QWidget):
 
 
 class LTimeEdit(QTimeEdit):
-    def __init__(self, parent=None):
+    def __init__(self, time_str, parent=None):
         super().__init__(parent)
         # 设置步长为500毫秒
         self._step_msecs = 500

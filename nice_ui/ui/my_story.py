@@ -33,8 +33,7 @@ class TableWidgetColumn(IntEnum):
     BUTTON_WIDGET = 3
     UNID = 4
     JOB_OBJ = 5
-def __str__(self):
-    return self.name.lower()
+
 
 class TableApp(CardWidget):
     def __init__(self, text: str, parent=None, settings=None):
@@ -193,7 +192,6 @@ class TableApp(CardWidget):
 
     def _set_row_buttons(self, row, button_types):
         # 4个按钮创建并添加到表格的第4列
-        button = None
         button_layout = QHBoxLayout()
         button_layout.setSpacing(2)  # 设置按钮之间的间距
         button_layout.setContentsMargins(0, 0, 0, 0)

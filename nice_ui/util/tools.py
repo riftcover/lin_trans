@@ -275,7 +275,7 @@ def split_audio_byraw(source_mp4, targe_audio, is_separate=False, btnkey=None):
     # 继续人声分离
     tmpdir = config.TEMP_DIR + f"/{time.time()}"
     os.makedirs(tmpdir, exist_ok=True)
-    tmpfile = f"{tmpdir}/raw.wav"
+    tmpfile = tmpdir + "/raw.wav"
     runffmpeg(["-y", "-i", source_mp4, "-vn", "-ac", "2", "-ar", "44100", "-c:a", "pcm_s16le", tmpfile])
     from videotrans.separate import st
     try:
