@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Dict, Any
 from pydantic import BaseModel, Field
 
 import requests
@@ -913,7 +913,7 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
             shutil.rmtree(config_dir, ignore_errors=True)
 
 
-def detect_media_type(file_path: Path):
+def detect_media_type(file_path: str):
     # 判断媒体文件是音频还是视频
     try:
         # 使用ffprobe获取文件信息
@@ -979,7 +979,7 @@ class VideoFormatInfo(BaseModel):
 
 
 # 格式化视频信息
-def format_video(name: str, out: Path) -> VideoFormatInfo:
+def format_video(name: str, out: Path) -> dict[str | Any, str | Any]:
     """
     格式化视频信息
 
@@ -1032,23 +1032,22 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
-    obj = {
-        "raw_name":name,  # 原始视频路径
-        "raw_dirname":raw_dirname,  # 原始视频所在原始目录
-        "raw_basename":raw_basename,  # 原始视频原始名字带后缀
-        "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
-        "raw_ext":ext[1:],  # 原始后缀不带 .
-        "dirname":"",  # 处理后 移动后符合规范的目录名
-        "basename":"",  # 符合规范的基本名带后缀
-        "noextname":"", # 符合规范的不带后缀
-        "ext":ext[1:],   # 扩展名
-        "codec_type":media_type,  # 视频或音频
-        "output":output_path.as_posix(),  # 最终存放的路径
-        "wav_dirname":wav_path.as_posix(), # ff处理完wav文件路径
-        "srt_dirname":srt_path.as_posix(), # funasr处理完srt文件路径
-        "unid":unid,  # 文件指纹
-        "source_mp4":name, # 任务视频路径，原始视频路径
-    }
+    obj = {"raw_name":name,  # 原始视频路径
+           "raw_dirname":raw_dirname,  # 原始视频所在原始目录
+           "raw_basename":raw_basename,  # 原始视频原始名字带后缀
+           "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
+           "raw_ext":ext[1:],  # 原始后缀不带 .
+           "dirname":"",  # 处理后 移动后符合规范的目录名
+           "basename":"",  # 符合规范的基本名带后缀
+           "noextname":"",  # 符合规范的不带后缀
+           "ext":ext[1:],  # 扩展名
+           "codec_type":media_type,  # 视频或音频
+           "output":output_path.as_posix(),  # 最终存放的路径
+           "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
+           "srt_dirname":srt_path.as_posix(),  # funasr处理完srt文件路径
+           "unid":unid,  # 文件指纹
+           "source_mp4":name  # 任务视频路径，原始视频路径
+           }
 
     if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
         # 符合规则，原始和目标相同
