@@ -55,7 +55,7 @@ class ToSrtOrm:
     def query_data_by_unid(self, unid, session=None):
         try:
             logger.info('找到数据')
-            logger.info(f'{session.query(ToSrt).filter(ToSrt.unid==unid).first()}')
+            logger.debug(f'{session.query(ToSrt).filter(ToSrt.unid==unid).first()}')
             return session.query(ToSrt).filter(ToSrt.unid==unid).first()
 
         except NoResultFound:
