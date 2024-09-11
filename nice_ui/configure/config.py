@@ -44,8 +44,9 @@ Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
 
-defaulelang = locale.getlocale()[0][:2].lower()  # 获取本地语言
-print(defaulelang)
+# defaulelang = locale.getlocale()[0][:2].lower()  # 获取本地语言
+
+defaulelang = "zh"
 
 def parse_init():
     # 加载init
@@ -127,12 +128,6 @@ def parse_init():
             init_settings['fontsize'] = int(init_settings['fontsize'].replace('px', ''))
     return init_settings
 
-
-# 语言
-try:
-    defaulelang = locale.getlocale()[0][:2].lower()
-except Exception:
-    defaulelang = "zh"
 
 # 初始化一个字典变量
 settings = parse_init()
@@ -225,8 +220,44 @@ params = {#操作系统类型:win32、linux、darwin
     "prompt_name": "默认",
     "prompt_text": "",
 
+
     "cuda": False,
     "is_separate": False,
+
+    "voice_role": "No",
+    "voice_rate": "0",
+
+    "tts_type": "edgeTTS",  # 所选的tts==edge-tts:openaiTTS|coquiTTS|elevenlabsTTS
+    "tts_type_list": ["edgeTTS", "ChatTTS", "gtts", "AzureTTS", "GPT-SoVITS", "clone-voice", "openaiTTS", "elevenlabsTTS", "TTS-API"],
+
+    "only_video": False, "subtitle_type": 0,  # embed soft
+    "voice_autorate": False, "auto_ajust": True,
+
+    "deepl_authkey": "", "deepl_api": "", "deeplx_address": "", "ott_address": "",
+
+    "tencent_SecretId": "", "tencent_SecretKey": "",
+
+    "baidu_appid": "", "baidu_miyue": "",
+
+    "coquitts_role": "", "coquitts_key": "",
+
+    "elevenlabstts_role": [], "elevenlabstts_key": "",
+
+    "clone_api": "", "zh_recogn_api": "",
+
+    "chatgpt_api": "", "chatgpt_key": "", "localllm_api": "", "localllm_key": "", "zijiehuoshan_key": "", "chatgpt_model": chatgpt_model_list[0],
+    "localllm_model": localllm_model_list[0], "zijiehuoshan_model": zijiehuoshan_model_list[0], "chatgpt_template": "", "localllm_template": "",
+    "zijiehuoshan_template": "", "azure_api": "", "azure_key": "", "azure_model": "gpt-3.5-turbo", "azure_template": "", "openaitts_role": openaiTTS_rolelist,
+    "gemini_key": "", "gemini_template": "",
+
+    "ttsapi_url": "", "ttsapi_voice_role": "", "ttsapi_extra": "linlin",
+
+    "trans_api_url": "", "trans_secret": "",
+
+    "azure_speech_region": "", "azure_speech_key": "",
+
+    "gptsovits_url": "", "gptsovits_role": "", "gptsovits_extra": "linlin"
+
 }
 
 chatgpt_path = root_path / 'nice_ui/chatgpt.txt'
@@ -284,15 +315,5 @@ video_codec = None
 video_min_ms = 50
 
 if __name__ == '__main__':
-    # logger.info(lang_path)
-    # logger.info(obj)
     logger.info(params)
-    # model_list = model_code_list[:4]
-    # a =2
-    # if a ==1:
-    #     model_list.extend(model_code_list[4:9])
-    # elif a ==2:
-    #     model_list.extend(model_code_list[9:14])
-    #
-    # logger.info(model_list)
 

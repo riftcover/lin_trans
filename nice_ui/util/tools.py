@@ -26,24 +26,26 @@ class ModelInfo(TypedDict):
     model_name: str
 
 
-class ObjFormat(TypedDict):
+class VideoFormatInfo(TypedDict):
     # 定义数据类型,是一个字典,里面有key a,a的数据类型为str
     """
     {
-  'raw_name': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_name': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
   'raw_dirname': 'F:/ski/国外教学翻译',
-  'raw_basename': 'Top 10 Affordable Ski Resorts in Europe.mp4',
-  'raw_noextname': 'Top 10 Affordable Ski Resorts in Europe',
+  'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
   'raw_ext': 'mp4',
-  'dirname': 'D:/dcode/lin_trans/tmp/f1f54d3c61d87f77344a132e0fac69b8',
-  'basename': 'f1f54d3c61d87f77344a132e0fac69b8.mp4',
-  'noextname': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
+  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
   'ext': 'mp4',
   'codec_type': 'video',
-  'output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8',
-  'unid': 'f1f54d3c61d87f77344a132e0fac69b8',
-  'source_mp4': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
-  'linshi_output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8'
+  'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
+  'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
+  'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
+  'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'job_type': 'srt'
 }
     """
     raw_name: str
@@ -57,9 +59,10 @@ class ObjFormat(TypedDict):
     ext: str
     codec_type: str
     output: str
+    wav_dirname: str
+    srt_dirname: str
     unid: str
     source_mp4: str
-    linshi_output: str
 
 
 class StartTools:
@@ -71,120 +74,6 @@ class StartTools:
     def check_file(self):
         pass
 
-
-# 获取代理，如果已设置os.environ代理，则返回该代理值,否则获取系统代理
-
-
-# 根据 gptsovits config.params['gptsovits_role'] 返回以参考音频为key的dict
-
-def get_gptsovits_role():
-    if not config.params['gptsovits_role'].strip():
-        return None
-    rolelist = {}
-    for it in config.params['gptsovits_role'].strip().split("\n"):
-        tmp = it.strip().split('#')
-        if len(tmp) != 3:
-            continue
-        rolelist[tmp[0]] = {"refer_wav_path": tmp[0], "prompt_text": tmp[1], "prompt_language": tmp[2]}
-    return rolelist
-
-
-def pygameaudio(filepath):
-    from nice_ui.util.playmp3 import AudioPlayer
-    player = AudioPlayer(filepath)
-    player.start()
-
-
-# 获取 elenevlabs 的角色列表
-def get_elevenlabs_role(force=False):
-    jsonfile = os.path.join(config.rootdir, 'elevenlabs.json')
-    namelist = []
-    if vail_file(jsonfile):
-        with open(jsonfile, 'r', encoding='utf-8') as f:
-            cache = json.loads(f.read())
-            namelist.extend(it['name'] for it in cache.values())
-    if not force and namelist:
-        config.params['elevenlabstts_role'] = namelist
-        return namelist
-    try:
-        from elevenlabs import voices, set_api_key
-        if config.params["elevenlabstts_key"]:
-            set_api_key(config.params["elevenlabstts_key"])
-        voiceslist = voices()
-        result = {}
-        for it in voiceslist:
-            n = re.sub(r'[^a-zA-Z0-9_ -]+', '', it.name).strip()
-            result[n] = {"name": n, "voice_id": it.voice_id, 'url': it.preview_url}
-            namelist.append(n)
-        with open(jsonfile, 'w', encoding="utf-8") as f:
-            f.write(json.dumps(result))
-        config.params['elevenlabstts_role'] = namelist
-        return namelist
-    except Exception as e:
-        print(e)
-
-
-def set_proxy(set_val=''):
-    if set_val == 'del':
-        config.proxy = None
-        # 删除代理
-        if os.environ.get('http_proxy'):
-            os.environ.pop('http_proxy')
-        if os.environ.get('https_proxy'):
-            os.environ.pop('https_proxy')
-        return None
-    if set_val:
-        return _extracted_from_set_proxy(set_val)
-    if (
-            http_proxy := config.proxy
-                          or os.environ.get('http_proxy')
-                          or os.environ.get('https_proxy')
-    ):
-        if not http_proxy.startswith("http") and not http_proxy.startswith('sock'):
-            http_proxy = f"http://{http_proxy}"
-        return http_proxy
-    if sys.platform != 'win32':
-        return None
-    with contextlib.suppress(Exception):
-        import winreg
-        # 打开 Windows 注册表
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                            r'Software\Microsoft\Windows\CurrentVersion\Internet Settings') as key:
-            # 读取代理设置
-            proxy_enable, _ = winreg.QueryValueEx(key, 'ProxyEnable')
-            proxy_server, _ = winreg.QueryValueEx(key, 'ProxyServer')
-            if proxy_server:
-                # 是否需要设置代理
-                if not proxy_server.startswith("http") and not proxy_server.startswith('sock'):
-                    proxy_server = "http://" + proxy_server
-                try:
-                    requests.head(proxy_server, proxies={"http": "", "https": ""})
-                except Exception:
-                    return None
-                return proxy_server
-    return None
-
-
-# TODO Rename this here and in `set_proxy`
-def _extracted_from_set_proxy(set_val):
-    # 设置代理
-    if not set_val.startswith("http") and not set_val.startswith('sock'):
-        set_val = f"http://{set_val}"
-    config.proxy = set_val
-    os.environ['http_proxy'] = set_val
-    os.environ['https_proxy'] = set_val
-    os.environ['all_proxy'] = set_val
-    return set_val
-
-
-# delete tmp files
-def delete_temp(noextname=None):
-    with contextlib.suppress(Exception):
-        if noextname and os.path.exists(f"{config.rootdir}/tmp/{noextname}"):
-            shutil.rmtree(f"{config.rootdir}/tmp/{noextname}")
-        elif os.path.exists(f"{config.rootdir}/tmp"):
-            shutil.rmtree(f"{config.rootdir}/tmp")
-            os.makedirs(f"{config.rootdir}/tmp", exist_ok=True)
 
 
 #  get role by edge tts
@@ -240,9 +129,7 @@ def get_azure_rolelist():
 
 
 # 执行 ffmpeg
-def runffmpeg(arg, *, noextname=None,
-              is_box=False,
-              fps=None):
+def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
     config.logger.info(f'runffmpeg-arg={arg}')
     arg_copy = copy.deepcopy(arg)
 
@@ -275,12 +162,7 @@ def runffmpeg(arg, *, noextname=None,
     if noextname:
         config.queue_novice[noextname] = 'ing'
     try:
-        subprocess.run(cmd,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE,
-                       encoding="utf-8",
-                       check=True,
-                       text=True,
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", check=True, text=True,
                        creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
         if noextname:
             config.queue_novice[noextname] = "end"
@@ -324,13 +206,8 @@ def runffmpeg(arg, *, noextname=None,
 def runffprobe(cmd):
     print(f'ffprobe:{cmd=}')
     try:
-        p = subprocess.run(cmd if isinstance(cmd, str) else ['ffprobe'] + cmd,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           encoding="utf-8",
-                           text=True,
-                           check=True,
-                           creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
+        p = subprocess.run(cmd if isinstance(cmd, str) else ['ffprobe'] + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", text=True,
+                           check=True, creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
         if p.stdout:
             return p.stdout.strip()
         raise VideoProcessingError(str(p.stderr))
@@ -366,16 +243,7 @@ def _extracted_from_get_video_info(mp4_file, nocache):
     if out is False:
         raise VideoProcessingError('ffprobe error:dont get video information')
     out = json.loads(out)
-    result = {
-        "video_fps": 30,
-        "video_codec_name": "",
-        "audio_codec_name": "aac",
-        "width": 0,
-        "height": 0,
-        "time": 0,
-        "streams_len": 0,
-        "streams_audio": 0
-    }
+    result = {"video_fps":30, "video_codec_name":"", "audio_codec_name":"aac", "width":0, "height":0, "time":0, "streams_len":0, "streams_audio":0}
     if "streams" not in out or len(out["streams"]) < 1:
         raise VideoProcessingError('ffprobe error:streams is 0')
 
@@ -389,11 +257,7 @@ def _extracted_from_get_video_info(mp4_file, nocache):
             result['height'] = int(it['height'])
 
             fps_split = it['r_frame_rate'].split('/')
-            fps1 = (
-                30
-                if len(fps_split) != 2 or fps_split[1] == '0'
-                else round(int(fps_split[0]) / int(fps_split[1]), 2)
-            )
+            fps1 = (30 if len(fps_split) != 2 or fps_split[1] == '0' else round(int(fps_split[0]) / int(fps_split[1]), 2))
             fps_split = it['avg_frame_rate'].split('/')
             if len(fps_split) != 2 or fps_split[1] == '0':
                 fps = fps1
@@ -428,33 +292,14 @@ def get_video_resolution(file_path):
 # 视频转为 mp4格式 nv12 + not h264_cuvid
 def conver_mp4(source_file, out_mp4, *, is_box=False):
     video_codec = config.settings['video_codec']
-    return runffmpeg([
-        '-y',
-        '-i',
-        Path(source_file).as_posix(),
-        '-c:v',
-        f'libx{video_codec}',
-        "-c:a",
-        "aac",
-        '-crf', f'{config.settings["crf"]}',
-        '-preset', 'slow',
-        out_mp4
-    ], is_box=is_box)
+    return runffmpeg(
+        ['-y', '-i', Path(source_file).as_posix(), '-c:v', f'libx{video_codec}', "-c:a", "aac", '-crf', f'{config.settings["crf"]}', '-preset', 'slow',
+         out_mp4], is_box=is_box)
 
 
 # 从原始视频分离出 无声视频 cuda + h264_cuvid
 def split_novoice_byraw(source_mp4, novoice_mp4, noextname, lib="copy"):
-    cmd = [
-        "-y",
-        "-i",
-        Path(source_mp4).as_posix(),
-        "-an",
-        "-c:v",
-        lib,
-        "-crf",
-        "0",
-        f'{novoice_mp4}'
-    ]
+    cmd = ["-y", "-i", Path(source_mp4).as_posix(), "-an", "-c:v", lib, "-crf", "0", f'{novoice_mp4}']
     return runffmpeg(cmd, noextname=noextname)
 
 
@@ -462,17 +307,7 @@ def split_novoice_byraw(source_mp4, novoice_mp4, noextname, lib="copy"):
 def split_audio_byraw(source_mp4, targe_audio, is_separate=False, btnkey=None):
     source_mp4 = Path(source_mp4).as_posix()
     targe_audio = Path(targe_audio).as_posix()
-    cmd = [
-        "-y",
-        "-i",
-        source_mp4,
-        "-vn",
-        "-ac",
-        "1",
-        "-c:a",
-        "aac",
-        targe_audio
-    ]
+    cmd = ["-y", "-i", source_mp4, "-vn", "-ac", "1", "-c:a", "aac", targe_audio]
     rs = runffmpeg(cmd)
     if not is_separate:
         return rs
@@ -480,19 +315,7 @@ def split_audio_byraw(source_mp4, targe_audio, is_separate=False, btnkey=None):
     tmpdir = config.TEMP_DIR + f"/{time.time()}"
     os.makedirs(tmpdir, exist_ok=True)
     tmpfile = tmpdir + "/raw.wav"
-    runffmpeg([
-        "-y",
-        "-i",
-        source_mp4,
-        "-vn",
-        "-ac",
-        "2",
-        "-ar",
-        "44100",
-        "-c:a",
-        "pcm_s16le",
-        tmpfile
-    ])
+    runffmpeg(["-y", "-i", source_mp4, "-vn", "-ac", "2", "-ar", "44100", "-c:a", "pcm_s16le", tmpfile])
     from videotrans.separate import st
     try:
         path = Path(targe_audio).parent.as_posix()
@@ -514,16 +337,7 @@ def split_audio_byraw(source_mp4, targe_audio, is_separate=False, btnkey=None):
 
 
 def conver_to_8k(audio, target_audio):
-    return runffmpeg([
-        "-y",
-        "-i",
-        Path(audio).as_posix(),
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        Path(target_audio).as_posix(),
-    ])
+    return runffmpeg(["-y", "-i", Path(audio).as_posix(), "-ac", "1", "-ar", "16000", Path(target_audio).as_posix(), ])
 
 
 #  背景音乐是wav,配音人声是m4a，都在目标文件夹下，合并后最后文件仍为 人声文件，时长需要等于人声
@@ -534,22 +348,14 @@ def backandvocal(backwav, peiyinm4a):
     tmpm4a = Path((os.environ["TEMP"] or os.environ['temp']) + f'/{time.time()}.m4a').as_posix()
     # 背景转为m4a文件,音量降低为0.8
     wav2m4a(backwav, tmpm4a, ["-filter:a", f"volume={config.settings['backaudio_volume']}"])
-    runffmpeg(['-y', '-i', peiyinm4a, '-i', tmpm4a, '-filter_complex',
-               "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2", '-ac', '2', '-c:a', 'aac', tmpwav])
-    shutil.copy2(tmpwav, peiyinm4a)
-    # 转为 m4a
+    runffmpeg(['-y', '-i', peiyinm4a, '-i', tmpm4a, '-filter_complex', "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2", '-ac', '2', '-c:a', 'aac',
+               tmpwav])
+    shutil.copy2(tmpwav, peiyinm4a)  # 转为 m4a
 
 
 # wav转为 m4a cuda + h264_cuvid
 def wav2m4a(wavfile, m4afile, extra=None):
-    cmd = [
-        "-y",
-        "-i",
-        Path(wavfile).as_posix(),
-        "-c:a",
-        "aac",
-        Path(m4afile).as_posix()
-    ]
+    cmd = ["-y", "-i", Path(wavfile).as_posix(), "-c:a", "aac", Path(m4afile).as_posix()]
     if extra:
         cmd = cmd[:3] + extra + cmd[3:]
     return runffmpeg(cmd)
@@ -557,12 +363,7 @@ def wav2m4a(wavfile, m4afile, extra=None):
 
 # wav转为 mp3 cuda + h264_cuvid
 def wav2mp3(wavfile, mp3file, extra=None):
-    cmd = [
-        "-y",
-        "-i",
-        Path(wavfile).as_posix(),
-        Path(mp3file).as_posix()
-    ]
+    cmd = ["-y", "-i", Path(wavfile).as_posix(), Path(mp3file).as_posix()]
     if extra:
         cmd = cmd[:3] + extra + cmd[3:]
     return runffmpeg(cmd)
@@ -570,20 +371,7 @@ def wav2mp3(wavfile, mp3file, extra=None):
 
 # m4a 转为 wav cuda + h264_cuvid
 def m4a2wav(m4afile, wavfile):
-    cmd = [
-        "-y",
-        "-i",
-        Path(m4afile).as_posix(),
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        "-b:a",
-        "128k",
-        "-c:a",
-        "pcm_s16le",
-        Path(wavfile).as_posix()
-    ]
+    cmd = ["-y", "-i", Path(m4afile).as_posix(), "-ac", "1", "-ar", "16000", "-b:a", "128k", "-c:a", "pcm_s16le", Path(wavfile).as_posix()]
     return runffmpeg(cmd)
 
 
@@ -607,12 +395,11 @@ def concat_multi_mp4(*, filelist=None, out=None, maxsec=None, fps=None):
         out = Path(out).as_posix()
     if maxsec:
         return runffmpeg(
-            ['-y', '-f', 'concat', '-safe', '0', '-i', txt, '-c:v', f"libx{video_codec}", '-t', f"{maxsec}", '-crf',
-             f'{config.settings["crf"]}', '-preset', 'slow', '-an', out], fps=fps)
+            ['-y', '-f', 'concat', '-safe', '0', '-i', txt, '-c:v', f"libx{video_codec}", '-t', f"{maxsec}", '-crf', f'{config.settings["crf"]}', '-preset',
+             'slow', '-an', out], fps=fps)
     return runffmpeg(
-        ['-y', '-f', 'concat', '-safe', '0', '-i', txt, '-c:v', f"libx{video_codec}", '-an', '-crf',
-         f'{config.settings["crf"]}',
-         '-preset', 'slow', out], fps=fps)
+        ['-y', '-f', 'concat', '-safe', '0', '-i', txt, '-c:v', f"libx{video_codec}", '-an', '-crf', f'{config.settings["crf"]}', '-preset', 'slow', out],
+        fps=fps)
 
 
 # 多个音频片段连接 
@@ -629,14 +416,7 @@ def concat_multi_audio(*, filelist=None, out=None):
 
 # mp3 加速播放 cuda + h264_cuvid
 def speed_up_mp3(*, filename=None, speed=1, out=None):
-    return runffmpeg([
-        "-y",
-        "-i",
-        Path(filename).as_posix(),
-        "-af",
-        f'atempo={speed}',
-        out
-    ])
+    return runffmpeg(["-y", "-i", Path(filename).as_posix(), "-af", f'atempo={speed}', out])
 
 
 def precise_speed_up_audio(*, file_path=None, out=None, target_duration_ms=None, max_rate=100):
@@ -741,7 +521,7 @@ def format_srt(content):
         it = it.strip()
         if is_time := re.match(timepat, it):
             # 当前行是时间格式，则添加
-            result.append({"time": it, "text": list})
+            result.append({"time":it, "text":list})
         elif i == 0:
             # 当前是第一行，并且不是时间格式，跳过
             continue
@@ -793,9 +573,7 @@ def get_subtitle_from_srt(srtfile, *, is_file=True):
     # txt 文件转为一条字幕
     if len(result) < 1:
         if is_file and srtfile.endswith('.txt'):
-            result = [
-                {"line": 1, "time": "00:00:00,000 --> 05:00:00,000", "text": "\n".join(content)}
-            ]
+            result = [{"line":1, "time":"00:00:00,000 --> 05:00:00,000", "text":"\n".join(content)}]
         else:
             return []
 
@@ -900,8 +678,7 @@ def is_novoice_mp4(novoice_mp4, noextname):
 
         if config.queue_novice[noextname] == 'ing':
             size = f'{round(last_size / 1024 / 1024, 2)}MB' if last_size > 0 else ""
-            set_process(
-                f"{noextname} {'分离音频和画面' if config.defaulelang == 'zh' else 'spilt audio and video'} {size}")
+            set_process(f"{noextname} {'分离音频和画面' if config.defaulelang == 'zh' else 'spilt audio and video'} {size}")
             time.sleep(3)
             t += 3
             continue
@@ -916,10 +693,7 @@ def match_target_amplitude(sound, target_dBFS):
 # 从视频中切出一段时间的视频片段 cuda + h264_cuvid
 def cut_from_video(*, ss="", to="", source="", pts="", out="", fps=None):
     video_codec = config.settings['video_codec']
-    cmd1 = [
-        "-y",
-        "-ss",
-        format_time(ss, '.')]
+    cmd1 = ["-y", "-ss", format_time(ss, '.')]
     if to != '':
         cmd1.append("-to")
         cmd1.append(format_time(to, '.'))  # 如果开始结束时间相同，则强制持续时间1s)
@@ -929,30 +703,13 @@ def cut_from_video(*, ss="", to="", source="", pts="", out="", fps=None):
     if pts:
         cmd1.append("-vf")
         cmd1.append(f'setpts={pts}*PTS')
-    cmd = cmd1 + ["-c:v",
-                  f"libx{video_codec}",
-                  '-an',
-                  '-crf', f'{config.settings["crf"]}',
-                  '-preset', 'slow',
-                  f'{out}'
-                  ]
+    cmd = cmd1 + ["-c:v", f"libx{video_codec}", '-an', '-crf', f'{config.settings["crf"]}', '-preset', 'slow', f'{out}']
     return runffmpeg(cmd, fps=fps)
 
 
 # 从音频中截取一个片段
 def cut_from_audio(*, ss, to, audio_file, out_file):
-    cmd = [
-        "-y",
-        "-i",
-        audio_file,
-        "-ss",
-        format_time(ss, '.'),
-        "-to",
-        format_time(to, '.'),
-        "-ar",
-        "16000",
-        out_file
-    ]
+    cmd = ["-y", "-i", audio_file, "-ss", format_time(ss, '.'), "-to", format_time(to, '.'), "-ar", "16000", out_file]
     return runffmpeg(cmd)
 
 
@@ -964,16 +721,15 @@ def get_clone_role(set_p=False):
         return False
     try:
         url = config.params['clone_api'].strip().rstrip('/') + "/init"
-        res = requests.get('http://' + url.replace('http://', ''), proxies={"http": "", "https": ""})
+        res = requests.get('http://' + url.replace('http://', ''), proxies={"http":"", "https":""})
         if res.status_code == 200:
             config.clone_voicelist = ["clone"] + res.json()
             set_process('', 'set_clone_role')
             return True
-        raise VideoProcessingError(
-            f"code={res.status_code},{config.transobj['You must deploy and start the clone-voice service']}")
+        raise VideoProcessingError(f"code={res.status_code},{config.transobj['You must deploy and start the clone-voice service']}")
     except Exception as e:
         if set_p:
-            raise VideoProcessingError(f'clone-voice:{str(e)}')
+            raise VideoProcessingError(f'clone-voice:{str(e)}') from e
     return False
 
 
@@ -998,9 +754,9 @@ def set_process(text, type="logs", *, qname='sp', func_name="", btnkey="", nolog
                 text = text.replace('\\n', ' ').strip()
 
         if qname == 'sp':
-            config.queue_logs.put_nowait({"text": text, "type": type, "btnkey": btnkey})
+            config.queue_logs.put_nowait({"text":text, "type":type, "btnkey":btnkey})
         elif qname == 'box':
-            config.queuebox_logs.put_nowait({"text": text, "type": type, "func_name": func_name})
+            config.queuebox_logs.put_nowait({"text":text, "type":type, "func_name":func_name})
         else:
             print(f'[{type}]: {text}')
 
@@ -1020,21 +776,17 @@ def delete_files(directory, ext):
             # 如果是子目录，递归调用删除函数
             elif os.path.isdir(item_path):
                 delete_files(item_path)
-    except:
+    except Exception:
         pass
 
 
 def send_notification(title, message):
     from plyer import notification
     try:
-        notification.notify(
-            title=title[:60],
-            message=message[:120],
-            ticker="pyVideoTrans",
-            app_name="pyVideoTrans",  # config.uilanglist['SP-video Translate Dubbing'],
-            app_icon=os.path.join(config.rootdir, 'videotrans/styles/icon.ico'),
-            timeout=10  # Display duration in seconds
-        )
+        notification.notify(title=title[:60], message=message[:120], ticker="pyVideoTrans", app_name="pyVideoTrans",
+                            # config.uilanglist['SP-video Translate Dubbing'],
+                            app_icon=os.path.join(config.rootdir, 'videotrans/styles/icon.ico'), timeout=10  # Display duration in seconds
+                            )
     except Exception:
         raise
 
@@ -1052,7 +804,7 @@ def rename_move(file, *, is_dir=False):
         if re.search(patter, dirname):
             basename = re.sub(patter, '', basename, 0, re.I)
             basename = basename.replace(':', '')
-            os.makedirs(config.homedir + "/rename", exist_ok=True)
+            os.makedirs(f"{config.homedir}/rename", exist_ok=True)
             newfile = config.homedir + f"/rename/{basename}"
         else:
             # 目录规则仅名称不规则，只修改名称
@@ -1115,8 +867,8 @@ def remove_silence_from_end(input_file_path, silence_threshold=-50.0, chunk_size
         else:
             # 转为mp3
             try:
-                runffmpeg(['-y', '-i', input_file_path, input_file_path + ".mp3"])
-                audio = AudioSegment.from_file(input_file_path + ".mp3", format="mp3")
+                runffmpeg(['-y', '-i', input_file_path, f"{input_file_path}.mp3"])
+                audio = AudioSegment.from_file(f"{input_file_path}.mp3", format="mp3")
             except Exception:
                 return input_file_path
 
@@ -1124,11 +876,7 @@ def remove_silence_from_end(input_file_path, silence_threshold=-50.0, chunk_size
         audio = input_file_path
 
     # Detect non-silent chunks
-    nonsilent_chunks = detect_nonsilent(
-        audio,
-        min_silence_len=chunk_size,
-        silence_thresh=silence_threshold
-    )
+    nonsilent_chunks = detect_nonsilent(audio, min_silence_len=chunk_size, silence_thresh=silence_threshold)
 
     # If we have nonsilent chunks, get the start and end of the last nonsilent chunk
     if nonsilent_chunks:
@@ -1146,8 +894,8 @@ def remove_silence_from_end(input_file_path, silence_threshold=-50.0, chunk_size
             trimmed_audio.export(input_file_path, format=_format if _format in ['wav', 'mp3'] else 'mp4')
             return input_file_path
         with contextlib.suppress(Exception):
-            trimmed_audio.export(input_file_path + ".mp3", format="mp3")
-            runffmpeg(['-y', '-i', input_file_path + ".mp3", input_file_path])
+            trimmed_audio.export(f"{input_file_path}.mp3", format="mp3")
+            runffmpeg(['-y', '-i', f"{input_file_path}.mp3", input_file_path])
         return input_file_path
     return trimmed_audio
 
@@ -1155,16 +903,15 @@ def remove_silence_from_end(input_file_path, silence_threshold=-50.0, chunk_size
 # 从 google_url 中获取可用地址
 def get_google_url():
     google_url = 'https://translate.google.com'
-    if vail_file(config.rootdir + '/google.txt'):
+    if vail_file(f'{config.rootdir}/google.txt'):
         with open(os.path.join(config.rootdir, 'google.txt'), 'r') as f:
             t = f.read().strip().splitlines()
-            urls = [x for x in t if x.strip() and x.startswith('http')]
-            if len(urls) > 0:
+            if urls := [x for x in t if x.strip() and x.startswith('http')]:
                 n = 0
                 while n < 5:
                     google_url = random.choice(urls).rstrip('/')
                     try:
-                        res = requests.head(google_url, proxies={"http": "", "https": ""})
+                        res = requests.head(google_url, proxies={"http":"", "https":""})
                         if res.status_code == 200:
                             return google_url
                     except Exception:
@@ -1209,14 +956,8 @@ def detect_media_type(file_path: Path):
     # 判断媒体文件是音频还是视频
     try:
         # 使用ffprobe获取文件信息
-        command = [
-            'ffprobe',
-            # ff_path,
-            '-v', 'quiet',
-            '-print_format', 'json',
-            '-show_streams',
-            file_path
-        ]
+        command = ['ffprobe',  # ff_path,
+                   '-v', 'quiet', '-print_format', 'json', '-show_streams', file_path]
         result = subprocess.run(command, capture_output=True, text=True, )
 
         # 解析JSON输出
@@ -1238,7 +979,7 @@ def detect_media_type(file_path: Path):
 
 
 # 格式化视频信息
-def format_video(name: Path, out=None) -> ObjFormat:
+def format_video(name: str, out: Path) -> VideoFormatInfo:
     """
     格式化视频信息
 
@@ -1248,20 +989,22 @@ def format_video(name: Path, out=None) -> ObjFormat:
 
     Returns:
     {
-  'raw_name': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
+  'raw_name': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
   'raw_dirname': 'F:/ski/国外教学翻译',
-  'raw_basename': 'Top 10 Affordable Ski Resorts in Europe.mp4',
-  'raw_noextname': 'Top 10 Affordable Ski Resorts in Europe',
+  'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
   'raw_ext': 'mp4',
-  'dirname': 'D:/dcode/lin_trans/tmp/f1f54d3c61d87f77344a132e0fac69b8',
-  'basename': 'f1f54d3c61d87f77344a132e0fac69b8.mp4',
-  'noextname': 'f1f54d3c61d87f77344a132e0fac69b8',
+  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
+  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
   'ext': 'mp4',
   'codec_type': 'video',
-  'output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8',
-  'unid': 'f1f54d3c61d87f77344a132e0fac69b8',
-  'source_mp4': 'F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4',
-  'linshi_output': 'D:/dcode/lin_trans/result/f1f54d3c61d87f77344a132e0fac69b8'
+  'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
+  'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
+  'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
+  'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
+  'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
+  'job_type': 'srt'
 }
 
     """
@@ -1280,42 +1023,31 @@ def format_video(name: Path, out=None) -> ObjFormat:
     h.update(current_time)
 
     unid = h.hexdigest()
-
-    output_path = Path(f'{out}/{unid}')
+    config.logger.info(f'out: {out}')
+    output_path:Path = out / unid
+    wav_path = output_path/f'{raw_noextname}.wav'
+    srt_path = output_path/f'{raw_noextname}.srt'
     config.logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
-    obj = {
-        # 原始视频路径
-        "raw_name": name,
-        # 原始视频所在原始目录
-        "raw_dirname": raw_dirname,
-        # 原始视频原始名字带后缀
-        "raw_basename": raw_basename,
-        # 原始视频名字不带后缀
-        "raw_noextname": raw_noextname,
-        # 原始后缀不带 .
-        "raw_ext": ext[1:],
-        # 处理后 移动后符合规范的目录名
-        "dirname": "",
-        # 符合规范的基本名带后缀
-        "basename": "",
-        # 符合规范的不带后缀
-        "noextname": "",
-        # 扩展名
-        "ext": ext[1:],
-        # 视频或音频
-        "codec_type": media_type,
-        # 最终存放目标位置，直接存到这里
-        "output": output_path.as_posix(),
-        "unid": unid,
-        "source_mp4": name,
-        # 临时存放，当名字符合规范时，和output相同
-        "linshi_output": ""
-    }
-    obj['linshi_output'] = obj['output']
+    obj = {  # 原始视频路径
+        "raw_name":name,  # 原始视频所在原始目录
+        "raw_dirname":raw_dirname,  # 原始视频原始名字带后缀
+        "raw_basename":raw_basename,  # 原始视频名字不带后缀
+        "raw_noextname":raw_noextname,  # 原始后缀不带 .
+        "raw_ext":ext[1:],  # 处理后 移动后符合规范的目录名
+        "dirname":"",  # 符合规范的基本名带后缀
+        "basename":"",  # 符合规范的不带后缀
+        "noextname":"",  # 扩展名
+        "ext":ext[1:],  # 视频或音频
+        "codec_type":media_type,  # 最终存放目标位置，直接存到这里
+        "output":output_path.as_posix(),
+        "wav_dirname":wav_path.as_posix(),
+        "srt_dirname":srt_path.as_posix(),
+        "unid":unid,
+        "source_mp4":name, }
 
     if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
         # 符合规则，原始和目标相同
@@ -1328,7 +1060,6 @@ def format_video(name: Path, out=None) -> ObjFormat:
         obj['basename'] = f'{obj["noextname"]}.{obj["raw_ext"]}'
         obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
         obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
-        # Path(obj['linshi_output']).mkdir(parents=True, exist_ok=True)
     return obj
 
 
@@ -1384,36 +1115,14 @@ def get_video_codec():
 
     try:
         Path(config.TEMP_DIR).mkdir(exist_ok=True)
-        subprocess.run([
-            "ffmpeg",
-            "-y",
-            "-hide_banner",
-            "-ignore_unknown",
-            "-i",
-            mp4_test,
-            "-c:v",
-            codec,
-            mp4_target
-        ],
-            check=True,
-            creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
+        subprocess.run(["ffmpeg", "-y", "-hide_banner", "-ignore_unknown", "-i", mp4_test, "-c:v", codec, mp4_target], check=True,
+                       creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
     except Exception:
         if sys.platform == 'win32':
             try:
                 codec = f"{hhead}_amf"
-                subprocess.run([
-                    "ffmpeg",
-                    "-y",
-                    "-hide_banner",
-                    "-ignore_unknown",
-                    "-i",
-                    mp4_test,
-                    "-c:v",
-                    codec,
-                    mp4_target
-                ],
-                    check=True,
-                    creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
+                subprocess.run(["ffmpeg", "-y", "-hide_banner", "-ignore_unknown", "-i", mp4_test, "-c:v", codec, mp4_target], check=True,
+                               creationflags=0 if sys.platform != 'win32' else subprocess.CREATE_NO_WINDOW)
             except Exception:
                 codec = f"libx{video_codec}"
     return codec
@@ -1432,9 +1141,8 @@ def set_ass_font(srtfile=None):
         if it.find('Style: ') == 0:
             ass_str[
                 i] = 'Style: Default,{fontname},{fontsize},{fontcolor},&HFFFFFF,{fontbordercolor},&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,{subtitle_bottom},1'.format(
-                fontname=config.settings['fontname'], fontsize=config.settings['fontsize'],
-                fontcolor=config.settings['fontcolor'], fontbordercolor=config.settings['fontbordercolor'],
-                subtitle_bottom=config.settings['subtitle_bottom'])
+                fontname=config.settings['fontname'], fontsize=config.settings['fontsize'], fontcolor=config.settings['fontcolor'],
+                fontbordercolor=config.settings['fontbordercolor'], subtitle_bottom=config.settings['subtitle_bottom'])
             break
 
     with open(assfile, 'w', encoding='utf-8') as f:
