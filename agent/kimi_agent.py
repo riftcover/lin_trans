@@ -5,7 +5,7 @@ from openai import OpenAI
 
 settings = QSettings("Locoweed", "LinLInTrans")
 kimi_key = settings.value("kimi", type=str)
-kimi_key = "sk-sPxaILKN9LDvVsybCzFMTiDZMxMmFRJTTDoBW5ACDbRsYpqF"
+# kimi_key = "sk-sPxaILKN9LDvVsybCzFMTiDZMxMmFRJTTDoBW5ACDbRsYpqF"
 
 
 

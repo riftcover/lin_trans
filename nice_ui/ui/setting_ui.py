@@ -203,7 +203,7 @@ class PopupWidget(QWidget):
         config.logger.info(f"修改提示词: {new_msg}")
         self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
         self.close()
-        self.parent()._refresh_table_data()
+        self.parent().refresh_table_data()
 
 
 class LLMConfigPage(QWidget):
@@ -250,7 +250,7 @@ class LLMConfigPage(QWidget):
         refresh_btn = ToolButton("刷新")
         refresh_btn.setIcon(FluentIcon.ROTATE)
 
-        refresh_btn.clicked.connect(self._refresh_table_data)
+        refresh_btn.clicked.connect(self.refresh_table_data)
         prompts_layout.addWidget(prompts_title)
         prompts_layout.addWidget(refresh_btn)
 
@@ -296,7 +296,7 @@ class LLMConfigPage(QWidget):
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         self.prompts_table.setCellWidget(row, 4, delete_btn)
 
-    def _refresh_table_data(self):
+    def refresh_table_data(self):
         self.prompts_table.setRowCount(0)  # 清空表格
         all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
         for prompt in all_prompts:
@@ -429,7 +429,7 @@ class ProxyPage(QWidget):
             if not re.match(r'^(http|sock)', proxy, re.I):
                 proxy = f'http://{proxy}'
             if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
+                tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
                        一般代理/vpn格式为 http://127.0.0.1:数字端口号
                        如果不知道什么是代理请勿随意填写
                        如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')

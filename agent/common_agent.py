@@ -44,6 +44,7 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
     """
     翻译srt文件
     Args:
+        unid: 文件指纹
         in_document: 需要翻译的文件
         out_document: 翻译完成后的文件
         agent_name: 所选api提供方:qwen,kimi等等
@@ -55,7 +56,7 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()
     # chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
-    chunks = list(range(10))
+    chunks = list(range(chunk_size))
     duration = len(chunks)
 
     with open(out_document, 'a', encoding='utf-8') as output_content:
@@ -65,8 +66,7 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
             # output_content.writelines(translated_paragraph)
             progress_now = int((i+1)/duration*100)
             data_bridge.emit_whisper_working(unid, progress_now)
-            # time.sleep(sleep_time)
-            time.sleep(2)
+            time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
 
 

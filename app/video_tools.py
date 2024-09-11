@@ -24,7 +24,7 @@ class FFmpegJobs:
         ffmpeg_process.run()
 
     @staticmethod
-    def convert_mp4_to_wav(input_path: Path|str, output_path: Path):
+    def convert_mp4_to_wav(input_path: str, output_path: str):
         logger.info(f'convert mp4 to wav: {input_path} -> {output_path}')
         command = [
             'ffmpeg',
