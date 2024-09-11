@@ -78,21 +78,19 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 class SrtWriter:
 
-    def __init__(self, unid: str, input_dirname: Path | str, raw_basename: str, ln: str):
+    def __init__(self, unid: str, wav_dirname: str, raw_noextname: str, ln: str):
         """
 
         Args:
             input_dirname: 需要提取文本的音频文件
             ln: 音频文件语言
         """
-        self.srt_name = raw_basename.rsplit('.', 1)[0]
-
-        audio_path = os.path.join(input_dirname, f'{self.srt_name}.wav')  # os.path.join(self.cwd, self.raw_basename)
-        if not os.path.isfile(audio_path):
-            logger.error(f"The file {audio_path} does not exist.")
-            raise FileNotFoundError(f"The file {audio_path} does not exist.")
-        self.input_dirname = input_dirname  #文件所在目录
-        self.input_file = audio_path  #文件名带上全路径
+        self.srt_name = raw_noextname
+        config.logger.info(f'wav_dirname : {wav_dirname}')
+        if not Path(wav_dirname).is_file():
+            logger.error(f"The file {wav_dirname} does not exist.")
+            raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
+        self.input_file = wav_dirname  #ffz转换后的wav文件路径
         self.ln = ln
         self.data_bridge = config.data_bridge
         self.unid = unid
@@ -128,53 +126,52 @@ class SrtWriter:
 
     # @timeit
 
-    def whisper_cpp_to_srt(self, model_name: str = 'ggml-medium.en.bin') -> None:
-        """
-        如果mac系统或者没有CUDA走这个
-        :param model_name:
-        :return:在result文件中输出结果
-        """
-
-        # 定义模型路径和音频文件路径
-        whisper_name = 'whisper.cpp'
-        model_rel_path = f'whisper.cpp/models/whisper_cpp/{model_name}'
-        audio_rel_path = f"data/{self.input_file}"
-        audio_srt_path = os.path.join(self.input_dirname, self.srt_name)
-        model_path = os.path.join(self.cwd, model_rel_path)
-        audio_path = os.path.join(self.cwd, audio_rel_path)
-        # cwd_path = os.path.join(self.cwd, whisper_name)
-
-        # 运行 whisper.cpp 的命令
-        command = ["./main", "-m", model_path, "-f", self.input_file, "-l", self.ln, "-osrt", "-of", audio_srt_path, "-pp"]
-        logger.debug("Running command:", " ".join(command))
-        subprocess.run(command, capture_output=True, text=True,  # cwd=cwd_path
-                       )
-
-    def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
-        # todo : [0.0 --> 30.0] [30.0 --> 39.92] [40.6 --> 59.64] 1.当前时间戳不精准，2.多句话混在一起
-        # todo : 3.,就是呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃, 口气词太多了
-        # 使用faster-whisper进行识别
-        logger.info(f"Using Faster-Whisper to generate SRT file")
-        if cuda_status:
-            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cuda", local_files_only=True,
-                                 compute_type="float16")
-        else:
-            model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cpu", local_files_only=True,
-                                 compute_type="int8")
-        segments, info = model.transcribe(self.input_file, language=self.ln)
-
-        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        logger.info(f"video_duration: {info.duration}")
-        logger.info(f"Writing srt file to {srt_file_path}")
-        for segment in segments:
-            progress_now = (segment.start / info.duration) * 100
-            # progress_now 取整
-            progress_now = round(progress_now, 2)
-            write_srt_file(segment, srt_file_path)
-            self.data_bridge.emit_whisper_working(self.unid, progress_now)
-            logger.info(f"[{segment.start} --> {segment.end}] {segment.text}")
-
-        self.data_bridge.emit_whisper_finished(self.unid)
+    # def whisper_cpp_to_srt(self, model_name: str = 'ggml-medium.en.bin') -> None:
+    #     """
+    #     如果mac系统或者没有CUDA走这个
+    #     :param model_name:
+    #     :return:在result文件中输出结果
+    #     """
+    #
+    #     # 定义模型路径和音频文件路径
+    #     whisper_name = 'whisper.cpp'
+    #     model_rel_path = f'whisper.cpp/models/whisper_cpp/{model_name}'
+    #     audio_rel_path = f"data/{self.input_file}"
+    #     audio_srt_path = self.input_dirname/self.srt_name
+    #     model_path = os.path.join(self.cwd, model_rel_path)
+    #     # cwd_path = os.path.join(self.cwd, whisper_name)
+    #
+    #     # 运行 whisper.cpp 的命令
+    #     command = ["./main", "-m", model_path, "-f", self.input_file, "-l", self.ln, "-osrt", "-of", audio_srt_path, "-pp"]
+    #     logger.debug("Running command:", " ".join(command))
+    #     subprocess.run(command, capture_output=True, text=True,  # cwd=cwd_path
+    #                    )
+    #
+    # def whisper_faster_to_srt(self, model_name: str = 'large-v2', cuda_status: bool = True):
+    #     # todo : [0.0 --> 30.0] [30.0 --> 39.92] [40.6 --> 59.64] 1.当前时间戳不精准，2.多句话混在一起
+    #     # todo : 3.,就是呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃, 口气词太多了
+    #     # 使用faster-whisper进行识别
+    #     logger.info(f"Using Faster-Whisper to generate SRT file")
+    #     if cuda_status:
+    #         model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cuda", local_files_only=True,
+    #                              compute_type="float16")
+    #     else:
+    #         model = WhisperModel(model_size_or_path=f'{config.root_path}/models/faster_whisper/{model_name}', device="cpu", local_files_only=True,
+    #                              compute_type="int8")
+    #     segments, info = model.transcribe(self.input_file, language=self.ln)
+    #
+    #     srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+    #     logger.info(f"video_duration: {info.duration}")
+    #     logger.info(f"Writing srt file to {srt_file_path}")
+    #     for segment in segments:
+    #         progress_now = (segment.start / info.duration) * 100
+    #         # progress_now 取整
+    #         progress_now = round(progress_now, 2)
+    #         write_srt_file(segment, srt_file_path)
+    #         self.data_bridge.emit_whisper_working(self.unid, progress_now)
+    #         logger.info(f"[{segment.start} --> {segment.end}] {segment.text}")
+    #
+    #     self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_to_srt(self, model_name: str = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'):
         logger.info("使用FunASR开始识别")

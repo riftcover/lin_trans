@@ -4,11 +4,11 @@ from agent.common_agent import translate_document
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
-from nice_ui.util.tools import ObjFormat
+from nice_ui.util.tools import VideoFormatInfo
 
 
 class LinQueue:
-    def lin_queue_put(self, take: ObjFormat):
+    def lin_queue_put(self, take: VideoFormatInfo):
         """
         将任务放入lin_queue队列中,所有任务都放在这音视频转文本,翻译任务
         在Worker中消费
@@ -21,7 +21,7 @@ class LinQueue:
     #     """
     #     config.tts_queue.put(take)
     #
-    # def trans_queue_put(self, take:ObjFormat):
+    # def trans_queue_put(self, take:VideoFormatInfo):
     #     """
     #     将任务放入trans_queue队列,在Worker中消费
     #     """
@@ -40,12 +40,12 @@ class LinQueue:
             # if task['codec_type'] == 'video':
                 # 视频转音频
 
-            final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'
+            final_name = task['wav_dirname']
             # 音视频转wav格式
             config.logger.debug(f'准备音视频转wav格式:{final_name}')
             FFmpegJobs.convert_mp4_to_wav(task['raw_name'], final_name)
             # 处理音频转文本
-            srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )
+            srt_worker = SrtWriter(task['unid'], task["wav_dirname"], task["raw_noextname"], config.params['source_language_code'], )
             # srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
             srt_worker.funasr_to_srt()
             # elif task['codec_type'] == 'audio':

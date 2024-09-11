@@ -11,7 +11,7 @@ from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui.srt_edit import SubtitleEditPage
 from nice_ui.util import tools
-from nice_ui.util.tools import ObjFormat
+
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
                                    ToolTipPosition, ToolTipFilter)
@@ -454,11 +454,11 @@ class TableApp(CardWidget):
 
     def _edit_row(self, row):
         """打开字幕编辑页面"""
-        file_path = eval(self.table.cellWidget(row, 5).text())  # 获取文件名
+        file_path: dict = eval(self.table.cellWidget(row, 5).text())  # 获取文件名
         if not os.path.isfile(file_path['srt_path']):
             config.logger.error(f"The file {file_path['srt_path']} does not exist.")
             InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                            parent=self)
+                          parent=self)
             raise FileNotFoundError(f"The file {file_path['srt_path']} does not exist.")
 
         config.logger.info(f"打开文件:{file_path}的字幕编辑页面")
