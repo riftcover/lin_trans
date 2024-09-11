@@ -275,12 +275,12 @@ gemini_path = root_path / 'nice_ui/gemini.txt'
 agent_settings = {"qwen": {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen2-57b-a14b-instruct"},
         "kimi": {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}}
 # 存放一次性多选的视频
-queue_mp4 = []
+queue_asr = []
 # 存放视频分离为无声视频进度，noextname为key，用于判断某个视频是否是否已预先创建好 novice_mp4, “ing”=需等待，end=成功完成，error=出错了
 queue_novice = {}
 
 # 存放一次性多选的srt
-queue_srt = []
+queue_trans = []
 
 # 倒计时
 task_countdown = 60

@@ -5,6 +5,7 @@ from typing import Literal
 from PySide6.QtCore import QObject, Signal
 
 from nice_ui.configure import config
+from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
 from nice_ui.util.tools import set_process
@@ -23,27 +24,27 @@ class Worker(QObject):
         self.queue_copy = queue_copy
         self.data_bridge = config.data_bridge
 
-    def do_work(self, work_type: Literal['mp4', 'srt']):
+    def do_work(self, work_type: WORK_TYPE):
         """
         点击开始按钮完成后,将需处理的文件放入队列中
         """
 
         config.logger.debug(f'do_work()线程开始工作:{self.queue_copy}')
-        if work_type == 'whisper':
-            self.mp4_work()
+        if work_type == 'asr':
+            self.asr_work()
         elif work_type == 'trans':
-            self.srt_work()
+            self.trans_work()
         self.queue_ready.emit()
         self.finished.emit()
         config.logger.debug('do_work() 线程工作完成')
 
-    def mp4_work(self):
+    def asr_work(self):
         srt_orm = ToSrtOrm()
         for it in self.queue_copy:
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it)
-            obj_format['job_type'] = 'srt'
+            obj_format['job_type'] = 'asr'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
@@ -54,13 +55,13 @@ class Worker(QObject):
                                       json.dumps(obj_format))
             config.logger.debug('添加视频消息完成')
 
-    def srt_work(self):
+    def trans_work(self):
         trans_orm = ToTranslationOrm()
         for it in self.queue_copy:
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个字幕信息
             obj_format = self._check_obj(it)
-            obj_format['job_type'] ='trans'
+            obj_format['job_type'] = 'trans'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
@@ -89,10 +90,10 @@ class Worker(QObject):
             return
         return obj_format
 
-    def stop( self):
+    def stop(self):
         set_process("", 'stop')
         # todo: 在翻译任务中,也要清空queue_srt
-        config.queue_mp4 = []
+        config.queue_asr = []
         self.finished.emit()
 
 

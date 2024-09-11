@@ -171,8 +171,8 @@ class Video2SRT(QWidget):
             # 获取self.media_table第i行第4列的数据
             config.logger.info(self.media_table.item(i, 4).text())
             srt_list.append(self.media_table.item(i, 4).text())
-        config.queue_mp4.extend(srt_list)
-        config.logger.info(f'queue_srt: {config.queue_mp4}')
+        config.queue_asr.extend(srt_list)
+        config.logger.info(f'queue_srt: {config.queue_asr}')
 
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))

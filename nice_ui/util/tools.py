@@ -13,13 +13,14 @@ import sys
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Dict, Any
-from pydantic import BaseModel, Field
+from typing import TypedDict, Dict, Any, Literal
+from pydantic import BaseModel, Field, validator
 
 import requests
 
 from nice_ui.configure import config
 from nice_ui.configure.custom_exceptions import VideoProcessingError
+from nice_ui.task import WORK_TYPE
 
 
 class ModelInfo(TypedDict):
@@ -958,7 +959,7 @@ class VideoFormatInfo(BaseModel):
   'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
   'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
   'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'job_type': 'srt'
+  'job_type': 'asr'
 }
     """
     raw_name: str
@@ -966,20 +967,17 @@ class VideoFormatInfo(BaseModel):
     raw_basename: str
     raw_noextname: str
     raw_ext: str
-    dirname: str
-    basename: str
-    noextname: str
-    ext: str
     codec_type: str
     output: str
     wav_dirname: str
     srt_dirname: str
     unid: str
     source_mp4: str
+    job_type: WORK_TYPE
 
 
 # 格式化视频信息
-def format_video(name: str, out: Path) -> dict[str | Any, str | Any]:
+def format_video(name: str, out: Path) -> VideoFormatInfo:
     """
     格式化视频信息
 
@@ -994,17 +992,12 @@ def format_video(name: str, out: Path) -> dict[str | Any, str | Any]:
   'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
   'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
   'raw_ext': 'mp4',
-  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
-  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
-  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
-  'ext': 'mp4',
-  'codec_type': 'video',
   'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
   'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
   'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
   'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
   'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'job_type': 'srt'
+  'job_type': 'asr'
 }
 
     """
@@ -1040,7 +1033,6 @@ def format_video(name: str, out: Path) -> dict[str | Any, str | Any]:
            "dirname":"",  # 处理后 移动后符合规范的目录名
            "basename":"",  # 符合规范的基本名带后缀
            "noextname":"",  # 符合规范的不带后缀
-           "ext":ext[1:],  # 扩展名
            "codec_type":media_type,  # 视频或音频
            "output":output_path.as_posix(),  # 最终存放的路径
            "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
@@ -1049,17 +1041,21 @@ def format_video(name: str, out: Path) -> dict[str | Any, str | Any]:
            "source_mp4":name  # 任务视频路径，原始视频路径
            }
 
-    if re.match(r'^([a-zA-Z]:)?/[a-zA-Z0-9_/.-]+$', name):
-        # 符合规则，原始和目标相同
-        obj['dirname'] = obj['raw_dirname']
-        obj['basename'] = obj['raw_basename']
-        obj['noextname'] = obj['raw_noextname']
-    else:
-        # 不符合，需要移动到 tmp 下
-        obj['noextname'] = obj['unid']
-        obj['basename'] = f'{obj["noextname"]}.{obj["raw_ext"]}'
-        obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
-        obj['dirname'] = config.TEMP_DIR + f"/{obj['noextname']}"
+    # video_info = VideoFormatInfo(
+    #     raw_name=name,
+    #     raw_dirname=raw_dirname,
+    #     raw_basename=raw_basename,
+    #     raw_noextname=raw_noextname,
+    #     raw_ext=ext[1:],
+    #     codec_type=media_type,
+    #     output=output_path.as_posix(),
+    #     wav_dirname=wav_path.as_posix(),
+    #     srt_dirname=srt_path.as_posix(),
+    #     unid=unid,
+    #     source_mp4=name,
+    #     job_type=""
+    # )
+
     return obj
 
 

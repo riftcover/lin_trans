@@ -48,7 +48,7 @@ class ToSrtOrm:
         session.commit()
 
     @session_manager
-    def get_all_data(self, session=None):
+    def query_data_all(self, session=None):
         return session.query(ToSrt).all()
 
     @session_manager
@@ -62,9 +62,7 @@ class ToSrtOrm:
         except NoResultFound:
             return None
 
-    @session_manager
-    def query_data_all(self, session=None):
-        return session.query(ToSrt).all()
+
 
     @session_manager
     def query_data_format_unid_path(self, session=None) -> list[tuple[ToSrt.unid, ToSrt.path, ToSrt.job_status, ToSrt.obj]]:
@@ -109,15 +107,25 @@ class ToTranslationOrm:
         session.commit()
 
     @session_manager
-    def get_all_to_translation(self, session=None):
+    def query_data_all(self, session=None):
         return session.query(ToTranslation).all()
 
     @session_manager
-    def get_to_translation_by_unid(self, unid, session=None):
+    def query_data_by_unid(self, unid, session=None):
         try:
-            return session.query(ToTranslation).filter_by(unid=unid).one()
+            result = session.query(ToTranslation).filter(ToTranslation.unid == unid).first()
+            if result:
+                logger.info('找到数据')
+                session.expunge(result)  # 从会话中分离对象，但保留其状态
+            return result
         except NoResultFound:
             return None
+
+    @session_manager
+    def query_data_format_unid_path(self, session=None) -> list[tuple[ToTranslation.unid, ToTranslation.path, ToTranslation.job_status, ToTranslation.obj]]:
+        # 输出所有行的unid和path
+        return session.query(ToTranslation.unid, ToTranslation.path, ToTranslation.job_status, ToTranslation.obj).all()
+
 
     @session_manager
     def query_data_format_unid_path(self, session=None) -> list[tuple[ToTranslation.unid, ToTranslation.path, ToTranslation.job_status, ToTranslation.obj]]:
@@ -142,7 +150,7 @@ class ToTranslationOrm:
 
     @session_manager
     def delete_to_translation(self, unid, session=None):
-        if entry := self.get_to_translation_by_unid(unid):
+        if entry := self.query_data_by_unid(unid):
             session.delete(entry)
             session.commit()
             return True

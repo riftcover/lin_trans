@@ -9,6 +9,7 @@ from PySide6.QtGui import QTextCursor, QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
 
 from agent import translate_api_name
+from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import QueueConsumer
 from nice_ui.ui.SingalBridge import DataBridge
 from nice_ui.configure.setting_cache import save_setting
@@ -309,7 +310,7 @@ class SecWindow:
             self.main.source_mp4.setText(f'{len(fnames)} videos')
             config.last_opendir = os.path.dirname(fnames[0])
             self.main.settings.setValue("last_dir", config.last_opendir)
-            config.queue_mp4 = fnames
+            config.queue_asr = fnames
 
     # 导入背景声音
     def get_background(self):
@@ -337,12 +338,6 @@ class SecWindow:
                 else:
                     return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['import src error'])
 
-    # 保存目录
-    def get_save_dir(self):
-        # todo:修改为导出文件夹,需要在导出页添加按钮后调整
-        dirname = QFileDialog.getExistingDirectory(self.main, config.transobj['selectsavedir'], config.last_opendir)
-        dirname = dirname.replace('\\', '/')
-        self.main.output_dir.setText(dirname)
 
     # 添加进度条
     def add_process_btn(self):
@@ -374,7 +369,7 @@ class SecWindow:
         # 如果是 合并模式,必须有字幕，有视频，有字幕嵌入类型，允许设置视频减速
         # 不需要翻译
         if self.main.app_mode == 'hebing':
-            if len(config.queue_mp4) < 1 or config.params['subtitle_type'] < 1 or not txt:
+            if len(config.queue_asr) < 1 or config.params['subtitle_type'] < 1 or not txt:
                 QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['hebingmoshisrt'])
                 return False
             config.params['is_separate'] = False
@@ -391,7 +386,7 @@ class SecWindow:
             return True
         if self.main.app_mode == 'tiqu':
             # 提取字幕模式，必须有视频、有原始语言，语音模型
-            if len(config.queue_mp4) < 1:
+            if len(config.queue_asr) < 1:
                 QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['selectvideodir'])
                 return False
 
@@ -422,7 +417,7 @@ class SecWindow:
     # 4. 存在字幕，不需要翻译
     # 是否无需翻译，返回True=无需翻译,False=需要翻译
     def dont_translate(self):
-        if len(config.queue_mp4) < 1:
+        if len(config.queue_asr) < 1:
             return True
         if self.main.translate_language.currentText() == '-' or self.main.source_language.currentText() == '-':
             return True
@@ -430,16 +425,6 @@ class SecWindow:
             return True
         return bool(self.main.subtitle_area.toPlainText().strip())
 
-    # def change_proxy(self, p):
-    #     # 设置或删除代理
-    #     config.proxy = p.strip()
-    #     try:
-    #         if not config.proxy:
-    #             # 删除代理
-    #             tools.set_proxy('del')
-    #         self.main.settings.setValue('proxy', config.proxy)
-    #     except Exception:
-    #         pass
 
     # 检测开始状态并启动
     def check_start(self):
@@ -465,7 +450,7 @@ class SecWindow:
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
 
         # 综合判断
-        if len(config.queue_mp4) < 1:
+        if len(config.queue_asr) < 1:
             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
             return False
 
@@ -513,22 +498,22 @@ class SecWindow:
         config.params['only_video'] = False
         config.params['clear_cache'] = False
 
-        if len(config.queue_mp4) > 0:
+        if len(config.queue_asr) > 0:
             config.params['only_video'] = True
 
         save_setting(self.main.settings)
 
-        config.logger.info(f'update later config.queue_mp4:{config.queue_mp4}')
+        config.logger.info(f'update later config.queue_mp4:{config.queue_asr}')
         config.settings = config.parse_init()
         config.logger.debug("====config.settings====")
         config.logger.debug(config.settings)
         config.logger.debug("====config.params====")
         config.logger.debug(config.params)
         config.logger.debug("add_queue_thread")
-        queue_mp4_copy = copy.deepcopy(config.queue_mp4)
-        self.add_queue_thread(queue_mp4_copy, 'whisper')
+        queue_mp4_copy = copy.deepcopy(config.queue_asr)
+        self.add_queue_thread(queue_mp4_copy, 'asr')
 
-        self.update_status('mp4')
+        self.update_status('asr')
 
     def check_translate(self):
         self.main.add_queue_srt()
@@ -555,16 +540,16 @@ class SecWindow:
         config.params['prompt_name'] = prompt_name
         config.params['prompt_text'] = self.main.prompts_orm.query_data_by_name(prompt_name)
 
-        if len(config.queue_srt) < 1:
+        if len(config.queue_trans) < 1:
             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
             return False
 
         save_setting(self.main.settings)
 
-        queue_srt_copy = copy.deepcopy(config.queue_srt)
+        queue_srt_copy = copy.deepcopy(config.queue_trans)
         self.add_queue_thread(queue_srt_copy, 'trans')
 
-        self.update_status('ing')
+        self.update_status('trans')
 
     def add_queue_thread(self, data_copy, work_type):
         # 添加需处理文件到队列的线程
@@ -600,193 +585,13 @@ class SecWindow:
     def handle_error(self, error_msg):
         config.logger.error(f"Error: {error_msg}")
 
-    # 设置按钮上的日志信息
-    def set_process_btn_text(self, text, btnkey="", type="logs"):
-        if not btnkey or btnkey not in self.main.processbtns:
-            return
-        if not self.main.task:
-            return
-        if btnkey == 'srt2wav':
-            if not (self.main.task and self.main.task.video):
-                return
-            if type == 'succeed':
-                text, basename = text.split('##')
-                self.main.processbtns[btnkey].setTarget(text)
-                self.main.processbtns[btnkey].setCursor(Qt.PointingHandCursor)
-                precent = 100
-                text = f'{config.transobj["endandopen"].replace("..", "")} {text}'
-            else:
-                precent = self.main.task.video.precent
-                text = f'{config.transobj["running"].replace("..", "")} [{round(precent, 1)}%] /  {config.transobj["endopendir"]} {text}'
-            self.main.processbtns[btnkey].progress_bar.setValue(precent)
-            self.main.processbtns[btnkey].setText(text)
-            return
-        precent = round(self.main.task.tasklist[btnkey].precent if self.main.task.tasklist and btnkey in self.main.task.tasklist else 0, 1)
-        if type == 'succeed' or precent >= 100.0:
-
-            target = self.main.task.tasklist[btnkey].obj['output']
-            basename = self.main.task.tasklist[btnkey].obj['raw_basename']
-
-            self.main.processbtns[btnkey].setTarget(target)
-            self.main.processbtns[btnkey].setCursor(Qt.PointingHandCursor)
-
-            text = f'{config.transobj["endandopen"]} {basename}'
-            self.main.processbtns[btnkey].setText(text)
-            self.main.processbtns[btnkey].progress_bar.setValue(100)
-            self.main.processbtns[btnkey].setToolTip(config.transobj['mubiao'])
-        elif type == 'error' or type == 'stop':
-            self.main.processbtns[btnkey].progress_bar.setStyleSheet('color:#ff0000')
-            if type == 'error':
-                self.main.processbtns[btnkey].setCursor(Qt.PointingHandCursor)
-                self.main.processbtns[btnkey].setMsg(
-                    text + f'\n\n{config.errorlist[btnkey] if btnkey in config.errorlist and config.errorlist[btnkey] != text else ""}')
-                self.main.processbtns[btnkey].setToolTip('点击查看详细报错' if config.defaulelang == 'zh' else 'Click to view the detailed error report')
-                self.main.processbtns[btnkey].setText(text[:120])
-            else:
-                self.main.processbtns[btnkey].setToolTip('')
-        elif btnkey in self.main.task.tasklist:
-            jindu = f' {precent}% '
-            self.main.processbtns[btnkey].progress_bar.setValue(int(self.main.task.tasklist[btnkey].precent))
-            raw_name = self.main.task.tasklist[btnkey].obj['raw_basename']
-            self.main.processbtns[btnkey].setToolTip(config.transobj["endopendir"])
-
-            self.main.processbtns[btnkey].setText(
-                f'{config.transobj["running"].replace("..", "")} [{jindu}] {raw_name} / {config.transobj["endopendir"]} {text}')
-
     # 更新执行状态
-    def update_status(self, type):
-        config.current_status = type
-        # 当type为ing时将列表media_table中的内容清空,queue_mp4清空
-        if type == 'mp4':
+    def update_status(self, ty: WORK_TYPE):
+        # config.current_status = type
+        # 将列表media_table中的内容清空,queue list清空
+        if ty == 'asr':
             self.main.table.clear_table(self.main.media_table)
-            config.queue_mp4 = []
-
-        if type == 'srt':
+            config.queue_asr = []
+        elif ty == 'trans':
             self.main.table.clear_table(self.main.media_table)
-            config.queue_srt = []
-
-    # 更新 UI
-    def update_data(self, json_data):
-        d = json.loads(json_data)
-        if d['type'] == 'alert':
-            QMessageBox.critical(self.main, config.transobj['anerror'], d['text'])
-            return
-
-        # 一行一行插入字幕到字幕编辑区
-        elif d['type'] == 'set_start_btn':
-            self.main.startbtn.setText(config.transobj["running"])
-        elif d['type'] == "subtitle":
-            self.main.subtitle_area.moveCursor(QTextCursor.End)
-            self.main.subtitle_area.insertPlainText(d['text'])
-        elif d['type'] == 'add_process':
-            self.main.processbtns[d['btnkey']] = self.add_process_btn()
-        elif d['type'] == 'rename':
-            self.main.show_tips.setText(d['text'])
-        elif d['type'] == 'set_target_dir':
-            self.main.target_dir.setText(d['text'])
-        elif d['type'] == "logs":
-            self.set_process_btn_text(d['text'], btnkey=d['btnkey'])
-        elif d['type'] == 'stop' or d['type'] == 'end' or d['type'] == 'error':
-            if d['type'] == 'error':
-                self.set_process_btn_text(d['text'], btnkey=d['btnkey'], type=d['type'])
-            elif d['type'] == 'stop':
-                # self.set_process_btn_text(config.transobj['stop'], d['btnkey'], d['type'])
-                self.main.subtitle_area.clear()
-            if d['type'] == 'stop' or d['type'] == 'end':
-                self.update_status(d['type'])
-                self.main.continue_compos.hide()
-                self.main.target_dir.clear()
-                self.main.stop_djs.hide()
-                self.main.export_sub.setDisabled(False)
-                self.main.set_line_role.setDisabled(False)
-        elif d['type'] == 'succeed':
-            # 本次任务结束
-            self.set_process_btn_text(d['text'], btnkey=d['btnkey'], type='succeed')
-        elif d['type'] == 'edit_subtitle':
-            # 显示出合成按钮,等待编辑字幕,允许修改字幕
-            self.main.subtitle_area.setReadOnly(False)
-            self.main.subtitle_area.setFocus()
-            self.main.continue_compos.show()
-            self.main.continue_compos.setDisabled(False)
-            self.main.continue_compos.setText(d['text'])
-            self.main.stop_djs.show()
-        elif d['type'] == 'disabled_edit':
-            # 禁止修改字幕
-            self.main.subtitle_area.setReadOnly(True)
-            self.main.export_sub.setDisabled(True)
-            self.main.set_line_role.setDisabled(True)
-        elif d['type'] == 'allow_edit':
-            # 允许修改字幕
-            self.main.subtitle_area.setReadOnly(False)
-            self.main.export_sub.setDisabled(False)
-            self.main.set_line_role.setDisabled(False)
-        elif d['type'] == 'replace_subtitle':
-            # 完全替换字幕区
-            self.main.subtitle_area.clear()
-            self.main.subtitle_area.insertPlainText(d['text'])
-        elif d['type'] == 'timeout_djs':
-            self.main.stop_djs.hide()
-            self.update_subtitle(step=d['text'], btnkey=d['btnkey'])
-            self.main.continue_compos.setDisabled(True)
-            self.main.subtitle_area.setReadOnly(True)
-        elif d['type'] == 'show_djs':
-            self.set_process_btn_text(d['text'], btnkey=d['btnkey'])
-        elif d['type'] == 'check_soft_update':
-            if not self.usetype:
-                self.usetype = QPushButton()
-                self.usetype.setStyleSheet('color:#ffff00;border:0')
-                self.usetype.setCursor(QtCore.Qt.PointingHandCursor)
-                self.usetype.clicked.connect(lambda:self.open_url('download'))
-                self.main.container.addWidget(self.usetype)
-            self.usetype.setText(d['text'])
-
-        elif d['type'] == 'update_download' and self.main.youw is not None:
-            self.main.youw.logs.setText(config.transobj['youtubehasdown'])
-        elif d['type'] == 'youtube_error':
-            self.main.youw.set.setText(config.transobj['start download'])
-            QMessageBox.critical(self.main.youw, config.transobj['anerror'], d['text'][:900])
-
-        elif d['type'] == 'youtube_ok':
-            self.main.youw.set.setText(config.transobj['start download'])
-            QMessageBox.information(self.main.youw, "OK", d['text'])
-        elif d['type'] == 'open_toolbox':
-            self.open_toolbox(0, True)
-        elif d['type'] == 'set_clone_role' and config.params['tts_type'] == 'clone-voice':
-            self.main.settings.setValue("clone_voicelist", ','.join(config.clone_voicelist))
-            if config.current_status == 'ing':
-                return
-            current = self.main.voice_role.currentText()
-            self.main.voice_role.clear()
-            self.main.voice_role.addItems(config.clone_voicelist)
-            self.main.voice_role.setCurrentText(current)
-        elif d['type'] == 'win':
-            # 小窗口背景音分离
-            if self.main.sepw is not None:
-                self.main.sepw.set.setText(d['text'])
-
-    # update subtitle 手动 点解了 立即合成按钮，或者倒计时结束超时自动执行
-    def update_subtitle(self, step="translate_start", btnkey=""):
-        self.main.stop_djs.hide()
-        self.main.continue_compos.setDisabled(True)
-        # 如果当前是等待翻译阶段，则更新原语言字幕,然后清空字幕区
-        txt = self.main.subtitle_area.toPlainText().strip()
-        config.task_countdown = 0
-        if not btnkey or not txt:
-            return
-        if btnkey == 'srt2wav':
-            srtfile = self.main.task.video.init['target_sub']
-            with open(srtfile, 'w', encoding='utf-8') as f:
-                f.write(txt)
-            return
-
-        if not self.main.task.is_batch and btnkey in self.main.task.tasklist:
-            if step == 'translate_start':
-                srtfile = self.main.task.tasklist[btnkey].init['source_sub']
-            else:
-                srtfile = self.main.task.tasklist[btnkey].init['target_sub']
-            # 不是批量才允许更新字幕
-            with open(srtfile, 'w', encoding='utf-8') as f:
-                f.write(txt)
-        if step == 'translate_start':
-            self.main.subtitle_area.clear()
-        return True
+            config.queue_trans = []

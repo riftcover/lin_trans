@@ -35,7 +35,7 @@ class LinQueue:
         config.logger.debug('消费线程工作中')
         task = config.lin_queue.get_nowait()
         config.logger.debug(f'获取到任务:{task}')
-        if task['job_type'] == 'srt':
+        if task['job_type'] == 'asr':
             config.logger.debug('消费srt任务')
             # if task['codec_type'] == 'video':
                 # 视频转音频

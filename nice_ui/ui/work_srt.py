@@ -158,8 +158,8 @@ class WorkSrt(QWidget):
         srt_list = []
         for i in range(self.media_table.rowCount()):
             srt_list.append(self.media_table.item(i, 4).text())
-        config.queue_srt.extend(srt_list)
-        config.logger.info(f"queue_srt: {config.queue_srt}")
+        config.queue_trans.extend(srt_list)
+        config.logger.info(f"queue_srt: {config.queue_trans}")
 
 
 
