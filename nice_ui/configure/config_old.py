@@ -337,15 +337,5 @@ video_codec = None
 video_min_ms = 50
 
 if __name__ == '__main__':
-    # logger.info(lang_path)
-    # logger.info(obj)
-    logger.info(model_code_list)
-    model_list = model_code_list[:4]
-    a =2
-    if a ==1:
-        model_list.extend(model_code_list[4:9])
-    elif a ==2:
-        model_list.extend(model_code_list[9:14])
-
-    logger.info(model_list)
+    logger.info(params)
 
