@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import sys
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget
@@ -24,6 +24,15 @@ class ButtonType(Enum):
     EXPORT = auto()
     EDIT = auto()
     DELETE = auto()
+
+
+class TableWidgetColumn(IntEnum):
+    CHECKBOX = 0
+    FILENAME = 1
+    JOB_STATUS = 2
+    BUTTON_WIDGET = 3
+    UNID = 4
+    JOB_OBJ = 5
 
 
 class TableApp(CardWidget):
@@ -120,7 +129,7 @@ class TableApp(CardWidget):
 
     def _selectAll(self):
         for row in range(self.table.rowCount()):
-            chk = self.table.cellWidget(row, 0)
+            chk = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
             if chk.isEnabled():
                 chk.setChecked(self.selectAllBtn.isChecked())
 
@@ -159,8 +168,7 @@ class TableApp(CardWidget):
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, srt_edit_dict, filename_without_extension)
 
-    @staticmethod
-    def _create_action_button(icon, tooltip, callback, size=button_size):
+    def _create_action_button(self, icon, tooltip, callback, size=button_size):
         """
         创建一个工具按钮，并设置其图标、提示和点击事件。
         参数:
@@ -194,13 +202,13 @@ class TableApp(CardWidget):
         for button_type in button_types:
 
             if button_type == ButtonType.EXPORT:
-                button = self._create_action_button(FluentIcon.DOWN, "导出字幕", lambda:self._export_row(row))
+                button = self._create_action_button(FluentIcon.DOWN, "导出字幕", self._export_row)
             elif button_type == ButtonType.EDIT:
-                button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", lambda:self._edit_row(row))
+                button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", self._edit_row)
             elif button_type == ButtonType.START:
-                button = self._create_action_button(FluentIcon.PLAY, "开始任务", lambda:self._start_row(row))
+                button = self._create_action_button(FluentIcon.PLAY, "开始任务", self._start_row)
             elif button_type == ButtonType.DELETE:
-                button = self._create_action_button(FluentIcon.DELETE, "删除字幕", self._delete_row(row))
+                button = self._create_action_button(FluentIcon.DELETE, "删除字幕", self._delete_row)
             button_layout.addWidget(button)
 
         button_widget = QWidget()
@@ -282,13 +290,14 @@ class TableApp(CardWidget):
             else:
                 return
 
-        progress_bar = self.table.cellWidget(row, 2)
+        progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
         config.logger.info(f"更新文件:{unid}的进度条:{progress}")
         progress_bar.setText(f"处理中 {progress}")
 
     def find_row_by_identifier(self, unid):
+        # 此函数用于根据唯一标识符（unid）在表格中查找行索引
         for row in range(self.table.rowCount()):
-            item = self.table.cellWidget(row, 6)
+            item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             if item and item.text() == unid:
                 return row
         config.logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
@@ -299,8 +308,8 @@ class TableApp(CardWidget):
 
         if unid in self.row_cache:
             row = self.row_cache[unid]
-            item = self.table.cellWidget(row, 4)
-            progress_bar = self.table.cellWidget(row, 2)
+            item = self.table.cellWidget(row, TableWidgetColumn.UNID)
+            progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
             progress_bar.setText("已完成")
             self.srt_orm.update_table_unid(unid, job_status=2)
 
@@ -342,11 +351,12 @@ class TableApp(CardWidget):
         file_full.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, 5, file_full)
 
-    def _start_row(self, row):
+    def _start_row(self):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
         # 1.和consume_mp4_queue接受的一样
         # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
-        unid_item = self.table.cellWidget(row, 4)
+        row = self.get_row()
+        unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
         job_path = self.srt_orm.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
@@ -354,47 +364,49 @@ class TableApp(CardWidget):
         tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.lin_queue_put(job_path)
 
-    def _delete_row(self, button):
+    def _delete_row(self):
         #todo： 删除的行好像是错的，删除的是下一行。style中SubtitleTable中_delete_row,update_row_numbers貌似是对的
+        button_row = self.get_row()
+        config.logger.info(f"删除文件所在行:{button_row + 1} ")
+        unid_item = self.table.cellWidget(button_row, TableWidgetColumn.UNID)
 
-        def delete_row_callback():
-            button_row = self.table.indexAt(button.pos()).row()
-            config.logger.info(f"删除文件所在行:{button_row} ")
-            unid_item = self.table.cellWidget(button_row, 7)
+        """
+        删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
+        删除result中对应文件
+        """
+        text = unid_item.text()
+        config.logger.warning(text)
+        if text:
+            job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
+            result_dir = job_obj["output"]
+            config.logger.info(f"删除目录:{text} 成功")
+            try:
+                shutil.rmtree(result_dir)
+                config.logger.info(f"删除目录:{result_dir} 成功")
+            except Exception as e:
+                config.logger.error(f"删除目录:{result_dir} 失败:{e}")
+        # 在数据库中删除对应数据
+        self.srt_orm.delete_table_unid(text)
+        # 删除表格行
+        self.table.removeRow(button_row)
+        # todo：不应该是清除缓存索引，应该仅删除当前的
+        # self.row_cache.clear()
+        InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                        parent=self)
 
-            """
-            删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
-            删除result中对应文件
-            """
-            text = unid_item.text()
-            if text:
-                job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
-                result_dir = job_obj["output"]
-                config.logger.info(f"删除目录:{text} 成功")
-                try:
-                    shutil.rmtree(result_dir)
-                    config.logger.info(f"删除目录:{result_dir} 成功")
-                except Exception as e:
-                    config.logger.error(f"删除目录:{result_dir} 失败:{e}")
-            # 在数据库中删除对应数据
-            self.srt_orm.delete_table_unid(text)
-            # 删除表格行
-            self.table.removeRow(button_row)
-            # 清除缓存索引
-            self.row_cache.clear()
-            InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                            parent=self)
-
-        return delete_row_callback
+    def get_row(self):
+        # 获取操作所在行
+        button = self.sender()
+        return self.table.indexAt(button.parent().pos()).row()
 
     def _delete_batch(self):
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, 0).isChecked():
-                self._delete_row(row)
+            if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
+                self._delete_row()
 
     def searchFiles(self, text):
         for row in range(self.table.rowCount()):
-            item = self.table.cellWidget(row, 1)
+            item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
             config.logger.info(f"item:{item.text()}")
             if text.lower() in item.text().lower():
                 self.table.setRowHidden(row, False)
@@ -408,9 +420,8 @@ class TableApp(CardWidget):
         file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
 
         for row in range(self.table.rowCount()):
-            print(f"{row}:{self.table.cellWidget(row, 4)}")
             if self.table.cellWidget(row, 4):
-                unid_item = self.table.cellWidget(row, 7)
+                unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
 
                 job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
                 config.logger.info(f"job_obj:{job_obj}")
@@ -428,14 +439,15 @@ class TableApp(CardWidget):
         InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                         parent=self)
 
-    def _export_row(self, row):
+    def _export_row(self):
+        row = self.get_row()
         options = QFileDialog.Options()
-        item = self.table.cellWidget(row, 1)
-        config.logger.info(f"文件所在行:{row} 文件名:{item.text()}")
+        item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
+        config.logger.info(f"文件所在行:{row+1} 文件名:{item.text()}")
         export_name = f"{item.text()}.srt"
         file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
-            unid_item = self.table.cellWidget(row, 7)
+            unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             config.logger.info(f"unid_item:{unid_item}")
             config.logger.info(f"导出文件:{unid_item.text()} 成功")
             job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
@@ -448,13 +460,14 @@ class TableApp(CardWidget):
 
     def _update_buttons_visibility(self):
         # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
-        any_checked = any(self.table.cellWidget(row, 0).isChecked() for row in range(self.table.rowCount()))
+        any_checked = any(self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked() for row in range(self.table.rowCount()))
         self.deleteBtn.setVisible(any_checked)
         self.exportBtn.setVisible(any_checked)
 
-    def _edit_row(self, row):
+    def _edit_row(self):
         """打开字幕编辑页面"""
-        file_path: dict = eval(self.table.cellWidget(row, 5).text())  # 获取文件名
+        row = self.get_row()
+        file_path: dict = eval(self.table.cellWidget(row, TableWidgetColumn.JOB_OBJ).text())  # 获取文件名
         if not os.path.isfile(file_path['srt_path']):
             config.logger.error(f"The file {file_path['srt_path']} does not exist.")
             InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
