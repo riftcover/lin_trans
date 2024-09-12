@@ -1,10 +1,12 @@
 from PySide6.QtCore import Signal, QObject
 
+from nice_ui.ui.my_story import SrtEditDict
+
 
 class DataBridge(QObject):
     # 定义信号
     checkbox_b_state_changed = Signal(bool)
-    update_table = Signal(dict)  # 音视频转文本添加文件的信号，用来更新我的创作页列表
+    update_table = Signal(SrtEditDict,int)  # 音视频转文本添加文件的信号，用来更新我的创作页列表
     whisper_working = Signal(str, float)
     whisper_finished = Signal(str)
 
@@ -23,7 +25,7 @@ class DataBridge(QObject):
             self.checkbox_b_state_changed.emit(value)
 
     def emit_update_table(self, obj_format):
-        self.update_table.emit(obj_format)
+        self.update_table.emit(obj_format,1)
 
     def emit_whisper_working(self, unid, progress: float):
         self.whisper_working.emit(unid, progress)

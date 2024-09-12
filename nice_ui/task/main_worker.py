@@ -1,4 +1,3 @@
-import json
 import re
 from typing import Optional
 
@@ -41,14 +40,14 @@ class Worker(QObject):
     def asr_work(self):
         srt_orm = ToSrtOrm()
         for it in self.queue_copy:
-            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
+            config.logger.debug(f'do_work()线线程工作中,处理asr_work任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it)
             obj_format.job_type = 'asr'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
-            self.data_bridge.emit_update_table(obj_format)
+            self.data_bridge.emit_update_table(obj_format,1)
             # 添加消息到数据库
             srt_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['source_module_status'],
                                       config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format.raw_ext, 1,
@@ -58,14 +57,14 @@ class Worker(QObject):
     def trans_work(self):
         trans_orm = ToTranslationOrm()
         for it in self.queue_copy:
-            config.logger.debug('do_work()线线程工作中,处理任务:{it}')
+            config.logger.debug(f'do_work()线线程工作中,处理trans_work任务:{it}')
             # 格式化每个字幕信息
             obj_format = self._check_obj(it)
             obj_format.job_type = 'trans'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
-            self.data_bridge.emit_update_table(obj_format)
+            self.data_bridge.emit_update_table(obj_format,1)
             # 添加消息到数据库
             trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
                                         config.params['translate_type'], 2, 1, obj_format.model_dump_json())
@@ -73,8 +72,6 @@ class Worker(QObject):
 
     def _check_obj(self, it) -> Optional[VideoFormatInfo]:
         obj_format = tools.format_video(it, config.params['target_dir'])
-        config.logger.debug(f'target_dir:{config.params["target_dir"]}')
-        config.logger.debug(f'obj_format:{obj_format}')
         target_path = f"{obj_format.output}/{obj_format.raw_noextname}.mp4"
 
         if len(target_path) >= 250:
@@ -88,6 +85,7 @@ class Worker(QObject):
             set_process(config.transobj['teshufuhao'] + "\n\n" + it, 'alert')
             self.stop()
             return
+        config.logger.debug(f'obj_format:{obj_format}')
         return obj_format
 
     def stop(self):
