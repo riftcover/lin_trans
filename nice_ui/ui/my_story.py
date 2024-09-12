@@ -289,17 +289,22 @@ class TableApp(CardWidget):
         """
         if item.job_status in (0, 1):
             if item.job_status == 1:
-                self._update_job_status(item)
+                self._update_job_status(item,edit_dict)
 
             self.table_row_init(edit_dict, 0)
         elif item.job_status == 2:
             self.addRow_init_all(edit_dict)
 
-    def _update_job_status(self, item):
+    def _update_job_status(self, item,edit_dict):
         new_status = 0
-        # todo：?? row呢
-        # orm_table = self._choose_sql_orm(row)
-        self.srt_orm.update_table_unid(item.unid, job_status=new_status)
+        orm_w = None
+        work_type = edit_dict.job_type
+        if work_type == 'asr':
+            orm_w = self.srt_orm
+        elif work_type == 'trans':
+            orm_w = self.trans_orm
+
+        orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
         if job_status == 1:
@@ -352,9 +357,8 @@ class TableApp(CardWidget):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
             progress_bar.setText("已完成")
-            # todo：row呢
-            # orm_table = self._choose_sql_orm(row)
-            self.srt_orm.update_table_unid(unid, job_status=2)
+            orm_table = self._choose_sql_orm(row)
+            orm_table.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
                 self._set_row_buttons(row, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
