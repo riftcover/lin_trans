@@ -5,13 +5,14 @@ import sys
 from enum import Enum, auto, IntEnum
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem
+from pydantic import BaseModel, Field
 
 from nice_ui.configure import config
+from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui.srt_edit import SubtitleEditPage
 from nice_ui.util import tools
-
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
                                    ToolTipPosition, ToolTipFilter)
@@ -33,6 +34,21 @@ class TableWidgetColumn(IntEnum):
     BUTTON_WIDGET = 3
     UNID = 4
     JOB_OBJ = 5
+
+
+class SrtEditDict(BaseModel):
+    """
+    定义数据格式，在column：5中传递的，用来在删除，编辑使用编辑器读取信息，使用SrtEditDictRole 角色存储信息
+    """
+    unid: str = Field(default="", description="文件指纹")
+    media_path: str = Field(default="", description="媒体文件路径")
+    srt_path: str = Field(default="", description="SRT文件路径")
+    job_type: WORK_TYPE = Field(default="", description="任务类型")
+    raw_noextname: str = Field(default="", description="无扩展名的原始文件名")
+
+
+# 定义一个自定义角色用于存储 SrtEditDict 对象
+SrtEditDictRole = Qt.UserRole + 1
 
 
 class TableApp(CardWidget):
@@ -119,7 +135,8 @@ class TableApp(CardWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self._set_column_widths()
-        # self.table.setColumnHidden(4, True)
+        self.table.setColumnHidden(4, True)
+        self.table.setColumnHidden(5, True)
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
@@ -138,6 +155,19 @@ class TableApp(CardWidget):
         self._load_data(self.srt_orm, 0)
         self._load_data(self.trans_orm, 1)
 
+    def _choose_sql_orm(self, row: int):
+        item = self.table.item(row, 5)
+        # work_obj 取值是_load_data中srt_edit_dict
+        work_obj = item.data(SrtEditDictRole)
+
+        work_type = work_obj.job_type
+        if work_type == 'asr':
+            return self.srt_orm
+        elif work_type == 'trans':
+            return self.trans_orm
+        else:
+            config.logger.error(f'任务类型:{work_type}不存在')
+
     def _load_data(self, orm, st: int):
         """
         加载数据到表格
@@ -149,24 +179,28 @@ class TableApp(CardWidget):
             srt_edit_dict: 字幕编辑器的字典
             filename_without_extension: 无扩展的文件名
         """
-        srt_edit_dict = {"media_path":"", "srt_path":""}
-        srt_path = None
+        srt_edit_dict = SrtEditDict()
         # file_path 在srt_orm是mp4，mp3名，在trans_orm是srt名
-
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
-            obj_data: dict = json.loads(item.obj)
+            try:
+                obj_data: dict = json.loads(item.obj)
+            except json.decoder.JSONDecodeError as e:
+                config.logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
+            srt_edit_dict.job_type = obj_data.get('job_type', '')
+            srt_edit_dict.raw_noextname = obj_data.get('raw_noextname', '')
+            srt_edit_dict.unid = obj_data.get('unid', '')
             if st == 0:
-                srt_edit_dict["srt_edit_dict"] = item.path
-                # todo: 没有拼接完
-                srt_path = obj_data.get('output', '')
-                srt_edit_dict["srt_path"] = srt_path
+                # todo：拼完了测试一下
+                srt_path = obj_data.get('srt_dirname', '')
+                srt_edit_dict.srt_path = srt_path
+
             elif st == 1:
-                srt_edit_dict["srt_path"] = item.path
+                srt_edit_dict.srt_path = item.path
 
             filename_without_extension: str = obj_data.get('raw_noextname', '')
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
-            self._process_item(item, srt_edit_dict, filename_without_extension)
+            self._process_item(item, srt_edit_dict)
 
     def _create_action_button(self, icon, tooltip, callback, size=button_size):
         """
@@ -215,34 +249,33 @@ class TableApp(CardWidget):
         button_widget.setLayout(button_layout)
         self.table.setCellWidget(row, 3, button_widget)
 
-    def _process_item(self, item, edit_dict: dict, filename_without_extension: str):
+    def _process_item(self, item, edit_dict: SrtEditDict):
         """
         处理单个项目并更新表格。
 
         :param item: 数据库查询返回的项目对象
-        :param file_path: 列表中显示创作文件的路径，srt_orm中是mp4，mp3名，trans_orm中是srt名
-        :param media_path: 媒体文件路径
-        :param srt_path: 字幕文件路径
-        :param filename_without_extension: 无扩展的文件名
-        """
+        :param edit_dict: srt_edit_dict = {"media_path":"", "srt_path":"", "job_type":"","raw_noextname":""}
 
+        """
         if item.job_status in (0, 1):
             if item.job_status == 1:
                 self._update_job_status(item)
-            obj_format = {'edit_dict':edit_dict, 'raw_noextname':filename_without_extension, 'unid':item.unid}
-            self.table_row_init(obj_format, 0)
+
+            self.table_row_init(edit_dict, 0)
         elif item.job_status == 2:
-            self.addRow_init_all(edit_dict, filename_without_extension, item.unid)
+            self.addRow_init_all(edit_dict)
 
     def _update_job_status(self, item):
         new_status = 0
+        # todo：?? row呢
+        # orm_table = self._choose_sql_orm(row)
         self.srt_orm.update_table_unid(item.unid, job_status=new_status)
 
-    def table_row_init(self, obj_format: dict, job_status: int = 1):
+    def table_row_init(self, obj_format: SrtEditDict, job_status: int = 1):
         if job_status == 1:
             config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
-        filename = obj_format['raw_noextname']
-        unid = obj_format['unid']
+        filename = obj_format.raw_noextname
+        unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
@@ -273,12 +306,11 @@ class TableApp(CardWidget):
         self.table.setCellWidget(row_position, 4, file_unid)
 
         # 隐藏列数据:文件名
-        file_full = QLabel()
-        file_full.setText(str(obj_format))
-        file_full.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 5, file_full)
+        file_full = QTableWidgetItem()
+        file_full.setData(SrtEditDictRole, obj_format)
+        self.table.setItem(row_position, 5, file_full)
 
-    def table_row_working(self, unid, progress: float):
+    def table_row_working(self, unid: str, progress: float):
         if unid in self.row_cache:
             row = self.row_cache[unid]
             config.logger.debug(f"找到文件:{unid}的行索引:{row}")
@@ -311,6 +343,8 @@ class TableApp(CardWidget):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
             progress_bar.setText("已完成")
+            # todo：row呢
+            # orm_table = self._choose_sql_orm(row)
             self.srt_orm.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
@@ -318,7 +352,9 @@ class TableApp(CardWidget):
             else:
                 config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
-    def addRow_init_all(self, edit_dict: dict, filename_without_extension: str, unid: str):
+    def addRow_init_all(self, edit_dict: SrtEditDict):
+        filename_without_extension = edit_dict.raw_noextname
+        unid = edit_dict.unid
         config.logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
@@ -346,18 +382,18 @@ class TableApp(CardWidget):
         self.table.setCellWidget(row_position, 4, file_unid)
 
         # 隐藏列数据:文件名
-        file_full = QLabel()
-        file_full.setText(str(edit_dict))
-        file_full.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 5, file_full)
+        file_full = QTableWidgetItem()
+        file_full.setData(SrtEditDictRole, edit_dict)
+        self.table.setItem(row_position, 5, file_full)
 
     def _start_row(self):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
         # 1.和consume_mp4_queue接受的一样
         # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
-        row = self.get_row()
+        row = self._get_row()
         unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-        job_path = self.srt_orm.query_data_by_unid(unid_item).path
+        orm_table = self._choose_sql_orm(row)
+        job_path = orm_table.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
             config.logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
@@ -365,35 +401,36 @@ class TableApp(CardWidget):
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self):
-        #todo： 删除的行好像是错的，删除的是下一行。style中SubtitleTable中_delete_row,update_row_numbers貌似是对的
-        button_row = self.get_row()
-        config.logger.info(f"删除文件所在行:{button_row + 1} ")
+        button_row = self._get_row()
         unid_item = self.table.cellWidget(button_row, TableWidgetColumn.UNID)
-
         """
         删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
         删除result中对应文件
         """
+
         text = unid_item.text()
-        config.logger.warning(text)
+        config.logger.info(f"删除文件所在行:{button_row + 1} | unid:{text} ")
+        orm_table = self._choose_sql_orm(button_row)
         if text:
-            job_obj = json.loads(self.srt_orm.query_data_by_unid(text).obj)
+            job_obj = json.loads(orm_table.query_data_by_unid(text).obj)
             result_dir = job_obj["output"]
             try:
+                # 删除本地文件
                 shutil.rmtree(result_dir)
                 config.logger.info(f"删除目录:{result_dir} 成功")
             except Exception as e:
                 config.logger.error(f"删除目录:{result_dir} 失败:{e}")
         # 在数据库中删除对应数据
-        self.srt_orm.delete_table_unid(text)
+        orm_table.delete_table_unid(text)
         # 删除表格行
         self.table.removeRow(button_row)
-        # todo：不应该是清除缓存索引，应该仅删除当前的
-        # self.row_cache.clear()
+        # 清除缓存索引
+        config.logger.info(f'row_cache before deletion :{self.row_cache}')
+        self.row_cache.pop(text, None)  # 如果键不存在，返回 None 而不是引发异常
         InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                         parent=self)
 
-    def get_row(self):
+    def _get_row(self):
         # 获取操作所在行
         button = self.sender()
         return self.table.indexAt(button.parent().pos()).row()
@@ -414,6 +451,7 @@ class TableApp(CardWidget):
 
     def _export_batch(self):
         # 打开系统文件夹选择框
+        # todo: 导出换成srt_edit文件中函数
         job_path, file_path = None, None
         options = QFileDialog.Options()
         file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
@@ -421,8 +459,8 @@ class TableApp(CardWidget):
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, 4):
                 unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-
-                job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
+                orm_table = self._choose_sql_orm(row)
+                job_obj = json.loads(orm_table.query_data_by_unid(unid_item.text()).obj)
                 config.logger.info(f"job_obj:{job_obj}")
                 job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
                 file_path = f'{file_dir}/{job_obj["raw_noextname"]}.srt'
@@ -439,17 +477,18 @@ class TableApp(CardWidget):
                         parent=self)
 
     def _export_row(self):
-        row = self.get_row()
+        row = self._get_row()
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
-        config.logger.info(f"文件所在行:{row+1} 文件名:{item.text()}")
+        config.logger.info(f"文件所在行:{row + 1} 文件名:{item.text()}")
         export_name = f"{item.text()}.srt"
         file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
+            orm_table = self._choose_sql_orm(row)
             unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             config.logger.info(f"unid_item:{unid_item}")
             config.logger.info(f"导出文件:{unid_item.text()} 成功")
-            job_obj = json.loads(self.srt_orm.query_data_by_unid(unid_item.text()).obj)
+            job_obj = json.loads(orm_table.query_data_by_unid(unid_item.text()).obj)
             config.logger.info(f"job_obj:{job_obj}")
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
             config.logger.info(f"导出文件:{job_path}到{file_path}")
@@ -465,7 +504,7 @@ class TableApp(CardWidget):
 
     def _edit_row(self):
         """打开字幕编辑页面"""
-        row = self.get_row()
+        row = self._get_row()
         file_path: dict = eval(self.table.cellWidget(row, TableWidgetColumn.JOB_OBJ).text())  # 获取文件名
         if not os.path.isfile(file_path['srt_path']):
             config.logger.error(f"The file {file_path['srt_path']} does not exist.")
