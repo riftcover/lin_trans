@@ -205,7 +205,6 @@ class TableApp(CardWidget):
             srt_edit_dict.raw_noextname = obj_data.get('raw_noextname', '')
             srt_edit_dict.unid = obj_data.get('unid', '')
             if st == 0:
-                # todo：拼完了测试一下
                 srt_path = obj_data.get('srt_dirname', '')
                 srt_edit_dict.srt_path = srt_path
 
@@ -454,7 +453,6 @@ class TableApp(CardWidget):
                 self.table.setRowHidden(row, True)
 
     def _export_batch(self):
-        # todo: 导出换成srt_edit文件中函数
         job_paths = []
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():

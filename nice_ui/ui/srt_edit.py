@@ -175,7 +175,6 @@ class ExportSubtitleDialog(QDialog):
         # 第二行：导出路径
         path_layout = QHBoxLayout()
         path_label = QLabel("导出路径:")
-        # todo 默认路径设置
         last_export_path = self.settings.value("last_export_path", get_default_documents_path())
         self.path_input = QLineEdit(last_export_path)
         choose_button = QPushButton("选择路径")
