@@ -31,7 +31,7 @@ class AspectRatioWidget(QWidget):
 
 
 class SubtitleEditPage(QWidget):
-    def __init__(self, patt: str,med_path: str, settings: QSettings = None,parent=None):
+    def __init__(self, patt: str, med_path: str, settings: QSettings = None, parent=None):
         """
 
         Args:
@@ -45,7 +45,7 @@ class SubtitleEditPage(QWidget):
         self.patt = patt
         self.media_path = med_path
         self.subtitle_table = SubtitleTable(self.patt)
-        
+
         self.initUI()
 
     def initUI(self):
@@ -221,13 +221,12 @@ class ExportSubtitleDialog(QDialog):
             if export_format == "srt":
                 shutil.copy(str(path), export_path)  # 复制文件
             else:
-                self._export_txt(path,export_path)
+                self._export_txt(path, export_path)
 
         self.accept()  # 关闭对话框
-        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                        parent=self)
+        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self)
 
-    def _export_txt(self,src_path,export_path:str):
+    def _export_txt(self, src_path, export_path: str):
         # 实现语种文本提取
         with open(src_path, 'r', encoding='utf-8') as src_file:
             lines = src_file.readlines()
@@ -271,7 +270,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
     # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt',med_path='D:/dcode/lin_trans/result/tt1/tt.mp4',settings=settings)
+    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt', med_path='D:/dcode/lin_trans/result/tt1/tt.mp4', settings=settings)
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())

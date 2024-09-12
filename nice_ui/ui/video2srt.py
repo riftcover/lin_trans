@@ -122,7 +122,7 @@ class Video2SRT(QWidget):
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作', '文件路径'])
 
-        self.media_table.verticalHeader().setVisible(False) #隐藏行头
+        self.media_table.verticalHeader().setVisible(False)  # 隐藏行头
 
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.media_table.setColumnWidth(0, 400)
@@ -175,17 +175,17 @@ class Video2SRT(QWidget):
         config.logger.info(f'queue_srt: {config.queue_asr}')
 
     def bind_action(self):
-        self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
+        self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
         self.startbtn_1.clicked.connect(self.util.check_start)
         self.act_btn_get_video()
 
     def act_btn_get_video(self):
         # self.table = TableWindow(self)
         # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(lambda: self.table.select_files(self.media_table))
+        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
         self.btn_get_video.setAcceptDrops(True)
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
+        self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
 
     # def lateUI(self):  #     self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))  #     source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))  #     # if QT_CONFIG(tooltip)  #     self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))  #     self.translate_model.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
 
@@ -201,7 +201,8 @@ class TableWindow:
         # 选择文件
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir, "Video files(*.mp4 *.avi *.mov *.mpg *.mkv *.mp3 *.wav *.flac)")
+        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir,
+                                                     "Video files(*.mp4 *.avi *.mov *.mpg *.mkv *.mp3 *.wav *.flac)")
 
         if file_paths:
             for file_path in file_paths:
@@ -235,11 +236,10 @@ class TableWindow:
         # todo 修改样式
         delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
         ui_table.setCellWidget(row_position, 3, delete_button)
-        delete_button.clicked.connect(lambda row=row_position: self.delete_file(ui_table, row))
+        delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
 
         # 文件路径
         ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
-
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, row: int):
@@ -253,7 +253,7 @@ class TableWindow:
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda r=row: self.delete_file(ui_table, r))
+            delete_button.clicked.connect(lambda r=row:self.delete_file(ui_table, r))
 
     def get_video_duration(self, file: Path):
         # Use ffprobe to get video duration
@@ -290,9 +290,8 @@ if __name__ == '__main__':
     import sys
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QSettings
+
     app = QApplication(sys.argv)
     window = Video2SRT('字幕翻译', settings=QSettings("Locoweed", "LinLInTrans"))
     window.show()
-    sys.exit(app.exec())
-    # a =TableWindow(None, None)
-    # print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))
+    sys.exit(app.exec())  # a =TableWindow(None, None)  # print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))

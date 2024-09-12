@@ -149,7 +149,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.clicked.connect(self.table.select_file)
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
+        self.btn_get_srt.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
         # self.add_queue_btn.clicked.connect(self.add_queue_srt)
         self.start_button.clicked.connect(self.util.check_translate)
 
@@ -161,8 +161,6 @@ class WorkSrt(QWidget):
         config.queue_trans.extend(srt_list)
         config.logger.info(f"queue_srt: {config.queue_trans}")
 
-
-
     def _get_ai_prompt(self) -> list:
         # 获取AI提示列表
         prompt_names = self.prompts_orm.get_prompt_name()
@@ -170,7 +168,6 @@ class WorkSrt(QWidget):
         for i in prompt_names:
             prompt_name_list.append(i.prompt_name)
         return prompt_name_list
-
 
 
 class LTableWindow:
@@ -218,11 +215,12 @@ class LTableWindow:
 
             delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
             ui_table.setCellWidget(row_position, 3, delete_button)
-            delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+            delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
             # 文件路径
             ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
         else:
-            InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self.main)
+            InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
+                          duration=2000, parent=self.main)
 
     # 获取文件字符数
     def get_file_character_count(self, file_path: path) -> int | bool:
@@ -253,7 +251,7 @@ class LTableWindow:
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
+            delete_button.clicked.connect(lambda r=row:self.delete_file(ui_table, r))
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入

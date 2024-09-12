@@ -25,7 +25,7 @@ class DataBridge(QObject):
             self.checkbox_b_state_changed.emit(value)
 
     def emit_update_table(self, obj_format):
-        self.update_table.emit(obj_format,1)
+        self.update_table.emit(obj_format, 1)
 
     def emit_whisper_working(self, unid, progress: int):
         self.whisper_working.emit(unid, progress)

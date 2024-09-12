@@ -20,8 +20,6 @@ from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
                                    ToolTipPosition, ToolTipFilter)
 
-button_size = QSize(32, 30)
-
 
 class ButtonType(Enum):
     START = auto()
@@ -39,14 +37,13 @@ class TableWidgetColumn(IntEnum):
     JOB_OBJ = 5
 
 
-
-
-
 # 定义一个自定义角色用于存储 SrtEditDict 对象
 SrtEditDictRole = Qt.UserRole + 1
 
 
 class TableApp(CardWidget):
+    button_size = QSize(32, 30)
+
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings

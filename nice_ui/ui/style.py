@@ -97,7 +97,7 @@ class SaveButton(PrimaryPushButton):
         self.setText("保存")
         self.settings = settings
         self.lineEdit = lineedit
-        self.clicked.connect(lambda: self.save_api_key(api_key))
+        self.clicked.connect(lambda:self.save_api_key(api_key))
 
     def save_api_key(self, api_key):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
@@ -188,7 +188,7 @@ class LTimeEdit(QTimeEdit):
         # 设置默认选中毫秒部分
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
 
-        #todo：当前默认毫秒高亮，后续修改为默认不高亮
+        # todo：当前默认毫秒高亮，后续修改为默认不高亮
 
     def initTime(self, time_str):
         self.setDisplayFormat(HH_MM_SS_ZZZ)
@@ -249,7 +249,7 @@ class LinLineEdit(QTextEdit):
 class SubtitleTable(QTableWidget):
     tableChanged = Signal(list)
 
-    def __init__(self, file_path:str, parent=None):
+    def __init__(self, file_path: str, parent=None):
         super().__init__(parent)
         self.file_path = file_path
 
@@ -332,7 +332,7 @@ class SubtitleTable(QTableWidget):
                 config.logger.error(f"字幕rowCount:{row} 错误：{e}")
 
         # 按开始时间排序
-        self.subtitles.sort(key=lambda x: x[0])
+        self.subtitles.sort(key=lambda x:x[0])
 
     def initUI(self):
         _data = self.load_subtitle()
@@ -413,14 +413,14 @@ class SubtitleTable(QTableWidget):
         text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 4, your_text)
-        your_text.textChanged.connect(lambda: self._on_item_changed())
+        your_text.textChanged.connect(lambda:self._on_item_changed())
 
         # 第六列：译文
         translated_text = LinLineEdit()
         translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 5, translated_text)
-        translated_text.textChanged.connect(lambda: self._on_item_changed())
+        translated_text.textChanged.connect(lambda:self._on_item_changed())
 
         # 第七列：编辑按钮
         edit_layout = QVBoxLayout()
@@ -431,12 +431,12 @@ class SubtitleTable(QTableWidget):
         delete_button.setToolTip("删除本行字幕")
         delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         delete_button.setObjectName("delete_button")
-        delete_button.clicked.connect(lambda _, r=row_position: self._delete_row(r))
+        delete_button.clicked.connect(lambda _, r=row_position:self._delete_row(r))
         add_button = TransparentToolButton(FluentIcon.ADD)
         add_button.setObjectName("add_button")
         add_button.setToolTip("下方添加一行")
         add_button.installEventFilter(ToolTipFilter(add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        add_button.clicked.connect(lambda _, r=row_position: self._insert_row_below(r))
+        add_button.clicked.connect(lambda _, r=row_position:self._insert_row_below(r))
 
         delete_button.setFixedSize(button_size)
         add_button.setFixedSize(button_size)
@@ -446,12 +446,12 @@ class SubtitleTable(QTableWidget):
         down_row_button.setObjectName("down_button")
         down_row_button.setToolTip("移动译文到下一行")
         down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        down_row_button.clicked.connect(lambda _, r=row_position: self._move_row_down(r))
+        down_row_button.clicked.connect(lambda _, r=row_position:self._move_row_down(r))
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("up_button")
         up_row_button.setToolTip("移动译文到上一行")
         up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        up_row_button.clicked.connect(lambda _, r=row_position: self._move_row_up(r))
+        up_row_button.clicked.connect(lambda _, r=row_position:self._move_row_up(r))
 
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
@@ -485,10 +485,10 @@ class SubtitleTable(QTableWidget):
                 add_button = edit_widget.findChild(TransparentToolButton, "add_button")
                 if delete_button:
                     delete_button.clicked.disconnect()
-                    delete_button.clicked.connect(lambda _, r=row: self._delete_row(r))
+                    delete_button.clicked.connect(lambda _, r=row:self._delete_row(r))
                 if add_button:
                     add_button.clicked.disconnect()
-                    add_button.clicked.connect(lambda _, r=row: self._insert_row_below(r))
+                    add_button.clicked.connect(lambda _, r=row:self._insert_row_below(r))
                 # 更新移动按钮行号
 
                 down_row_button = edit_widget.findChild(TransparentToolButton, "down_button")
@@ -496,10 +496,10 @@ class SubtitleTable(QTableWidget):
                 if down_row_button:
                     # 更新向下按钮
                     down_row_button.clicked.disconnect()
-                    down_row_button.clicked.connect(lambda _, r=row: self._move_row_down(r))
+                    down_row_button.clicked.connect(lambda _, r=row:self._move_row_down(r))
                 if up_row_button:
                     up_row_button.clicked.disconnect()
-                    up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
+                    up_row_button.clicked.connect(lambda _, r=row:self._move_row_up(r))
         # 变更行好时发出信号
         self._on_item_changed()
 
