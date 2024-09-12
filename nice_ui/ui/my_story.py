@@ -5,14 +5,14 @@ import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem
+from PySide6.QtCore import Qt, QSize, QSettings
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView
 from pydantic import BaseModel, Field
 
 from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
-from nice_ui.ui.srt_edit import SubtitleEditPage
+from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
@@ -136,15 +136,27 @@ class TableApp(CardWidget):
         self.table.horizontalHeader().setVisible(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        # self.table.setStyleSheet("""
+        #         QTableWidget {
+        #             background-color: transparent;
+        #         }
+        #         QTableWidget::item {
+        #             padding: 5px;
+        #         }
+        #     """)
         self._set_column_widths()
         self.table.setColumnHidden(4, True)
         self.table.setColumnHidden(5, True)
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
-        widths = [50, 200, 150, 150, 200]  # 调整列宽
+        widths = [50, -1, 120, 160]  # 调整列宽
         for i, width in enumerate(widths):
-            self.table.setColumnWidth(i, width)
+            if width == -1:
+                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
+            else:
+                self.table.setColumnWidth(i, width)
 
     def _selectAll(self):
         for row in range(self.table.rowCount()):
@@ -158,7 +170,7 @@ class TableApp(CardWidget):
         self._load_data(self.trans_orm, 1)
 
     def _choose_sql_orm(self, row: int)-> Optional[ToSrtOrm|ToTranslationOrm]:
-        item = self.table.item(row, 5)
+        item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj = item.data(SrtEditDictRole)
 
@@ -234,7 +246,7 @@ class TableApp(CardWidget):
 
         # 添加文件名
         file_name = QLabel(filename)
-        file_name.setAlignment(Qt.AlignCenter)
+        file_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.FILENAME, file_name)
 
         # 添加状态
@@ -257,8 +269,9 @@ class TableApp(CardWidget):
     def _set_row_buttons(self, row, button_types):
         # 4个按钮创建并添加到表格的第4列
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(2)  # 设置按钮之间的间距
+        button_layout.setSpacing(5)  # 设置按钮之间的间距
         button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # 添加一个伸缩项,将按钮推到右侧
         button_layout.addStretch()
@@ -442,29 +455,18 @@ class TableApp(CardWidget):
 
     def _export_batch(self):
         # todo: 导出换成srt_edit文件中函数
-        job_path, file_path = None, None
-        options = QFileDialog.Options()
-        file_dir = QFileDialog.getExistingDirectory(self, "选择文件夹", "", options=options)
-
+        job_paths = []
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, 4):
-                unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-                orm_table = self._choose_sql_orm(row)
-                job_obj = json.loads(orm_table.query_data_by_unid(unid_item.text()).obj)
-                config.logger.info(f"job_obj:{job_obj}")
-                job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
-                file_path = f'{file_dir}/{job_obj["raw_noextname"]}.srt'
-                config.logger.info(f"导出文件:{job_path} 到 {file_path}")
-            try:
-                shutil.copy(job_path, file_path)
-            except Exception as e:
-                config.logger.error(f"导出文件失败:{e}")
-                InfoBar.error(title='错误', content="导出文件失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                              parent=self)
-                return
+            if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
+                job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+                # work_obj 取值是_load_data中srt_edit_dict
+                work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+                job_paths.append(work_obj.srt_path)
 
-        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                        parent=self)
+        dialog = ExportSubtitleDialog(job_paths, self)
+        dialog.exec()
+
+
 
     def _export_row(self):
         row = self._get_row()
@@ -508,17 +510,12 @@ class TableApp(CardWidget):
         edit_page.show()
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle('我的创作列表')
-        self.setGeometry(100, 100, 900, 600)
-        self.setCentralWidget(TableApp("我的创作列表"))
-
 
 if __name__ == '__main__':
     print("我的创作列表")
     app = QApplication(sys.argv)
-    ex = MainWindow()
+    settings = QSettings("Locoweed", "LinLInTrans")
+    ex = TableApp("我的创作列表",settings=settings)
+    ex.resize(900, 600)
     ex.show()
     sys.exit(app.exec())

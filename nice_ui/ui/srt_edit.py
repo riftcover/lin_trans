@@ -7,8 +7,9 @@ from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerIt
                                QFileDialog, QDialog, QLabel)
 
 from nice_ui.configure import config
+from nice_ui.util.tools import get_default_documents_path
 from nice_ui.widget.subedit import SubtitleTable
-from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton
+from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
 
@@ -135,7 +136,7 @@ class SubtitleEditPage(QWidget):
         self.subtitle_table.move_row_up_more()
 
     def export_srt(self):
-        dialog = ExportSubtitleDialog(self.patt, self)
+        dialog = ExportSubtitleDialog([self.patt], self)
         dialog.exec()
 
     def save_srt(self):
@@ -149,9 +150,9 @@ class SubtitleEditPage(QWidget):
 
 class ExportSubtitleDialog(QDialog):
     # 导出字幕弹窗
-    def __init__(self, path: str, parent=None):
+    def __init__(self, paths: list, parent=None):
         super().__init__(parent)
-        self.patt = path
+        self.paths = paths if isinstance(paths, list) else [paths]
         self.setWindowTitle("导出字幕")
         self.setFixedSize(400, 200)
         self.settings = self.parent().settings
@@ -175,7 +176,7 @@ class ExportSubtitleDialog(QDialog):
         path_layout = QHBoxLayout()
         path_label = QLabel("导出路径:")
         # todo 默认路径设置
-        last_export_path = self.settings.value("last_export_path", self.patt)
+        last_export_path = self.settings.value("last_export_path", get_default_documents_path())
         self.path_input = QLineEdit(last_export_path)
         choose_button = QPushButton("选择路径")
         choose_button.clicked.connect(self.choose_path)
@@ -204,16 +205,32 @@ class ExportSubtitleDialog(QDialog):
     def export_subtitle(self):
         # 实现导出逻辑
         export_path = self.path_input.text()
+        export_format = "srt" if self.srt_radio.isChecked() else "txt"
+        # 检查导出路径是否存在
+        if not os.path.exists(export_path):
+            config.logger.error(f'导出目录不存在: {export_path}')
+            InfoBar.error(title='错误', content="导出目录不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                          parent=self)
+            return
 
-        if self.srt_radio.isChecked():
-            shutil.copy(self.patt, export_path)  # 复制文件
-        else:
-            self._export_txt(export_path)
+        for path in self.paths:
+            if not os.path.exists(path):
+                config.logger.error(f'字幕文件被删除: {path}')
+                InfoBar.error(title='错误', content="字幕文件被删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                              parent=self)
+                return
+            if export_format == "srt":
+                shutil.copy(str(path), export_path)  # 复制文件
+            else:
+                self._export_txt(path,export_path)
+
         self.accept()  # 关闭对话框
+        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                        parent=self)
 
-    def _export_txt(self,export_path:str):
+    def _export_txt(self,src_path,export_path:str):
         # 实现语种文本提取
-        with open(self.patt, 'r', encoding='utf-8') as src_file:
+        with open(src_path, 'r', encoding='utf-8') as src_file:
             lines = src_file.readlines()
 
         # 提取第一行和第二行字幕

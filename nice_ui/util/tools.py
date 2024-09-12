@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Union
 from pydantic import BaseModel
 
 import requests
@@ -263,40 +263,6 @@ def conver_mp4(source_file, out_mp4, *, is_box=False):
 def split_novoice_byraw(source_mp4, novoice_mp4, noextname, lib="copy"):
     cmd = ["-y", "-i", Path(source_mp4).as_posix(), "-an", "-c:v", lib, "-crf", "0", f'{novoice_mp4}']
     return runffmpeg(cmd, noextname=noextname)
-
-
-# 从原始视频中分离出音频 cuda + h264_cuvid
-def split_audio_byraw(source_mp4, targe_audio, is_separate=False, btnkey=None):
-    source_mp4 = Path(source_mp4).as_posix()
-    targe_audio = Path(targe_audio).as_posix()
-    cmd = ["-y", "-i", source_mp4, "-vn", "-ac", "1", "-c:a", "aac", targe_audio]
-    rs = runffmpeg(cmd)
-    if not is_separate:
-        return rs
-    # 继续人声分离
-    tmpdir = config.TEMP_DIR + f"/{time.time()}"
-    os.makedirs(tmpdir, exist_ok=True)
-    tmpfile = tmpdir + "/raw.wav"
-    runffmpeg(["-y", "-i", source_mp4, "-vn", "-ac", "2", "-ar", "44100", "-c:a", "pcm_s16le", tmpfile])
-    from videotrans.separate import st
-    try:
-        path = Path(targe_audio).parent.as_posix()
-        vocal_file = path + '/vocal.wav'
-        if not vail_file(vocal_file):
-            set_process(config.transobj['Separating vocals and background music, which may take a longer time'])
-            try:
-                st.start(audio=tmpfile, path=path, btnkey=btnkey)
-            except Exception as e:
-                msg = f"separate vocal and background music:{str(e)}"
-                set_process(msg)
-                raise VideoProcessingError(msg)
-        if not vail_file(vocal_file):
-            return False
-    except Exception as e:
-        msg = f"separate vocal and background music:{str(e)}"
-        set_process(msg)
-        raise VideoProcessingError(msg)
-
 
 def conver_to_8k(audio, target_audio):
     return runffmpeg(["-y", "-i", Path(audio).as_posix(), "-ac", "1", "-ar", "16000", Path(target_audio).as_posix(), ])
@@ -938,6 +904,31 @@ def detect_media_type(file_path: str):
     except Exception as e:
         print(f"Error detecting media type: {e}")
         return 'unknown'
+
+
+def get_default_documents_path() -> Union[str, Path]:
+    """
+    返回当前操作系统的默认文档文件夹路径。
+
+    Returns:
+        Union[str, Path]: 默认文档文件夹的路径。
+                          返回类型可能是字符串或 Path 对象，
+                          具体取决于操作系统和环境变量。
+    """
+    if sys.platform.startswith('win'):
+        # Windows
+        return str(Path.home() / "Documents")
+    elif sys.platform.startswith('darwin'):
+        # macOS
+        return str(Path.home() / "Documents")
+    elif sys.platform.startswith('linux'):
+        if xdg_documents := os.environ.get("XDG_DOCUMENTS_DIR"):
+            return xdg_documents
+        else:
+            return str(Path.home() / "Documents")
+    else:
+        # 其他操作系统
+        return str(Path.home())  # 默认返回用户主目录
 
 
 class VideoFormatInfo(BaseModel):
