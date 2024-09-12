@@ -13,8 +13,8 @@ import sys
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Union
-from pydantic import BaseModel
+from typing import TypedDict, Union, Optional
+from pydantic import BaseModel, Field
 
 import requests
 
@@ -953,18 +953,18 @@ class VideoFormatInfo(BaseModel):
   'job_type': 'asr'
 }
     """
-    raw_name: str
-    raw_dirname: str
-    raw_basename: str
-    raw_noextname: str
-    raw_ext: str
-    codec_type: str
-    output: str
-    wav_dirname: str
-    srt_dirname: str
-    unid: str
-    source_mp4: str
-    job_type: WORK_TYPE
+    raw_name: str = Field(..., description="原始视频路径")
+    raw_dirname: str = Field(..., description="原始视频所在原始目录")
+    raw_basename: str = Field(..., description="原始视频原始名字带后缀")
+    raw_noextname: str = Field(..., description="原始视频名字不带后缀")
+    raw_ext: str = Field(..., description="原始后缀不带 .")
+    codec_type: str = Field(..., description="视频或音频")
+    output: str = Field(..., description="最终存放的路径")
+    wav_dirname: str = Field(..., description="ff处理完wav文件路径")
+    srt_dirname: str = Field(..., description="funasr处理完srt文件路径")
+    unid: str = Field(..., description="文件指纹")
+    source_mp4: str = Field(..., description="任务视频路径，原始视频路径")
+    job_type: Optional[WORK_TYPE] = Field(default=None, description="任务类型，asr、trans 可选字段")
 
 
 # 格式化视频信息
@@ -1016,38 +1016,37 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
     config.logger.info(f'media_type: {media_type}')
-    obj = {"raw_name":name,  # 原始视频路径
-           "raw_dirname":raw_dirname,  # 原始视频所在原始目录
-           "raw_basename":raw_basename,  # 原始视频原始名字带后缀
-           "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
-           "raw_ext":ext[1:],  # 原始后缀不带 .
-           "dirname":"",  # 处理后 移动后符合规范的目录名
-           "basename":"",  # 符合规范的基本名带后缀
-           "noextname":"",  # 符合规范的不带后缀
-           "codec_type":media_type,  # 视频或音频
-           "output":output_path.as_posix(),  # 最终存放的路径
-           "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
-           "srt_dirname":srt_path.as_posix(),  # funasr处理完srt文件路径
-           "unid":unid,  # 文件指纹
-           "source_mp4":name  # 任务视频路径，原始视频路径
-           }
+    # obj = {"raw_name":name,  # 原始视频路径
+    #        "raw_dirname":raw_dirname,  # 原始视频所在原始目录
+    #        "raw_basename":raw_basename,  # 原始视频原始名字带后缀
+    #        "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
+    #        "raw_ext":ext[1:],  # 原始后缀不带 .
+    #        "dirname":"",  # 处理后 移动后符合规范的目录名
+    #        "basename":"",  # 符合规范的基本名带后缀
+    #        "noextname":"",  # 符合规范的不带后缀
+    #        "codec_type":media_type,  # 视频或音频
+    #        "output":output_path.as_posix(),  # 最终存放的路径
+    #        "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
+    #        "srt_dirname":srt_path.as_posix(),  # funasr处理完srt文件路径
+    #        "unid":unid,  # 文件指纹
+    #        "source_mp4":name  # 任务视频路径，原始视频路径
+    #        }
 
-    # video_info = VideoFormatInfo(
-    #     raw_name=name,
-    #     raw_dirname=raw_dirname,
-    #     raw_basename=raw_basename,
-    #     raw_noextname=raw_noextname,
-    #     raw_ext=ext[1:],
-    #     codec_type=media_type,
-    #     output=output_path.as_posix(),
-    #     wav_dirname=wav_path.as_posix(),
-    #     srt_dirname=srt_path.as_posix(),
-    #     unid=unid,
-    #     source_mp4=name,
-    #     job_type=""
-    # )
+    video_info = VideoFormatInfo(
+        raw_name=name,
+        raw_dirname=raw_dirname,
+        raw_basename=raw_basename,
+        raw_noextname=raw_noextname,
+        raw_ext=ext[1:],
+        codec_type=media_type,
+        output=output_path.as_posix(),
+        wav_dirname=wav_path.as_posix(),
+        srt_dirname=srt_path.as_posix(),
+        unid=unid,
+        source_mp4=name
+    )
 
-    return obj
+    return video_info
 
 
 def open_dir(self, dirname=None):

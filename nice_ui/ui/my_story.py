@@ -57,7 +57,7 @@ class TableApp(CardWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace(' ', '-'))
+        self.setObjectName(text.replace('', '-'))
         self.setupUi()
         self.data_bridge = config.data_bridge
         self._connect_signals()
@@ -102,7 +102,7 @@ class TableApp(CardWidget):
         self._setup_table(layout)
 
     @staticmethod
-    def _create_button(text, icon, callback:callable):
+    def _create_button(text, icon, callback: callable):
         """
         生成顶部空间中的按钮
         """
@@ -114,7 +114,7 @@ class TableApp(CardWidget):
         button.setVisible(False)
         return button
 
-    def _create_search_input(self) ->SearchLineEdit:
+    def _create_search_input(self) -> SearchLineEdit:
         """
 
         Returns:生成顶部空间中的搜索框
@@ -169,7 +169,7 @@ class TableApp(CardWidget):
         self._load_data(self.srt_orm, 0)
         self._load_data(self.trans_orm, 1)
 
-    def _choose_sql_orm(self, row: int)-> Optional[ToSrtOrm|ToTranslationOrm]:
+    def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj = item.data(SrtEditDictRole)
@@ -216,7 +216,7 @@ class TableApp(CardWidget):
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, srt_edit_dict)
 
-    def _create_action_button(self, icon, tooltip:str, callback:callable, size:QSize=button_size):
+    def _create_action_button(self, icon, tooltip: str, callback: callable, size: QSize = button_size):
         """
         创建一个工具按钮，并设置其图标、提示和点击事件。
         参数:
@@ -238,7 +238,7 @@ class TableApp(CardWidget):
         button.clicked.connect(callback)
         return button
 
-    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: SrtEditDict) ->Tuple[CheckBox, QLabel]:
+    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: SrtEditDict) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
         chk.stateChanged.connect(self._update_buttons_visibility)
@@ -302,13 +302,13 @@ class TableApp(CardWidget):
         """
         if item.job_status in (0, 1):
             if item.job_status == 1:
-                self._update_job_status(item,edit_dict)
+                self._update_job_status(item, edit_dict)
 
             self.table_row_init(edit_dict, 0)
         elif item.job_status == 2:
             self.addRow_init_all(edit_dict)
 
-    def _update_job_status(self, item,edit_dict):
+    def _update_job_status(self, item, edit_dict):
         new_status = 0
         orm_w = None
         work_type = edit_dict.job_type
@@ -338,11 +338,12 @@ class TableApp(CardWidget):
             self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
 
     def table_row_working(self, unid: str, progress: float):
+        ask = self.row_cache
+        config.logger.info(f'row_cache: {self.row_cache}')
         if unid in self.row_cache:
-            row = self.row_cache[unid]
-            config.logger.debug(f"找到文件:{unid}的行索引:{row}")
+            config.logger.debug(f"缓存中找到:{unid}的索引")
         else:
-            config.logger.warning(f"未找到文件:{unid}的行索引,尝试从缓存中查找")
+            config.logger.warning(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
                 self.row_cache[unid] = row
@@ -353,7 +354,7 @@ class TableApp(CardWidget):
         config.logger.info(f"更新文件:{unid}的进度条:{progress}")
         progress_bar.setText(f"处理中 {progress}")
 
-    def find_row_by_identifier(self, unid:str) ->Optional[int]:
+    def find_row_by_identifier(self, unid: str) -> Optional[int]:
         # 此函数用于根据唯一标识符（unid）在表格中查找行索引
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
@@ -362,7 +363,7 @@ class TableApp(CardWidget):
         config.logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
         return None
 
-    def table_row_finish(self, unid:str):
+    def table_row_finish(self, unid: str):
         config.logger.info(f"文件处理完成:{unid},更新表单")
 
         if unid in self.row_cache:
@@ -444,7 +445,7 @@ class TableApp(CardWidget):
             if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
                 self._delete_row()
 
-    def searchFiles(self, text:str):
+    def searchFiles(self, text: str):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
             config.logger.info(f"item:{item.text()}")
@@ -464,8 +465,6 @@ class TableApp(CardWidget):
 
         dialog = ExportSubtitleDialog(job_paths, self)
         dialog.exec()
-
-
 
     def _export_row(self):
         row = self._get_row()
@@ -509,12 +508,11 @@ class TableApp(CardWidget):
         edit_page.show()
 
 
-
 if __name__ == '__main__':
     print("我的创作列表")
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
-    ex = TableApp("我的创作列表",settings=settings)
+    ex = TableApp("我的创作列表", settings=settings)
     ex.resize(900, 600)
     ex.show()
     sys.exit(app.exec())

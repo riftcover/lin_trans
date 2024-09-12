@@ -232,12 +232,10 @@ class TableWindow:
         delete_button = PushButton("删除")
         delete_button.setFixedSize(QSize(80, 30))
         delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        config.logger.info(delete_button.size())
-        config.logger.info(f"Row height of row {row_position}: {ui_table.rowHeight(row_position)}")
-
+        # todo 修改样式
         delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
         ui_table.setCellWidget(row_position, 3, delete_button)
-        delete_button.clicked.connect(lambda _, row=row_position: self.delete_file(ui_table, row))
+        delete_button.clicked.connect(lambda row=row_position: self.delete_file(ui_table, row))
 
         # 文件路径
         ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
@@ -255,7 +253,7 @@ class TableWindow:
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda _, r=row: self.delete_file(ui_table, r))
+            delete_button.clicked.connect(lambda r=row: self.delete_file(ui_table, r))
 
     def get_video_duration(self, file: Path):
         # Use ffprobe to get video duration

@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Literal
+from typing import Optional
 
 from PySide6.QtCore import QObject, Signal
 
@@ -8,7 +8,7 @@ from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
-from nice_ui.util.tools import set_process
+from nice_ui.util.tools import set_process, VideoFormatInfo
 from orm.queries import ToSrtOrm, ToTranslationOrm
 
 work_queue = LinQueue()
@@ -44,15 +44,15 @@ class Worker(QObject):
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it)
-            obj_format['job_type'] = 'asr'
+            obj_format.job_type = 'asr'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
-            srt_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'], config.params['source_language'], config.params['source_module_status'],
-                                      config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format['raw_ext'], 1,
-                                      json.dumps(obj_format))
+            srt_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['source_module_status'],
+                                      config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format.raw_ext, 1,
+                                      obj_format.model_dump_json())
             config.logger.debug('添加视频消息完成')
 
     def trans_work(self):
@@ -61,23 +61,23 @@ class Worker(QObject):
             config.logger.debug('do_work()线线程工作中,处理任务:{it}')
             # 格式化每个字幕信息
             obj_format = self._check_obj(it)
-            obj_format['job_type'] = 'trans'
+            obj_format.job_type = 'trans'
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
-            trans_orm.add_data_to_table(obj_format['unid'], obj_format['raw_name'], config.params['source_language'], config.params['target_language'],
-                                        config.params['translate_type'], 2, 1, json.dumps(obj_format))
+            trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
+                                        config.params['translate_type'], 2, 1, obj_format.model_dump_json())
             config.logger.debug('添加翻译消息完成')
 
-    def _check_obj(self, it):
-        obj_format = tools.format_video(it.replace('\\', '/'), config.params['target_dir'])
+    def _check_obj(self, it) -> Optional[VideoFormatInfo]:
+        obj_format = tools.format_video(it, config.params['target_dir'])
         config.logger.debug(f'target_dir:{config.params["target_dir"]}')
         config.logger.debug(f'obj_format:{obj_format}')
-        target_dir = obj_format['output'] + f"/{obj_format['raw_noextname']}.mp4"
+        target_path = f"{obj_format.output}/{obj_format.raw_noextname}.mp4"
 
-        if len(target_dir) >= 250:
+        if len(target_path) >= 250:
             # 调用 set_process() 函数，将提示信息 config.transobj['chaochu255'] 和 it 的值拼接在一起，并将提示级别设置为 'alert'。
             # set_process() 函数会在主线程中显示提示信息。
             # self.stop() 函数会在主线程中停止程序运行。
@@ -113,3 +113,6 @@ class QueueConsumer(QObject):
             work_queue.consume_queue()
         config.is_consuming = False
         self.finished.emit()
+
+if __name__ == '__main__':
+    print(111)
