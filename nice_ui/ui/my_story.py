@@ -7,13 +7,14 @@ from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
+from nice_ui.util.tools import VideoFormatInfo
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
@@ -193,26 +194,26 @@ class TableApp(CardWidget):
             srt_edit_dict: 字幕编辑器的字典
             filename_without_extension: 无扩展的文件名
         """
-        obj_data = {}
-        srt_edit_dict = SrtEditDict()
-        # file_path 在srt_orm是mp4，mp3名，在trans_orm是srt名
+
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
+            obj_data: Optional[VideoFormatInfo] = None
+            srt_edit_dict = SrtEditDict()
             try:
-                obj_data: dict = json.loads(item.obj)
-            except json.decoder.JSONDecodeError as e:
+                obj_data = VideoFormatInfo.model_validate_json(item.obj)
+            except ValidationError as e:
                 config.logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
-            srt_edit_dict.job_type = obj_data.get('job_type', '')
-            srt_edit_dict.raw_noextname = obj_data.get('raw_noextname', '')
-            srt_edit_dict.unid = obj_data.get('unid', '')
+            srt_edit_dict.job_type = obj_data.job_type
+            srt_edit_dict.raw_noextname = obj_data.raw_noextname
+            srt_edit_dict.unid = obj_data.unid
             if st == 0:
-                srt_path = obj_data.get('srt_dirname', '')
+                srt_path = obj_data.srt_dirname
                 srt_edit_dict.srt_path = srt_path
 
             elif st == 1:
                 srt_edit_dict.srt_path = item.path
 
-            filename_without_extension: str = obj_data.get('raw_noextname', '')
+            filename_without_extension: str = obj_data.raw_noextname
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, srt_edit_dict)
 
@@ -320,12 +321,14 @@ class TableApp(CardWidget):
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
+        config.logger.info(f'table get obj_format:{obj_format}')
         if job_status == 1:
-            config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
+            config.logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
         filename = obj_format.raw_noextname
         unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
+        config.logger.info('我的创作列表中添加新行')
 
         chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
@@ -339,14 +342,14 @@ class TableApp(CardWidget):
 
     def table_row_working(self, unid: str, progress: float):
         ask = self.row_cache
-        config.logger.info(f'row_cache: {self.row_cache}')
-        if unid in self.row_cache:
+        config.logger.info(f'row_cache: {ask}')
+        if unid in ask:
             config.logger.debug(f"缓存中找到:{unid}的索引")
         else:
             config.logger.warning(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
-                self.row_cache[unid] = row
+                ask[unid] = row
             else:
                 return
 
