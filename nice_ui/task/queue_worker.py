@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from agent.common_agent import translate_document
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
@@ -14,18 +12,6 @@ class LinQueue:
         在Worker中消费
         """
         config.lin_queue.put(take)
-
-    # def tts_queue_put(self, take: Path):
-    #     """
-    #     将任务放入tts_queue队列,在Worker中消费
-    #     """
-    #     config.tts_queue.put(take)
-    #
-    # def trans_queue_put(self, take:VideoFormatInfo):
-    #     """
-    #     将任务放入trans_queue队列,在Worker中消费
-    #     """
-    #     config.trans_queue.put(take)
 
     # 消费mp4_to_war_queue
     @staticmethod

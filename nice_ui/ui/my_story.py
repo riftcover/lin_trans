@@ -193,6 +193,7 @@ class TableApp(CardWidget):
             srt_edit_dict: 字幕编辑器的字典
             filename_without_extension: 无扩展的文件名
         """
+        obj_data = {}
         srt_edit_dict = SrtEditDict()
         # file_path 在srt_orm是mp4，mp3名，在trans_orm是srt名
         all_data = orm.query_data_format_unid_path()

@@ -1,17 +1,16 @@
-import functools
+
 import os
-import subprocess
-import sys
+
 import time
 from pathlib import Path
 import threading
 
 # import whisper
-from faster_whisper import WhisperModel
+# from faster_whisper import WhisperModel
 # from whisper.utils import get_writer, format_timestamp, make_safe
 from funasr import AutoModel
 from nice_ui.configure import config
-from utils.file_utils import write_srt_file, get_segment_timestamps, funasr_write_srt_file
+from utils.file_utils import get_segment_timestamps, funasr_write_srt_file
 from utils.log import Logings
 
 logger = Logings().logger
