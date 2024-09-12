@@ -1,9 +1,11 @@
+from pathlib import Path
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
 from typing import Literal
 
-from nice_ui.configure.config import root_path
+
 
 Base = declarative_base()
 JOB_STATUS = Literal[0,1,2,3,4]
@@ -53,8 +55,8 @@ class Prompts(Base):
 
 
 # 创建数据库引擎
-
-engine = create_engine('sqlite:///' + str(root_path / 'orm/linlin.db'))
+hh_path = Path(__file__).parent.parent  # 项目目录
+engine = create_engine('sqlite:///' + str(hh_path / 'orm/linlin.db'))
 
 # 创建所有表
 Base.metadata.create_all(engine)

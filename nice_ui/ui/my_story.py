@@ -6,14 +6,14 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView
-from pydantic import BaseModel, Field, ValidationError
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView
+from pydantic import ValidationError
 
 from nice_ui.configure import config
-from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
+from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
@@ -39,15 +39,7 @@ class TableWidgetColumn(IntEnum):
     JOB_OBJ = 5
 
 
-class SrtEditDict(BaseModel):
-    """
-    定义数据格式，在column：5中传递的，用来在删除，编辑使用编辑器读取信息，使用SrtEditDictRole 角色存储信息
-    """
-    unid: str = Field(default="", description="文件指纹")
-    media_path: str = Field(default="", description="媒体文件路径")
-    srt_path: str = Field(default="", description="SRT文件路径")
-    job_type: WORK_TYPE = Field(default="", description="任务类型")
-    raw_noextname: str = Field(default="", description="无扩展名的原始文件名")
+
 
 
 # 定义一个自定义角色用于存储 SrtEditDict 对象
@@ -197,24 +189,12 @@ class TableApp(CardWidget):
 
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
-            obj_data: Optional[VideoFormatInfo] = None
-            srt_edit_dict = SrtEditDict()
+            srt_edit_dict: Optional[SrtEditDict] = None
             try:
-                obj_data = VideoFormatInfo.model_validate_json(item.obj)
+                obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
+                srt_edit_dict = convert_video_format_info_to_srt_edit_dict(obj_data)
             except ValidationError as e:
                 config.logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
-            srt_edit_dict.job_type = obj_data.job_type
-            srt_edit_dict.raw_noextname = obj_data.raw_noextname
-            srt_edit_dict.unid = obj_data.unid
-            if st == 0:
-                srt_path = obj_data.srt_dirname
-                srt_edit_dict.srt_path = srt_path
-
-            elif st == 1:
-                srt_edit_dict.srt_path = item.path
-
-            filename_without_extension: str = obj_data.raw_noextname
-            config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, srt_edit_dict)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable, size: QSize = button_size):
@@ -342,11 +322,11 @@ class TableApp(CardWidget):
 
     def table_row_working(self, unid: str, progress: float):
         ask = self.row_cache
-        config.logger.info(f'row_cache: {ask}')
         if unid in ask:
             config.logger.debug(f"缓存中找到:{unid}的索引")
+            row = self.row_cache[unid]
         else:
-            config.logger.warning(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
+            config.logger.debug(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
                 ask[unid] = row
@@ -355,7 +335,7 @@ class TableApp(CardWidget):
 
         progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
         config.logger.info(f"更新文件:{unid}的进度条:{progress}")
-        progress_bar.setText(f"处理中 {progress}")
+        progress_bar.setText(f"处理中 {progress}%")
 
     def find_row_by_identifier(self, unid: str) -> Optional[int]:
         # 此函数用于根据唯一标识符（unid）在表格中查找行索引

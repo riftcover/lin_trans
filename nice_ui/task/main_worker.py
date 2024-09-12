@@ -47,7 +47,7 @@ class Worker(QObject):
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
-            self.data_bridge.emit_update_table(obj_format,1)
+            self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
             srt_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['source_module_status'],
                                       config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format.raw_ext, 1,
