@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 from enum import Enum, auto, IntEnum
+from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem
@@ -13,6 +14,7 @@ from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui.srt_edit import SubtitleEditPage
 from nice_ui.util import tools
+from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
                                    ToolTipPosition, ToolTipFilter)
@@ -100,7 +102,7 @@ class TableApp(CardWidget):
         self._setup_table(layout)
 
     @staticmethod
-    def _create_button(text, icon, callback):
+    def _create_button(text, icon, callback:callable):
         """
         生成顶部空间中的按钮
         """
@@ -112,7 +114,7 @@ class TableApp(CardWidget):
         button.setVisible(False)
         return button
 
-    def _create_search_input(self):
+    def _create_search_input(self) ->SearchLineEdit:
         """
 
         Returns:生成顶部空间中的搜索框
@@ -155,7 +157,7 @@ class TableApp(CardWidget):
         self._load_data(self.srt_orm, 0)
         self._load_data(self.trans_orm, 1)
 
-    def _choose_sql_orm(self, row: int):
+    def _choose_sql_orm(self, row: int)-> Optional[ToSrtOrm|ToTranslationOrm]:
         item = self.table.item(row, 5)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj = item.data(SrtEditDictRole)
@@ -202,7 +204,7 @@ class TableApp(CardWidget):
             config.logger.debug(f"文件:{filename_without_extension} 状态:{item.job_status}")
             self._process_item(item, srt_edit_dict)
 
-    def _create_action_button(self, icon, tooltip, callback, size=button_size):
+    def _create_action_button(self, icon, tooltip:str, callback:callable, size:QSize=button_size):
         """
         创建一个工具按钮，并设置其图标、提示和点击事件。
         参数:
@@ -223,6 +225,34 @@ class TableApp(CardWidget):
         button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         button.clicked.connect(callback)
         return button
+
+    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: SrtEditDict) ->Tuple[CheckBox, QLabel]:
+        # 添加复选框
+        chk = CheckBox()
+        chk.stateChanged.connect(self._update_buttons_visibility)
+        self.table.setCellWidget(row_position, TableWidgetColumn.CHECKBOX, chk)
+
+        # 添加文件名
+        file_name = QLabel(filename)
+        file_name.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, TableWidgetColumn.FILENAME, file_name)
+
+        # 添加状态
+        file_status = QLabel()
+        file_status.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, TableWidgetColumn.JOB_STATUS, file_status)
+
+        # 添加UNID
+        file_unid = QLabel(unid)
+        file_unid.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, TableWidgetColumn.UNID, file_unid)
+
+        # 隐藏列数据:文件名
+        file_full = QTableWidgetItem()
+        file_full.setData(SrtEditDictRole, obj_format)
+        self.table.setItem(row_position, TableWidgetColumn.JOB_OBJ, file_full)
+
+        return chk, file_status
 
     def _set_row_buttons(self, row, button_types):
         # 4个按钮创建并添加到表格的第4列
@@ -271,7 +301,7 @@ class TableApp(CardWidget):
         # orm_table = self._choose_sql_orm(row)
         self.srt_orm.update_table_unid(item.unid, job_status=new_status)
 
-    def table_row_init(self, obj_format: SrtEditDict, job_status: int = 1):
+    def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
         if job_status == 1:
             config.logger.debug(f"添加新文件:{obj_format['raw_noextname']} 到我的创作列表")
         filename = obj_format.raw_noextname
@@ -279,16 +309,7 @@ class TableApp(CardWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        chk = CheckBox()
-        chk.stateChanged.connect(self._update_buttons_visibility)
-        self.table.setCellWidget(row_position, 0, chk)
-
-        file_name = QLabel()
-        file_name.setText(filename)
-        file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 1, file_name)
-
-        file_status = QLabel()
+        chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
             file_status.setText("排队中")
         elif job_status == 0:
@@ -297,18 +318,6 @@ class TableApp(CardWidget):
             file_status.setText("处理失败")
             file_status.setStyleSheet("color: #FF6C64;")
             self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
-        file_status.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 2, file_status)
-
-        file_unid = QLabel()
-        file_unid.setText(unid)
-        file_unid.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 4, file_unid)
-
-        # 隐藏列数据:文件名
-        file_full = QTableWidgetItem()
-        file_full.setData(SrtEditDictRole, obj_format)
-        self.table.setItem(row_position, 5, file_full)
 
     def table_row_working(self, unid: str, progress: float):
         if unid in self.row_cache:
@@ -326,7 +335,7 @@ class TableApp(CardWidget):
         config.logger.info(f"更新文件:{unid}的进度条:{progress}")
         progress_bar.setText(f"处理中 {progress}")
 
-    def find_row_by_identifier(self, unid):
+    def find_row_by_identifier(self, unid:str) ->Optional[int]:
         # 此函数用于根据唯一标识符（unid）在表格中查找行索引
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
@@ -335,7 +344,7 @@ class TableApp(CardWidget):
         config.logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
         return None
 
-    def table_row_finish(self, unid):
+    def table_row_finish(self, unid:str):
         config.logger.info(f"文件处理完成:{unid},更新表单")
 
         if unid in self.row_cache:
@@ -359,32 +368,10 @@ class TableApp(CardWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        chk = CheckBox()
-        chk.stateChanged.connect(self._update_buttons_visibility)
-        self.table.setCellWidget(row_position, 0, chk)
-
-        file_name = QLabel()
-        file_name.setText(filename_without_extension)
-        file_name.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 1, file_name)
-
-        file_stat = QLabel()
-        file_stat.setText("已完成")
-        file_stat.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 2, file_stat)
+        _, file_status = self._add_common_widgets(row_position, filename_without_extension, unid, 2, edit_dict)
+        file_status.setText("已完成")
 
         self._set_row_buttons(row_position, [ButtonType.EXPORT, ButtonType.EDIT, ButtonType.START, ButtonType.DELETE])
-
-        # 隐藏列数据:unid
-        file_unid = QLabel()
-        file_unid.setText(unid)
-        file_unid.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, 4, file_unid)
-
-        # 隐藏列数据:文件名
-        file_full = QTableWidgetItem()
-        file_full.setData(SrtEditDictRole, edit_dict)
-        self.table.setItem(row_position, 5, file_full)
 
     def _start_row(self):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
@@ -440,7 +427,7 @@ class TableApp(CardWidget):
             if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
                 self._delete_row()
 
-    def searchFiles(self, text):
+    def searchFiles(self, text:str):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
             config.logger.info(f"item:{item.text()}")
@@ -450,7 +437,6 @@ class TableApp(CardWidget):
                 self.table.setRowHidden(row, True)
 
     def _export_batch(self):
-        # 打开系统文件夹选择框
         # todo: 导出换成srt_edit文件中函数
         job_path, file_path = None, None
         options = QFileDialog.Options()

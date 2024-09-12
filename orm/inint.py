@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base
+from typing import Literal
 
 from nice_ui.configure.config import root_path
 
 Base = declarative_base()
-
+JOB_STATUS = Literal[0,1,2,3,4]
 
 class ToSrt(Base):
     __tablename__ = 'tosrt'

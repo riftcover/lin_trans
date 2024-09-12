@@ -13,8 +13,8 @@ import sys
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Dict, Any, Literal
-from pydantic import BaseModel, Field, validator
+from typing import TypedDict
+from pydantic import BaseModel
 
 import requests
 
