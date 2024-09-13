@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
 
+from nice_ui.ui import MAIN_WINDOW_SIZE
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.ui.my_story import TableApp
@@ -40,7 +41,7 @@ class Window(FluentWindow):
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
         self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
-        self.edit_srt = Widget('字幕编辑', self)
+        # self.edit_srt = Widget('字幕编辑', self)
         self.my_story = TableApp('我的创作', self, self.settings)
         self.settingInterface = SettingInterface('设置', self, self.settings)
 
@@ -50,19 +51,21 @@ class Window(FluentWindow):
         # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
         self.addSubInterface(self.vide2srt, FIF.VIDEO, '音视频转字幕')
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, '字幕翻译')
-        self.addSubInterface(self.edit_srt, FIF.EDIT, '字幕编辑')
-        self.navigationInterface.addSeparator()
+        # self.addSubInterface(self.edit_srt, FIF.EDIT, '字幕编辑')
+
         self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
 
-        self.navigationInterface.addWidget(routeKey='avatar', widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'), onClick=self.showMessageBox,
-                                           position=NavigationItemPosition.BOTTOM, )
+
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置')
 
         # add badge to navigation item
-        self.navigationInterface.widget(self.vide2srt.objectName())
+        # self.navigationInterface.addSeparator()
+        # self.navigationInterface.addWidget(routeKey='avatar', widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'), onClick=self.showMessageBox,
+        #                                    position=NavigationItemPosition.BOTTOM, )
+        # self.navigationInterface.widget(self.vide2srt.objectName())
 
     def initWindow(self):
-        self.resize(900, 700)
+        self.resize(MAIN_WINDOW_SIZE)
         self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
         self.setWindowTitle('林林字幕')
 

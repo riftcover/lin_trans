@@ -6,11 +6,12 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
+from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
@@ -473,19 +474,42 @@ class TableApp(CardWidget):
         self.exportBtn.setVisible(any_checked)
 
     def _edit_row(self):
-        """打开字幕编辑页面"""
         row = self._get_row()
-        file_path: dict = eval(self.table.cellWidget(row, TableWidgetColumn.JOB_OBJ).text())  # 获取文件名
-        if not os.path.isfile(file_path['srt_path']):
-            config.logger.error(f"The file {file_path['srt_path']} does not exist.")
-            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                          parent=self)
-            raise FileNotFoundError(f"The file {file_path['srt_path']} does not exist.")
+        item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+        srt_edit_dict: SrtEditDict = item.data(SrtEditDictRole)
 
-        config.logger.info(f"打开文件:{file_path}的字幕编辑页面")
-        # 创建并显示字幕编辑页面
-        edit_page = SubtitleEditPage(file_path['srt_path'], file_path['media_path'], self.settings, parent=self)
-        edit_page.show()
+        # 创建一个新的对话框窗口
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"编辑字幕 - {srt_edit_dict.raw_noextname}")
+        dialog.resize(SUBTITLE_EDIT_DIALOG_SIZE)  # 设置一个合适的初始大小
+
+        # 创建SubtitleEditPage实例
+        subtitle_edit_page = SubtitleEditPage(srt_edit_dict.srt_path, srt_edit_dict.media_path, self.settings, parent=self)
+
+        # 创建垂直布局并添加SubtitleEditPage
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(subtitle_edit_page)
+
+        # 连接保存信号
+        # subtitle_edit_page.save_signal.connect(self._update_subtitle_data)
+
+        # 显示对话框
+        dialog.exec()
+
+    def _update_subtitle_data(self, updated_srt_edit_dict):
+        # 更新表格中的数据
+        row = self._get_row()
+        item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+        item.setData(SrtEditDictRole, updated_srt_edit_dict)
+
+        # 更新数据库
+        orm_table = self._choose_sql_orm(row)
+        unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
+        orm_table.update_table_unid(unid_item.text(), obj=updated_srt_edit_dict.model_dump_json())
+
+        # 可以在这里添加一个成功提示
+        InfoBar.success(title='成功', content="字幕已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+            parent=self)
 
 
 if __name__ == '__main__':
