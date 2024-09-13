@@ -38,7 +38,6 @@ class WorkSrt(QWidget):
         self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
 
-        # # todo: 增加到队列按钮到时候屏蔽掉
         # self.add_queue_btn = PushButton("添加到队列")
         # main_layout.addWidget(self.add_queue_btn)
 

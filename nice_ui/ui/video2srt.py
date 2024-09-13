@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QSizePolic
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, SwitchButton
 from videotrans.translator import TRANSNAMES
 
 
@@ -24,6 +24,8 @@ class Video2SRT(QWidget):
 
     def setupUi(self):
         main_layout = QVBoxLayout()
+        # main_layout.setSpacing(20)
+        # main_layout.setContentsMargins(20, 20, 20, 20)
 
         self.btn_get_video = PushButton("导入音视频文件，自动生成字幕")
         self.btn_get_video.setCursor(Qt.PointingHandCursor)
@@ -43,6 +45,23 @@ class Video2SRT(QWidget):
         # source_language_label.setMinimumSize(QSize(0, 35))
 
         self.source_language = ComboBox()
+        self.source_language.setStyleSheet("""
+            QComboBox {
+                background-color: #3E3E42;
+                color: #FFFFFF;
+                border: 1px solid #555555;
+                padding: 5px;
+                border-radius: 3px;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left-width: 1px;
+                border-left-color: #555555;
+                border-left-style: solid;
+            }
+        """)
         self.source_language.addItems(config.langnamelist)
         # self.source_language.setMinimumSize(QSize(0, 35))
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
@@ -187,7 +206,7 @@ class Video2SRT(QWidget):
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
 
-    # def lateUI(self):  #     self.btn_get_video.setText(QCoreApplication.translate("MainWindow", u"导入音视频文件", None))  #     source_language_name.setText(QCoreApplication.translate("MainWindow", u" 原始语种", None))  #     # if QT_CONFIG(tooltip)  #     self.source_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_3.setText(QCoreApplication.translate("MainWindow", u"识别引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.source_model.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     self.check_fanyi.setText(QCoreApplication.translate("MainWindow", u"字幕翻译", None))  #     self.translate_model.setText(QCoreApplication.translate("MainWindow", u"翻译引擎", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_type.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))  #     # endif // QT_CONFIG(tooltip)  #     self.label_4.setText(QCoreApplication.translate("MainWindow", u"翻译语种", None))  #     # if QT_CONFIG(tooltip)  #     self.translate_language.setToolTip(QCoreApplication.translate("MainWindow", u"原视频发音所用语言", None))
+
 
 
 class TableWindow:
@@ -294,4 +313,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Video2SRT('字幕翻译', settings=QSettings("Locoweed", "LinLInTrans"))
     window.show()
-    sys.exit(app.exec())  # a =TableWindow(None, None)  # print(a.get_video_duration(r'F:\pm_data\2\1.需求\1.需求挖掘与分析\1.如何获取需求.mp4'))
+    sys.exit(app.exec())

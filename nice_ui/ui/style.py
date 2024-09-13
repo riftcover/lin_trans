@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
+from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal, QTimer
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
@@ -187,8 +187,18 @@ class LTimeEdit(QTimeEdit):
 
         # 设置默认选中毫秒部分
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
-
-        # todo：当前默认毫秒高亮，后续修改为默认不高亮
+        self.setStyleSheet("""
+                    QTimeEdit {
+                        border: 1px solid #c0c0c0;
+                        border-radius: 3px;
+                        padding: 2px;
+                        background: white;
+                    }
+                    QTimeEdit:focus {
+                        border: 2px solid #0078d7;
+                    }
+                    """
+        )
 
     def initTime(self, time_str):
         self.setDisplayFormat(HH_MM_SS_ZZZ)
@@ -210,13 +220,13 @@ class LTimeEdit(QTimeEdit):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        # 在鼠标点击时，始终选中毫秒部分
-        self.setSelectedSection(QTimeEdit.Section.MSecSection)
+        # 将焦点设置到毫秒部分
+        self.setCurrentSection(QTimeEdit.Section.MSecSection)
 
     def focusInEvent(self, event):
         super().focusInEvent(event)
-        # 在获得焦点时，选中毫秒部分
-        self.setSelectedSection(QTimeEdit.Section.MSecSection)
+        # 将焦点设置到毫秒部分
+        self.setCurrentSection(QTimeEdit.Section.MSecSection)
 
     def wheelEvent(self, event):
         # 处理鼠标滚轮事件
