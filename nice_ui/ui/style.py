@@ -6,7 +6,7 @@ from agent import translate_api_name
 from nice_ui.configure import config
 from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, CheckBox, ToolTipFilter,
                                    ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
-
+from nice_ui.resource_manager import StyleManager
 HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 
 
@@ -187,18 +187,7 @@ class LTimeEdit(QTimeEdit):
 
         # 设置默认选中毫秒部分
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
-        self.setStyleSheet("""
-                    QTimeEdit {
-                        border: 1px solid #c0c0c0;
-                        border-radius: 3px;
-                        padding: 2px;
-                        background: white;
-                    }
-                    QTimeEdit:focus {
-                        border: 2px solid #0078d7;
-                    }
-                    """
-        )
+        StyleManager.apply_style(self, 'time_edit')
 
     def initTime(self, time_str):
         self.setDisplayFormat(HH_MM_SS_ZZZ)

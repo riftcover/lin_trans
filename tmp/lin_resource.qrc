@@ -1,0 +1,12 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/qss">
+        <file>themes/lin_time_edit.qss</file>
+    </qresource>
+    <qresource prefix="/icon">
+        <file>assets/AntDesignDownSquareFilled.svg</file>
+        <file>assets/AntDesignUpSquareFilled.svg</file>
+        <file>assets/TeenyiconsDownSolid.svg</file>
+        <file>assets/TeenyiconsUpSolid.svg</file>
+    </qresource>
+</RCC>

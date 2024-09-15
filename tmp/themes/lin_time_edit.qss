@@ -1,0 +1,33 @@
+QTimeEdit {
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 2px 4px;
+    color: #333333;
+}
+
+QTimeEdit:focus {
+    background-color: #ffffff;
+    border-color: #3d7eff;
+    outline: none;
+}
+
+QTimeEdit::up-button, QTimeEdit::down-button {
+    background-color: transparent;
+}
+
+QTimeEdit::up-button:hover, QTimeEdit::down-button:hover {
+    background-color: rgba(208, 208, 208, 0.5);
+}
+
+QTimeEdit::up-arrow, QTimeEdit::down-arrow {
+    width: 10px;
+    height: 8px;
+}
+
+QTimeEdit::up-arrow {
+    image: url(:/icon/assets/TeenyiconsUpSolid.svg);
+}
+
+QTimeEdit::down-arrow {
+    image: url(:/icon/assets/TeenyiconsDownSolid.svg);
+}
