@@ -2,6 +2,11 @@ from PySide6.QtCore import QFile, QTextStream
 from tmp import lin_resource_rc
 
 class StyleManager:
+    """
+    1. lin_resource.qrc中添加相关路径
+    2. pyside6-rcc lin_resource.qrc -o lin_resource_rc.py生成二进制文件
+    3. resource_manager.py中_load_all_styles添加对应映射
+    """
     _instance = None
     _styles = {}
 
