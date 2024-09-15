@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileD
     QSizePolicy, QTextEdit
 
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
+from components.widget.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,

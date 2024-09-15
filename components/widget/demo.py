@@ -1,14 +1,12 @@
 # coding: utf-8
 import sys
-from pathlib import Path
 
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
 
 from qfluentwidgets import setTheme, Theme
 
-from nice_ui.ui.style import SubtitleTable
-from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
+from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, LinVideoWidget
 from nice_ui.configure import config
 
 class Demo1(QWidget):

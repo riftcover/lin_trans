@@ -1,12 +1,11 @@
-from typing import Dict, Set, Tuple, Optional, Any, List, Callable
+from typing import Tuple, Any, List
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QPoint
 from PySide6.QtGui import QColor
 
-from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout, QCheckBox, \
-    QAbstractItemDelegate
+from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QAbstractItemDelegate
 
 from nice_ui.configure import config
-from nice_ui.ui.style import LinLineEdit, LTimeEdit
+from components.widget.style import LinLineEdit, LTimeEdit
 from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
 
 

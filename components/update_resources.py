@@ -27,7 +27,7 @@ class ResourceHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     event_handler = ResourceHandler()
     observer = Observer()
-    observer.schedule(event_handler, path='../tmp', recursive=False)
+    observer.schedule(event_handler, path='../components', recursive=False)
     observer.start()
 
     try:

@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal, QTimer
+from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
@@ -6,7 +6,7 @@ from agent import translate_api_name
 from nice_ui.configure import config
 from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, CheckBox, ToolTipFilter,
                                    ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
-from nice_ui.resource_manager import StyleManager
+from components.resource_manager import StyleManager
 HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 
 

@@ -5,9 +5,9 @@
         <file>themes/lin_status_label.qss</file>
     </qresource>
     <qresource prefix="/icon">
-        <file>assets/AntDesignDownSquareFilled.svg</file>
-        <file>assets/AntDesignUpSquareFilled.svg</file>
-        <file>assets/TeenyiconsDownSolid.svg</file>
-        <file>assets/TeenyiconsUpSolid.svg</file>
+        <file>assets/image/AntDesignDownSquareFilled.svg</file>
+        <file>assets/image/AntDesignUpSquareFilled.svg</file>
+        <file>assets/image/TeenyiconsDownSolid.svg</file>
+        <file>assets/image/TeenyiconsUpSolid.svg</file>
     </qresource>
 </RCC>
