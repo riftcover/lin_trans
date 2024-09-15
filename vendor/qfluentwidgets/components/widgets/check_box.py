@@ -1,7 +1,7 @@
 # coding: utf-8
 from enum import Enum
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QCheckBox, QStyle, QStyleOptionButton, QWidget
 
@@ -149,21 +149,28 @@ class CheckBox(QCheckBox):
         painter = QPainter(self)
         painter.setRenderHints(QPainter.RenderHint.Antialiasing)
 
-        # get the rect of indicator
+        # 获取指示器的矩形
         opt = QStyleOptionButton()
         opt.initFrom(self)
         rect = self.style().subElementRect(QStyle.SE_CheckBoxIndicator, opt, self)
 
-        # draw shape
+        # 调整矩形大小为16x16
+        rect_center = rect.center()
+        rect.setSize(QSize(16, 16))
+        rect.moveCenter(rect_center)
+
+        # 绘制形状
         painter.setPen(self._borderColor())
         painter.setBrush(self._backgroundColor())
-        painter.drawRoundedRect(rect, 4.5, 4.5)
+        painter.drawRoundedRect(rect, 4, 4)  # 调整圆角半径
 
         if not self.isEnabled():
             painter.setOpacity(0.8)
 
-        # draw icon
+        # 绘制图标
         if self.checkState() == Qt.Checked:
-            CheckBoxIcon.ACCEPT.render(painter, rect)
+            icon_rect = rect.adjusted(2, 2, -2, -2)  # 稍微缩小图标以适应新大小
+            CheckBoxIcon.ACCEPT.render(painter, icon_rect)
         elif self.checkState() == Qt.PartiallyChecked:
-            CheckBoxIcon.PARTIAL_ACCEPT.render(painter, rect)
+            icon_rect = rect.adjusted(2, 2, -2, -2)  # 稍微缩小图标以适应新大小
+            CheckBoxIcon.PARTIAL_ACCEPT.render(painter, icon_rect)
