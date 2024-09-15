@@ -19,6 +19,7 @@ class StyleManager:
     def _load_all_styles(self):
         # 加载所有样式
         self._styles['time_edit'] = self._load_stylesheet(":/qss/themes/lin_time_edit.qss")
+        self._styles['status_label'] = self._load_stylesheet(":/qss/themes/lin_status_label.qss")
         # 添加其他样式...
 
     def _load_stylesheet(self, resource_path):

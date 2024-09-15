@@ -30,7 +30,7 @@ class StatusLabel(QLabel):
                 QLabel {
                     background-color: #FFEBEE;
                     border: 1px solid #FF5252;
-                    color: #055160;
+                    color: #C62828;
                     border-radius: 3px;
                     font-size: 11px;
                 }

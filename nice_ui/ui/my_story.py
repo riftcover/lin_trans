@@ -227,16 +227,11 @@ class TableApp(CardWidget):
 
         # 添加文件名
         file_name = QLabel(filename)
-        config.logger.error(file_name.size())
-        font = file_name.font()
-        font_metrics = QFontMetrics(font)
-        config.logger.error(font_metrics.height())
         file_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.FILENAME, file_name)
 
         # 添加状态
         file_status = StatusLabel("")
-        config.logger.error(file_status.size())
         file_status.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.JOB_STATUS, file_status)
 

@@ -1,0 +1,31 @@
+QLabel#StatusLabel {
+    border-radius: 3px;
+    font-size: 11px;
+    background-color: #E3F2FD;
+    border: 1px solid #2196F3;
+    color: #1565C0;
+}
+
+QLabel#StatusLabel[status="completed"] {
+    background-color: #E3F2FD;
+    border: 1px solid #2196F3;
+    color: #1565C0;
+}
+
+QLabel#StatusLabel[status="waiting"] {
+    background-color: #cff4fc;
+    border: 1px solid #0dcaf0;
+    color: #055160;
+}
+
+QLabel#StatusLabel[status="failed"] {
+    background-color: #FFEBEE;
+    border: 1px solid #FF5252;
+    color: #055160;
+}
+
+QLabel#StatusLabel[status="default"] {
+    background-color: #E0E0E0;
+    border: 1px solid #9E9E9E;
+    color: #616161;
+}
