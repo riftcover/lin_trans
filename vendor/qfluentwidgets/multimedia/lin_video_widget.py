@@ -6,9 +6,9 @@ from bisect import bisect_right
 from PySide6.QtCore import Qt, QUrl, QSizeF
 from PySide6.QtGui import QPainter, QFont
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
-from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QSpacerItem, QSizePolicy, QGraphicsTextItem, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QGraphicsTextItem, QGraphicsDropShadowEffect
 
-from nice_ui.widget.subedit import SubtitleTable
+from components.widget.subedit import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
 from .media_play_bar import LinMediaPlayBar
 from nice_ui.configure import config

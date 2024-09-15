@@ -6,7 +6,6 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
-from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
@@ -17,11 +16,11 @@ from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
-from nice_ui.widget.status_labe import StatusLabel
+from components.widget.status_labe import StatusLabel
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
-                                   ToolTipPosition, ToolTipFilter, FlowLayout, PrimaryPushButton)
+                                   ToolTipPosition, ToolTipFilter)
 
 
 class ButtonType(Enum):
@@ -81,8 +80,8 @@ class TableApp(CardWidget):
         top_layout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
-        self.exportBtn = self._create_button("批量导出", FluentIcon.DOWN, self._export_batch)
-        self.deleteBtn = self._create_button("批量删除", FluentIcon.DELETE, self._delete_batch)
+        self.exportBtn = self._create_top_button("批量导出", FluentIcon.DOWN, self._export_batch)
+        self.deleteBtn = self._create_top_button("批量删除", FluentIcon.DELETE, self._delete_batch)
         self.searchInput = self._create_search_input()
 
         top_layout.addWidget(self.selectAllBtn)
@@ -95,7 +94,7 @@ class TableApp(CardWidget):
         self._setup_table(layout)
 
     @staticmethod
-    def _create_button(text, icon, callback: callable):
+    def _create_top_button(text, icon, callback: callable):
         """
         生成顶部空间中的按钮
         """
@@ -260,7 +259,7 @@ class TableApp(CardWidget):
         for button_type in button_types:
 
             if button_type == ButtonType.EXPORT:
-                button = self._create_action_button(FluentIcon.DOWN, "导出字幕", self._export_row)
+                button = self._create_action_button('D:/dcode/lin_trans/components/assets/MaterialSymbolsExportNotes.svg', "导出字幕", self._export_row)
             elif button_type == ButtonType.EDIT:
                 button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", self._edit_row)
             elif button_type == ButtonType.START:

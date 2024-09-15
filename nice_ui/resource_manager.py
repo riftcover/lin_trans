@@ -1,5 +1,5 @@
 from PySide6.QtCore import QFile, QTextStream
-from tmp import lin_resource_rc
+
 
 class StyleManager:
     """
