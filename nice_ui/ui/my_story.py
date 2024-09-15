@@ -6,10 +6,12 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
-from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
+from components import lin_resource_rc
+
+from components import LinIcon
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
@@ -17,11 +19,11 @@ from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
-from nice_ui.widget.status_labe import StatusLabel
+from components.widget.status_labe import StatusLabel
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
-                                   ToolTipPosition, ToolTipFilter, FlowLayout, PrimaryPushButton)
+                                   ToolTipPosition, ToolTipFilter)
 
 
 class ButtonType(Enum):
@@ -260,7 +262,7 @@ class TableApp(CardWidget):
         for button_type in button_types:
 
             if button_type == ButtonType.EXPORT:
-                button = self._create_action_button(FluentIcon.DOWN, "导出字幕", self._export_row)
+                button = self._create_action_button(LinIcon.EXPORT(), "导出字幕", self._export_row)
             elif button_type == ButtonType.EDIT:
                 button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", self._edit_row)
             elif button_type == ButtonType.START:

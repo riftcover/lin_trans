@@ -14,3 +14,6 @@ SUBTITLE_EDIT_DIALOG_SIZE = QSize(1300, 800)
 MAIN_WINDOW_SIZE = QSize(900, 700)
 TABLE_ROW_HEIGHT = 40
 # ...其他常量
+from components import LinIcon
+a = LinIcon.EXPORT.path()
+print(a)

@@ -1,5 +1,5 @@
 from PySide6.QtCore import QFile, QTextStream
-from tmp import lin_resource_rc
+from components import lin_resource_rc
 
 class StyleManager:
     """
@@ -35,4 +35,5 @@ class StyleManager:
     @staticmethod
     def apply_style(widget, style_name):
         style = StyleManager().get_style(style_name)
+        print(style)
         widget.setStyleSheet(style)
