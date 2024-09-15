@@ -6,6 +6,7 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, QSize, QSettings
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
@@ -16,10 +17,11 @@ from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
+from nice_ui.widget.status_labe import StatusLabel
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
-                                   ToolTipPosition, ToolTipFilter)
+                                   ToolTipPosition, ToolTipFilter, FlowLayout, PrimaryPushButton)
 
 
 class ButtonType(Enum):
@@ -225,11 +227,16 @@ class TableApp(CardWidget):
 
         # 添加文件名
         file_name = QLabel(filename)
+        config.logger.error(file_name.size())
+        font = file_name.font()
+        font_metrics = QFontMetrics(font)
+        config.logger.error(font_metrics.height())
         file_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.FILENAME, file_name)
 
         # 添加状态
-        file_status = QLabel()
+        file_status = StatusLabel("")
+        config.logger.error(file_status.size())
         file_status.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.JOB_STATUS, file_status)
 
@@ -310,12 +317,11 @@ class TableApp(CardWidget):
 
         chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
-            file_status.setText("排队中")
+            file_status.set_status("排队中")
         elif job_status == 0:
             config.logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)
-            file_status.setText("处理失败")
-            file_status.setStyleSheet("color: #FF6C64;")
+            file_status.set_status("处理失败")
             self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
 
     def table_row_working(self, unid: str, progress: float):
@@ -351,7 +357,7 @@ class TableApp(CardWidget):
             row = self.row_cache[unid]
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
-            progress_bar.setText("已完成")
+            progress_bar.set_status("已完成")
             orm_table = self._choose_sql_orm(row)
             orm_table.update_table_unid(unid, job_status=2)
 
@@ -368,7 +374,7 @@ class TableApp(CardWidget):
         self.table.insertRow(row_position)
 
         _, file_status = self._add_common_widgets(row_position, filename_without_extension, unid, 2, edit_dict)
-        file_status.setText("已完成")
+        file_status.set_status("已完成")
 
         self._set_row_buttons(row_position, [ButtonType.EXPORT, ButtonType.EDIT, ButtonType.START, ButtonType.DELETE])
 
