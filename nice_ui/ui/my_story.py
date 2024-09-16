@@ -82,8 +82,9 @@ class TableApp(CardWidget):
         top_layout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
-        self.exportBtn = self._create_button("批量导出", FluentIcon.DOWN, self._export_batch)
-        self.deleteBtn = self._create_button("批量删除", FluentIcon.DELETE, self._delete_batch)
+        self.exportBtn = self._create_button(LinIcon.EXPORT(),"批量导出", self._export_batch)
+        self.exportBtn.setIconSize(GuiSize.row_button_icon_size)
+        self.deleteBtn = self._create_button(FluentIcon.DELETE,"批量删除", self._delete_batch)
         self.searchInput = self._create_search_input()
 
         top_layout.addWidget(self.selectAllBtn)
@@ -96,14 +97,15 @@ class TableApp(CardWidget):
         self._setup_table(layout)
 
     @staticmethod
-    def _create_button(text, icon, callback: callable):
+    def _create_button(icon,tooltip: str, callback: callable):
         """
         生成顶部空间中的按钮
         """
-        button = PushButton(text)
-        button.setFixedSize(QSize(110, 30))
+        button = ToolButton(icon)
+        button.setFixedSize(GuiSize.top_button_size)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        button.setIcon(icon)
+        button.setToolTip(tooltip)
+        button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
         button.clicked.connect(callback)
         button.setVisible(False)
         return button
@@ -198,7 +200,7 @@ class TableApp(CardWidget):
                 config.logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
             self._process_item(item, srt_edit_dict)
 
-    def _create_action_button(self, icon, tooltip: str, callback: callable, size: QSize = button_size):
+    def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
         创建一个工具按钮，并设置其图标、提示和点击事件。
         参数:
@@ -212,7 +214,7 @@ class TableApp(CardWidget):
 
         """
         button = ToolButton(icon)
-        button.setFixedSize(size)
+        button.setFixedSize(GuiSize.row_button_size)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setToolTip(tooltip)
         # 设置工具提示立即显示
