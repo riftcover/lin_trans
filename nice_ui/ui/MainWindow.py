@@ -1,34 +1,19 @@
 # coding:utf-8
 import sys
 
-from PySide6.QtCore import Qt, QUrl, QSettings
+from PySide6.QtCore import QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices, QColor
-from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout
+from PySide6.QtWidgets import QApplication
 
-from nice_ui.ui import MAIN_WINDOW_SIZE
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
+from nice_ui.ui import MAIN_WINDOW_SIZE
 from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from vendor.qfluentwidgets import FluentIcon as FIF
-from vendor.qfluentwidgets import (NavigationItemPosition, MessageBox, FluentWindow, NavigationAvatarWidget, SubtitleLabel, setFont, FluentBackgroundTheme,
-                                   setThemeColor)
-
-
-class Widget(QFrame):
-
-    def __init__(self, text: str, parent=None):
-        super().__init__(parent=parent)
-        self.label = SubtitleLabel(text, self)
-        self.hBoxLayout = QHBoxLayout(self)
-
-        setFont(self.label, 24)
-        setThemeColor(QColor(0, 120, 212))  # 蓝色
-        self.label.setAlignment(Qt.AlignCenter)
-        self.hBoxLayout.addWidget(self.label, 1, Qt.AlignCenter)
-        self.setObjectName(text.replace(' ', '-'))
+from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor)
 
 
 class Window(FluentWindow):
@@ -36,12 +21,13 @@ class Window(FluentWindow):
     def __init__(self):
         super().__init__()
         self.settings = QSettings("Locoweed", "LinLInTrans")
+        # 设置主题颜色为蓝色
+        setThemeColor(QColor(0, 120, 212))  # 使用RGB值设置蓝色
         self.initWindow()
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
         self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
-        # self.edit_srt = Widget('字幕编辑', self)
         self.my_story = TableApp('我的创作', self, self.settings)
         self.settingInterface = SettingInterface('设置', self, self.settings)
 
@@ -51,10 +37,7 @@ class Window(FluentWindow):
         # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
         self.addSubInterface(self.vide2srt, FIF.VIDEO, '音视频转字幕')
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, '字幕翻译')
-        # self.addSubInterface(self.edit_srt, FIF.EDIT, '字幕编辑')
-
         self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
-
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置')
 
@@ -89,12 +72,8 @@ class Window(FluentWindow):
         if w.exec():
             QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
 
-    # 存储本地数据
-
 
 if __name__ == '__main__':
-    # setTheme(Theme.DARK)
-
     app = QApplication(sys.argv)
     w = Window()
     w.show()
