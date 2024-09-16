@@ -1,12 +1,10 @@
 import os
 import re
-import sys
 
 import path
-from PySide6.QtCore import Qt, Slot, QSettings, QSize
+from PySide6.QtCore import Qt, Slot, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QApplication, QAbstractItemView, QTableWidgetItem, QSizePolicy,
-                               QFormLayout, )
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QSizePolicy, QHeaderView, )
 
 from agent import get_translate_code
 from nice_ui.configure import config
@@ -112,15 +110,23 @@ class WorkSrt(QWidget):
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
+
+
+        self.media_table.verticalHeader().setVisible(False) # 隐藏行号
+        # 设置表头样式
+        header = self.media_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)  # 文件名列自适应宽度
+        header.setSectionResizeMode(1, QHeaderView.Fixed)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        header.setSectionResizeMode(3, QHeaderView.Fixed)
         self.media_table.setColumnWidth(0, 400)
         self.media_table.setColumnWidth(1, 100)
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
-        # self.media_table.setShowGrid(False) #隐藏网格线
         self.media_table.setColumnHidden(2, True)  # 隐藏操作列
         self.media_table.setColumnHidden(4, True)  # 隐藏操作列
-        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers) # 禁止编辑
 
         table_layout.addWidget(self.media_table)
         main_layout.addWidget(table_card)
@@ -139,11 +145,10 @@ class WorkSrt(QWidget):
     def bind_action(self):
 
         # 选择文件,并显示路径
-        self.btn_get_srt.clicked.connect(self.table.select_file)
+        self.btn_get_srt.clicked.connect(lambda:self.table.select_files(self.media_table))
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
-        # self.add_queue_btn.clicked.connect(self.add_queue_srt)
         self.start_btn.clicked.connect(self.util.check_translate)
 
     def add_queue_srt(self):
@@ -168,23 +173,24 @@ class LTableWindow:
         self.main = main
         self.settings = settings
 
-    def select_file(self):
-        file_paths = QFileDialog()
-        file_paths.setFileMode(QFileDialog.ExistingFiles)
-        file_paths.setNameFilter("Subtitle files (*.srt)")
-        # file_paths.setNameFilter("Subtitle files (*.srt *.ass *.vtt)")
+    # 列表的操作
+    @Slot()
+    def select_files(self,ui_table: QTableWidget):
+        # 选择文件
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
         file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectsrt'], config.last_opendir, "Srt files(*.srt)")
 
         if file_paths:
             for file_path in file_paths:
-                self.add_file_to_table(self.main.media_table, file_path)
-        config.last_opendir = os.path.dirname(file_paths[0])
-        self.settings.setValue("last_dir", config.last_opendir)
+                self.add_file_to_table(ui_table, file_path)
 
-    # 列表的操作
+            config.last_opendir = os.path.dirname(file_paths[0])
+            self.settings.setValue("last_dir", config.last_opendir)
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
+        config.logger.info(f'add_file_to_table: {file_path}')
         row_position = ui_table.rowCount()
         file_character_count = self.get_file_character_count(file_path)
         if file_character_count:
@@ -194,7 +200,6 @@ class LTableWindow:
             config.logger.info(f"file_name: {file_name}")
             config.logger.info(f"file_character_count: {file_character_count}")
             config.logger.info(f"file_path: {file_path}")
-            # todo: 算力消耗
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数
@@ -205,7 +210,7 @@ class LTableWindow:
             delete_button = PushButton("删除")
             delete_button.setFixedSize(QSize(80, 30))
             delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-
+            # todo 修改样式
             delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
             ui_table.setCellWidget(row_position, 3, delete_button)
             delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
@@ -269,6 +274,10 @@ class LTableWindow:
 
 
 if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings
+
     app = QApplication(sys.argv)
     window = WorkSrt("字幕翻译", setting=QSettings("Locoweed", "LinLInTrans"))
     window.show()

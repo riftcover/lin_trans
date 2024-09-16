@@ -1,17 +1,14 @@
 import os
 import subprocess
-from pathlib import Path
 
 from PySide6.QtCore import (Qt, Slot, QSize)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
-from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem,
-                               QGraphicsDropShadowEffect, QGridLayout, QHeaderView, QStyle)
+from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
+                               QStyle)
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, SwitchButton, setTheme, FluentStyleSheet, CardWidget, \
-    TableItemDelegate
-from videotrans.translator import TRANSNAMES
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
 
 
 class CustomTableItemDelegate(TableItemDelegate):
@@ -139,7 +136,8 @@ class Video2SRT(QWidget):
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(4)
         self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作'])
-        self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.media_table.verticalHeader().setVisible(False)  # 隐藏行号
 
         # 设置表头样式
         header = self.media_table.horizontalHeader()
@@ -151,6 +149,8 @@ class Video2SRT(QWidget):
         self.media_table.setColumnWidth(1, 100)  # 时长列
         self.media_table.setColumnWidth(2, 100)  # 算力消耗列
         self.media_table.setColumnWidth(3, 100)  # 操作列
+
+        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
         table_layout.addWidget(self.media_table)
         main_layout.addWidget(table_card)
@@ -164,6 +164,18 @@ class Video2SRT(QWidget):
 
         self.bind_action()
 
+    def bind_action(self):
+        self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
+        self.start_btn.clicked.connect(self.util.check_start)
+        self.act_btn_get_video()
+
+    def act_btn_get_video(self):
+        # 选择文件,并显示路径
+        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
+        self.btn_get_video.setAcceptDrops(True)
+        self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
+        self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
+
     def add_queue_mp4(self):
         # 获取self.main.media_table中第4列的数据
         srt_list = []
@@ -174,18 +186,7 @@ class Video2SRT(QWidget):
         config.queue_asr.extend(srt_list)
         config.logger.info(f'queue_srt: {config.queue_asr}')
 
-    def bind_action(self):
-        self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
-        self.start_btn.clicked.connect(self.util.check_start)
-        self.act_btn_get_video()
 
-    def act_btn_get_video(self):
-        # self.table = TableWindow(self)
-        # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
-        self.btn_get_video.setAcceptDrops(True)
-        self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
 
 
 class TableWindow:
@@ -209,35 +210,34 @@ class TableWindow:
             config.last_opendir = os.path.dirname(file_paths[0])
             self.settings.setValue("last_dir", config.last_opendir)
 
-    def add_file_to_table(self, ui_table: QTableWidget, file_path: Path):
+    def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
         config.logger.info(f'add_file_to_table: {file_path}')
         row_position = ui_table.rowCount()
+        file_duration = self.get_video_duration(file_path)  # 获取视频时长
+        if file_duration:
+            ui_table.insertRow(row_position)
+            file_name = os.path.basename(file_path)
+            # 文件名
+            ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
+            # 时长
+            ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
+            # 算力消耗
+            ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+            # 操作
+            delete_button = PushButton("删除")
+            delete_button.setFixedSize(QSize(80, 30))
+            delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+            # todo 修改样式
+            delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
+            ui_table.setCellWidget(row_position, 3, delete_button)
+            delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
 
-        ui_table.insertRow(row_position)
-        file_duration = self.get_video_duration(file_path)
-        # self.table_set_item(ui_table, row_position, file_path, file_duration, "0.00")
-        file_name = os.path.basename(file_path)
-        # 文件名
-        ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
-
-        # 时长
-        ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
-
-        # 算力消耗
-        ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
-
-        # 操作
-        delete_button = PushButton("删除")
-        delete_button.setFixedSize(QSize(80, 30))
-        delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        # todo 修改样式
-        delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
-        ui_table.setCellWidget(row_position, 3, delete_button)
-        delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
-
-        # 文件路径
-        ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
+            # 文件路径
+            ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
+        else:
+            InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
+                          duration=2000, parent=self.main)
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, row: int):
@@ -253,7 +253,7 @@ class TableWindow:
             delete_button.clicked.disconnect()
             delete_button.clicked.connect(lambda r=row:self.delete_file(ui_table, r))
 
-    def get_video_duration(self, file: Path):
+    def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
         cmd = f"ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\""
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -272,7 +272,7 @@ class TableWindow:
     def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
         # 拖出
         file_urls = event.mimeData().urls()
-        config.logger.info(f'file_urls: {file_urls}')
+        config.logger.info(f"file_urls: {file_urls}")
         if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
@@ -284,7 +284,7 @@ class TableWindow:
         ui_table.setRowCount(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QSettings
