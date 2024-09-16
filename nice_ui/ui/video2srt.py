@@ -3,13 +3,22 @@ import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import (Qt, Slot, QSize)
-from PySide6.QtGui import (QDragEnterEvent, QDropEvent)
-from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem)
+from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
+from PySide6.QtWidgets import (QFileDialog, QFormLayout, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem,
+                               QGraphicsDropShadowEffect, QGridLayout, QHeaderView, QStyle)
 
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, SwitchButton
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, SwitchButton, setTheme, FluentStyleSheet, CardWidget, \
+    TableItemDelegate
 from videotrans.translator import TRANSNAMES
+
+
+class CustomTableItemDelegate(TableItemDelegate):
+    def paint(self, painter, option, index):
+        if option.state & QStyle.State_MouseOver:
+            option.palette.setColor(QPalette.Highlight, QColor(230, 230, 230))
+        super().paint(painter, option, index)
 
 
 class Video2SRT(QWidget):
@@ -23,14 +32,16 @@ class Video2SRT(QWidget):
         self.setupUi()
 
     def setupUi(self):
-        main_layout = QVBoxLayout()
-        # main_layout.setSpacing(20)
-        # main_layout.setContentsMargins(20, 20, 20, 20)
 
-        self.btn_get_video = PushButton("导入音视频文件，自动生成字幕")
-        self.btn_get_video.setCursor(Qt.PointingHandCursor)
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 导入文件
+        self.btn_get_video = PushButton("导入音视频文件", self)
         self.btn_get_video.setIcon(FluentIcon.VIDEO)
-        self.btn_get_video.setFixedHeight(100)  # 增加按钮的高度
+        self.btn_get_video.setFixedHeight(100)
+
         main_layout.addWidget(self.btn_get_video)
 
         # 下拉框布局
@@ -121,66 +132,36 @@ class Video2SRT(QWidget):
         translate_engine_layout = QHBoxLayout()
         translate_engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        translate_model_label = BodyLabel("翻译引擎")
+        # 媒体表格卡片
+        table_card = CardWidget(self)
+        table_layout = QVBoxLayout(table_card)
 
-        self.translate_type = ComboBox()
-        # todo: 翻译引擎列表需调整
-        # 模型下拉菜单内容
-        self.translate_type.addItems(TRANSNAMES)
-        # 模型默认值
-        translate_name = config.params['translate_type'] if config.params['translate_type'] in TRANSNAMES else TRANSNAMES[0]
-        self.translate_type.setCurrentText(translate_name)
-        translate_engine_layout.addWidget(translate_model_label)
-        translate_engine_layout.addWidget(self.translate_type)
-        combo_layout.addLayout(translate_engine_layout)
-
-        media_table_layout = QVBoxLayout()
-        media_table_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        media_table_layout.setContentsMargins(60, -1, 60, -1)
         self.media_table = TableWidget(self)
-        self.media_table.setColumnCount(5)
-        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作', '文件路径'])
+        self.media_table.setColumnCount(4)
+        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作'])
+        self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        self.media_table.verticalHeader().setVisible(False)  # 隐藏行头
+        # 设置表头样式
+        header = self.media_table.horizontalHeader()
+        # 设置列宽
+        header.setSectionResizeMode(0, QHeaderView.Stretch)  # 文件名列自适应宽度
+        header.setSectionResizeMode(1, QHeaderView.Fixed)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        header.setSectionResizeMode(3, QHeaderView.Fixed)
+        self.media_table.setColumnWidth(1, 100)  # 时长列
+        self.media_table.setColumnWidth(2, 100)  # 算力消耗列
+        self.media_table.setColumnWidth(3, 100)  # 操作列
 
-        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.media_table.setColumnWidth(0, 400)
-        self.media_table.setColumnWidth(1, 100)
-        self.media_table.setColumnWidth(2, 100)
-        self.media_table.setColumnWidth(3, 100)
-        self.media_table.setColumnWidth(4, 0)
+        table_layout.addWidget(self.media_table)
+        main_layout.addWidget(table_card)
 
-        # self.media_table.setShowGrid(False) #隐藏网格线
-        self.media_table.setColumnHidden(2, True)  # 隐藏操作列
-        self.media_table.setColumnHidden(4, True)  # 隐藏操作列
-        # self.media_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # self.media_table.setObjectName(u"media_table")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.media_table.sizePolicy().hasHeightForWidth())
-        self.media_table.setSizePolicy(sizePolicy4)
-        self.media_table.setMinimumSize(QSize(0, 300))
-        media_table_layout.addWidget(self.media_table)
-        main_layout.addLayout(media_table_layout)
+        # 开始按钮
+        self.start_btn = PushButton("开始", self)
+        self.start_btn.setIcon(FluentIcon.PLAY)
+        self.start_btn.setFixedSize(200, 50)
 
-        self.formLayout_5 = QFormLayout()
-        self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
-        self.startbtn_1 = PushButton("开始")
-        self.startbtn_1.setIcon(FluentIcon.PLAY)
-        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.startbtn_1.sizePolicy().hasHeightForWidth())
-        self.startbtn_1.setSizePolicy(sizePolicy5)
-        self.startbtn_1.setMinimumSize(QSize(200, 50))
+        main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
 
-        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.startbtn_1)
-
-        main_layout.addLayout(self.formLayout_5)
-
-        self.setLayout(main_layout)
         self.bind_action()
 
     def add_queue_mp4(self):
@@ -195,7 +176,7 @@ class Video2SRT(QWidget):
 
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
-        self.startbtn_1.clicked.connect(self.util.check_start)
+        self.start_btn.clicked.connect(self.util.check_start)
         self.act_btn_get_video()
 
     def act_btn_get_video(self):
@@ -205,8 +186,6 @@ class Video2SRT(QWidget):
         self.btn_get_video.setAcceptDrops(True)
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
-
-
 
 
 class TableWindow:

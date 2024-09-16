@@ -12,7 +12,7 @@ from agent import get_translate_code
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
-from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel
+from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel, CardWidget
 
 
 class WorkSrt(QWidget):
@@ -105,9 +105,10 @@ class WorkSrt(QWidget):
         prompt_layout.addWidget(self.ai_prompt)
         main_layout.addLayout(prompt_layout)
 
-        # 表格
-        media_table_layout = QHBoxLayout()
-        media_table_layout.setContentsMargins(60, -1, 60, -1)
+        # 媒体表格卡片
+        table_card = CardWidget(self)
+        table_layout = QVBoxLayout(table_card)
+
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
         self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
@@ -120,25 +121,18 @@ class WorkSrt(QWidget):
         self.media_table.setColumnHidden(2, True)  # 隐藏操作列
         self.media_table.setColumnHidden(4, True)  # 隐藏操作列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        media_table_layout.addWidget(self.media_table)
-        main_layout.addLayout(media_table_layout)
+
+        table_layout.addWidget(self.media_table)
+        main_layout.addWidget(table_card)
 
         # 开始按钮
-        self.formLayout_5 = QFormLayout()
-        self.formLayout_5.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.formLayout_5.setContentsMargins(-1, -1, -1, 20)
-        self.start_button = PushButton("开始", self)
-        self.start_button.setIcon(FluentIcon.PLAY)
+        self.start_btn = PushButton("开始", self)
+        self.start_btn.setIcon(FluentIcon.PLAY)
+        self.start_btn.setFixedSize(200, 50)
 
-        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.start_button.sizePolicy().hasHeightForWidth())
-        self.start_button.setSizePolicy(sizePolicy5)
-        self.start_button.setMinimumSize(QSize(200, 50))
-        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.start_button)
+        main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
 
-        main_layout.addLayout(self.formLayout_5)
+        self.bind_action()
 
         # # 设置接受拖放  # self.setAcceptDrops(True) #不知道为啥不好使了
 
@@ -150,7 +144,7 @@ class WorkSrt(QWidget):
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
         # self.add_queue_btn.clicked.connect(self.add_queue_srt)
-        self.start_button.clicked.connect(self.util.check_translate)
+        self.start_btn.clicked.connect(self.util.check_translate)
 
     def add_queue_srt(self):
         # 获取self.main.media_table中第4列的数据
