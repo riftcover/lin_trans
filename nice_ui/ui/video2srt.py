@@ -27,6 +27,7 @@ class Video2SRT(QWidget):
         self.language_name = config.langnamelist
         self.setObjectName(text.replace(' ', '-'))
         self.setupUi()
+        self.bind_action()
 
     def setupUi(self):
 
@@ -149,6 +150,7 @@ class Video2SRT(QWidget):
         self.media_table.setColumnWidth(1, 100)  # 时长列
         self.media_table.setColumnWidth(2, 100)  # 算力消耗列
         self.media_table.setColumnWidth(3, 100)  # 操作列
+        self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
 
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
@@ -161,8 +163,6 @@ class Video2SRT(QWidget):
         self.start_btn.setFixedSize(200, 50)
 
         main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
-
-        self.bind_action()
 
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))

@@ -124,8 +124,8 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
-        self.media_table.setColumnHidden(2, True)  # 隐藏操作列
-        self.media_table.setColumnHidden(4, True)  # 隐藏操作列
+        self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
+        self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers) # 禁止编辑
 
         table_layout.addWidget(self.media_table)
@@ -138,17 +138,16 @@ class WorkSrt(QWidget):
 
         main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
 
-        self.bind_action()
-
-        # # 设置接受拖放  # self.setAcceptDrops(True) #不知道为啥不好使了
 
     def bind_action(self):
-
         # 选择文件,并显示路径
         self.btn_get_srt.clicked.connect(lambda:self.table.select_files(self.media_table))
+
+        # 设置拖放功能
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
         self.btn_get_srt.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
+
         self.start_btn.clicked.connect(self.util.check_translate)
 
     def add_queue_srt(self):
