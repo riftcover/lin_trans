@@ -1,6 +1,7 @@
 from PySide6.QtCore import QFile, QTextStream
 from components import lin_resource_rc
 
+
 class StyleManager:
     """
     1. lin_resource.qrc中添加相关路径
@@ -19,8 +20,7 @@ class StyleManager:
     def _load_all_styles(self):
         # 加载所有样式
         self._styles['time_edit'] = self._load_stylesheet(":/qss/themes/lin_time_edit.qss")
-        self._styles['status_label'] = self._load_stylesheet(":/qss/themes/lin_status_label.qss")
-        # 添加其他样式...
+        self._styles['status_label'] = self._load_stylesheet(":/qss/themes/lin_status_label.qss")  # 添加其他样式...
 
     def _load_stylesheet(self, resource_path):
         file = QFile(resource_path)
@@ -35,5 +35,4 @@ class StyleManager:
     @staticmethod
     def apply_style(widget, style_name):
         style = StyleManager().get_style(style_name)
-        print(style)
         widget.setStyleSheet(style)

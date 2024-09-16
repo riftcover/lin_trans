@@ -9,9 +9,8 @@ from PySide6.QtCore import Qt, QSize, QSettings
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
-from components import lin_resource_rc
 
-from components import LinIcon
+from components import LinIcon,GuiSize
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
@@ -47,7 +46,7 @@ SrtEditDictRole = Qt.UserRole + 1
 
 
 class TableApp(CardWidget):
-    button_size = QSize(32, 30)
+    button_size = GuiSize.row_button_size
 
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
@@ -263,6 +262,7 @@ class TableApp(CardWidget):
 
             if button_type == ButtonType.EXPORT:
                 button = self._create_action_button(LinIcon.EXPORT(), "导出字幕", self._export_row)
+                button.setIconSize(GuiSize.row_button_icon_size)
             elif button_type == ButtonType.EDIT:
                 button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", self._edit_row)
             elif button_type == ButtonType.START:
@@ -516,7 +516,6 @@ class TableApp(CardWidget):
 
 
 if __name__ == '__main__':
-    print("我的创作列表")
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
     ex = TableApp("我的创作列表", settings=settings)

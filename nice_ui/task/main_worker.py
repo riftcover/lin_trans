@@ -111,6 +111,3 @@ class QueueConsumer(QObject):
             work_queue.consume_queue()
         config.is_consuming = False
         self.finished.emit()
-
-if __name__ == '__main__':
-    print(111)

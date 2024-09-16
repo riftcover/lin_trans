@@ -9,6 +9,7 @@
         <file>assets/AntDesignUpSquareFilled.svg</file>
         <file>assets/TeenyiconsDownSolid.svg</file>
         <file>assets/TeenyiconsUpSolid.svg</file>
-        <file>assets/MaterialSymbolsExportNotes.svg</file>
+        <file>assets/PhExport.svg</file>
+        <file>assets/ClarityExportLine.svg</file>
     </qresource>
 </RCC>

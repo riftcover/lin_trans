@@ -305,7 +305,6 @@ class LLMConfigPage(QWidget):
     def _delete_row(self, button):
         def delete_row():
             button_row = self.prompts_table.indexAt(button.pos()).row()
-            print(f"删除第{button_row}行数据")
             key_id = self.prompts_table.item(button_row, 0).text()
             self.prompts_orm.delete_table_prompt(key_id)
             self.prompts_table.removeRow(button_row)

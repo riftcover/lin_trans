@@ -6,8 +6,7 @@ from PySide6.QtGui import QIcon
 class LinIcon(Enum):
     """ Fluent icon """
 
-    EXPORT = 'MaterialSymbolsExportNotes'
-
+    EXPORT = 'PhExport'
 
     def path(self):
         return f':/icon/assets/{self.value}.svg'

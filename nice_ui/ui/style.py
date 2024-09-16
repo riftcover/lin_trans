@@ -281,7 +281,7 @@ class SubtitleTable(QTableWidget):
             try:
                 start_time, end_time = time_range.split(' --> ')
             except ValueError:
-                print(f"Error parsing time range: {time_range}")
+                config.logger.error(f"字幕文件第{i+1}行时间范围格式错误：{time_range}")
                 i += 1
                 continue
             i += 1
