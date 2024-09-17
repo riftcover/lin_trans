@@ -7,10 +7,11 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QSizePolicy, QHeaderView, )
 
 from agent import get_translate_code
+from components.widget import DeleteButton
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
-from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel, CardWidget
+from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel, CardWidget, PrimaryPushButton
 
 
 class WorkSrt(QWidget):
@@ -32,6 +33,19 @@ class WorkSrt(QWidget):
 
         # 文件选择按钮
         self.btn_get_srt = PushButton("拖拽拖拽文件到页面，选择字幕文件")
+
+        # 样式很好看，就是button的文字有遮挡
+        # self.btn_get_srt.setStyleSheet("""
+        #     QPushButton {
+        #         background-color: #f0f0f0;
+        #         border: 2px dashed #cccccc;
+        #         border-radius: 10px;
+        #         padding: 10px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #e6e6e6;
+        #     }
+        # """)
         self.btn_get_srt.setIcon(FluentIcon.FOLDER)
         self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
@@ -206,11 +220,7 @@ class LTableWindow:
             # 算力消耗
             ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
             # 操作
-            delete_button = PushButton("删除")
-            delete_button.setFixedSize(QSize(80, 30))
-            delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-            # todo 修改样式
-            delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
+            delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
             delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
             # 文件路径
@@ -278,6 +288,6 @@ if __name__ == "__main__":
     from PySide6.QtCore import QSettings
 
     app = QApplication(sys.argv)
-    window = WorkSrt("字幕翻译", setting=QSettings("Locoweed", "LinLInTrans"))
+    window = WorkSrt("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
     window.show()
     sys.exit(app.exec())

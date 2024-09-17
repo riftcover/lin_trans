@@ -8,12 +8,12 @@ from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileD
     QSizePolicy, QTextEdit
 
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet, DeleteButton
+from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, )
-
+from components.widget import DeleteButton
 
 class LocalModelPage(QWidget):
     def __init__(self, settings, parent=None):

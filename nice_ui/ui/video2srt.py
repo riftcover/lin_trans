@@ -2,13 +2,15 @@ import os
 import subprocess
 
 from PySide6.QtCore import (Qt, Slot, QSize)
-from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
+from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette, QFontMetrics)
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
-                               QStyle)
+                               QStyle, QPushButton)
 
+from components.widget import DeleteButton
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, \
+    PrimaryPushButton
 
 
 class CustomTableItemDelegate(TableItemDelegate):
@@ -225,12 +227,7 @@ class TableWindow:
             # 算力消耗
             ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
             # 操作
-            delete_button = PushButton("删除")
-            delete_button.setFixedSize(QSize(80, 30))
-            delete_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-            # todo 修改样式
-            delete_button.setStyleSheet("background-color: #FF6C64; color: white;")
-            ui_table.setCellWidget(row_position, 3, delete_button)
+            delete_button = DeleteButton("删除")
             delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
 
             # 文件路径
