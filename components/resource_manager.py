@@ -12,6 +12,7 @@ class StyleManager:
     _styles = {}
 
     def __new__(cls):
+        # 单例模式
         if cls._instance is None:
             cls._instance = super(StyleManager, cls).__new__(cls)
             cls._instance._load_all_styles()
@@ -21,6 +22,7 @@ class StyleManager:
         # 加载所有样式
         self._styles['time_edit'] = self._load_stylesheet(":/qss/themes/lin_time_edit.qss")
         self._styles['status_label'] = self._load_stylesheet(":/qss/themes/lin_status_label.qss")  # 添加其他样式...
+        self._styles['delete_button'] = self._load_stylesheet(":/qss/themes/delete_button.qss")  # 添加其他样式...
 
     def _load_stylesheet(self, resource_path):
         file = QFile(resource_path)
@@ -36,3 +38,8 @@ class StyleManager:
     def apply_style(widget, style_name):
         style = StyleManager().get_style(style_name)
         widget.setStyleSheet(style)
+
+if __name__ == '__main__':
+    # 测试
+    style_manager = StyleManager()
+    print(style_manager.get_style('delete_button'))

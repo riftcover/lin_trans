@@ -228,6 +228,7 @@ class TableWindow:
             ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
             # 操作
             delete_button = DeleteButton("删除")
+            ui_table.setCellWidget(row_position, 3, delete_button)
             delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
 
             # 文件路径

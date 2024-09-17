@@ -1,6 +1,8 @@
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QSizePolicy
-from qfluentwidgets import PrimaryPushButton
+from vendor.qfluentwidgets import PrimaryPushButton
+
+from components.resource_manager import StyleManager
 
 
 class DeleteButton(PrimaryPushButton):
@@ -14,18 +16,11 @@ class DeleteButton(PrimaryPushButton):
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def updateStyle(self):
-        new_style = """
-        DeleteButton { 
-            background-color: #e74c3c !important;
-            border: 1px solid #e74c3c !important;
-         }
-        DeleteButton:hover { 
-            background-color: #f17a6f !important; 
-            border: 1px solid #f17a6f !important;
-        }
-        DeleteButton:pressed { 
-            background-color: #c0392b !important; 
-        }
-        """
+        # 加载原有样式
+        original_style = self.styleSheet()
+        new_style = StyleManager().get_style('delete_button')
         # 合并原有样式和新样式
-        self.setStyleSheet(self.styleSheet() + new_style)
+        self.setStyleSheet(original_style + new_style)
+
+if __name__ == '__main__':
+    a = DeleteButton()
