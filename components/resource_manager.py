@@ -1,4 +1,6 @@
-from PySide6.QtCore import QFile, QTextStream
+import os
+
+from PySide6.QtCore import QFile, QTextStream, QDir
 from components import lin_resource_rc
 
 
@@ -20,9 +22,16 @@ class StyleManager:
 
     def _load_all_styles(self):
         # 加载所有样式
-        self._styles['time_edit'] = self._load_stylesheet(":/qss/themes/lin_time_edit.qss")
-        self._styles['status_label'] = self._load_stylesheet(":/qss/themes/lin_status_label.qss")  # 添加其他样式...
-        self._styles['delete_button'] = self._load_stylesheet(":/qss/themes/delete_button.qss")  # 添加其他样式...
+        qss_dir = ":/qss/themes/"
+
+        # 获取目录中的所有文件
+        qss_path = QDir(qss_dir)
+        files = qss_path.entryList(["*.qss"], QDir.Files)
+
+        for file_name in files:
+            style_name = os.path.splitext(file_name)[0]  # 移除.qss扩展名
+            full_path = f"{qss_dir}{file_name}"
+            self._styles[style_name] = self._load_stylesheet(full_path)
 
     def _load_stylesheet(self, resource_path):
         file = QFile(resource_path)
