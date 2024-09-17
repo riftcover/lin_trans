@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
 
 from qfluentwidgets import setTheme, Theme
 
-from nice_ui.ui.style import SubtitleTable
 from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
 from nice_ui.configure import config
 

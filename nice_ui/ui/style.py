@@ -12,19 +12,6 @@ HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 
 # 这里放的是自定义样式组件
 
-class DeleteButton(PrimaryPushButton):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setFixedSize(QSize(80, 30))
-        # self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
-        self.setStyleSheet("""
-            PrimaryPushButton {
-                background-color: #FF6C64; /* 红色背景 */
-                color: white; /* 白色文字 */
-                border-radius: 5px; /* 保持圆角 */
-            }
-        """)
 
 
 class AppCard(CardWidget):

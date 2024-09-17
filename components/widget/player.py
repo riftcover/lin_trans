@@ -143,9 +143,9 @@ class VideoPlayerWidget(QWidget):
 
 
 # 使用示例
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    player = VideoPlayerWidget()
-    player.set_media_source('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4')  # 可以是视频或音频文件
-    player.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     player = VideoPlayerWidget()
+#     player.set_media_source('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4')  # 可以是视频或音频文件
+#     player.show()
+#     sys.exit(app.exec())
