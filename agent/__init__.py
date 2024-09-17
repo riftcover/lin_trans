@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-from nice_ui.configure import config
 
 
 SRT_NAME = "srt"
