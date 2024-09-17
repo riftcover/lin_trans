@@ -33,7 +33,8 @@ class StyleManager:
             full_path = f"{qss_dir}{file_name}"
             self._styles[style_name] = self._load_stylesheet(full_path)
 
-    def _load_stylesheet(self, resource_path):
+    @staticmethod
+    def _load_stylesheet(resource_path):
         file = QFile(resource_path)
         if file.open(QFile.ReadOnly | QFile.Text):
             stream = QTextStream(file)
@@ -51,4 +52,3 @@ class StyleManager:
 if __name__ == '__main__':
     # 测试
     style_manager = StyleManager()
-    print(style_manager.get_style('delete_button'))
