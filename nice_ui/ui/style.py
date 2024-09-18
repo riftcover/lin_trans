@@ -1,11 +1,11 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, QLineEdit
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
 from agent import translate_api_name
 from utils import logger
 from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, CheckBox, ToolTipFilter,
-                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
+                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel, PasswordLineEdit)
 from components.resource_manager import StyleManager
 HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 
@@ -62,16 +62,40 @@ class AppCardContainer(QWidget):
         return ll_card
 
 
-class KeyLineEdit(LineEdit):
+class KeyLineEdit(PasswordLineEdit):
     """ Key Line Edit
     用在llm配置页 创建api key 输入框
     """
 
     def __init__(self, edit_text, parent=None):
         super().__init__(parent)
+
         self.setPlaceholderText("请输入Api Key")
-        self.setClearButtonEnabled(True)
+        # self.setClearButtonEnabled(True)
         self.setText(edit_text)
+        self.setPasswordVisible(True)
+        self.setAttribute(Qt.WA_MacShowFocusRect, False)
+        self.setObjectName("KeyLineEdit")  # 设置对象名称
+        self.setStyleSheet("""
+                    KeyLineEdit {
+                        color: black !important;
+                        background-color: white !important;
+                        border: 1px solid #C0C0C0 !important;
+                        border-radius: 5px !important;
+                        padding: 2px 5px !important;
+                    }
+                    KeyLineEdit:hover {
+                        background-color: #F9F9F9 !important;
+                        border: 1px solid #C0C0C0 !important;
+                    }
+                    KeyLineEdit:focus {
+                        border: 2px solid #0078D7 !important;
+                        background-color: #F0F9FF !important;
+                    }
+                    KeyLineEdit::selection {
+                        background-color: palette(highlight) !important;
+                    }
+                """)
 
 
 class SaveButton(PrimaryPushButton):
