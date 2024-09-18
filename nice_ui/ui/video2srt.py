@@ -1,16 +1,17 @@
 import os
 import subprocess
 
-from PySide6.QtCore import (Qt, Slot, QSize, QTimer)
-from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette, QFontMetrics)
-from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
+from PySide6.QtCore import (Qt, Slot, QSize)
+from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
+from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
                                QStyle)
 
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
 from utils import logger
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
+
 
 class CustomTableItemDelegate(TableItemDelegate):
     def paint(self, painter, option, index):
@@ -116,6 +117,7 @@ class Video2SRT(QWidget):
         table_layout = QVBoxLayout(table_card)
 
         self.media_table = TableWidget(self)
+        # 设置表格表头不显示网格线
         self.media_table.setColumnCount(4)
         self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作'])
 
@@ -123,6 +125,14 @@ class Video2SRT(QWidget):
 
         # 设置表头样式
         header = self.media_table.horizontalHeader()
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: white;
+                border: none;
+                border-bottom: 1px solid #E0E0E0;
+                padding: 4px;
+            }
+        """)
         # 设置列宽
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # 文件名列自适应宽度
         header.setSectionResizeMode(1, QHeaderView.Fixed)

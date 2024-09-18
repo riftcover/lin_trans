@@ -2,17 +2,18 @@ import os
 import re
 
 import path
-from PySide6.QtCore import Qt, Slot, QSize
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QSizePolicy, QHeaderView, )
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, )
 
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
-from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel, CardWidget, PrimaryPushButton
 from utils import logger
+from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget
+
 
 class WorkSrt(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
@@ -122,6 +123,14 @@ class WorkSrt(QWidget):
         self.media_table.verticalHeader().setVisible(False) # 隐藏行号
         # 设置表头样式
         header = self.media_table.horizontalHeader()
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: white;
+                border: none;
+                border-bottom: 1px solid #E0E0E0;
+                padding: 4px;
+            }
+        """)
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # 文件名列自适应宽度
         header.setSectionResizeMode(1, QHeaderView.Fixed)
         header.setSectionResizeMode(2, QHeaderView.Fixed)

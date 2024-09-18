@@ -23,11 +23,10 @@ class Logings:
         # 判断目录是否存在，不存在则创建新的目录
         if not os.path.isdir(log_path):
             os.makedirs(log_path)
-        self.logger.configure(handlers=[{"sink":sys.stderr, "level":"TRACE"},
-            {"sink":f'{log_path}/{DATE}.log', "level":"TRACE", "rotation":"1 day", "retention":"1 day", "encoding":'utf-8', "backtrace":True, "diagnose":True,
-             "enqueue":True}])
-
-
+        self.logger.configure(handlers=[{"sink": sys.stderr, "level": "TRACE"},
+                                        {"sink": f'{log_path}/{DATE}.log', "level": "TRACE", "rotation": "1 day",
+                                         "retention": "1 day", "encoding": 'utf-8', "backtrace": True, "diagnose": True,
+                                         "enqueue": True}])
 
 
 if __name__ == '__main__':
