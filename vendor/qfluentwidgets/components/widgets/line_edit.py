@@ -384,6 +384,7 @@ class PasswordLineEdit(LineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.viewButton = LineEditButton(FIF.VIEW, self)
+        self._passwordVisible = False  # 新增状态变量
 
         self.setEchoMode(QLineEdit.Password)
         self.setContextMenuPolicy(Qt.NoContextMenu)
@@ -396,13 +397,16 @@ class PasswordLineEdit(LineEdit):
 
     def setPasswordVisible(self, isVisible: bool):
         """ set the visibility of password """
+        self._passwordVisible = isVisible
         if isVisible:
             self.setEchoMode(QLineEdit.Normal)
+            self.viewButton.setIcon(FIF.VIEW.icon())
         else:
             self.setEchoMode(QLineEdit.Password)
+            self.viewButton.setIcon(FIF.HIDE.icon())
 
     def isPasswordVisible(self):
-        return self.echoMode() == QLineEdit.Normal
+        return self._passwordVisible
 
     def setClearButtonEnabled(self, enable: bool):
         self._isClearButtonEnabled = enable
@@ -421,9 +425,7 @@ class PasswordLineEdit(LineEdit):
             return super().eventFilter(obj, e)
 
         if e.type() == QEvent.MouseButtonPress:
-            self.setPasswordVisible(True)
-        elif e.type() == QEvent.MouseButtonRelease:
-            self.setPasswordVisible(False)
+            self.setPasswordVisible(not self.isPasswordVisible())
 
         return super().eventFilter(obj, e)
 
