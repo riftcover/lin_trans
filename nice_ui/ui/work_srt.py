@@ -7,7 +7,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QSizePolicy, QHeaderView, )
 
 from agent import get_translate_code
-from components.widget import DeleteButton
+from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
@@ -63,7 +63,7 @@ class WorkSrt(QWidget):
 
         source_language_name = BodyLabel("原始语种")
 
-        self.source_language_combo = ComboBox(self)
+        self.source_language_combo = TransComboBox(self)
         self.source_language_combo.addItems(self.language_name)
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language_combo.setCurrentText(config.params['source_language'])
@@ -79,7 +79,7 @@ class WorkSrt(QWidget):
 
         translate_language_name = BodyLabel("翻译语种")
 
-        self.translate_language_combo = ComboBox(self)
+        self.translate_language_combo = TransComboBox(self)
         self.translate_language_combo.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language_combo.setCurrentText(config.params['target_language'])
@@ -94,7 +94,7 @@ class WorkSrt(QWidget):
 
         translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = ComboBox(self)
+        self.translate_model = TransComboBox(self)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
@@ -110,7 +110,7 @@ class WorkSrt(QWidget):
         prompt_layout = QHBoxLayout()
         prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         ai_prompt_name = BodyLabel("提示词")
-        self.ai_prompt = ComboBox(self)
+        self.ai_prompt = TransComboBox(self)
         self.ai_prompt.addItems(self._get_ai_prompt())
         self.ai_prompt.setCurrentText(config.params["prompt_name"])
         prompt_layout.addWidget(ai_prompt_name)

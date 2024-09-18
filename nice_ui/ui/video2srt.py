@@ -1,16 +1,15 @@
 import os
 import subprocess
 
-from PySide6.QtCore import (Qt, Slot, QSize)
+from PySide6.QtCore import (Qt, Slot, QSize, QTimer)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette, QFontMetrics)
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QSizePolicy, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
-                               QStyle, QPushButton)
+                               QStyle)
 
-from components.widget import DeleteButton
+from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, \
-    PrimaryPushButton
+from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
 
 
 class CustomTableItemDelegate(TableItemDelegate):
@@ -53,28 +52,9 @@ class Video2SRT(QWidget):
         source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         source_language_label = BodyLabel("原始语种")
-        # source_language_label.setMinimumSize(QSize(0, 35))
 
-        self.source_language = ComboBox()
-        self.source_language.setStyleSheet("""
-            QComboBox {
-                background-color: #3E3E42;
-                color: #FFFFFF;
-                border: 1px solid #555555;
-                padding: 5px;
-                border-radius: 3px;
-            }
-            QComboBox::drop-down {
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 20px;
-                border-left-width: 1px;
-                border-left-color: #555555;
-                border-left-style: solid;
-            }
-        """)
+        self.source_language = TransComboBox()
         self.source_language.addItems(config.langnamelist)
-        # self.source_language.setMinimumSize(QSize(0, 35))
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language.setCurrentText(config.params['source_language'])
         else:
@@ -91,7 +71,7 @@ class Video2SRT(QWidget):
         # 识别引擎
         recognition_label = BodyLabel("识别引擎")
 
-        self.source_model = ComboBox()
+        self.source_model = TransComboBox()
         model_type = self.settings.value('model_type', type=int)
         config.logger.info(f"获取model_type: {model_type}")
         model_list = config.model_code_list[:4]
@@ -100,12 +80,7 @@ class Video2SRT(QWidget):
         elif model_type == 2:
             model_list.extend(config.model_code_list[9:14])
         self.source_model.addItems(model_list)
-        # sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        # sizePolicy3.setHorizontalStretch(0)
-        # sizePolicy3.setVerticalStretch(0)
-        # sizePolicy3.setHeightForWidth(self.source_model.sizePolicy().hasHeightForWidth())
-        # self.source_model.setSizePolicy(sizePolicy3)
-        # self.source_model.setMinimumSize(QSize(0, 35))
+
         recognition_layout.addWidget(recognition_label)
         recognition_layout.addWidget(self.source_model)
         combo_layout.addLayout(recognition_layout)
@@ -120,7 +95,7 @@ class Video2SRT(QWidget):
         translate_language_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_language_label = BodyLabel("翻译语种")
-        self.translate_language = ComboBox()
+        self.translate_language = TransComboBox()
         self.translate_language.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language.setCurrentText(config.params['target_language'])
@@ -187,8 +162,6 @@ class Video2SRT(QWidget):
             srt_list.append(self.media_table.item(i, 4).text())
         config.queue_asr.extend(srt_list)
         config.logger.info(f'queue_srt: {config.queue_asr}')
-
-
 
 
 class TableWindow:

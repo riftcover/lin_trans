@@ -2,7 +2,7 @@
 import sys
 
 from PySide6.QtCore import QUrl, QSettings
-from PySide6.QtGui import QIcon, QDesktopServices, QColor
+from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtWidgets import QApplication
 
 from nice_ui.configure import config
@@ -22,7 +22,7 @@ class Window(FluentWindow):
         super().__init__()
         self.settings = QSettings("Locoweed", "LinLInTrans")
         # 设置主题颜色为蓝色
-        setThemeColor(QColor(0, 120, 212))  # 使用RGB值设置蓝色
+        setThemeColor(QColor("#0078d4"))  # 使用RGB值设置蓝色
         self.initWindow()
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
@@ -75,6 +75,8 @@ class Window(FluentWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    default_font = app.font()
+    print(f"Current application font: {default_font.family()}, Size: {default_font.pointSize()}")
     w = Window()
     w.show()
     app.exec()

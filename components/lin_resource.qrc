@@ -4,6 +4,7 @@
         <file>themes/lin_time_edit.qss</file>
         <file>themes/lin_status_label.qss</file>
         <file>themes/delete_button.qss</file>
+        <file>themes/combo_box.qss</file>
     </qresource>
     <qresource prefix="/icon">
         <file>assets/AntDesignDownSquareFilled.svg</file>
