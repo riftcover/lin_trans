@@ -89,7 +89,7 @@ class KeyLineEdit(PasswordLineEdit):
                         border: 1px solid #C0C0C0 !important;
                     }
                     KeyLineEdit:focus {
-                        border: 2px solid #0078D7 !important;
+                        border: 2px solid #0078d4 !important;
                         background-color: #F0F9FF !important;
                     }
                     KeyLineEdit::selection {
