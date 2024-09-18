@@ -23,24 +23,19 @@ class Logings:
         # 判断目录是否存在，不存在则创建新的目录
         if not os.path.isdir(log_path):
             os.makedirs(log_path)
-        self.logger.remove()  # 删去import logger之后自动产生的handler，不删除的话会出现重复输出的现象
-        self.logger.add(sys.stderr, level="DEBUG")  # 控制台日志级别
-        self.logger.add(f'{log_path}/{DATE}.log', encoding='utf-8', backtrace=True,  # 回溯
-            diagnose=True,  # 诊断
-            enqueue=True,  # 异步写入
-            filter="",  # 过滤器
-            level="INFO",  # 过滤级别
-            rotation="1 day"  ,# 每天轮换一次日志文件
-            retention = "1 day",  # 保留1天的日志文件
-            # rotation="5kb",  # 切割，设置文件大小，rotation="12:00"，rotation="1 week"
-            # filter="my_module"  # 过滤模块
-            # compression="zip"   # 文件压缩
-        )
+        self.logger.configure(handlers=[{"sink":sys.stderr, "level":"TRACE"},
+            {"sink":f'{log_path}/{DATE}.log', "level":"TRACE", "rotation":"1 day", "retention":"1 day", "encoding":'utf-8', "backtrace":True, "diagnose":True,
+             "enqueue":True}])
 
 
 
 
 if __name__ == '__main__':
-    logger.debug("这是一条debug日志")
-    logger.info("这是一条info日志")
-    logger.error("error{}", 233)
+    logger = Logings().logger
+    logger.trace("这是一条追踪日志")
+    logger.debug("这是一条调试日志")
+    logger.info("这是一条信息日志")
+    logger.success("这是一条成功日志")
+    logger.warning("这是一条警告日志")
+    logger.error("这是一条错误日志")
+    logger.critical("这是一条严重错误日志")
