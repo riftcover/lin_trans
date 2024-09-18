@@ -5,16 +5,17 @@ import sys
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit
+    QSizePolicy, QTextEdit, QHeaderView
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 from nice_ui.util import tools
 from orm.queries import PromptsOrm
-from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
-                                   InfoBarPosition, FluentIcon, PrimaryPushButton, )
-from components.widget import DeleteButton
 from utils import logger
+from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, )
+
+
 class LocalModelPage(QWidget):
     def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
@@ -210,69 +211,85 @@ class LLMConfigPage(QWidget):
     def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setup_ui()
         self.prompts_orm = PromptsOrm()
+        self.setup_ui()
         self._init_table()
 
     def setup_ui(self):
-        # 创建垂直布局来容纳所有组件
-        main_layout = QVBoxLayout()
-        card_api_layout = QHBoxLayout()
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 10, 20, 10)
 
-        api_key_title = SubtitleLabel("API Key")
-        main_layout.addWidget(api_key_title)
+        # API Key Section
+        api_key_card = CardWidget(self)
+        api_key_layout = QVBoxLayout(api_key_card)
+        api_key_layout.addWidget(SubtitleLabel("API Key"))
+
+        api_key_content_layout = QHBoxLayout()  # 新增：水平布局来容纳卡片和伸缩
 
         cards_layout = QVBoxLayout()
+        cards_layout.setSpacing(0)
 
-        # 创建两个 OpenAIApiKeyCard 实例
         kimi_card = LLMKeySet('kimi', 'hurl', self)
         zhipu_card = LLMKeySet('zhipu', 'zhipu', self)
         qwen_card = LLMKeySet('qwen', 'qwen', self)
 
-        # 将所有组件添加到垂直布局中
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
         cards_layout.addWidget(qwen_card)
-        # 添加一些垂直间距
-        cards_layout.addStretch(1)
 
-        # 将垂直布局添加到主布局中
-        card_api_layout.addLayout(cards_layout, 1)
+        api_key_content_layout.addLayout(cards_layout,1)
+        api_key_content_layout.addStretch(1)  # 添加水平伸缩
 
-        # 添加一个水平伸缩项，使卡片占用左半部分
-        card_api_layout.addStretch(1)
+        api_key_layout.addLayout(api_key_content_layout)
+        main_layout.addWidget(api_key_card)
 
-        main_layout.addLayout(card_api_layout)
-        prompts_layout = QHBoxLayout()
-        prompts_title = SubtitleLabel("提示词")
-        # 刷新提示词
+        # Prompts Section
+        prompts_card = CardWidget(self)
+        prompts_layout = QVBoxLayout(prompts_card)
+        prompts_layout.setSpacing(20)
 
-        refresh_btn = ToolButton("刷新")
-        refresh_btn.setIcon(FluentIcon.ROTATE)
-
+        prompts_header = QHBoxLayout()
+        prompts_header.addWidget(SubtitleLabel("提示词"))
+        refresh_btn = ToolButton(FluentIcon.ROTATE)
+        refresh_btn.setToolTip("刷新提示词")
         refresh_btn.clicked.connect(self._refresh_table_data)
-        prompts_layout.addWidget(prompts_title)
-        prompts_layout.addWidget(refresh_btn)
+        prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
+        prompts_layout.addLayout(prompts_header)
 
-        main_layout.addLayout(prompts_layout)
-        # 创建一个table
+        # 创建一个水平布局来容纳表格和左右间距
+
 
         self.prompts_table = TableWidget(self)
-        self.prompts_table.setColumnCount(5)
-        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词", "提示词", "修改", "删除"])
-        self.prompts_table.verticalHeader().setVisible(False)
-        self.prompts_table.horizontalHeader().setVisible(False)
-        self.prompts_table.setColumnWidth(0, 150)  # 设置第一列宽度
-        self.prompts_table.setColumnWidth(1, 150)  # 设置第二列宽度
-        self.prompts_table.setColumnWidth(2, 150)  # 设置第三列宽度
-        self.prompts_table.setColumnWidth(3, 100)  # 设置第四列宽度
-        self.prompts_table.setColumnWidth(4, 100)  # 设置第五列宽度
+        # 设置表格为交替行颜色
+        self.prompts_table.setAlternatingRowColors(True)
+        self.prompts_table.verticalHeader().setDefaultSectionSize(40)  # 设置默认行高为 40
+        self.prompts_table.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)  # 固定行高
 
-        # self.prompts_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)  # 设置表头的拉伸模式
-        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑状态
-        # self.prompts_table.setSelectionBehavior(self.prompts_table.SelectRows)  # 设置表格的选择行为为选择整行，用户在选择表格中的某个单元格时，整行都会被选中。
-        main_layout.addWidget(self.prompts_table)
-        self.setLayout(main_layout)
+        # 不显示表头
+        self.prompts_table.horizontalHeader().setVisible(False)
+
+        self.prompts_table.setColumnCount(4)
+        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名称", "提示词内容", "操作"])
+        self.prompts_table.verticalHeader().setVisible(False)
+        self.prompts_table.setColumnWidth(0, 50)
+        self.prompts_table.setColumnWidth(1, 150)
+        self.prompts_table.setColumnWidth(3, 70)
+        self.prompts_table.setColumnHidden(0, True)
+
+        # 让第三列（索引为2）占据剩余空间
+        self.prompts_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+
+        # 其他列保持固定宽度
+        self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
+
+        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers) # 设置表格为不可编辑
+
+
+        prompts_layout.addWidget(self.prompts_table)
+
+        main_layout.addWidget(prompts_card)
 
     def _init_table(self):
         all_prompts = self.prompts_orm.get_data_with_id_than_one()
@@ -283,18 +300,28 @@ class LLMConfigPage(QWidget):
         row = self.prompts_table.rowCount()
         self.prompts_table.insertRow(row)
         self.prompts_table.setItem(row, 0, QTableWidgetItem(str(prompt_id)))
-        self.prompts_table.setItem(row, 1, QTableWidgetItem(str(prompt_name)))
+        self.prompts_table.setCellWidget(row, 1, StrongBodyLabel(str(prompt_name)))
         self.prompts_table.setItem(row, 2, QTableWidgetItem(str(prompt_content)))
-        edit_btn = PushButton("修改")
-        edit_btn.setFixedSize(QSize(80, 30))
+
+        # 创建一个包含两个按钮的widget
+        buttons_widget = QWidget()
+        buttons_layout = QHBoxLayout(buttons_widget)
+        buttons_layout.setContentsMargins(5, 2, 5, 2)
+        buttons_layout.setSpacing(2)
+
+        edit_btn = TransparentToolButton(FluentIcon.EDIT)
+        edit_btn.setFixedSize(QSize(30, 28))
         edit_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         edit_btn.clicked.connect(self._edit_prompt(edit_btn))
-        self.prompts_table.setCellWidget(row, 3, edit_btn)
-        delete_btn = DeleteButton("删除")
-        delete_btn.setFixedSize(QSize(80, 30))
+        buttons_layout.addWidget(edit_btn)
+
+        delete_btn = TransparentToolButton(FluentIcon.DELETE)
+        delete_btn.setFixedSize(QSize(30, 28))
         delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
         delete_btn.clicked.connect(self._delete_row(delete_btn))
-        self.prompts_table.setCellWidget(row, 4, delete_btn)
+        buttons_layout.addWidget(delete_btn)
+
+        self.prompts_table.setCellWidget(row, 3, buttons_widget)
 
     def _refresh_table_data(self):
         self.prompts_table.setRowCount(0)  # 清空表格

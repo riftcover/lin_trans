@@ -5,12 +5,12 @@ import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
-from PySide6.QtCore import Qt, QSize, QSettings
+from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
-
-from components import LinIcon,GuiSize
+from components import LinIcon, GuiSize
+from components.widget import StatusLabel
 from nice_ui.configure import config
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
@@ -18,12 +18,12 @@ from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
 from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
-from components.widget import StatusLabel
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
-from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
-                                   ToolTipPosition, ToolTipFilter)
 from utils import logger
+from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
+                                   ToolTipPosition, ToolTipFilter, TransparentToolButton)
+
 
 class ButtonType(Enum):
     START = auto()
@@ -213,7 +213,7 @@ class TableApp(CardWidget):
             ToolButton 对象，该对象根据提供的参数进行了初始化。
 
         """
-        button = ToolButton(icon)
+        button = TransparentToolButton(icon)
         button.setFixedSize(GuiSize.row_button_size)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setToolTip(tooltip)
@@ -253,7 +253,7 @@ class TableApp(CardWidget):
     def _set_row_buttons(self, row, button_types):
         # 4个按钮创建并添加到表格的第4列
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(5)  # 设置按钮之间的间距
+        button_layout.setSpacing(2)  # 设置按钮之间的间距
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
