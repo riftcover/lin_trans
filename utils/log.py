@@ -37,7 +37,7 @@ class Logings:
         )
 
 
-logger = Logings().logger
+
 
 if __name__ == '__main__':
     logger.debug("这是一条debug日志")
