@@ -20,7 +20,7 @@ from nice_ui.util import tools
 from videotrans import translator
 from nice_ui.configure import config
 from nice_ui.util.tools import StartTools
-
+from utils import logger
 start_tools = StartTools()
 
 
@@ -438,15 +438,15 @@ class SecWindow:
 
         # 原始语言
         language_name = self.main.source_language.currentText()
-        config.logger.debug(f'==========language_name:{language_name}')
+        logger.debug(f'==========language_name:{language_name}')
         config.params['source_language'] = language_name
         config.params['source_language_code'] = language_code(language_name)
-        # config.logger.debug(config.params['source_language'])
+        # logger.debug(config.params['source_language'])
 
         # 语音模型
-        # config.logger.debug(self.main.source_model.currentText())
+        # logger.debug(self.main.source_model.currentText())
         config.params['source_module_status'] = start_tools.match_source_model(self.main.source_model.currentText())['status']
-        config.logger.debug(config.params['source_module_status'])
+        logger.debug(config.params['source_module_status'])
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
 
         # 综合判断
@@ -503,13 +503,13 @@ class SecWindow:
 
         save_setting(self.main.settings)
 
-        config.logger.info(f'update later config.queue_mp4:{config.queue_asr}')
+        logger.info(f'update later config.queue_mp4:{config.queue_asr}')
         config.settings = config.parse_init()
-        config.logger.debug("====config.settings====")
-        config.logger.debug(config.settings)
-        config.logger.debug("====config.params====")
-        config.logger.debug(config.params)
-        config.logger.debug("add_queue_thread")
+        logger.debug("====config.settings====")
+        logger.debug(config.settings)
+        logger.debug("====config.params====")
+        logger.debug(config.params)
+        logger.debug("add_queue_thread")
         queue_mp4_copy = copy.deepcopy(config.queue_asr)
         self.add_queue_thread(queue_mp4_copy, 'asr')
 
@@ -519,12 +519,12 @@ class SecWindow:
         self.main.add_queue_srt()
         # 原始语言
         language_name = self.main.source_language_combo.currentText()
-        config.logger.debug(f'==========language_name:{language_name}')
+        logger.debug(f'==========language_name:{language_name}')
         config.params['source_language'] = language_name
 
         #翻译语种
         translate_language_name = self.main.translate_language_combo.currentText()
-        config.logger.debug(f'==========translate_language_name:{translate_language_name}')
+        logger.debug(f'==========translate_language_name:{translate_language_name}')
         config.params['target_language'] = translate_language_name
 
         # 翻译渠道
@@ -533,7 +533,7 @@ class SecWindow:
         for key, value in translate_api_name.items():
             if value == translate_language_name:
                 translate_language_key = key
-        config.logger.debug(f'==========translate_language_name:{translate_language_key}')
+        logger.debug(f'==========translate_language_name:{translate_language_key}')
         config.params['translate_type'] = translate_language_key
 
         prompt_name = self.main.ai_prompt.currentText()
@@ -562,14 +562,14 @@ class SecWindow:
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker.error.connect(self.handle_error)
-        config.logger.debug('通知消费线程')
+        logger.debug('通知消费线程')
         self.worker.queue_ready.connect(self.start_queue_consumer)  # 连接新信号
         self.worker_thread.start()
 
     def start_queue_consumer(self):
-        config.logger.debug(f'检查config.is_consuming:{config.is_consuming}')
+        logger.debug(f'检查config.is_consuming:{config.is_consuming}')
         if not config.is_consuming:
-            config.logger.debug('开始消费队列')
+            logger.debug('开始消费队列')
             self.queue_consumer_thread = QThread()
             self.queue_consumer = QueueConsumer()
             self.queue_consumer.moveToThread(self.queue_consumer_thread)
@@ -580,10 +580,10 @@ class SecWindow:
             self.queue_consumer.error.connect(self.handle_error)
             self.queue_consumer_thread.start()
         else:
-            config.logger.debug("消费队列正在工作")
+            logger.debug("消费队列正在工作")
 
     def handle_error(self, error_msg):
-        config.logger.error(f"Error: {error_msg}")
+        logger.error(f"Error: {error_msg}")
 
     # 更新执行状态
     def update_status(self, ty: WORK_TYPE):

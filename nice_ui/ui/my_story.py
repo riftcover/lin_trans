@@ -23,7 +23,7 @@ from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from vendor.qfluentwidgets import (TableWidget, CheckBox, PushButton, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
                                    ToolTipPosition, ToolTipFilter)
-
+from utils import logger
 
 class ButtonType(Enum):
     START = auto()
@@ -176,7 +176,7 @@ class TableApp(CardWidget):
         elif work_type == 'trans':
             return self.trans_orm
         else:
-            config.logger.error(f'任务类型:{work_type}不存在')
+            logger.error(f'任务类型:{work_type}不存在')
 
     def _load_data(self, orm, st: int):
         """
@@ -197,7 +197,7 @@ class TableApp(CardWidget):
                 obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
                 srt_edit_dict = convert_video_format_info_to_srt_edit_dict(obj_data)
             except ValidationError as e:
-                config.logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
+                logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
             self._process_item(item, srt_edit_dict)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
@@ -305,20 +305,20 @@ class TableApp(CardWidget):
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
-        config.logger.info(f'table get obj_format:{obj_format}')
+        logger.info(f'table get obj_format:{obj_format}')
         if job_status == 1:
-            config.logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
+            logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
         filename = obj_format.raw_noextname
         unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
-        config.logger.info('我的创作列表中添加新行')
+        logger.info('我的创作列表中添加新行')
 
         chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
             file_status.set_status("排队中")
         elif job_status == 0:
-            config.logger.debug(f"文件:{filename} 状态更新为未开始")
+            logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)
             file_status.set_status("处理失败")
             self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
@@ -326,10 +326,10 @@ class TableApp(CardWidget):
     def table_row_working(self, unid: str, progress: float):
         ask = self.row_cache
         if unid in ask:
-            config.logger.debug(f"缓存中找到:{unid}的索引")
+            logger.debug(f"缓存中找到:{unid}的索引")
             row = self.row_cache[unid]
         else:
-            config.logger.debug(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
+            logger.debug(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
             row = self.find_row_by_identifier(unid)
             if row is not None:
                 ask[unid] = row
@@ -337,7 +337,7 @@ class TableApp(CardWidget):
                 return
 
         progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
-        config.logger.info(f"更新文件:{unid}的进度条:{progress}")
+        logger.info(f"更新文件:{unid}的进度条:{progress}")
         progress_bar.setText(f"处理中 {progress}%")
 
     def find_row_by_identifier(self, unid: str) -> Optional[int]:
@@ -346,11 +346,11 @@ class TableApp(CardWidget):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             if item and item.text() == unid:
                 return row
-        config.logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
+        logger.error(f"未找到文件:{unid}的行索引,也未缓存,直接返回")
         return None
 
     def table_row_finish(self, unid: str):
-        config.logger.info(f"文件处理完成:{unid},更新表单")
+        logger.info(f"文件处理完成:{unid},更新表单")
 
         if unid in self.row_cache:
             row = self.row_cache[unid]
@@ -363,12 +363,12 @@ class TableApp(CardWidget):
             if unid in item.text():
                 self._set_row_buttons(row, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
             else:
-                config.logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
+                logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
     def addRow_init_all(self, edit_dict: SrtEditDict):
         filename_without_extension = edit_dict.raw_noextname
         unid = edit_dict.unid
-        config.logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
+        logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
@@ -386,7 +386,7 @@ class TableApp(CardWidget):
         orm_table = self._choose_sql_orm(row)
         job_path = orm_table.query_data_by_unid(unid_item).path
         if not os.path.isfile(job_path):
-            config.logger.error(f"文件:{job_path}不存在,无法开始处理")
+            logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
         tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.lin_queue_put(job_path)
@@ -400,7 +400,7 @@ class TableApp(CardWidget):
         """
 
         text = unid_item.text()
-        config.logger.info(f"删除文件所在行:{button_row + 1} | unid:{text} ")
+        logger.info(f"删除文件所在行:{button_row + 1} | unid:{text} ")
         orm_table = self._choose_sql_orm(button_row)
         if text:
             job_obj = json.loads(orm_table.query_data_by_unid(text).obj)
@@ -408,15 +408,15 @@ class TableApp(CardWidget):
             try:
                 # 删除本地文件
                 shutil.rmtree(result_dir)
-                config.logger.info(f"删除目录:{result_dir} 成功")
+                logger.info(f"删除目录:{result_dir} 成功")
             except Exception as e:
-                config.logger.error(f"删除目录:{result_dir} 失败:{e}")
+                logger.error(f"删除目录:{result_dir} 失败:{e}")
         # 在数据库中删除对应数据
         orm_table.delete_table_unid(text)
         # 删除表格行
         self.table.removeRow(button_row)
         # 清除缓存索引
-        config.logger.info(f'row_cache before deletion :{self.row_cache}')
+        logger.info(f'row_cache before deletion :{self.row_cache}')
         self.row_cache.pop(text, None)  # 如果键不存在，返回 None 而不是引发异常
         InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                         parent=self)
@@ -434,7 +434,7 @@ class TableApp(CardWidget):
     def searchFiles(self, text: str):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
-            config.logger.info(f"item:{item.text()}")
+            logger.info(f"item:{item.text()}")
             if text.lower() in item.text().lower():
                 self.table.setRowHidden(row, False)
             else:
@@ -456,18 +456,18 @@ class TableApp(CardWidget):
         row = self._get_row()
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
-        config.logger.info(f"文件所在行:{row + 1} 文件名:{item.text()}")
+        logger.info(f"文件所在行:{row + 1} 文件名:{item.text()}")
         export_name = f"{item.text()}.srt"
         file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
         if file_path:
             orm_table = self._choose_sql_orm(row)
             unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-            config.logger.info(f"unid_item:{unid_item}")
-            config.logger.info(f"导出文件:{unid_item.text()} 成功")
+            logger.info(f"unid_item:{unid_item}")
+            logger.info(f"导出文件:{unid_item.text()} 成功")
             job_obj = json.loads(orm_table.query_data_by_unid(unid_item.text()).obj)
-            config.logger.info(f"job_obj:{job_obj}")
+            logger.info(f"job_obj:{job_obj}")
             job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
-            config.logger.info(f"导出文件:{job_path}到{file_path}")
+            logger.info(f"导出文件:{job_path}到{file_path}")
             shutil.copy(job_path, file_path)
             InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                             parent=self)

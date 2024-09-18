@@ -14,7 +14,7 @@ from orm.queries import PromptsOrm
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, )
 from components.widget import DeleteButton
-
+from utils import logger
 class LocalModelPage(QWidget):
     def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
@@ -40,7 +40,7 @@ class LocalModelPage(QWidget):
         # 模型存储路径
         path_layout = QHBoxLayout()
         path_layout.addWidget(BodyLabel("模型存储路径:"))  # Windows
-        config.logger.info(f"模型存储路径: {config.models_path}")
+        logger.info(f"模型存储路径: {config.models_path}")
 
         self.path_input = QLineEdit(str(config.models_path))
         self.path_change_btn = PushButton("更换路径")
@@ -92,13 +92,13 @@ class LocalModelPage(QWidget):
             os.startfile(path) if sys.platform == "win32" else os.system(f'open "{path}"')
 
         else:
-            config.logger.error(f"路径不存在: {path}")
+            logger.error(f"路径不存在: {path}")
 
     def change_path(self):
         # 选择路径
         if new_path := QFileDialog.getExistingDirectory(self, "选择模型存储路径"):
             self.path_input.setText(new_path)
-            # config.logger.info(f"new_path type: {type(new_path)}")
+            # logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
             self.settings.setValue("models_path", config.models_path)  # self.settings.sync()
 
@@ -149,7 +149,7 @@ class LocalModelPage(QWidget):
         设置模型类型，1为Whisper.Cpp，2为FasterWhisper
         """
         config.model_type = param
-        config.logger.info(f"设置模型类型: {config.model_type}")
+        logger.info(f"设置模型类型: {config.model_type}")
         self.settings.setValue("model_type", param)
 
 
@@ -199,8 +199,8 @@ class PopupWidget(QWidget):
     def save_prompt(self):
         # 保存提示词到数据库
         new_msg = self.label.toPlainText()
-        # config.logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
-        config.logger.info(f"修改提示词: {new_msg}")
+        # logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
+        logger.info(f"修改提示词: {new_msg}")
         self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
         self.close()
         self.parent()._refresh_table_data()
@@ -314,9 +314,9 @@ class LLMConfigPage(QWidget):
     def _edit_prompt(self, button):
         def edit_row():
             button_row = self.prompts_table.indexAt(button.pos()).row()
-            config.logger.debug(f"编辑prompt,所在行:{button_row} ")
+            logger.debug(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
-            config.logger.debug(f"编辑prompt,key_id:{key_id} ")
+            logger.debug(f"编辑prompt,key_id:{key_id} ")
             prompt_name = self.prompts_table.item(button_row, 1).text()
             prompt_content = self.prompts_table.item(button_row, 2).text()
             self.popup = PopupWidget(int(key_id), prompt_content, self)

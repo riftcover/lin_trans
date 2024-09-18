@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidg
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
 from agent import translate_api_name
-from nice_ui.configure import config
+from utils import logger
 from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, CheckBox, ToolTipFilter,
                                    ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel)
 from components.resource_manager import StyleManager
@@ -113,7 +113,7 @@ class LLMKeySet(QWidget):
 
         # 第一排布局
         key_name = translate_api_name.get(api_key)
-        config.logger.debug(f"key_name: {key_name}")
+        logger.debug(f"key_name: {key_name}")
         title_layout = QHBoxLayout()
         title_label = BodyLabel(key_name)
         tutorial_link = HyperlinkLabel("设置教程")
@@ -183,9 +183,9 @@ class LTimeEdit(QTimeEdit):
 
     def stepBy(self, steps):
         current_time: QTime = self.time()
-        # config.logger.debug(f"当前时间：{current_time}, steps:{steps}")
+        # logger.debug(f"当前时间：{current_time}, steps:{steps}")
         new_time = current_time.addMSecs(steps * 500)  # 每次调整500毫秒
-        # config.logger.debug(f"调整后的时间：{new_time}")
+        # logger.debug(f"调整后的时间：{new_time}")
         # 在时间边界时调整时间，使其不会超出范围
         if steps < 0 and new_time > current_time:
             new_time = QTime(0, 0, 0, 000)
@@ -243,7 +243,7 @@ class SubtitleTable(QTableWidget):
         # 预处理字幕数据
         self.subtitles = []
         self.process_subtitles()
-        config.logger.debug(f"字幕文件行数: {self.subtitles}")
+        logger.debug(f"字幕文件行数: {self.subtitles}")
         # 连接 itemChanged 信号到我们的处理方法
         self.itemChanged.connect(self._on_item_changed)
 
@@ -268,7 +268,7 @@ class SubtitleTable(QTableWidget):
             try:
                 start_time, end_time = time_range.split(' --> ')
             except ValueError:
-                config.logger.error(f"字幕文件第{i+1}行时间范围格式错误：{time_range}")
+                logger.error(f"字幕文件第{i+1}行时间范围格式错误：{time_range}")
                 i += 1
                 continue
             i += 1
@@ -293,17 +293,17 @@ class SubtitleTable(QTableWidget):
             # 跳过空行
             while i < len(lines) and not lines[i].strip():
                 i += 1
-        config.logger.debug(f"字幕文件行数: {len(subtitles)}")
+        logger.debug(f"字幕文件行数: {len(subtitles)}")
         return subtitles
 
     def process_subtitles(self):
         """ 预处理字幕数据 """
         self.subtitles.clear()
-        config.logger.debug("预处理字幕")
+        logger.debug("预处理字幕")
         for row in range(self.rowCount()):
             try:
                 time_widget = self.cellWidget(row, 3)
-                # config.logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
+                # logger.debug(f"视频播放器中的：rowCount:{row} time_widget:{time_widget}")
                 start_time = time_widget.findChild(LTimeEdit, "start_time")
                 end_time = time_widget.findChild(LTimeEdit, "end_time")
 
@@ -315,7 +315,7 @@ class SubtitleTable(QTableWidget):
 
                 self.subtitles.append((start_ms, end_ms, subtitle_text))
             except AttributeError as e:
-                config.logger.error(f"字幕rowCount:{row} 错误：{e}")
+                logger.error(f"字幕rowCount:{row} 错误：{e}")
 
         # 按开始时间排序
         self.subtitles.sort(key=lambda x:x[0])
@@ -460,7 +460,7 @@ class SubtitleTable(QTableWidget):
 
     def update_row_numbers(self):
         # 更新行号
-        config.logger.debug("更新行号")
+        logger.debug("更新行号")
         for row in range(self.rowCount()):
             edit_widget = self.cellWidget(row, 6)
             item = self.item(row, 1)
@@ -497,16 +497,16 @@ class SubtitleTable(QTableWidget):
         # 添加新行
         new_row_position = row + 1
         end_time_edit = self.cellWidget(row, 3).findChild(LTimeEdit, "end_time")
-        config.logger.debug(f"end_time_edit: {end_time_edit}")
+        logger.debug(f"end_time_edit: {end_time_edit}")
         if end_time_edit:
             # 获取当前行的结束时间
             current_row_end_time = end_time_edit.time()
         else:
             current_row_end_time = QTime(0, 0)
-            config.logger.error("Warning: Could not find endTime widget")
+            logger.error("Warning: Could not find endTime widget")
         # 将结束时间转换为字符串
         start_time_str = current_row_end_time.toString(HH_MM_SS_ZZZ)
-        config.logger.debug(f"start_time_str: {start_time_str}")
+        logger.debug(f"start_time_str: {start_time_str}")
 
         # 计算新的结束时间（加500毫秒）
         new_end_time = current_row_end_time.addMSecs(500)
@@ -525,7 +525,7 @@ class SubtitleTable(QTableWidget):
         """
         移动行译文到下一行
         """
-        config.logger.debug(f"移动行: {row}")
+        logger.debug(f"移动行: {row}")
         if row < self.rowCount() - 1:  # 确保不是最后一行
             # 获取当前行和下一行的第5列内容
             current_row_widget = self.cellWidget(row, 5)
@@ -541,9 +541,9 @@ class SubtitleTable(QTableWidget):
                 # 清空当前行的文本内容
                 current_row_widget.setPlainText("")
             else:
-                config.logger.error("Error: Could not find text widget in row")
+                logger.error("Error: Could not find text widget in row")
         else:
-            config.logger.warning("Warning: Cannot move row down as it is the last row")
+            logger.warning("Warning: Cannot move row down as it is the last row")
 
         self._on_item_changed()
 
@@ -551,12 +551,12 @@ class SubtitleTable(QTableWidget):
         """
         移动多行译文到下一行
         """
-        config.logger.debug("移动多行译文到下一行")
+        logger.debug("移动多行译文到下一行")
         rows = []
         for row in range(self.rowCount()):
             chk = self.cellWidget(row, 0)
             if chk and chk.isChecked():
-                config.logger.debug(f"选中行: {row}")
+                logger.debug(f"选中行: {row}")
                 rows.append(row)
         if len(rows) > 0:
             for row in reversed(rows):
@@ -582,9 +582,9 @@ class SubtitleTable(QTableWidget):
                 # 清空当前行的文本内容
                 current_row_widget.setPlainText("")
             else:
-                config.logger.error("Error: Could not find text widget in row")
+                logger.error("Error: Could not find text widget in row")
         else:
-            config.logger.warning("Warning: Cannot move row up as it is the first row")
+            logger.warning("Warning: Cannot move row up as it is the first row")
 
         self._on_item_changed()
 
@@ -592,12 +592,12 @@ class SubtitleTable(QTableWidget):
         """
         移动多行译文到上一行
         """
-        config.logger.debug("移动多行译文到上一行")
+        logger.debug("移动多行译文到上一行")
         rows = []
         for row in range(self.rowCount()):
             chk = self.cellWidget(row, 0)
             if chk and chk.isChecked():
-                config.logger.debug(f"选中行: {row}")
+                logger.debug(f"选中行: {row}")
                 rows.append(row)
         if len(rows) > 0:
             for row in rows:

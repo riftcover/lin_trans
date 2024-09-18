@@ -4,6 +4,7 @@ from typing import Optional
 from PySide6.QtCore import QObject, Signal
 
 from nice_ui.configure import config
+from utils import logger
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
@@ -28,19 +29,19 @@ class Worker(QObject):
         点击开始按钮完成后,将需处理的文件放入队列中
         """
 
-        config.logger.debug(f'do_work()线程开始工作:{self.queue_copy}')
+        logger.debug(f'do_work()线程开始工作:{self.queue_copy}')
         if work_type == 'asr':
             self.asr_work()
         elif work_type == 'trans':
             self.trans_work()
         self.queue_ready.emit()
         self.finished.emit()
-        config.logger.debug('do_work() 线程工作完成')
+        logger.debug('do_work() 线程工作完成')
 
     def asr_work(self):
         srt_orm = ToSrtOrm()
         for it in self.queue_copy:
-            config.logger.debug(f'do_work()线线程工作中,处理asr_work任务:{it}')
+            logger.debug(f'do_work()线线程工作中,处理asr_work任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it)
             obj_format.job_type = 'asr'
@@ -52,12 +53,12 @@ class Worker(QObject):
             srt_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['source_module_status'],
                                       config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format.raw_ext, 1,
                                       obj_format.model_dump_json())
-            config.logger.debug('添加视频消息完成')
+            logger.debug('添加视频消息完成')
 
     def trans_work(self):
         trans_orm = ToTranslationOrm()
         for it in self.queue_copy:
-            config.logger.debug(f'do_work()线线程工作中,处理trans_work任务:{it}')
+            logger.debug(f'do_work()线线程工作中,处理trans_work任务:{it}')
             # 格式化每个字幕信息
             obj_format = self._check_obj(it)
             obj_format.job_type = 'trans'
@@ -68,7 +69,7 @@ class Worker(QObject):
             # 添加消息到数据库
             trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
                                         config.params['translate_type'], 2, 1, obj_format.model_dump_json())
-            config.logger.debug('添加翻译消息完成')
+            logger.debug('添加翻译消息完成')
 
     def _check_obj(self, it) -> Optional[VideoFormatInfo]:
         obj_format = tools.format_video(it, config.params['target_dir'])
@@ -85,7 +86,7 @@ class Worker(QObject):
             set_process(config.transobj['teshufuhao'] + "\n\n" + it, 'alert')
             self.stop()
             return
-        config.logger.debug(f'obj_format:{obj_format}')
+        logger.debug(f'obj_format:{obj_format}')
         return obj_format
 
     def stop(self):
@@ -104,10 +105,10 @@ class QueueConsumer(QObject):
 
     def process_queue(self):
         # todo: 添加文件开始后立即点击我的创作页,线程不工作
-        config.logger.debug('通知消费线程')
+        logger.debug('通知消费线程')
         config.is_consuming = True
         while not config.lin_queue.empty():
-            config.logger.debug('消费线程开始准备')
+            logger.debug('消费线程开始准备')
             work_queue.consume_queue()
         config.is_consuming = False
         self.finished.emit()

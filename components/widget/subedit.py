@@ -5,7 +5,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout, QCheckBox, \
     QAbstractItemDelegate
 
-from nice_ui.configure import config
+from utils import logger
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
 from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
 
@@ -193,13 +193,13 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             times = index.data(Qt.UserRole)
             editor.findChild(LTimeEdit, "start_time")
-            # config.logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
+            # logger.debug(f"setEditorData: start_time: {start_time}, times: {times}")
             editor.findChild(LTimeEdit, "start_time").initTime(times[0])
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
             editor.setText(index.data(Qt.EditRole))
-            # config.logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            # logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -221,7 +221,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 时间
             start_time = editor.findChild(LTimeEdit, "start_time").time().toString()
             end_time = editor.findChild(LTimeEdit, "end_time").time().toString()
-            config.logger.debug(f"setModelData:start_time: {start_time}, end_time: {end_time}")
+            logger.debug(f"setModelData:start_time: {start_time}, end_time: {end_time}")
             model.setData(index, f"{start_time} - {end_time}", Qt.UserRole)
         elif index.column() in (4, 5):
             # 原文和译文
@@ -270,7 +270,7 @@ class SubtitleModel(QAbstractTableModel):
             try:
                 start_time, end_time = time_range.split(' --> ')
             except ValueError:
-                config.logger.error(f"Error parsing time range: {time_range}")
+                logger.error(f"Error parsing time range: {time_range}")
                 i += 1
                 continue
             i += 1
@@ -295,7 +295,7 @@ class SubtitleModel(QAbstractTableModel):
             # 跳过空行
             while i < len(lines) and not lines[i].strip():
                 i += 1
-        config.logger.debug(f"字幕文件行数: {len(subtitles)}")
+        logger.debug(f"字幕文件行数: {len(subtitles)}")
         return subtitles
 
     def rowCount(self, parent=QModelIndex()) -> int:
@@ -342,13 +342,13 @@ class SubtitleModel(QAbstractTableModel):
 
         row = index.row()
         col = index.column()
-        # config.logger.debug(f"setData: {row}, {col}")
+        # logger.debug(f"setData: {row}, {col}")
         if role == Qt.CheckStateRole and col == 0:
             if value == Qt.Checked:
-                # config.logger.debug(f"setData: 勾选行: {row}")
+                # logger.debug(f"setData: 勾选行: {row}")
                 self.checked_rows.add(row)
             else:
-                # config.logger.debug(f"setData: 取消勾选行: {row}")
+                # logger.debug(f"setData: 取消勾选行: {row}")
                 self.checked_rows.discard(row)
             self.dataChanged.emit(index, index, [role])
             return True
@@ -368,7 +368,7 @@ class SubtitleModel(QAbstractTableModel):
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
  
-        # config.logger.debug(f"setData 触发信号 dataChanged: {index}")
+        # logger.debug(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
 
@@ -379,7 +379,7 @@ class SubtitleModel(QAbstractTableModel):
 
     def removeRow(self, row, parent=QModelIndex()) -> bool:
         # 删除指定行
-        config.logger.debug(f"SubtitleModel.removeRow: 删除行: {row}")
+        logger.debug(f"SubtitleModel.removeRow: 删除行: {row}")
         if 0 <= row < self.rowCount():
             self.beginRemoveRows(parent, row, row)
             del self._data[row]
@@ -564,7 +564,7 @@ class SubtitleTable(QTableView):
 
     def on_scroll(self) -> None:
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
-        # config.logger.debug("Scroll event")
+        # logger.debug("Scroll event")
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
@@ -572,7 +572,7 @@ class SubtitleTable(QTableView):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        # config.logger.debug("Resize event")
+        # logger.debug("Resize event")
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
@@ -586,15 +586,15 @@ class SubtitleTable(QTableView):
         # 调用将屏幕坐标转换为表格的行和列索引
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
-        # config.logger.debug(f"Visible rect: {visible_rect}")
-        # config.logger.debug(f"Top left index: {top_left.row()}")
-        # config.logger.debug(f"Bottom right index: {bottom_right.row()}")
+        # logger.debug(f"Visible rect: {visible_rect}")
+        # logger.debug(f"Top left index: {top_left.row()}")
+        # logger.debug(f"Bottom right index: {bottom_right.row()}")
 
         # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = max(0, top_left.row())
         end_row = 0
         if not bottom_right.isValid():
-            config.logger.warning("end_row use self.model.rowCount()")
+            logger.warning("end_row use self.model.rowCount()")
             # 如果 bottom_right 无效，我们可以估算可见的行数
             visible_height = visible_rect.height()
             row_height = self.rowHeight(0)  # 假设所有行高相同
@@ -603,7 +603,7 @@ class SubtitleTable(QTableView):
         else:
             end_row = bottom_right.row()
 
-        # config.logger.debug(f"Creating editors for rows {start_row} to {end_row}")
+        # logger.debug(f"Creating editors for rows {start_row} to {end_row}")
 
         for row in range(start_row, end_row + 1):
             for col in range(self.model.columnCount()):
@@ -623,7 +623,7 @@ class SubtitleTable(QTableView):
         bottom_right = self.indexAt(visible_rect.bottomRight())
 
         if not top_left.isValid() or not bottom_right.isValid():
-            config.logger.warning("Invalid index range")
+            logger.warning("Invalid index range")
             return
 
         visible_range = set((row, col) for row in range(top_left.row(), bottom_right.row() + 1) for col in range(self.model.columnCount()))
@@ -632,7 +632,7 @@ class SubtitleTable(QTableView):
         for row, col in to_remove:
             index = self.model.index(row, col)
             self.closePersistentEditor(index)
-            config.logger.debug(f"Removed editor for ({row}, {col})")
+            logger.debug(f"Removed editor for ({row}, {col})")
 
     def on_editor_created(self, row: int, col: int) -> None:
         self.visible_editors.add((row, col))
@@ -652,7 +652,7 @@ class SubtitleTable(QTableView):
         for row in range(top_left.row(), bottom_right.row() + 1):
             for col in range(self.model.columnCount()):
                 if (row, col) not in self.visible_editors:
-                    config.logger.warning(f"Editor missing for visible cell ({row}, {col})")
+                    logger.warning(f"Editor missing for visible cell ({row}, {col})")
                     self.openPersistentEditor(self.model.index(row, col))
 
     def showEvent(self, event) -> None:
@@ -679,7 +679,7 @@ class SubtitleTable(QTableView):
         r_list = set()
         for r, c in self.visible_editors:
             r_list.add(r)
-        # config.logger.info(f"read_visible_editors: {r_list}")
+        # logger.info(f"read_visible_editors: {r_list}")
         return r_list
 
     def delete_row(self) -> None:
@@ -696,7 +696,7 @@ class SubtitleTable(QTableView):
         self.visible_editors = new_visible_editors
         # 此时visible_editors移除了删除行对应的坐标，但是重新创建编辑器时还是会正确的被创建，没有出现串行，漏行。看不懂？？
         self.read_visible_editors()
-        config.logger.info(f"Delete row called for row: {row}")  # 新增调试信息
+        logger.info(f"Delete row called for row: {row}")  # 新增调试信息
 
         self.model.removeRow(row)
         # 删除后更新可见的编辑器
@@ -743,7 +743,7 @@ class SubtitleTable(QTableView):
         self.model.move_edit_down(row)
 
     def move_row_down_more(self):
-        config.logger.debug(f"move_row_down_more {self.model.checked_rows}")
+        logger.debug(f"move_row_down_more {self.model.checked_rows}")
         # Iterate over checked rows in reverse order
         for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_down(row)
@@ -754,7 +754,7 @@ class SubtitleTable(QTableView):
         self.model.move_edit_up(row)
 
     def move_row_up_more(self):
-        config.logger.debug(f"move_row_up_more {self.model.checked_rows}")
+        logger.debug(f"move_row_up_more {self.model.checked_rows}")
         for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_up(row)
 

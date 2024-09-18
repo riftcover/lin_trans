@@ -12,7 +12,7 @@ from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
 from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, ComboBox, BodyLabel, CardWidget, PrimaryPushButton
-
+from utils import logger
 
 class WorkSrt(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
@@ -31,21 +31,10 @@ class WorkSrt(QWidget):
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
-        # 文件选择按钮
-        self.btn_get_srt = PushButton("拖拽拖拽文件到页面，选择字幕文件")
 
-        # 样式很好看，就是button的文字有遮挡
-        # self.btn_get_srt.setStyleSheet("""
-        #     QPushButton {
-        #         background-color: #f0f0f0;
-        #         border: 2px dashed #cccccc;
-        #         border-radius: 10px;
-        #         padding: 10px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #e6e6e6;
-        #     }
-        # """)
+        # 文件选择按钮
+        self.btn_get_srt = PushButton("选择字幕文件或拖放至此")
+
         self.btn_get_srt.setIcon(FluentIcon.FOLDER)
         self.btn_get_srt.setFixedHeight(100)  # 增加按钮的高度
         main_layout.addWidget(self.btn_get_srt)
@@ -64,6 +53,7 @@ class WorkSrt(QWidget):
         source_language_name = BodyLabel("原始语种")
 
         self.source_language_combo = TransComboBox(self)
+        self.source_language_combo.setFixedWidth(98)
         self.source_language_combo.addItems(self.language_name)
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language_combo.setCurrentText(config.params['source_language'])
@@ -80,6 +70,7 @@ class WorkSrt(QWidget):
         translate_language_name = BodyLabel("翻译语种")
 
         self.translate_language_combo = TransComboBox(self)
+        self.translate_language_combo.setFixedWidth(117)
         self.translate_language_combo.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language_combo.setCurrentText(config.params['target_language'])
@@ -95,11 +86,12 @@ class WorkSrt(QWidget):
         translate_model_name = BodyLabel("翻译引擎")
 
         self.translate_model = TransComboBox(self)
+        self.translate_model.setFixedWidth(117)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
         translate_name = config.params["translate_type"]
-        config.logger.info(f"translate_name: {translate_name}")
+        logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
         engine_layout.addWidget(translate_model_name)
@@ -111,6 +103,7 @@ class WorkSrt(QWidget):
         prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         ai_prompt_name = BodyLabel("提示词")
         self.ai_prompt = TransComboBox(self)
+        self.ai_prompt.setFixedWidth(98)
         self.ai_prompt.addItems(self._get_ai_prompt())
         self.ai_prompt.setCurrentText(config.params["prompt_name"])
         prompt_layout.addWidget(ai_prompt_name)
@@ -170,7 +163,7 @@ class WorkSrt(QWidget):
         for i in range(self.media_table.rowCount()):
             srt_list.append(self.media_table.item(i, 4).text())
         config.queue_trans.extend(srt_list)
-        config.logger.info(f"queue_srt: {config.queue_trans}")
+        logger.info(f"queue_srt: {config.queue_trans}")
 
     def _get_ai_prompt(self) -> list:
         # 获取AI提示列表
@@ -203,16 +196,16 @@ class LTableWindow:
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
-        config.logger.info(f'add_file_to_table: {file_path}')
+        logger.info(f'add_file_to_table: {file_path}')
         row_position = ui_table.rowCount()
         file_character_count = self.get_file_character_count(file_path)
         if file_character_count:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
-            config.logger.info(f"file_name type: {type(file_name)}")
-            config.logger.info(f"file_name: {file_name}")
-            config.logger.info(f"file_character_count: {file_character_count}")
-            config.logger.info(f"file_path: {file_path}")
+            logger.info(f"file_name type: {type(file_name)}")
+            logger.info(f"file_name: {file_name}")
+            logger.info(f"file_character_count: {file_character_count}")
+            logger.info(f"file_path: {file_path}")
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数
@@ -237,7 +230,7 @@ class LTableWindow:
             try:
                 lines = f.readlines()
             except UnicodeDecodeError:
-                config.logger.error(f"文件{file_path}编码错误，请检查文件编码格式")
+                logger.error(f"文件{file_path}编码错误，请检查文件编码格式")
                 return False
             for line in lines:
                 # 跳过序号和时间戳
@@ -270,7 +263,7 @@ class LTableWindow:
     def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
         # 拖出
         file_urls = event.mimeData().urls()
-        config.logger.info(f"file_urls: {file_urls}")
+        logger.info(f"file_urls: {file_urls}")
         if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()

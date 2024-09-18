@@ -10,7 +10,7 @@ from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, ComboBox, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
-
+from utils import logger
 
 class CustomTableItemDelegate(TableItemDelegate):
     def paint(self, painter, option, index):
@@ -37,7 +37,7 @@ class Video2SRT(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
 
         # 导入文件
-        self.btn_get_video = PushButton("导入音视频文件", self)
+        self.btn_get_video = PushButton("选择音视频文件或拖放至此", self)
         self.btn_get_video.setIcon(FluentIcon.VIDEO)
         self.btn_get_video.setFixedHeight(100)
 
@@ -54,6 +54,8 @@ class Video2SRT(QWidget):
         source_language_label = BodyLabel("原始语种")
 
         self.source_language = TransComboBox()
+        # 设置self.source_language宽度
+        self.source_language.setFixedWidth(98)
         self.source_language.addItems(config.langnamelist)
         if config.params['source_language'] and config.params['source_language'] in self.language_name:
             self.source_language.setCurrentText(config.params['source_language'])
@@ -72,8 +74,9 @@ class Video2SRT(QWidget):
         recognition_label = BodyLabel("识别引擎")
 
         self.source_model = TransComboBox()
+        self.source_model.setFixedWidth(131)
         model_type = self.settings.value('model_type', type=int)
-        config.logger.info(f"获取model_type: {model_type}")
+        logger.info(f"获取model_type: {model_type}")
         model_list = config.model_code_list[:4]
         if model_type == 1:
             model_list.extend(config.model_code_list[4:9])
@@ -96,6 +99,7 @@ class Video2SRT(QWidget):
 
         translate_language_label = BodyLabel("翻译语种")
         self.translate_language = TransComboBox()
+        self.translate_language.setFixedWidth(98)
         self.translate_language.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
             self.translate_language.setCurrentText(config.params['target_language'])
@@ -158,10 +162,10 @@ class Video2SRT(QWidget):
         srt_list = []
         for i in range(self.media_table.rowCount()):
             # 获取self.media_table第i行第4列的数据
-            config.logger.info(self.media_table.item(i, 4).text())
+            logger.info(self.media_table.item(i, 4).text())
             srt_list.append(self.media_table.item(i, 4).text())
         config.queue_asr.extend(srt_list)
-        config.logger.info(f'queue_srt: {config.queue_asr}')
+        logger.info(f'queue_srt: {config.queue_asr}')
 
 
 class TableWindow:
@@ -187,7 +191,7 @@ class TableWindow:
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
-        config.logger.info(f'add_file_to_table: {file_path}')
+        logger.info(f'add_file_to_table: {file_path}')
         row_position = ui_table.rowCount()
         file_duration = self.get_video_duration(file_path)  # 获取视频时长
         if file_duration:
@@ -243,7 +247,7 @@ class TableWindow:
     def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
         # 拖出
         file_urls = event.mimeData().urls()
-        config.logger.info(f"file_urls: {file_urls}")
+        logger.info(f"file_urls: {file_urls}")
         if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
