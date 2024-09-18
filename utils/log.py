@@ -30,7 +30,8 @@ class Logings:
             enqueue=True,  # 异步写入
             filter="",  # 过滤器
             level="INFO",  # 过滤级别
-            rotation="1 day"  # 设置历史保留时长
+            rotation="1 day"  ,# 每天轮换一次日志文件
+            retention = "1 day",  # 保留1天的日志文件
             # rotation="5kb",  # 切割，设置文件大小，rotation="12:00"，rotation="1 week"
             # filter="my_module"  # 过滤模块
             # compression="zip"   # 文件压缩
