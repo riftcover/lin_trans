@@ -2,10 +2,12 @@ import os
 import re
 import sys
 
+import requests
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
-from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
+from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit, QHeaderView
+    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton
+from requests import RequestException
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
@@ -13,7 +15,7 @@ from nice_ui.util import tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
-                                   InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, )
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, )
 
 
 class LocalModelPage(QWidget):
@@ -238,7 +240,7 @@ class LLMConfigPage(QWidget):
         cards_layout.addWidget(zhipu_card)
         cards_layout.addWidget(qwen_card)
 
-        api_key_content_layout.addLayout(cards_layout,1)
+        api_key_content_layout.addLayout(cards_layout, 1)
         api_key_content_layout.addStretch(1)  # 添加水平伸缩
 
         api_key_layout.addLayout(api_key_content_layout)
@@ -258,7 +260,6 @@ class LLMConfigPage(QWidget):
         prompts_layout.addLayout(prompts_header)
 
         # 创建一个水平布局来容纳表格和左右间距
-
 
         self.prompts_table = TableWidget(self)
         # 设置表格为交替行颜色
@@ -284,8 +285,7 @@ class LLMConfigPage(QWidget):
         self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
         self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
 
-        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers) # 设置表格为不可编辑
-
+        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑
 
         prompts_layout.addWidget(self.prompts_table)
 
@@ -383,29 +383,111 @@ class TranslationPage(QWidget):
         self.setLayout(main_layout)
 
 
+class ProxyTestWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+        self.network_manager = QNetworkAccessManager(self)
+        self.network_manager.finished.connect(self.handle_response)
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        self.test_button = QPushButton("测试代理", self)
+        self.test_button.clicked.connect(self.test_proxy)
+        self.response_text = QTextEdit(self)
+        self.response_text.setReadOnly(True)
+
+        layout.addWidget(self.test_button)
+        layout.addWidget(self.response_text)
+
+    def test_proxy(self):
+        url = QUrl("http://www.google.com")
+        request = QNetworkRequest(url)
+        self.network_manager.get(request)
+
+    def handle_response(self, reply):
+        if reply.error() == QNetworkReply.NoError:
+            content = reply.readAll()
+            self.response_text.setPlainText(str(content, encoding='utf-8'))
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+        else:
+            error_msg = reply.errorString()
+            self.response_text.setPlainText(f"错误: {error_msg}")
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {error_msg}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+
+        reply.deleteLater()
+
 class ProxyPage(QWidget):
     def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
         self.settings = setting
         self.setup_ui()
+        self.load_settings()  # 在初始化时加载设置
 
     def setup_ui(self):
-        # 添加代理设置
         layout = QVBoxLayout()
 
         # 创建单选框
         self.no_proxy_radio = RadioButton("无代理")
-        self.use_proxy_radio = RadioButton("使用代理")
+        self.use_proxy_radio = RadioButton("手动代理配置")
 
         radio_layout = QHBoxLayout()
+        self.proxy_radio_group = QButtonGroup(radio_layout)
+        self.proxy_radio_group.addButton(self.no_proxy_radio)
+        self.proxy_radio_group.addButton(self.use_proxy_radio)
         radio_layout.addWidget(self.no_proxy_radio)
         radio_layout.addWidget(self.use_proxy_radio)
+        radio_layout.addStretch(1)
         layout.addLayout(radio_layout)
 
-        # 创建代理输入框
-        self.proxy_input = LineEdit()
-        self.proxy_input.setPlaceholderText("输入代理地址 (例如: http://127.0.0.1:8080)")
-        layout.addWidget(self.proxy_input)
+        # 创建代理类型选择
+        self.http_radio = RadioButton("HTTP")
+        self.socks5_radio = RadioButton("SOCKS5")
+
+        proxy_type_layout = QHBoxLayout()
+        self.proxy_type_group = QButtonGroup(proxy_type_layout)
+        self.proxy_type_group.addButton(self.http_radio)
+        self.proxy_type_group.addButton(self.socks5_radio)
+        proxy_type_layout.addSpacing(20)
+        proxy_type_layout.addWidget(self.http_radio)
+        proxy_type_layout.addWidget(self.socks5_radio)
+        proxy_type_layout.addStretch(1)
+        layout.addLayout(proxy_type_layout)
+
+        # 主机名输入框
+        host_layout = QHBoxLayout()
+        host_label = BodyLabel("主机名(H):")
+        self.host_input = LineEdit()
+        self.host_input.setPlaceholderText("127.0.0.1")
+        host_layout.addWidget(host_label)
+        host_layout.addWidget(self.host_input)
+        layout.addLayout(host_layout)
+
+        # 端口号输入框
+        port_layout = QHBoxLayout()
+        port_label = BodyLabel("端口号(N):")
+        self.port_input = SpinBox()
+        self.port_input.setRange(0, 65535)
+        self.port_input.setValue(7890)
+        port_layout.addWidget(port_label)
+        port_layout.addWidget(self.port_input)
+        layout.addLayout(port_layout)
 
         # 创建应用代理按钮
         self.apply_button = PushButton("保存")
@@ -415,120 +497,196 @@ class ProxyPage(QWidget):
         # 创建显示当前代理设置按钮
         self.show_settings_button = PushButton("显示当前代理设置")
         self.show_settings_button.clicked.connect(self.show_current_settings)
-        # layout.addWidget(self.show_settings_button)
+        layout.addWidget(self.show_settings_button)
 
         # 添加测试按钮
         self.test_button = PushButton("测试代理")
         self.test_button.clicked.connect(self.test_proxy)
-        # layout.addWidget(self.test_button)
+        layout.addWidget(self.test_button)
+
+        self.proxy_test_widget = ProxyTestWidget(self)
+        layout.addWidget(self.proxy_test_widget)
 
         self.setLayout(layout)
 
-        # 加载保存的设置
-        self.load_settings()
-
         # 连接单选框信号
-        self.no_proxy_radio.toggled.connect(self.toggle_proxy_input)
-        self.use_proxy_radio.toggled.connect(self.toggle_proxy_input)
+        self.proxy_radio_group.buttonClicked.connect(self.toggle_proxy_input)
+        self.proxy_type_group.buttonClicked.connect(self.on_proxy_type_changed)
 
     def load_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
-        proxy = self.settings.value("proxy", "", type=str)  # 实际使用的
-        proxy_text = self.settings.value("proxy_text", "", type=str)  # 仅做文本显示
+        proxy_type = self.settings.value("proxy_type", "http", type=str)
+        host = self.settings.value("proxy_host", "", type=str)
+        port = self.settings.value("proxy_port", 7890, type=int)
 
         if use_proxy:
             self.use_proxy_radio.setChecked(True)
         else:
             self.no_proxy_radio.setChecked(True)
 
-        self.proxy_input.setText(proxy_text)
+        if proxy_type.lower() == "http":
+            self.http_radio.setChecked(True)
+        else:
+            self.socks5_radio.setChecked(True)
+
+        self.host_input.setText(host)
+        self.port_input.setValue(port)
         self.toggle_proxy_input()
 
     def toggle_proxy_input(self):
-        self.proxy_input.setEnabled(self.use_proxy_radio.isChecked())
+        enabled = self.use_proxy_radio.isChecked()
+        self.http_radio.setEnabled(enabled)
+        self.socks5_radio.setEnabled(enabled)
+        self.host_input.setEnabled(enabled)
+        self.port_input.setEnabled(enabled)
+
+    def on_proxy_type_changed(self):
+        # 确保在选择 HTTP 或 SOCKS 时，"手动代理配置"被选中
+        self.use_proxy_radio.setChecked(True)
+        self.toggle_proxy_input()
+
+        proxy_type = "http" if self.http_radio.isChecked() else "socks5"
+        self.settings.setValue("proxy_type", proxy_type)
 
     def apply_proxy(self):
         use_proxy = self.use_proxy_radio.isChecked()
+        proxy_type = "http" if self.http_radio.isChecked() else "socks5"
+        host = self.host_input.text()
+        port = self.port_input.value()
 
         if use_proxy:
-            proxy = self.proxy_input.text()
-            if not re.match(r'^(http|sock)', proxy, re.I):
-                proxy = f'http://{proxy}'
-            if not re.match(r'^(http|sock)(s|5)?://(\d+\.){3}\d+:\d+', proxy, re.I):
-                question = tools.show_popup('请确认代理地址是否正确？' if config.defaulelang == 'zh' else 'Please make sure the proxy address is correct', """你填写的网络代理地址似乎不正确
-                       一般代理/vpn格式为 http://127.0.0.1:数字端口号
-                       如果不知道什么是代理请勿随意填写
-                       如果确认代理地址无误，请点击 Yes 继续执行""" if config.defaulelang == 'zh' else 'The network proxy address you fill in seems to be incorrect, the general proxy/vpn format is http://127.0.0.1:port, if you do not know what is the proxy please do not fill in arbitrarily, ChatGPT and other api address please fill in the menu - settings - corresponding configuration. If you confirm that the proxy address is correct, please click Yes to continue.')
-
-            if not proxy:
-                InfoBar.warning(title="警告", content="请输入有效的代理地址", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
-                                duration=2000, parent=self, )
+            if not host or port == 0:
+                InfoBar.warning(
+                    title="警告",
+                    content="请输入有效的主机名和端口号",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
                 return
-            self.settings.setValue("use_proxy", use_proxy)
-            self.settings.setValue("proxy", proxy)
-            self.settings.setValue("proxy_text", proxy)
-        else:
-            proxy = ""
-            self.settings.setValue("use_proxy", use_proxy)
-            self.settings.setValue("proxy", proxy)
-        # 保存设置
 
-        # 应用代理设置到应用程序
-        try:
-            if use_proxy:
-                # 解析代理地址
-                protocol, address = proxy.split("://")
-                host, port = address.split(":")
-                port = int(port)
+            proxy = f"{proxy_type}://{host}:{port}"
+            self.settings.setValue("use_proxy", use_proxy)
+            self.settings.setValue("proxy_type", proxy_type)
+            self.settings.setValue("proxy_host", host)
+            self.settings.setValue("proxy_port", port)
+            self.settings.setValue("proxy", proxy)
 
-                # 设置全局代理
+            try:
                 proxy_obj = QNetworkProxy()
-                if protocol.lower() == "http":
+                if proxy_type.lower() == "http":
                     proxy_obj.setType(QNetworkProxy.HttpProxy)
-                elif protocol.lower() == "socks5":
-                    proxy_obj.setType(QNetworkProxy.Socks5Proxy)
                 else:
-                    raise ValueError("Unsupported proxy protocol")
+                    proxy_obj.setType(QNetworkProxy.Socks5Proxy)
 
                 proxy_obj.setHostName(host)
                 proxy_obj.setPort(port)
                 QNetworkProxy.setApplicationProxy(proxy_obj)
-            else:
-                # 这里添加取消代理的代码
-                QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
+                logger.info(f"设置代理: {proxy_obj}")
+            except Exception as e:
+                InfoBar.error(
+                    title="错误",
+                    content=f"设置代理时出错: {str(e)}",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
+                return
+        else:
+            self.settings.setValue("use_proxy", False)
+            self.settings.setValue("proxy", "")
+            QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
+            logger.info("禁用代理")
 
-            InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                            parent=self, )
-        except Exception as e:
-            InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                          parent=self, )
+        InfoBar.success(
+            title="成功",
+            content="代理设置已保存",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self,
+        )
+
+    def test_proxy(self):
+        try:
+            response = requests.get("http://www.google.com", timeout=10)
+            response.raise_for_status()
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {response.status_code}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+        except RequestException as e:
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {str(e)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
 
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
-        proxy = self.settings.value("proxy", "", type=str)
+        proxy_type = self.settings.value("proxy_type", "http", type=str)
+        host = self.settings.value("proxy_host", "", type=str)
+        port = self.settings.value("proxy_port", 7890, type=int)
 
         if use_proxy:
-            message = f"当前使用代理: {proxy}"
+            message = f"当前使用代理: {proxy_type}://{host}:{port}"
         else:
             message = "当前未使用代理"
 
-        InfoBar.info(title="当前代理设置", content=message, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+        InfoBar.info(
+            title="当前代理设置",
+            content=message,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
+
 
     def test_proxy(self):
-        manager = QNetworkAccessManager(self)
-        manager.finished.connect(self.handle_response)
+        self.network_manager = QNetworkAccessManager(self)
+        self.network_manager.finished.connect(self.handle_response)
 
-        request = QNetworkRequest(QUrl("https://www.google.com/"))
-        manager.get(request)
+        request = QNetworkRequest(QUrl("http://www.google.com"))
+        self.network_manager.get(request)
 
     def handle_response(self, reply):
         if reply.error():
-            InfoBar.error(title='错误', content=f"测试失败: {reply.errorString()}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
-                          duration=3000, parent=self)
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {reply.errorString()}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
         else:
             response = reply.readAll().data().decode()
-            InfoBar.success(title='成功', content=f"测试成功: {response}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
-                            parent=self)
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: {response}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
 
 
 class SettingInterface(QWidget):
@@ -544,12 +702,12 @@ class SettingInterface(QWidget):
 
         self.localModelPage = LocalModelPage(settings=self.settings)
         self.llmConfigPage = LLMConfigPage(settings=self.settings)
-        self.translationPage = TranslationPage(settings=self.settings)
+        # self.translationPage = TranslationPage(settings=self.settings)
         self.proxyPage = ProxyPage(setting=self.settings)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
-        self.tabs.addTab(self.translationPage, "翻译配置")
+        # self.tabs.addTab(self.translationPage, "翻译配置")
         self.tabs.addTab(self.proxyPage, "代理设置")
 
         layout.addWidget(self.tabs)
