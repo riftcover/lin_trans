@@ -3,6 +3,7 @@ import sys
 
 from PySide6.QtCore import QUrl, QSettings
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
+from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 
 from nice_ui.configure import config
@@ -14,7 +15,7 @@ from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from vendor.qfluentwidgets import FluentIcon as FIF
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor)
-
+from utils import logger
 
 class Window(FluentWindow):
 
@@ -24,6 +25,7 @@ class Window(FluentWindow):
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))  # 使用RGB值设置蓝色
         self.initWindow()
+        self.load_proxy_settings()  # 加载代理设置
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
@@ -71,6 +73,27 @@ class Window(FluentWindow):
 
         if w.exec():
             QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
+
+    def load_proxy_settings(self):
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
+        if use_proxy:
+            proxy_type = self.settings.value("proxy_type", "http", type=str)
+            host = self.settings.value("proxy_host", "", type=str)
+            port = self.settings.value("proxy_port", 7890, type=int)
+
+            proxy_obj = QNetworkProxy()
+            if proxy_type.lower() == "http":
+                proxy_obj.setType(QNetworkProxy.HttpProxy)
+            else:
+                proxy_obj.setType(QNetworkProxy.Socks5Proxy)
+
+            proxy_obj.setHostName(host)
+            proxy_obj.setPort(port)
+            QNetworkProxy.setApplicationProxy(proxy_obj)
+            logger.info(f"程序启动时设置代理: {proxy_obj}")
+        else:
+            QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
+            logger.info("程序启动时禁用代理")
 
 
 if __name__ == '__main__':
