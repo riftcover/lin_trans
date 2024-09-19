@@ -137,7 +137,6 @@ class LLMKeySet(QWidget):
 
         # 第一排布局
         key_name = translate_api_name.get(api_key)
-        logger.debug(f"key_name: {key_name}")
         title_layout = QHBoxLayout()
         title_label = BodyLabel(key_name)
         tutorial_link = HyperlinkLabel("设置教程")
