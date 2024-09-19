@@ -12,6 +12,7 @@ from requests import RequestException
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 from nice_ui.util import tools
+from nice_ui.util.get_size import get_font_size, get_widget_size
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
@@ -392,17 +393,20 @@ class ProxyTestWidget(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        self.test_button = QPushButton("测试代理", self)
-        self.test_button.clicked.connect(self.test_proxy)
+        self.test_button = QPushButton("检查代理", self)
+        self.test_button.clicked.connect(self.ask_proxy)
         self.response_text = QTextEdit(self)
         self.response_text.setReadOnly(True)
 
         layout.addWidget(self.test_button)
         layout.addWidget(self.response_text)
 
-    def test_proxy(self):
+    def ask_proxy(self):
         url = QUrl("http://www.google.com")
         request = QNetworkRequest(url)
+        request.setAttribute(QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork)
+        request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
+        request.setTransferTimeout(10000)  # 设置 10 秒超时
         self.network_manager.get(request)
 
     def handle_response(self, reply):
@@ -440,11 +444,14 @@ class ProxyPage(QWidget):
         self.setup_ui()
         self.load_settings()  # 在初始化时加载设置
 
+
     def setup_ui(self):
         layout = QVBoxLayout()
 
         # 创建单选框
         self.no_proxy_radio = RadioButton("无代理")
+        get_font_size(self.no_proxy_radio)
+        get_widget_size(self.no_proxy_radio)
         self.use_proxy_radio = RadioButton("手动代理配置")
 
         radio_layout = QHBoxLayout()
@@ -472,6 +479,7 @@ class ProxyPage(QWidget):
 
         # 主机名输入框
         host_layout = QHBoxLayout()
+        host_layout.setAlignment(Qt.AlignLeft)
         host_label = BodyLabel("主机名(H):")
         self.host_input = LineEdit()
         self.host_input.setPlaceholderText("127.0.0.1")
@@ -481,6 +489,7 @@ class ProxyPage(QWidget):
 
         # 端口号输入框
         port_layout = QHBoxLayout()
+        port_layout.setAlignment(Qt.AlignLeft)
         port_label = BodyLabel("端口号(N):")
         self.port_input = SpinBox()
         self.port_input.setRange(0, 65535)
@@ -494,18 +503,18 @@ class ProxyPage(QWidget):
         self.apply_button.clicked.connect(self.apply_proxy)
         layout.addWidget(self.apply_button)
 
-        # 创建显示当前代理设置按钮
-        self.show_settings_button = PushButton("显示当前代理设置")
-        self.show_settings_button.clicked.connect(self.show_current_settings)
-        layout.addWidget(self.show_settings_button)
+        # # 创建显示当前代理设置按钮
+        # self.show_settings_button = PushButton("显示当前代理设置")
+        # self.show_settings_button.clicked.connect(self.show_current_settings)
+        # layout.addWidget(self.show_settings_button)
 
         # 添加测试按钮
         self.test_button = PushButton("测试代理")
         self.test_button.clicked.connect(self.test_proxy)
         layout.addWidget(self.test_button)
 
-        self.proxy_test_widget = ProxyTestWidget(self)
-        layout.addWidget(self.proxy_test_widget)
+        # self.proxy_test_widget = ProxyTestWidget(self)
+        # layout.addWidget(self.proxy_test_widget)
 
         self.setLayout(layout)
 
@@ -532,6 +541,9 @@ class ProxyPage(QWidget):
         self.host_input.setText(host)
         self.port_input.setValue(port)
         self.toggle_proxy_input()
+
+        # # 自动应用保存的代理设置
+        # self.apply_proxy()
 
     def toggle_proxy_input(self):
         enabled = self.use_proxy_radio.isChecked()
@@ -612,29 +624,6 @@ class ProxyPage(QWidget):
             parent=self,
         )
 
-    def test_proxy(self):
-        try:
-            response = requests.get("http://www.google.com", timeout=10)
-            response.raise_for_status()
-            InfoBar.success(
-                title="成功",
-                content=f"测试成功: 状态码 {response.status_code}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
-        except RequestException as e:
-            InfoBar.error(
-                title="错误",
-                content=f"测试失败: {str(e)}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
 
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -662,14 +651,19 @@ class ProxyPage(QWidget):
         self.network_manager = QNetworkAccessManager(self)
         self.network_manager.finished.connect(self.handle_response)
 
+        use_proxy = self.settings.value("use_proxy", False, type=bool)
         request = QNetworkRequest(QUrl("http://www.google.com"))
+        request.setAttribute(QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork)
+        request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
+        request.setTransferTimeout(10000)  # 设置 10 秒超时
         self.network_manager.get(request)
 
     def handle_response(self, reply):
-        if reply.error():
-            InfoBar.error(
-                title="错误",
-                content=f"测试失败: {reply.errorString()}",
+        if reply.error() == QNetworkReply.NoError:
+            content = reply.readAll()
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -677,16 +671,18 @@ class ProxyPage(QWidget):
                 parent=self,
             )
         else:
-            response = reply.readAll().data().decode()
-            InfoBar.success(
-                title="成功",
-                content=f"测试成功: {response}",
+            error_msg = reply.errorString()
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {error_msg}",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=3000,
                 parent=self,
             )
+
+        reply.deleteLater()
 
 
 class SettingInterface(QWidget):
