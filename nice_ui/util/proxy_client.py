@@ -4,6 +4,12 @@ import httpx
 
 
 def get_proxy_from_settings():
+    """
+    get proxy from settings.
+    通过settings获取gui程序QNetworkProxy.setApplicationProxy设置的代理
+    Returns:
+
+    """
     settings = QSettings("Locoweed", "LinLInTrans")
     use_proxy = settings.value("use_proxy", False, type=bool)
     if not use_proxy:
@@ -16,7 +22,17 @@ def get_proxy_from_settings():
     return None if not host or port == 0 else f"{proxy_type}://{host}:{port}"
 
 
-def create_openai_client(api_key, base_url):
+def create_openai_client(api_key: str, base_url: str):
+    """
+    由于OpenAI client不会自动读取gui设置的系统代理，所以创建使用代理的client
+    because the openai client doesn't support proxy, we need to create our own client with proxy support.
+    Args:
+        api_key:  String, the api key of openai.
+        base_url:   String, the base url of openai.
+
+    Returns:
+
+    """
     proxy = get_proxy_from_settings()
     http_client = httpx.Client(
         proxies=proxy,
