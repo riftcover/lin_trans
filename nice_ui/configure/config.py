@@ -8,9 +8,9 @@ from queue import Queue
 
 from nice_ui.configure import ModelDict
 from nice_ui.ui.SingalBridge import DataBridge
-from utils.log import Logings
-
-logger = Logings().logger
+# from utils.log import Logings
+#
+# logger = Logings().logger
 
 
 def get_executable_path():
