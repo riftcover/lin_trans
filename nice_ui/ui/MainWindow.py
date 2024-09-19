@@ -75,8 +75,7 @@ class Window(FluentWindow):
             QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
 
     def load_proxy_settings(self):
-        use_proxy = self.settings.value("use_proxy", False, type=bool)
-        if use_proxy:
+        if self.settings.value("use_proxy", False, type=bool):
             proxy_type = self.settings.value("proxy_type", "http", type=str)
             host = self.settings.value("proxy_host", "", type=str)
             port = self.settings.value("proxy_port", 7890, type=int)
