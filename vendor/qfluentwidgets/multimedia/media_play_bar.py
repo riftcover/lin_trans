@@ -1,5 +1,5 @@
 # coding:utf-8
-from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QPoint
+from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QPoint, QRect
 from PySide6.QtGui import QPixmap, QPainter, QColor
 from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout, QLabel
 
@@ -46,16 +46,23 @@ class VolumeView(FlyoutViewBase):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.muteButton = MediaPlayBarButton(FluentIcon.VOLUME, self)
-        self.volumeSlider = Slider(Qt.Horizontal, self)
+        self.volumeSlider = Slider(Qt.Vertical, self)  # 改为垂直方向
         self.volumeLabel = CaptionLabel('30', self)
 
         self.volumeSlider.setRange(0, 100)
-        self.volumeSlider.setFixedWidth(208)
-        self.setFixedSize(295, 64)
+        self.volumeSlider.setFixedHeight(100)  # 调整滑块高度
+        self.setFixedSize(60, 180)  # 调整整体大小
 
-        h = self.height()
-        self.muteButton.move(10, h//2-self.muteButton.height()//2)
-        self.volumeSlider.move(45, 21)
+        # 设置窗口透明
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # 布局
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 5, 0, 5)
+        layout.setSpacing(0)
+        layout.addWidget(self.muteButton, alignment=Qt.AlignCenter)
+        layout.addWidget(self.volumeSlider, alignment=Qt.AlignCenter)
+        layout.addWidget(self.volumeLabel, alignment=Qt.AlignCenter)
 
     def setMuted(self, isMute: bool):
         if isMute:
@@ -64,7 +71,6 @@ class VolumeView(FlyoutViewBase):
         else:
             self.muteButton.setIcon(FluentIcon.VOLUME)
             self.muteButton.setToolTip(self.tr('Mute'))
-
     def setVolume(self, volume: int):
         self.volumeSlider.setValue(volume)
 
@@ -72,20 +78,24 @@ class VolumeView(FlyoutViewBase):
         self.volumeLabel.adjustSize()
 
         tr = self.volumeLabel.fontMetrics().boundingRect(str(volume))
-        self.volumeLabel.move(self.width() - 20 - tr.width(), self.height()//2 - tr.height()//2)
+        self.volumeLabel.move(self.width()//2 - tr.width()//2, self.height() - tr.height() - 10)
+
 
     def paintEvent(self, e):
         painter = QPainter(self)
         painter.setRenderHints(QPainter.Antialiasing)
 
+        # 设置半透明背景
         if isDarkTheme():
-            painter.setBrush(QColor(46, 46, 46))
+            painter.setBrush(QColor(46, 46, 46, 200))
             painter.setPen(QColor(0, 0, 0, 20))
         else:
-            painter.setBrush(QColor(248, 248, 248))
+            painter.setBrush(QColor(248, 248, 248, 200))
             painter.setPen(QColor(0, 0, 0, 10))
 
-        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 8, 8)
+        # 绘制圆角矩形
+        rect = QRect(1, 1, self.width() - 2, self.height() - 2)
+        painter.drawRoundedRect(rect, 8, 8)
 
 
 class VolumeButton(MediaPlayBarButton):
