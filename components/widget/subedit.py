@@ -574,7 +574,7 @@ class SubtitleTable(QTableView):
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(200)  # self.create_visible_editors()    # self.remove_invisible_editors()
+        self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
