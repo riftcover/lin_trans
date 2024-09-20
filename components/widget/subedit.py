@@ -40,7 +40,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         """
         if index.column() == 0:  # 勾选框
             self.signals.createEditor.emit(index.row(), index.column())
-            return self.create_checkbox(parent,index)
+            return self.create_checkbox(parent)
         elif index.column() == 1:  # 操作按钮
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_operation_widget(parent)
@@ -67,24 +67,34 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         # 调用原有的绘制逻辑
         if index.column() == 2:  # 行号列
-            # 使用默认绘制方法
-            super().paint(painter, option, index)
+                        # 使用自定义绘制方法来居中显示行号
+            painter.setPen(QColor("#000000"))  # 设置文字颜色
+            painter.setFont(option.font)  # 使用默认字体
+            
+            # 计算文本
+            text = str(index.row() + 1)
+            
+            # 计算文本矩形
+            text_rect = painter.boundingRect(option.rect, Qt.AlignCenter, text)
+            
+            # 绘制居中的文本
+            painter.drawText(option.rect, Qt.AlignCenter, text)
         else:
             # 对于其他列，保持原有的逻辑
             pass  # 这里应该是你原有的绘制逻辑
 
         # 在原有绘制逻辑之后，为所有列添加红色底部边框
         painter.setPen(QColor("#d0d0d0"))
-        if index.column() == 1:  # 第二列
-            # 为第二列特别处理，确保边框被绘制
-            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight() + QPoint(1, 0))
-        else:
-            painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+        # if index.column() == 3:  # 第二列
+        #     # 为第二列特别处理，确保边框被绘制
+        #     painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight() + QPoint(5, 0))
+        # else:
+        painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
 
         # 恢复painter的状态
         painter.restore()
 
-    def create_checkbox(self, parent,index) -> CheckBox:
+    def create_checkbox(self, parent) -> CheckBox:
         editor = CheckBox(parent)
         # editor.stateChanged.connect(lambda:self.commitAndCloseEditor(editor, index))
         return editor
@@ -534,9 +544,54 @@ class SubtitleTable(QTableView):
         # 隐藏网格线
         self.setShowGrid(False)
 
+        self.setStyleSheet("""
+            QTableView {
+                background-color: white;
+                border: none;
+            }
+            QHeaderView::section {
+                background-color: #f0f0f0;
+                padding: 6px;
+                border: none;
+                border-bottom: 2px solid #d0d0d0;
+                font-weight: bold;
+                color: #333333;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #f0f0f0;
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c0c0c0;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar:horizontal {
+                border: none;
+                background: #f0f0f0;
+                height: 10px;
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:horizontal {
+                background: #c0c0c0;
+                min-width: 20px;
+                border-radius: 5px;
+            }
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                width: 0px;
+            }
+        """)
+
     def setHorizontalHeaderLabels(self):
         # 设置表头样式
         header = self.horizontalHeader()
+        # 设置默认对齐方式为居中
+        header.setDefaultAlignment(Qt.AlignCenter)
         header.setStyleSheet("""
             QHeaderView::section {
                 background-color: #f0f0f0;
@@ -557,7 +612,7 @@ class SubtitleTable(QTableView):
             if width > 0:
                 header.resizeSection(col, width)
             else:
-                header.setSectionResizeMode(col, QHeaderView.Stretch)
+                header.setSectionResizeMode(col, QHeaderView.Stretch)  # 列会自动调整以填充可用空间
 
     def delayed_update(self) -> None:
         self.create_visible_editors()

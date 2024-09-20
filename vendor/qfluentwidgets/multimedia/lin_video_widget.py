@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScen
 from components.widget import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
 from .media_play_bar import LinMediaPlayBar
-from nice_ui.configure import config
+from utils import logger
 
 
 class SrtParser:
@@ -66,7 +66,7 @@ class LinVideoWidget(QWidget):
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
         self.playBar = LinMediaPlayBar(self)
-        config.logger.debug(f'self.playBar.size()={self.playBar.size()}')
+        logger.trace(f'self.playBar.size()={self.playBar.size()}')
 
         # 将图形视图与图形场景关联，添加视频项到场景中，并设置滚动条策略和渲染提示。
         self.graphicsView.setScene(self.graphicsScene)
@@ -147,7 +147,7 @@ class LinVideoWidget(QWidget):
         self.graphicsView.fitInView(self.videoItem, Qt.KeepAspectRatio)
     def on_subtitle_changed(self, new_srt):
         """ 当字幕改变时调用 """
-        config.logger.debug("on_subtitle_changed")
+        logger.trace("on_subtitle_changed")
         self.subtitles = new_srt
 
     def setVideo(self, url: QUrl):
@@ -178,11 +178,11 @@ class LinVideoWidget(QWidget):
         for match in subtitle_pattern.finditer(content):
             # 格式：
             # <re.Match object; span=(0, 60), match="1\n00:00:00,166 --> 00:00:01,166\nwe're going to >
-            # config.logger.debug(f'match={match}')
+            # logger.trace(f'match={match}')
             start_time = self.time_to_milliseconds(match.group(2))
             end_time = self.time_to_milliseconds(match.group(3))
             text = match.group(4).strip()
-            # config.logger.debug(f'text={text}')
+            # logger.trace(f'text={text}')
             subtitles.append((start_time, end_time, text))
 
         return subtitles
