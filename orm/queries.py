@@ -219,6 +219,13 @@ class PromptsOrm:
         return False
 
     @session_manager
+    def insert_table_prompt(self, prompt_name: str, prompt_content: str, session=None):
+        new_entry = Prompts(prompt_name=prompt_name, prompt_content=prompt_content)
+        session.add(new_entry)
+        session.commit()
+        return True
+
+    @session_manager
     def delete_table_prompt(self, key_id, session=None):
         if entry := self.query_data_by_id(key_id):
             session.delete(entry)

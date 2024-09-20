@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from typing import Optional
 
 import requests
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
@@ -158,11 +159,11 @@ class LocalModelPage(QWidget):
 
 
 class PopupWidget(QWidget):
-    def __init__(self, key_id: int, msg: str, parent=None):
+    def __init__(self, key_id: Optional[int], prompt_name: str, prompt_msg: str, parent=None):
         super().__init__(parent=parent)
         self.key_id = key_id
-        self.msg = msg
-        self.setWindowTitle("编辑提示词")
+        self.name = prompt_name
+        self.msg = prompt_msg
         self.resize(460, 330)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.setup_ui()
@@ -185,6 +186,22 @@ class PopupWidget(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        self.name_input = None
+        
+        if self.key_id is not None:
+            # 编辑提示词
+            self.setWindowTitle("编辑提示词")
+            self.name_input = LineEdit()
+            self.name_input.setText(self.name)
+            # 不可编辑
+            self.name_input.setReadOnly(True)
+        else:
+            # 新增提示词
+            self.setWindowTitle("新增提示词")
+            self.name_input = LineEdit()
+            self.name_input.setPlaceholderText("请输入提示词名称")
+            self.name_input.setClearButtonEnabled(True)
+
         self.label = QTextEdit()
         self.label.setPlainText(self.msg)
         close_button = PushButton("取消")
@@ -196,14 +213,16 @@ class PopupWidget(QWidget):
         button_layout.addWidget(enter_button)
         button_layout.addWidget(close_button)
 
+        layout.addWidget(self.name_input)
         layout.addWidget(self.label)
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
     def save_prompt(self):
         # 保存提示词到数据库
-        new_msg = self.label.toPlainText()
-        if not new_msg:
+        new_name = self.name_input.text()
+        new_content = self.label.toPlainText()
+        if not new_name or not new_content:
             logger.error("提示词不能为空")
             InfoBar.error(
                 title="错误",
@@ -215,8 +234,56 @@ class PopupWidget(QWidget):
                 parent=self,
             )
             return
-        logger.info(f"key_id: {self.key_id}, 修改提示词: {new_msg}")
-        self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
+        if self.key_id is None:
+            # 添加新提示词
+            logger.info(f"添加新提示词: 名称={new_name}, 内容={new_content}")
+            if new_id := self.parent().prompts_orm.insert_table_prompt(
+                prompt_name=new_name, prompt_content=new_content
+            ):
+                InfoBar.success(
+                    title="成功",
+                    content="新提示词已添加",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
+            else:
+                InfoBar.error(
+                    title="错误",
+                    content="添加新提示词失败",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
+        else:
+            # 更新现有提示词
+            logger.info(f"修改提示词: id={self.key_id}, 名称={new_name}, 内容={new_content}")
+            success: bool = self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_name=new_name, prompt_content=new_content)
+            if success:
+                InfoBar.success(
+                    title="成功",
+                    content="提示词已更新",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
+            else:
+                InfoBar.error(
+                    title="错误",
+                    content="更新提示词失败",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
+
         self.close()
         self.parent()._refresh_table_data()
 
@@ -268,6 +335,11 @@ class LLMConfigPage(QWidget):
         refresh_btn = ToolButton(FluentIcon.ROTATE)
         refresh_btn.setToolTip("刷新提示词")
         refresh_btn.clicked.connect(self._refresh_table_data)
+
+        add_btn = ToolButton(FluentIcon.CHAT)
+        add_btn.setToolTip("新增提示词")
+        add_btn.clicked.connect(self._add_prompt)
+        prompts_header.addWidget(add_btn, alignment=Qt.AlignRight)
         prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
         prompts_layout.addLayout(prompts_header)
 
@@ -306,9 +378,9 @@ class LLMConfigPage(QWidget):
     def _init_table(self):
         all_prompts = self.prompts_orm.get_data_with_id_than_one()
         for prompt in all_prompts:
-            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
+            self._init_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
 
-    def add_prompt(self, prompt_id, prompt_name, prompt_content):
+    def _init_prompt(self, prompt_id, prompt_name, prompt_content):
         row = self.prompts_table.rowCount()
         self.prompts_table.insertRow(row)
         self.prompts_table.setItem(row, 0, QTableWidgetItem(str(prompt_id)))
@@ -339,7 +411,7 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setRowCount(0)  # 清空表格
         all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
         for prompt in all_prompts:
-            self.add_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
+            self._init_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
 
     def _delete_row(self, button):
         def delete_row():
@@ -358,10 +430,15 @@ class LLMConfigPage(QWidget):
             logger.debug(f"编辑prompt,key_id:{key_id} ")
             prompt_name = self.prompts_table.cellWidget(button_row, 1).text()
             prompt_content = self.prompts_table.item(button_row, 2).text()
-            self.popup = PopupWidget(int(key_id), prompt_content, self)
+            self.popup = PopupWidget(int(key_id), prompt_name, prompt_content, self)
             self.popup.show()
 
         return edit_row
+
+
+    def _add_prompt(self):
+        self.popup = PopupWidget(key_id=None, prompt_name="", prompt_msg="", parent=self)
+        self.popup.show()
 
 
 class TranslationPage(QWidget):
@@ -448,13 +525,13 @@ class ProxyTestWidget(QWidget):
 
         reply.deleteLater()
 
+
 class ProxyPage(QWidget):
     def __init__(self, setting, parent=None):
         super().__init__(parent=parent)
         self.settings = setting
         self.setup_ui()
         self.load_settings()  # 在初始化时加载设置
-
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -519,8 +596,6 @@ class ProxyPage(QWidget):
 
         # Buttons Card
 
-
-
         # 添加一个垂直间隔
         card_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
@@ -544,12 +619,9 @@ class ProxyPage(QWidget):
 
         main_layout.addWidget(proxy_card)
 
-
-
         # 连接单选框信号
         self.proxy_radio_group.buttonClicked.connect(self.toggle_proxy_input)
         self.proxy_type_group.buttonClicked.connect(self.on_proxy_type_changed)
-
 
     def load_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -653,7 +725,6 @@ class ProxyPage(QWidget):
             parent=self,
         )
 
-
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
         proxy_type = self.settings.value("proxy_type", "http", type=str)
@@ -674,7 +745,6 @@ class ProxyPage(QWidget):
             duration=3000,
             parent=self,
         )
-
 
     def test_proxy(self):
         use_proxy = self.use_proxy_radio.isChecked()
