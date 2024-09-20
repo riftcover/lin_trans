@@ -203,8 +203,19 @@ class PopupWidget(QWidget):
     def save_prompt(self):
         # 保存提示词到数据库
         new_msg = self.label.toPlainText()
-        # logger.info(f"保存key_id: {self.key_id}, 提示词: {self.msg}")
-        logger.info(f"修改提示词: {new_msg}")
+        if not new_msg:
+            logger.error("提示词不能为空")
+            InfoBar.error(
+                title="错误",
+                content="提示词不能为空",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            return
+        logger.info(f"key_id: {self.key_id}, 修改提示词: {new_msg}")
         self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_content=new_msg)
         self.close()
         self.parent()._refresh_table_data()
@@ -345,7 +356,7 @@ class LLMConfigPage(QWidget):
             logger.debug(f"编辑prompt,所在行:{button_row} ")
             key_id = self.prompts_table.item(button_row, 0).text()
             logger.debug(f"编辑prompt,key_id:{key_id} ")
-            prompt_name = self.prompts_table.item(button_row, 1).text()
+            prompt_name = self.prompts_table.cellWidget(button_row, 1).text()
             prompt_content = self.prompts_table.item(button_row, 2).text()
             self.popup = PopupWidget(int(key_id), prompt_content, self)
             self.popup.show()
