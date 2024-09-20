@@ -24,6 +24,8 @@ class Window(FluentWindow):
         self.settings = QSettings("Locoweed", "LinLInTrans")
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))  # 使用RGB值设置蓝色
+
+
         self.initWindow()
         self.load_proxy_settings()  # 加载代理设置
         # create sub interface
@@ -51,7 +53,7 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
+        self.setWindowIcon(QIcon('D:/dcode/lin_trans/components/assets/linlin.jpg'))
         self.setWindowTitle('林林字幕')
 
         desktop = QApplication.screens()[0].availableGeometry()
@@ -97,7 +99,7 @@ class Window(FluentWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    default_font = app.font()
+    # default_font = app.font()
     # print(f"Current application font: {default_font.family()}, Size: {default_font.pointSize()}")
     w = Window()
     w.show()
