@@ -328,10 +328,11 @@ class LLMConfigPage(QWidget):
         # Prompts Section
         prompts_card = CardWidget(self)
         prompts_layout = QVBoxLayout(prompts_card)
-        prompts_layout.setSpacing(20)
+        # prompts_layout.setSpacing(10)
 
         prompts_header = QHBoxLayout()
         prompts_header.addWidget(SubtitleLabel("提示词"))
+        prompts_header.addStretch()
         refresh_btn = ToolButton(FluentIcon.ROTATE)
         refresh_btn.setToolTip("刷新提示词")
         refresh_btn.clicked.connect(self._refresh_table_data)
