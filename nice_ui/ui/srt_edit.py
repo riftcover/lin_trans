@@ -3,8 +3,9 @@ import shutil
 import sys
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings
+from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QPalette
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget, QLineEdit, QPushButton, QRadioButton,
-                               QFileDialog, QDialog, QLabel)
+                               QFileDialog, QDialog, QLabel, QSplitterHandle)
 
 from nice_ui.configure import config
 from nice_ui.util.tools import get_default_documents_path
@@ -29,6 +30,19 @@ class AspectRatioWidget(QWidget):
         super().resizeEvent(event)
 
 
+class CustomSplitter(QSplitter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setHandleWidth(5)  # 增加宽度到3像素
+        self.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #E0E5EA;
+            }
+            QSplitter::handle:hover {
+                background-color: #B0C4DE;
+            }
+        """)
+
 class SubtitleEditPage(QWidget):
 
     def __init__(self, patt: str, med_path: str, settings: QSettings = None, parent=None):
@@ -51,7 +65,8 @@ class SubtitleEditPage(QWidget):
 
     def initUI(self):
         main_layout = QHBoxLayout(self)
-        splitter = QSplitter(Qt.Horizontal)
+        main_layout.setContentsMargins(0, 0, 0, 0)  # 移除布局边距
+        splitter = CustomSplitter(Qt.Horizontal)
         main_layout.addWidget(splitter)
 
         # 左侧部分
@@ -84,7 +99,7 @@ class SubtitleEditPage(QWidget):
         top_card = CardWidget()
         top_layout = QHBoxLayout(top_card)
         top_layout.setSpacing(10)
-        top_layout.setContentsMargins(10, 10, 10, 10)
+        top_layout.setContentsMargins(15, 10, 15, 10)
 
         # 添加按钮
         buttons = [(TransparentToolButton(FluentIcon.DOWN), self.move_row_down_more, "将勾选的译文整体向下移动"),
@@ -94,6 +109,8 @@ class SubtitleEditPage(QWidget):
 
         top_layout.addStretch(1)
         for button, callback, tooltip in buttons:
+            button.setIconSize(QSize(20, 20))
+            button.setFixedSize(QSize(30, 30))
             button.clicked.connect(callback)
             button.setToolTip(tooltip)
             button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
