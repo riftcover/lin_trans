@@ -237,7 +237,7 @@ class PopupWidget(QWidget):
         if self.key_id is None:
             # 添加新提示词
             logger.info(f"添加新提示词: 名称={new_name}, 内容={new_content}")
-            if new_id := self.parent().prompts_orm.insert_table_prompt(
+            if _ := self.parent().prompts_orm.insert_table_prompt(
                 prompt_name=new_name, prompt_content=new_content
             ):
                 InfoBar.success(
@@ -644,8 +644,7 @@ class ProxyPage(QWidget):
         self.port_input.setValue(port)
         self.toggle_proxy_input()
 
-        # # 自动应用保存的代理设置
-        # self.apply_proxy()
+        # self.apply_proxy() # 自动应用保存的代理设置
 
     def toggle_proxy_input(self):
         enabled = self.use_proxy_radio.isChecked()
@@ -789,7 +788,7 @@ class ProxyPage(QWidget):
 
     def handle_response(self, reply):
         if reply.error() == QNetworkReply.NoError:
-            content = reply.readAll()
+            reply.readAll()
             InfoBar.success(
                 title="成功",
                 content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
