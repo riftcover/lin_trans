@@ -3,11 +3,10 @@ import shutil
 import sys
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings
-from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QPalette
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget, QLineEdit, QPushButton, QRadioButton,
-                               QFileDialog, QDialog, QLabel, QSplitterHandle)
+                               QFileDialog, QDialog, QLabel)
 
-from nice_ui.configure import config
+from utils import logger
 from nice_ui.util.tools import get_default_documents_path
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
@@ -225,14 +224,14 @@ class ExportSubtitleDialog(QDialog):
         export_format = "srt" if self.srt_radio.isChecked() else "txt"
         # 检查导出路径是否存在
         if not os.path.exists(export_path):
-            config.logger.error(f'导出目录不存在: {export_path}')
+            logger.error(f'导出目录不存在: {export_path}')
             InfoBar.error(title='错误', content="导出目录不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
                           parent=self)
             return
 
         for path in self.paths:
             if not os.path.exists(path):
-                config.logger.error(f'字幕文件被删除: {path}')
+                logger.error(f'字幕文件被删除: {path}')
                 InfoBar.error(title='错误', content="字幕文件被删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
                               parent=self)
                 return
@@ -272,8 +271,8 @@ class ExportSubtitleDialog(QDialog):
             while i < len(lines) and not lines[i].strip():
                 i += 1
 
-        config.logger.info(first_line_subtitles)
-        config.logger.info(second_line_subtitles)
+        logger.info(first_line_subtitles)
+        logger.info(second_line_subtitles)
         # 保存提取的文本到 export_path
         export_name = os.path.splitext(os.path.basename(self.patt))[0]
         with open(f'{export_path}/{export_name}[双语].txt', 'w', encoding='utf-8') as dest_file:
