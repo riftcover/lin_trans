@@ -6,7 +6,7 @@ import requests
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton
+    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem
 from requests import RequestException
 
 from nice_ui.configure import config
@@ -446,22 +446,25 @@ class ProxyPage(QWidget):
 
 
     def setup_ui(self):
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+
+        # Proxy Settings Card
+        proxy_card = CardWidget(self)
+        card_layout = QVBoxLayout(proxy_card)
 
         # 创建单选框
         self.no_proxy_radio = RadioButton("无代理")
-        get_font_size(self.no_proxy_radio)
-        get_widget_size(self.no_proxy_radio)
         self.use_proxy_radio = RadioButton("手动代理配置")
 
-        radio_layout = QHBoxLayout()
+        radio_layout = QVBoxLayout()
         self.proxy_radio_group = QButtonGroup(radio_layout)
         self.proxy_radio_group.addButton(self.no_proxy_radio)
         self.proxy_radio_group.addButton(self.use_proxy_radio)
         radio_layout.addWidget(self.no_proxy_radio)
         radio_layout.addWidget(self.use_proxy_radio)
-        radio_layout.addStretch(1)
-        layout.addLayout(radio_layout)
+        card_layout.addLayout(radio_layout)
 
         # 创建代理类型选择
         self.http_radio = RadioButton("HTTP")
@@ -475,7 +478,7 @@ class ProxyPage(QWidget):
         proxy_type_layout.addWidget(self.http_radio)
         proxy_type_layout.addWidget(self.socks5_radio)
         proxy_type_layout.addStretch(1)
-        layout.addLayout(proxy_type_layout)
+        card_layout.addLayout(proxy_type_layout)
 
         # 主机名输入框
         host_layout = QHBoxLayout()
@@ -483,9 +486,10 @@ class ProxyPage(QWidget):
         host_label = BodyLabel("主机名(H):")
         self.host_input = LineEdit()
         self.host_input.setPlaceholderText("127.0.0.1")
+        host_layout.addSpacing(20)
         host_layout.addWidget(host_label)
         host_layout.addWidget(self.host_input)
-        layout.addLayout(host_layout)
+        card_layout.addLayout(host_layout)
 
         # 端口号输入框
         port_layout = QHBoxLayout()
@@ -494,33 +498,47 @@ class ProxyPage(QWidget):
         self.port_input = SpinBox()
         self.port_input.setRange(0, 65535)
         self.port_input.setValue(7890)
+        port_layout.addSpacing(20)
         port_layout.addWidget(port_label)
         port_layout.addWidget(self.port_input)
-        layout.addLayout(port_layout)
+        card_layout.addLayout(port_layout)
+        card_layout.addStretch(1)
 
-        # 创建应用代理按钮
-        self.apply_button = PushButton("保存")
+        main_layout.addWidget(proxy_card)
+
+        # Buttons Card
+
+
+
+        # 添加一个垂直间隔
+        card_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        # 按钮布局
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(10)
+
+        self.apply_button = PrimaryPushButton("保存")
+        self.apply_button.setIcon(FluentIcon.SAVE)
         self.apply_button.clicked.connect(self.apply_proxy)
-        layout.addWidget(self.apply_button)
 
-        # # 创建显示当前代理设置按钮
-        # self.show_settings_button = PushButton("显示当前代理设置")
-        # self.show_settings_button.clicked.connect(self.show_current_settings)
-        # layout.addWidget(self.show_settings_button)
-
-        # 添加测试按钮
         self.test_button = PushButton("测试代理")
+        self.test_button.setIcon(FluentIcon.SYNC)
         self.test_button.clicked.connect(self.test_proxy)
-        layout.addWidget(self.test_button)
 
-        # self.proxy_test_widget = ProxyTestWidget(self)
-        # layout.addWidget(self.proxy_test_widget)
+        buttons_layout.addStretch(1)
+        buttons_layout.addWidget(self.test_button)
+        buttons_layout.addWidget(self.apply_button)
 
-        self.setLayout(layout)
+        card_layout.addLayout(buttons_layout)
+
+        main_layout.addWidget(proxy_card)
+
+
 
         # 连接单选框信号
         self.proxy_radio_group.buttonClicked.connect(self.toggle_proxy_input)
         self.proxy_type_group.buttonClicked.connect(self.on_proxy_type_changed)
+
 
     def load_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -648,10 +666,39 @@ class ProxyPage(QWidget):
 
 
     def test_proxy(self):
+        use_proxy = self.use_proxy_radio.isChecked()
+        proxy_type = "http" if self.http_radio.isChecked() else "socks5"
+        host = self.host_input.text()
+        port = self.port_input.value()
+
+        if use_proxy:
+            if not host or port == 0:
+                InfoBar.warning(
+                    title="警告",
+                    content="请输入有效的主机名和端口号",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
+                return
+
+            proxy_obj = QNetworkProxy()
+            if proxy_type.lower() == "http":
+                proxy_obj.setType(QNetworkProxy.HttpProxy)
+            else:
+                proxy_obj.setType(QNetworkProxy.Socks5Proxy)
+
+            proxy_obj.setHostName(host)
+            proxy_obj.setPort(port)
+        else:
+            proxy_obj = QNetworkProxy.NoProxy
+
         self.network_manager = QNetworkAccessManager(self)
+        self.network_manager.setProxy(proxy_obj)
         self.network_manager.finished.connect(self.handle_response)
 
-        use_proxy = self.settings.value("use_proxy", False, type=bool)
         request = QNetworkRequest(QUrl("http://www.google.com"))
         request.setAttribute(QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork)
         request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
