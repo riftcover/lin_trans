@@ -257,7 +257,7 @@ class SubtitleModel(QAbstractTableModel):
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
-        self._data = self.load_subtitle()
+        self.sub_data = self.load_subtitle()
         self.checked_rows = set()  # 新增：用于存储被选中的行
 
     def load_subtitle(self) -> List[Tuple[str, str, str, str]]:
@@ -310,7 +310,7 @@ class SubtitleModel(QAbstractTableModel):
         return subtitles
 
     def rowCount(self, parent=QModelIndex()) -> int:
-        return len(self._data)
+        return len(self.sub_data)
 
     def columnCount(self, parent=QModelIndex()) -> int:
         return 7
@@ -324,7 +324,7 @@ class SubtitleModel(QAbstractTableModel):
 
     def data(self, index, role=Qt.DisplayRole) -> Any:
         # 定义数据获取方式
-        if not index.isValid() or not (0 <= index.row() < len(self._data)):
+        if not index.isValid() or not (0 <= index.row() < len(self.sub_data)):
             return None
 
         row = index.row()
@@ -337,13 +337,13 @@ class SubtitleModel(QAbstractTableModel):
             if col == 2:  # 行号列
                 return str(row + 1)  # 行号从1开始
             if col == 3:  # 时间列
-                return f"{self._data[row][0]} - {self._data[row][1]}"
+                return f"{self.sub_data[row][0]} - {self.sub_data[row][1]}"
             elif col == 4:  # 原文列
-                return self._data[row][2]
+                return self.sub_data[row][2]
             elif col == 5:  # 译文列
-                return self._data[row][3]
+                return self.sub_data[row][3]
         elif role == Qt.UserRole and col == 3:  # 时间列
-            return self._data[row][0], self._data[row][1]
+            return self.sub_data[row][0], self.sub_data[row][1]
 
         return None
 
@@ -366,15 +366,15 @@ class SubtitleModel(QAbstractTableModel):
 
         if role == Qt.EditRole:
             if col == 4:  # 原文列
-                set_data = (self._data[row][0], self._data[row][1], value, self._data[row][3])
-                self._data[row] = set_data
+                set_data = (self.sub_data[row][0], self.sub_data[row][1], value, self.sub_data[row][3])
+                self.sub_data[row] = set_data
             elif col == 5:  # 译文列
-                self._data[row] = (self._data[row][0], self._data[row][1], self._data[row][2], value)
+                self.sub_data[row] = (self.sub_data[row][0], self.sub_data[row][1], self.sub_data[row][2], value)
             
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
         elif role == Qt.UserRole and col == 3:  # 时间列
-            self._data[row] = (value[0], value[1], self._data[row][2], self._data[row][3])
+            self.sub_data[row] = (value[0], value[1], self.sub_data[row][2], self.sub_data[row][3])
 
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
@@ -393,7 +393,7 @@ class SubtitleModel(QAbstractTableModel):
         logger.debug(f"SubtitleModel.removeRow: 删除行: {row}")
         if 0 <= row < self.rowCount():
             self.beginRemoveRows(parent, row, row)
-            del self._data[row]
+            del self.sub_data[row]
             self.endRemoveRows()
             return True
         return False
@@ -403,7 +403,7 @@ class SubtitleModel(QAbstractTableModel):
         # Insert a new empty subtitle entry
         new_text = f"第{row + 2}行"
         new_entry = ('00:00:00,000', '00:00:00,000', new_text, "")
-        self._data.insert(row + 1, new_entry)
+        self.sub_data.insert(row + 1, new_entry)
         self.endInsertRows()
         return True
 
@@ -772,7 +772,7 @@ class SubtitleTable(QTableView):
         self.subtitles.clear()  # 清空现有字幕
         # 从 SubtitleModel 中读取字幕数据
         for row in range(self.model.rowCount()):
-            start_time, end_time, first_text, second_text = self.model._data[row]
+            start_time, end_time, first_text, second_text = self.model.sub_data[row]
             
             # 将时间转换为毫秒
             start_time_ms = self.time_to_milliseconds(start_time)

@@ -404,10 +404,10 @@ class QConfig(QObject):
 
 
 qconfig = QConfig()
-try:
-    print(ALERT)
-except UnicodeEncodeError:
-    print(ALERT.replace("📢", ""))
+# try:
+#     print(ALERT)
+# except UnicodeEncodeError:
+#     print(ALERT.replace("📢", ""))
 
 
 def isDarkTheme():
