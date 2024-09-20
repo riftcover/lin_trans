@@ -3,9 +3,10 @@ import shutil
 import sys
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QSplitter, QWidget, QLineEdit, QPushButton, QRadioButton,
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QWidget, QLineEdit, QPushButton, QRadioButton,
                                QFileDialog, QDialog, QLabel)
 
+from components.widget.custom_splitter import CustomSplitter
 from utils import logger
 from nice_ui.util.tools import get_default_documents_path
 from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition
@@ -28,19 +29,6 @@ class AspectRatioWidget(QWidget):
         self.setFixedHeight(height)
         super().resizeEvent(event)
 
-
-class CustomSplitter(QSplitter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setHandleWidth(5)  # 增加宽度到3像素
-        self.setStyleSheet("""
-            QSplitter::handle {
-                background-color: #E0E5EA;
-            }
-            QSplitter::handle:hover {
-                background-color: #B0C4DE;
-            }
-        """)
 
 class SubtitleEditPage(QWidget):
 
