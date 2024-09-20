@@ -1,17 +1,49 @@
-from PySide6.QtWidgets import QPushButton, QLabel
-from components import lin_resource_rc
-from components import LinIcon
+class ProxyTestWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+        self.network_manager = QNetworkAccessManager(self)
+        self.network_manager.finished.connect(self.handle_response)
 
-# 创建一个带图标的按钮
-export_button = QPushButton(LinIcon.EXPORT.icon(32), "Export")
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        self.test_button = QPushButton("测试代理", self)
+        self.test_button.clicked.connect(self.test_proxy)
+        self.response_text = QTextEdit(self)
+        self.response_text.setReadOnly(True)
 
-# 或者使用类方法
-up_button = QPushButton(LinIcon.get_icon('UP', 24), "Up")
+        layout.addWidget(self.test_button)
+        layout.addWidget(self.response_text)
 
-# 创建一个图标标签
-icon_label = QLabel()
-icon_label.setPixmap(LinIcon.DOWN.pixmap(48))
+    def test_proxy(self):
+        url = QUrl("http://www.google.com")
+        request = QNetworkRequest(url)
+        self.network_manager.get(request)
 
-# 或者使用类方法
-icon_label2 = QLabel()
-icon_label2.setPixmap(LinIcon.get_pixmap('DOWN_SQUARE', 48))
+    def handle_response(self, reply):
+        if reply.error() == QNetworkReply.NoError:
+            content = reply.readAll()
+            self.response_text.setPlainText(str(content, encoding='utf-8'))
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+        else:
+            error_msg = reply.errorString()
+            self.response_text.setPlainText(f"错误: {error_msg}")
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {error_msg}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+
+        reply.deleteLater()

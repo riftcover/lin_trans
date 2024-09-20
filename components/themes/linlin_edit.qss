@@ -1,0 +1,7 @@
+LinLineEdit {
+    border-left: 1px solid #d0d0d0;  /* 左边框为灰色 */
+    border-right: 1px solid #d0d0d0;  /* 右边框为灰 色 */
+    border-top: 2px solid transparent;  /* 上边框为透明 */
+    border-bottom: 2px solid transparent;  /* 下边框为透明 */
+    padding: 2px;
+}

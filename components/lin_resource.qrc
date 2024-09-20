@@ -5,6 +5,9 @@
         <file>themes/lin_status_label.qss</file>
         <file>themes/delete_button.qss</file>
         <file>themes/combo_box.qss</file>
+        <file>themes/linlin_edit.qss</file>
+        <file>themes/subedit_head.qss</file>
+        <file>themes/subedit_table.qss</file>
     </qresource>
     <qresource prefix="/icon">
         <file>assets/AntDesignDownSquareFilled.svg</file>

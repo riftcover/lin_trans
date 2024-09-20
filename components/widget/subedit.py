@@ -1,12 +1,12 @@
-from typing import Dict, Set, Tuple, Optional, Any, List, Callable
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QPoint
+from typing import Tuple, Any, List
+
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QAbstractItemDelegate
 
-from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QHBoxLayout, QCheckBox, \
-    QAbstractItemDelegate
-
-from utils import logger
+from components.resource_manager import StyleManager
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
+from utils import logger
 from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
 
 
@@ -136,6 +136,7 @@ class CustomItemDelegate(QStyledItemDelegate):
     def create_text_edit(self, parent) -> LinLineEdit:
         text_edit = LinLineEdit(parent)
         text_edit.setObjectName("text_edit")
+        StyleManager.apply_style(text_edit, 'linlin_edit')
         return text_edit
 
     def create_edit_widget(self, parent, index) -> QWidget:
@@ -544,64 +545,14 @@ class SubtitleTable(QTableView):
         # 隐藏网格线
         self.setShowGrid(False)
 
-        self.setStyleSheet("""
-            QTableView {
-                background-color: white;
-                border: none;
-            }
-            QHeaderView::section {
-                background-color: #f0f0f0;
-                padding: 6px;
-                border: none;
-                border-bottom: 2px solid #d0d0d0;
-                font-weight: bold;
-                color: #333333;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #f0f0f0;
-                width: 10px;
-                margin: 0px 0px 0px 0px;
-            }
-            QScrollBar::handle:vertical {
-                background: #c0c0c0;
-                min-height: 20px;
-                border-radius: 5px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-            QScrollBar:horizontal {
-                border: none;
-                background: #f0f0f0;
-                height: 10px;
-                margin: 0px 0px 0px 0px;
-            }
-            QScrollBar::handle:horizontal {
-                background: #c0c0c0;
-                min-width: 20px;
-                border-radius: 5px;
-            }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-                width: 0px;
-            }
-        """)
+        StyleManager.apply_style(self, 'subedit_table')
 
     def setHorizontalHeaderLabels(self):
         # 设置表头样式
         header = self.horizontalHeader()
         # 设置默认对齐方式为居中
         header.setDefaultAlignment(Qt.AlignCenter)
-        header.setStyleSheet("""
-            QHeaderView::section {
-                background-color: #f0f0f0;
-                padding: 4px;
-                border: none;
-                border-bottom: 1px solid #d0d0d0;
-                border-right: none;
-                font-weight: bold;
-            }
-        """)
+        StyleManager.apply_style(header, 'subedit_head')
 
         # 设置表头高度
         header.setFixedHeight(30)
