@@ -453,24 +453,20 @@ class TableApp(CardWidget):
         dialog.exec()
 
     def _export_row(self):
-        # todo： 使用字幕编辑页面的导出功能
         row = self._get_row()
-        options = QFileDialog.Options()
-        item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
-        logger.info(f"文件所在行:{row + 1} 文件名:{item.text()}")
-        export_name = f"{item.text()}.srt"
-        file_path, _ = QFileDialog.getSaveFileName(self, "导出文件", export_name, options=options)
-        if file_path:
-            orm_table = self._choose_sql_orm(row)
-            unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-            logger.info(f"unid_item:{unid_item}")
-            logger.info(f"导出文件:{unid_item.text()} 成功")
-            job_obj = json.loads(orm_table.query_data_by_unid(unid_item.text()).obj)
-            logger.info(f"job_obj:{job_obj}")
-            job_path = f'{job_obj["output"]}/{job_obj["raw_noextname"]}.srt'
-            logger.info(f"导出文件:{job_path}到{file_path}")
-            shutil.copy(job_path, file_path)
-            InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+        job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+        # work_obj 取值是_load_data中srt_edit_dict
+        work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+        srt_path = work_obj.srt_path
+        if not os.path.isfile(srt_path):
+            logger.error(f"文件:{srt_path}不存在,无法导出")
+            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                            parent=self)
+            raise FileNotFoundError(f"The file {srt_path} does not exist.")
+
+        dialog = ExportSubtitleDialog([srt_path], self)
+        dialog.exec()
+        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                             parent=self)
 
     def _update_buttons_visibility(self):
