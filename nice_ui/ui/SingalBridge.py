@@ -1,6 +1,8 @@
 from PySide6.QtCore import Signal, QObject
 
 
+from utils import logger
+
 
 class DataBridge(QObject):
     # 定义信号
@@ -24,8 +26,8 @@ class DataBridge(QObject):
             self.checkbox_b_state_changed.emit(value)
 
     def emit_update_table(self, obj_format):
-        from nice_ui.ui.my_story import SrtEditDict
-        assert isinstance(obj_format, SrtEditDict)
+        from nice_ui.util.tools import VideoFormatInfo
+        assert isinstance(obj_format, VideoFormatInfo)
         self.update_table.emit(obj_format, 1)
 
     def emit_whisper_working(self, unid, progress: int):

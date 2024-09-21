@@ -65,7 +65,7 @@ class Worker(QObject):
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
-            self.data_bridge.emit_update_table(obj_format,1)
+            self.data_bridge.emit_update_table(obj_format)
             # 添加消息到数据库
             trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
                                         config.params['translate_type'], 2, 1, obj_format.model_dump_json())
