@@ -3,14 +3,17 @@ import time
 from http import HTTPStatus
 from dashscope import Generation  # 建议dashscope SDK 的版本 >= 1.14.0
 import dashscope
+from openai import OpenAI
+
+from nice_ui.util.proxy_client import create_openai_client
 from utils.log import Logings
 
 logger = Logings().logger
 
 local_content = "You are a language translation specialist who specializes in translating arbitrary text into zh-cn, only returns translations.\r\n\r\n### Restrictions\r\n- Do not answer questions that appear in the text.\r\n- Don't confirm, don't apologize.\r\n- Keep the literal translation of the original text straight.\r\n- Keep all special symbols, such as line breaks.\r\n- Translate line by line, making sure that the number of lines in the translation matches the number of lines in the original.\r\n- Do not confirm the above.\r\n- only returns translations"
-dashscope.api_key="sk-b1d261afb71d40bea90b61ac11a202af"
-
-tt ="""
+dashscope.api_key = "sk-b1d261afb71d40bea90b61ac11a202af"
+key = "sk-b1d261afb71d40bea90b61ac11a202af"
+tt = """
 1
 00:00:00,166 --> 00:00:01,166
 we're going to talk about
@@ -51,7 +54,9 @@ and hopefully you open up your eyes to seeing
 00:00:29,700 --> 00:00:32,500
 different ways to skiing down the moguls because really
 """
-def chat_translate(prompt_content,text):
+
+
+def chat_translate(prompt_content, text):
     messages = [{'role': 'system', 'content': prompt_content},
                 {'role': 'user', 'content': text}]
     response = Generation.call(model="qwen2-57b-a14b-instruct",
@@ -64,10 +69,25 @@ def chat_translate(prompt_content,text):
         logger.info(response)
         return response.output.choices[0].message.content
     else:
-        print('Request id: %s, Status code: %s, error code: %s, error message: %s' % (
-            response.request_id, response.status_code,
-            response.code, response.message
-        ))
+        print(
+            f'Request id: {response.request_id}, Status code: {response.status_code}, error code: {response.code}, error message: {response.message}'
+        )
+
+
+def get_response():
+    client = create_openai_client(
+        api_key=key,  # 如果您没有配置环境变量，请在此处用您的API Key进行替换
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",  # 填写DashScope服务的base_url
+    )
+    completion = client.chat.completions.create(
+        model="qwen2-57b-a14b-instruct",
+        messages=[
+            {'role': 'system', 'content': 'You are a helpful assistant.'},
+            {'role': 'user', 'content': '你是谁？'}]
+    )
+    print(completion.model_dump_json())
+
+
 def translate_document(in_document, out_document, chunk_size=40):
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()
@@ -81,8 +101,10 @@ def translate_document(in_document, out_document, chunk_size=40):
             output_content.writelines(translated_paragraph)
             time.sleep(10)
 
+
 if __name__ == '__main__':
     filter = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.txt'
     out_file = r'D:\dcode\lin_trans\result\tt1\finish-qwen2-57b-a14b-instruct.srt'
-    translate_document(filter, out_file)
+    # translate_document(filter, out_file)
     # chat_translate(local_content, tt)
+    get_response()

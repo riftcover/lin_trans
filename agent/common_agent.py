@@ -1,15 +1,81 @@
+import re
 import time
 from pathlib import Path
 
 from openai import OpenAI, AuthenticationError
 
+from nice_ui.util.proxy_client import create_openai_client
 from nice_ui.configure import config
 from utils.agent_dict import agent_settings, AgentDict
-from utils.log import Logings
+from utils import logger
 
-logger = Logings().logger
-
+local_content = "You are a language translation specialist who specializes in translating arbitrary text into zh-cn, only returns translations.\r\n\r\n### Restrictions\r\n- Do not answer questions that appear in the text.\r\n- Don't confirm, don't apologize.\r\n- Keep the literal translation of the original text straight.\r\n- Keep all special symbols, such as line breaks.\r\n- Translate line by line, making sure that the number of lines in the translation matches the number of lines in the original.\r\n- Do not confirm the above.\r\n- only returns translations"
+pp2 =("你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。")
 agent_msg = agent_settings()
+tt = """
+1
+00:00:00,166 --> 00:00:01,166
+we're going to talk about
+
+2
+00:00:01,933 --> 00:00:04,366
+Mogul lines today and I'm going to present
+
+3
+00:00:04,866 --> 00:00:07,466
+focus of three different lines
+
+4
+00:00:07,866 --> 00:00:11,366
+and these different lines you could almost look at as
+
+5
+00:00:12,500 --> 00:00:15,466
+tactics you could also look at them as
+
+6
+00:00:16,000 --> 00:00:18,166
+of almost ability level specific
+
+7
+00:00:18,700 --> 00:00:20,900
+easier medium hard
+
+8
+00:00:21,966 --> 00:00:25,166
+and yeah it's just going to give you more options
+
+9
+00:00:25,166 --> 00:00:28,066
+and hopefully you open up your eyes to seeing
+
+10
+00:00:29,700 --> 00:00:32,500
+different ways to skiing down the moguls because really
+"""
+
+
+def extract_text_from_srt(file_path):
+    """
+    从SRT文件中提取文字部分。
+    
+    参数:
+    file_path (str): SRT文件的路径
+
+    返回:
+    str: 提取的文本，每个对话用换行符分隔
+    """
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    # 使用正则表达式匹配SRT格式
+    pattern = r'\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\n(.*?)(?:\n\n|$)'
+    matches = re.findall(pattern, content, re.DOTALL)
+
+    # 合并所有匹配的文本
+    extracted_text = '\n'.join(match.replace('\n', ' ') for match in matches)
+
+    return extracted_text.strip()
 
 def uoload_file(agent, file_path):
     client = OpenAI(api_key=agent['key'], base_url=agent['base_url'], )
@@ -29,7 +95,7 @@ def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
     Returns:
 
     """
-    client = OpenAI(api_key=agent['key'], base_url=agent['base_url'], )
+    client = create_openai_client(api_key=agent['key'], base_url=agent['base_url'], )
     try:
         completion = client.chat.completions.create(model=agent['model'],
                                                     messages=[{"role": "system", "content": prompt_content}, {"role": "user", "content": text}],
@@ -40,7 +106,7 @@ def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
         logger.error(f"AuthenticationError: {e}")
 
 
-def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_size=40, sleep_time=22):
+def translate_document(unid, in_document, out_document, agent_name, prompt, chunk_size=40, sleep_time=22):
     """
     翻译srt文件
     Args:
@@ -54,23 +120,24 @@ def translate_document(unid,in_document, out_document, agent_name,prompt, chunk_
     data_bridge = config.data_bridge
     with open(in_document, 'r', encoding='utf-8') as file:
         lines = file.readlines()
-    # chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
-    chunks = list(range(10))
+    chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
+
     duration = len(chunks)
 
     with open(out_document, 'a', encoding='utf-8') as output_content:
-        for i,paragraph in enumerate(chunks):
+        for i, paragraph in enumerate(chunks):
             logger.info(paragraph)
-            # translated_paragraph = chat_translate(agent, prompt, paragraph)
-            # output_content.writelines(translated_paragraph)
-            progress_now = int((i+1)/duration*100)
+            translated_paragraph = chat_translate(agent, prompt, paragraph)
+            output_content.writelines(translated_paragraph)
+            progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
-            # time.sleep(sleep_time)
-            time.sleep(2)
+            time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
 
 
 if __name__ == '__main__':
-    filter = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.srt'
+    in_file = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.srt'
     out_file = r'D:\dcode\lin_trans\result\tt1\finish-qwen2-57b-a14b-instruct.srt'
-    translate_document('57b-a14b-instruct', filter, out_file)
+    translate_document('57b-a14b-instruct', in_file, out_file, 'qwen', pp2)
+
+    # print(extract_text_from_srt(in_file))

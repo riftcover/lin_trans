@@ -17,6 +17,7 @@ kimi_msg = {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}
 
 
 def agent_settings() -> AgentSettings:
+    # todo 智普
     gui_settings = QSettings("Locoweed", "LinLInTrans")
     qwen_key = {"key": gui_settings.value("qwen")}
     qwen_msg.update(qwen_key)
