@@ -1,10 +1,13 @@
 # coding:utf-8
+import asyncio
 import sys
 
-from PySide6.QtCore import QUrl, QSettings
+import httpx
+from PySide6.QtCore import QUrl, QSettings, QTimer
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
+from packaging import version
 
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
@@ -28,6 +31,8 @@ class Window(FluentWindow):
 
         self.initWindow()
         self.load_proxy_settings()  # 加载代理设置
+        # todo 更新检查更改地址
+        # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
@@ -95,6 +100,35 @@ class Window(FluentWindow):
         else:
             QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
             logger.info("程序启动时禁用代理")
+
+    async def fetch_latest_version(self):
+        async with httpx.AsyncClient() as client:
+            # todo 更新检查更改地址
+            response = await client.get("https://api.github.com/repos/your_username/your_repo/releases/latest")
+            response.raise_for_status()
+            return response.json()["tag_name"]
+
+    def check_for_updates(self):
+        current_version = "1.0.0"  # Replace with your current version
+        try:
+            loop = asyncio.get_event_loop()
+            latest_version = loop.run_until_complete(self.fetch_latest_version())
+            if version.parse(latest_version) > version.parse(current_version):
+                self.show_update_dialog(latest_version)
+        except Exception as e:
+            logger.error(f"Error checking for updates: {e}")
+
+    def show_update_dialog(self, latest_version):
+        dialog = MessageBox(
+            "更新可用",
+            f"新版本 {latest_version} 已经可用。是否要现在更新？",
+            self
+        )
+        dialog.yesButton.setText("更新")
+        dialog.cancelButton.setText("稍后")
+
+        if dialog.exec():
+            QDesktopServices.openUrl(QUrl("https://github.com/your_username/your_repo/releases/latest"))
 
 
 if __name__ == '__main__':
