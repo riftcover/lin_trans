@@ -262,7 +262,7 @@ class ExportSubtitleDialog(QDialog):
         logger.info(first_line_subtitles)
         logger.info(second_line_subtitles)
         # 保存提取的文本到 export_path
-        export_name = os.path.splitext(os.path.basename(self.patt))[0]
+        export_name = os.path.splitext(os.path.basename(path))[0]
         with open(f'{export_path}/{export_name}[双语].txt', 'w', encoding='utf-8') as dest_file:
             # 写入第一行字幕
             dest_file.write('\n'.join(first_line_subtitles) + '\n')
