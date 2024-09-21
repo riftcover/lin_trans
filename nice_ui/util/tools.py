@@ -21,7 +21,7 @@ import requests
 from nice_ui.configure import config
 from nice_ui.configure.custom_exceptions import VideoProcessingError
 from nice_ui.task import WORK_TYPE
-
+from utils import logger
 
 class ModelInfo(TypedDict):
     status: int
@@ -53,7 +53,7 @@ def get_edge_rolelist():
     try:
         return _extracted_from_get_edge_rolelist(voice_list, video_list_json)
     except Exception as e:
-        config.logger.error('获取edgeTTS角色失败' + str(e))
+        logger.error('获取edgeTTS角色失败' + str(e))
         print('获取edgeTTS角色失败' + str(e))
 
 
@@ -92,7 +92,7 @@ def get_azure_rolelist():
 
 # 执行 ffmpeg
 def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
-    config.logger.info(f'runffmpeg-arg={arg}')
+    logger.info(f'runffmpeg-arg={arg}')
     arg_copy = copy.deepcopy(arg)
 
     if fps:
@@ -120,7 +120,7 @@ def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
     arg.insert(-1, 'cfr' if fps else 'vfr')
     cmd += arg
     print(f'ffmpeg:{cmd=}')
-    config.logger.info(f'runffmpeg-tihuan:{cmd=}')
+    logger.info(f'runffmpeg-tihuan:{cmd=}')
     if noextname:
         config.queue_novice[noextname] = 'ing'
     try:
@@ -131,8 +131,8 @@ def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
         return True
     except subprocess.CalledProcessError as e:
         retry = False
-        config.logger.error(f'出错了:{cmd=}')
-        config.logger.error(f'before:{retry=},{arg_copy=}')
+        logger.error(f'出错了:{cmd=}')
+        logger.error(f'before:{retry=},{arg_copy=}')
         # 处理视频时如果出错，尝试回退
         if cmd[-1].endswith('.mp4'):
             #存在视频的copy操作时，尝试回退使用重新编码
@@ -147,20 +147,20 @@ def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
                 # 切换为cpu
                 if not is_box:
                     set_process(config.transobj['huituicpu'])
-                config.logger.error('cuda上执行出错，退回到CPU执行')
+                logger.error('cuda上执行出错，退回到CPU执行')
                 for i, it in enumerate(arg_copy):
                     if i > 0 and arg_copy[i - 1] == '-c:v' and it != default_codec:
                         arg_copy[i] = default_codec
                         retry = True
-            config.logger.error(f'after:{retry=},{arg_copy=}')
+            logger.error(f'after:{retry=},{arg_copy=}')
             if retry:
                 return runffmpeg(arg_copy, noextname=noextname, is_box=is_box)
         if noextname:
             config.queue_novice[noextname] = "error"
-        config.logger.error(f'cmd执行出错抛出异常:{cmd=},{str(e.stderr)}')
+        logger.error(f'cmd执行出错抛出异常:{cmd=},{str(e.stderr)}')
         raise ValueError(str(e.stderr))
     except Exception as e:
-        config.logger.error(f'执行出错 Exception:{cmd=},{str(e)}')
+        logger.error(f'执行出错 Exception:{cmd=},{str(e)}')
         raise VideoProcessingError(str(e))
 
 
@@ -672,9 +672,9 @@ def set_process(text, type="logs", *, qname='sp', func_name="", btnkey="", nolog
         if text:
             if not nologs:
                 if type == 'error':
-                    config.logger.error(text)
+                    logger.error(text)
                 else:
-                    config.logger.info(text)
+                    logger.info(text)
 
             # 移除html
             if type == 'error':
@@ -844,7 +844,7 @@ def get_google_url():
                             return google_url
                     except Exception:
                         msg = f'测试失败: {google_url}'
-                        config.logger.error(msg)
+                        logger.error(msg)
                         continue
                     finally:
                         n += 1
@@ -992,7 +992,7 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
 }
 
     """
-    config.logger.info(f'format_video {name}')
+    logger.info(f'format_video {name}')
 
     raw_pathlib = Path(name)
     raw_basename = raw_pathlib.name
@@ -1007,15 +1007,15 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
     h.update(current_time)
 
     unid = h.hexdigest()
-    config.logger.info(f'out: {out}')
+    logger.info(f'out: {out}')
     output_path: Path = out / unid
     wav_path = output_path / f'{raw_noextname}.wav'
     srt_path = output_path / f'{raw_noextname}.srt'
-    config.logger.info(f'output_path: {output_path}')
+    logger.info(f'output_path: {output_path}')
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
-    config.logger.info(f'media_type: {media_type}')
+    logger.info(f'media_type: {media_type}')
     # obj = {"raw_name":name,  # 原始视频路径
     #        "raw_dirname":raw_dirname,  # 原始视频所在原始目录
     #        "raw_basename":raw_basename,  # 原始视频原始名字带后缀

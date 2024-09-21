@@ -375,7 +375,7 @@ class TableApp(CardWidget):
         _, file_status = self._add_common_widgets(row_position, filename_without_extension, unid, 2, edit_dict)
         file_status.set_status("已完成")
 
-        self._set_row_buttons(row_position, [ButtonType.EXPORT, ButtonType.EDIT, ButtonType.START, ButtonType.DELETE])
+        self._set_row_buttons(row_position, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
 
     def _start_row(self):
         # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
@@ -453,6 +453,7 @@ class TableApp(CardWidget):
         dialog.exec()
 
     def _export_row(self):
+        # todo： 使用字幕编辑页面的导出功能
         row = self._get_row()
         options = QFileDialog.Options()
         item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)

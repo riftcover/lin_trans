@@ -11,9 +11,7 @@ import threading
 
 from nice_ui.configure import config
 from utils.file_utils import get_segment_timestamps, funasr_write_srt_file
-from utils.log import Logings
-
-logger = Logings().logger
+from utils import logger
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -85,7 +83,7 @@ class SrtWriter:
             ln: 音频文件语言
         """
         self.srt_name = raw_noextname
-        config.logger.info(f'wav_dirname : {wav_dirname}')
+        logger.info(f'wav_dirname : {wav_dirname}')
         if not Path(wav_dirname).is_file():
             logger.error(f"The file {wav_dirname} does not exist.")
             raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
