@@ -6,9 +6,11 @@ from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
                                QStyle)
 
+from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
+from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition
 
@@ -23,6 +25,7 @@ class CustomTableItemDelegate(TableItemDelegate):
 class Video2SRT(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
+        self.prompts_orm = PromptsOrm()
         self.settings = settings
         self.table = TableWindow(self, settings)
         self.util = SecWindow(self)
@@ -112,14 +115,41 @@ class Video2SRT(QWidget):
         translate_engine_layout = QHBoxLayout()
         translate_engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
+        translate_model_name = BodyLabel("翻译引擎")
+
+        self.translate_model = TransComboBox(self)
+        self.translate_model.setFixedWidth(117)
+        # todo: 翻译引擎列表需调整
+        translate_list = get_translate_code()
+        self.translate_model.addItems(translate_list)
+        translate_name = config.params["translate_type"]
+        logger.info(f"translate_name: {translate_name}")
+        self.translate_model.setCurrentText(translate_name)
+
+        translate_engine_layout.addWidget(translate_model_name)
+        translate_engine_layout.addWidget(self.translate_model)
+        combo_layout.addLayout(translate_engine_layout)
+
+        # todo: 只有选择ai时才显示
+        prompt_layout = QHBoxLayout()
+        prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        ai_prompt_name = BodyLabel("提示词")
+        self.ai_prompt = TransComboBox(self)
+        self.ai_prompt.setFixedWidth(98)
+        self.ai_prompt.addItems(self._get_ai_prompt())
+        self.ai_prompt.setCurrentText(config.params["prompt_name"])
+        prompt_layout.addWidget(ai_prompt_name)
+        prompt_layout.addWidget(self.ai_prompt)
+        main_layout.addLayout(prompt_layout)
+
         # 媒体表格卡片
         table_card = CardWidget(self)
         table_layout = QVBoxLayout(table_card)
 
         self.media_table = TableWidget(self)
         # 设置表格表头不显示网格线
-        self.media_table.setColumnCount(4)
-        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作'])
+        self.media_table.setColumnCount(5)
+        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作','文件路径'])
 
         self.media_table.verticalHeader().setVisible(False)  # 隐藏行号
 
@@ -142,6 +172,7 @@ class Video2SRT(QWidget):
         self.media_table.setColumnWidth(2, 100)  # 算力消耗列
         self.media_table.setColumnWidth(3, 100)  # 操作列
         self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
+        self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
 
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
@@ -157,7 +188,7 @@ class Video2SRT(QWidget):
 
     def bind_action(self):
         self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
-        self.start_btn.clicked.connect(self.util.check_start)
+        self.start_btn.clicked.connect(self.util.check_asr)
         self.act_btn_get_video()
 
     def act_btn_get_video(self):
@@ -176,6 +207,10 @@ class Video2SRT(QWidget):
             srt_list.append(self.media_table.item(i, 4).text())
         config.queue_asr.extend(srt_list)
         logger.info(f'queue_srt: {config.queue_asr}')
+
+    def _get_ai_prompt(self):
+        prompt_names = self.prompts_orm.get_prompt_name()
+        return [i.prompt_name for i in prompt_names]
 
 
 class TableWindow:

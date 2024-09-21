@@ -167,20 +167,17 @@ class WorkSrt(QWidget):
         self.start_btn.clicked.connect(self.util.check_translate)
 
     def add_queue_srt(self):
-        # 获取self.main.media_table中第4列的数据
-        srt_list = []
-        for i in range(self.media_table.rowCount()):
-            srt_list.append(self.media_table.item(i, 4).text())
+        srt_list = [
+            self.media_table.item(i, 4).text()
+            for i in range(self.media_table.rowCount())
+        ]
         config.queue_trans.extend(srt_list)
         logger.info(f"queue_srt: {config.queue_trans}")
 
     def _get_ai_prompt(self) -> list:
         # 获取AI提示列表
         prompt_names = self.prompts_orm.get_prompt_name()
-        prompt_name_list = []
-        for i in prompt_names:
-            prompt_name_list.append(i.prompt_name)
-        return prompt_name_list
+        return [i.prompt_name for i in prompt_names]
 
 
 class LTableWindow:
@@ -207,8 +204,7 @@ class LTableWindow:
         # 添加文件到表格
         logger.info(f'add_file_to_table: {file_path}')
         row_position = ui_table.rowCount()
-        file_character_count = self.get_file_character_count(file_path)
-        if file_character_count:
+        if file_character_count := self.get_file_character_count(file_path):
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
             logger.info(f"file_name type: {type(file_name)}")
