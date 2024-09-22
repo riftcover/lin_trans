@@ -13,31 +13,6 @@ local_content = "You are a language translation specialist who specializes in tr
 pp2 = "你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。"
 agent_msg = agent_settings()
 
-
-def extract_text_from_srt(file_path):
-    """
-    从SRT文件中提取文字部分。
-    extract text content from srt file.
-    
-    参数:
-    file_path (str): SRT文件的路径
-
-    返回:
-    str: 提取的文本，每个对话用换行符分隔
-    """
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    # 使用正则表达式匹配SRT格式
-    pattern = r'\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\n(.*?)(?:\n\n|$)'
-    matches = re.findall(pattern, content, re.DOTALL)
-
-    # 合并所有匹配的文本
-    extracted_text = '\n'.join(match for match in matches)
-
-    return extracted_text.strip()
-
-
 def uoload_file(agent, file_path):
     client = OpenAI(api_key=agent['key'], base_url=agent['base_url'], )
     file_object = client.files.create(file=Path(file_path), purpose="file-extract")
