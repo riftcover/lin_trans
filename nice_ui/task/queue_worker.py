@@ -38,9 +38,8 @@ class LinQueue:
         elif task.job_type == 'trans':
             logger.debug('消费translate任务')
             agent_type = config.params['translate_type']
-            if agent_type in ('qwen', 'kimi'):
-                final_name = f'{task.output}/{task.raw_noextname}_译文.srt'
-                logger.trace(f'准备翻译任务:{final_name}')
-                logger.trace(f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
-                translate_document(task.unid, task.raw_name, final_name, agent_type, config.params['prompt_text'], config.settings['trans_row'],
-                                   config.settings['trans_sleep'])
+            final_name = task.srt_dirname  # 原始文件名_译文.srt
+            logger.trace(f'准备翻译任务:{final_name}')
+            logger.trace(f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
+            translate_document(task.unid, task.raw_name, final_name, agent_type, config.params['prompt_text'], config.settings['trans_row'],
+                               config.settings['trans_sleep'])
