@@ -220,7 +220,7 @@ params = {#操作系统类型:win32、linux、darwin
     "source_module_name": "small", "detect_language": "en",
 
     "translate_status": False,
-    "target_language": "zh-cn", "translate_type": "通义千问",
+    "target_language": "zh-cn", "translate_channel": "通义千问",
     "subtitle_language": "chi",
     "prompt_name": "默认",
     "prompt_text": "",

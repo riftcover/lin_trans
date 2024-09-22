@@ -4,6 +4,7 @@ from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
 from nice_ui.util.tools import VideoFormatInfo
 from utils import logger
+from nice_ui.task import WORK_TYPE
 
 class LinQueue:
     def lin_queue_put(self, take: VideoFormatInfo):
@@ -21,7 +22,7 @@ class LinQueue:
         logger.debug('消费线程工作中')
         task: VideoFormatInfo = config.lin_queue.get_nowait()
         logger.debug(f'获取到任务:{task}')
-        if task.job_type == 'asr':
+        if task.job_type == WORK_TYPE.ASR:
             logger.debug('消费srt任务')
             # if task['codec_type'] == 'video':
             # 视频转音频
@@ -35,9 +36,9 @@ class LinQueue:
             # srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
             srt_worker.funasr_to_srt()  # elif task['codec_type'] == 'audio':  #     final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'  #     FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)  #     srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )  #     srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
 
-        elif task.job_type == 'trans':
+        elif task.job_type == WORK_TYPE.TRANS:
             logger.debug('消费translate任务')
-            agent_type = config.params['translate_type']
+            agent_type = config.params['translate_channel']
             final_name = task.srt_dirname  # 原始文件名_译文.srt
             logger.trace(f'准备翻译任务:{final_name}')
             logger.trace(f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')

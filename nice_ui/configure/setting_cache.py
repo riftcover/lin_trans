@@ -30,9 +30,9 @@ def get_setting_cache(settings: QSettings):
     config.params["gptsovits_extra"] = settings.value("gptsovits_extra", "pyvideotrans")
     config.params["azure_model"] = settings.value("azure_model", config.params['azure_model'])
 
-    config.params['translate_type'] = settings.value("translate_type", config.params['translate_type'])
-    if config.params['translate_type'] == 'FreeChatGPT':
-        config.params['translate_type'] = 'FreeGoogle'
+    config.params['translate_channel'] = settings.value("translate_channel", config.params['translate_channel'])
+    if config.params['translate_channel'] == 'FreeChatGPT':
+        config.params['translate_channel'] = 'FreeGoogle'
     config.params['subtitle_type'] = settings.value("subtitle_type", config.params['subtitle_type'], int)
     config.proxy = settings.value("proxy", "", str)
     config.params['voice_rate'] = settings.value("voice_rate", config.params['voice_rate'].replace('%', '').replace('+', ''), str)

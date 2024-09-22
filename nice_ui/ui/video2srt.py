@@ -102,13 +102,13 @@ class Video2SRT(QWidget):
         translate_language_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_language_label = BodyLabel("翻译语种")
-        self.translate_language = TransComboBox()
-        self.translate_language.setFixedWidth(98)
-        self.translate_language.addItems(self.language_name)
+        self.translate_language_combo = TransComboBox()
+        self.translate_language_combo.setFixedWidth(98)
+        self.translate_language_combo.addItems(self.language_name)
         if config.params['target_language'] and config.params['target_language'] in self.language_name:
-            self.translate_language.setCurrentText(config.params['target_language'])
+            self.translate_language_combo.setCurrentText(config.params['target_language'])
         translate_language_layout.addWidget(translate_language_label)
-        translate_language_layout.addWidget(self.translate_language)
+        translate_language_layout.addWidget(self.translate_language_combo)
         combo_layout.addLayout(translate_language_layout)
 
         # 翻译引擎布局
@@ -122,7 +122,7 @@ class Video2SRT(QWidget):
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
-        translate_name = config.params["translate_type"]
+        translate_name = config.params["translate_channel"]
         logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
@@ -206,7 +206,7 @@ class Video2SRT(QWidget):
             logger.info(self.media_table.item(i, 4).text())
             srt_list.append(self.media_table.item(i, 4).text())
         config.queue_asr.extend(srt_list)
-        logger.info(f'queue_srt: {config.queue_asr}')
+        logger.info(f'queue_asr: {config.queue_asr}')
 
     def _get_ai_prompt(self):
         prompt_names = self.prompts_orm.get_prompt_name()

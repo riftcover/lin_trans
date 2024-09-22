@@ -91,7 +91,7 @@ class WorkSrt(QWidget):
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
-        translate_name = config.params["translate_type"]
+        translate_name = config.params["translate_channel"]
         logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 

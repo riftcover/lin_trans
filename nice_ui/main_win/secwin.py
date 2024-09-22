@@ -21,6 +21,7 @@ from videotrans import translator
 from nice_ui.configure import config
 from nice_ui.util.tools import StartTools
 from utils import logger
+
 start_tools = StartTools()
 
 
@@ -320,94 +321,6 @@ class SecWindow:
         fname = fname.replace('\\', '/')
         self.main.back_audio.setText(fname)
 
-    # 从本地导入字幕文件
-    def import_sub_fun(self):
-        fname, _ = QFileDialog.getOpenFileName(self.main, config.transobj['selectmp4'], config.last_opendir, "Srt files(*.srt *.txt)")
-        if fname:
-            content = ""
-            try:
-                with open(fname, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except:
-                with open(fname, 'r', encoding='gbk') as f:
-                    content = f.read()
-            finally:
-                if content:
-                    self.main.subtitle_area.clear()
-                    self.main.subtitle_area.insertPlainText(content.strip())
-                else:
-                    return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['import src error'])
-
-
-    # 添加进度条
-    def add_process_btn(self):
-        clickable_progress_bar = ClickableProgressBar(self)
-        clickable_progress_bar.progress_bar.setValue(0)  # 设置当前进度值
-        clickable_progress_bar.setText(config.transobj["waitforstart"])
-        clickable_progress_bar.setMinimumSize(500, 50)
-        # # 将按钮添加到布局中
-        self.main.processlayout.addWidget(clickable_progress_bar)
-        return clickable_progress_bar
-
-    # 检测各个模式下参数是否设置正确
-    def check_mode(self, *, txt=None):
-        # 如果是 从字幕配音模式, 只需要字幕和目标语言，不需要翻译和视频
-        if self.main.app_mode == 'peiyin':
-            if not txt or config.params['voice_role'] == 'No' or config.params['target_language'] == '-':
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['peiyinmoshisrt'])
-                return False
-            # 去掉选择视频，去掉原始语言
-            config.params['source_mp4'] = ''
-            config.params['source_language'] = '-'
-            config.params['subtitle_type'] = 0
-            config.params['whisper_model'] = 'tiny'
-            config.params['whisper_type'] = 'all'
-            config.params['is_separate'] = False
-            config.params['video_autorate'] = False
-            config.params['append_video'] = False
-            return True
-        # 如果是 合并模式,必须有字幕，有视频，有字幕嵌入类型，允许设置视频减速
-        # 不需要翻译
-        if self.main.app_mode == 'hebing':
-            if len(config.queue_asr) < 1 or config.params['subtitle_type'] < 1 or not txt:
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['hebingmoshisrt'])
-                return False
-            config.params['is_separate'] = False
-            config.params['target_language'] = '-'
-            config.params['source_language'] = '-'
-            config.params['voice_role'] = 'No'
-            config.params['voice_rate'] = '+0%'
-            config.params['voice_autorate'] = False
-            config.params['video_autorate'] = False
-            config.params['append_video'] = False
-            config.params['whisper_model'] = 'tiny'
-            config.params['whisper_type'] = 'all'
-            config.params['back_audio'] = ''
-            return True
-        if self.main.app_mode == 'tiqu':
-            # 提取字幕模式，必须有视频、有原始语言，语音模型
-            if len(config.queue_asr) < 1:
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['selectvideodir'])
-                return False
-
-            config.params['is_separate'] = False
-            config.params['subtitle_type'] = 0
-            config.params['voice_role'] = 'No'
-            config.params['voice_rate'] = '+0%'
-            config.params['voice_autorate'] = False
-            config.params['video_autorate'] = False
-            config.params['append_video'] = False
-            config.params['back_audio'] = ''
-        if self.main.app_mode == 'biaozhun_jd':
-            config.params['voice_autorate'] = True
-            config.params['video_autorate'] = True
-            config.params['append_video'] = True
-            config.params['auto_ajust'] = True
-            config.params['is_separate'] = False
-            config.params['back_audio'] = ''
-
-        return True
-
     #
     # 判断是否需要翻译
     # 0 peiyin模式无需翻译，heibng模式无需翻译
@@ -425,16 +338,20 @@ class SecWindow:
             return True
         return bool(self.main.subtitle_area.toPlainText().strip())
 
-
     # 检测开始状态并启动
-    def check_start(self):
-
+    def check_asr(self):
         # 加载数据
         self.main.add_queue_mp4()
+        # 存在视频
+        config.params['only_video'] = False
 
-        # 倒计时
-        config.task_countdown = config.settings['countdown_sec']
-        config.settings = config.parse_init()
+        # 判断是否有视频添加
+        if len(config.queue_asr) < 1:
+
+            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+            return False
+        else:
+            config.params['only_video'] = True
 
         # 原始语言
         language_name = self.main.source_language.currentText()
@@ -449,71 +366,68 @@ class SecWindow:
         logger.debug(config.params['source_module_status'])
         config.params['source_module_name'] = start_tools.match_source_model(self.main.source_model.currentText())['model_name']
 
-        # 综合判断
-        if len(config.queue_asr) < 1:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
-            return False
-
-        # cuda检测
-        if 100 < config.params["source_module_status"] < 200:
-            import torch
-            if not torch.cuda.is_available():
-                QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocuda"])
-                return
-            else:
-                allow = True
-                try:
-                    from torch.backends import cudnn
-                    if not cudnn.is_available() or not cudnn.is_acceptable(torch.tensor(1.).cuda()):
-                        allow = False
-                except Exception:
-                    allow = False
-
-                if not allow:
-                    self.main.enable_cuda.setChecked(False)
-                    config.params['cuda'] = False
-                    return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
+        # cuda检测,当前funasr模型不用cuda也很快，所以不检测cuda。代码先别删
+        # if 100 < config.params["source_module_status"] < 200:
+        #     import torch
+        #     if not torch.cuda.is_available():
+        #         QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocuda"])
+        #         return
+        #     else:
+        #         allow = True
+        #         try:
+        #             from torch.backends import cudnn
+        #             if not cudnn.is_available() or not cudnn.is_acceptable(torch.tensor(1.).cuda()):
+        #                 allow = False
+        #         except Exception:
+        #             allow = False
+        #
+        #         if not allow:
+        #             self.main.enable_cuda.setChecked(False)
+        #             config.params['cuda'] = False
+        #             return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj["nocudnn"])
 
         # 是否翻译
         translate_status = self.main.check_fanyi.isChecked()
         config.params['translate_status']: bool = translate_status
-        # 目标语言
-        target_language = self.main.translate_language.currentText()
-        config.params['target_language'] = target_language
 
-        # 翻译渠道
-        config.params['translate_type'] = self.main.translate_type.currentText()
-
-        # 如果需要翻译，再判断是否符合翻译规则
-        # if target_language:
-        #     if not self.dont_translate():
-        #         rs = translator.is_allow_translate(translate_type=config.params['translate_type'],
-        #                                            show_target=config.params['target_language'])
-        #         if rs is not True:
-        #             # 不是True，有错误
-        #             QMessageBox.critical(self.main, config.transobj['anerror'], rs)
-        #             return False
-
-        # 存在视频
-        config.params['only_video'] = False
-        config.params['clear_cache'] = False
-
-        if len(config.queue_asr) > 0:
-            config.params['only_video'] = True
+        if translate_status:
+            # 翻译语种
+            self.get_trans_setting()
 
         save_setting(self.main.settings)
 
         logger.info(f'update later config.queue_mp4:{config.queue_asr}')
-        config.settings = config.parse_init()
         logger.debug("====config.settings====")
         logger.debug(config.settings)
         logger.debug("====config.params====")
         logger.debug(config.params)
         logger.debug("add_queue_thread")
         queue_mp4_copy = copy.deepcopy(config.queue_asr)
-        self.add_queue_thread(queue_mp4_copy, 'asr')
+        if not translate_status:
+            self.add_queue_thread(queue_mp4_copy, WORK_TYPE.ASR)
+            self.update_status(WORK_TYPE.ASR)
+        else:
+            self.add_queue_thread(queue_mp4_copy, WORK_TYPE.ASR_TRANS)
+            self.update_status(WORK_TYPE.ASR_TRANS)
 
-        self.update_status('asr')
+    def get_trans_setting(self):
+        # 翻译语种
+        translate_language_name = self.main.translate_language_combo.currentText()
+        logger.debug(f'==========translate_language_name:{translate_language_name}')
+        config.params['target_language'] = translate_language_name
+
+        # 翻译渠道
+        translate_language_key = config.params["translate_channel"]
+        translate_language_channel_name = self.main.translate_model.currentText()
+        for key, value in translate_api_name.items():
+            if value == translate_language_channel_name:
+                translate_language_key = key
+        logger.debug(f'==========translate_language_name:{translate_language_key}')
+        config.params['translate_channel'] = translate_language_key
+
+        prompt_name = self.main.ai_prompt.currentText()
+        config.params['prompt_name'] = prompt_name
+        config.params['prompt_text'] = self.main.prompts_orm.query_data_by_name(prompt_name)
 
     def check_translate(self):
         self.main.add_queue_srt()
@@ -522,23 +436,7 @@ class SecWindow:
         logger.debug(f'==========language_name:{language_name}')
         config.params['source_language'] = language_name
 
-        #翻译语种
-        translate_language_name = self.main.translate_language_combo.currentText()
-        logger.debug(f'==========translate_language_name:{translate_language_name}')
-        config.params['target_language'] = translate_language_name
-
-        # 翻译渠道
-        translate_language_key = config.params["translate_type"]
-        translate_language_name = self.main.translate_model.currentText()
-        for key, value in translate_api_name.items():
-            if value == translate_language_name:
-                translate_language_key = key
-        logger.debug(f'==========translate_language_name:{translate_language_key}')
-        config.params['translate_type'] = translate_language_key
-
-        prompt_name = self.main.ai_prompt.currentText()
-        config.params['prompt_name'] = prompt_name
-        config.params['prompt_text'] = self.main.prompts_orm.query_data_by_name(prompt_name)
+        self.get_trans_setting()
 
         if len(config.queue_trans) < 1:
             QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
@@ -547,17 +445,17 @@ class SecWindow:
         save_setting(self.main.settings)
 
         queue_srt_copy = copy.deepcopy(config.queue_trans)
-        self.add_queue_thread(queue_srt_copy, 'trans')
+        self.add_queue_thread(queue_srt_copy, WORK_TYPE.TRANS)
 
-        self.update_status('trans')
+        self.update_status(WORK_TYPE.TRANS)
 
-    def add_queue_thread(self, data_copy, work_type):
+    def add_queue_thread(self, data_copy:list, work_type:WORK_TYPE):
         # 添加需处理文件到队列的线程
 
         self.worker_thread = QThread()
         self.worker = Worker(data_copy)
         self.worker.moveToThread(self.worker_thread)
-        self.worker_thread.started.connect(lambda:self.worker.do_work(work_type))
+        self.worker_thread.started.connect(lambda: self.worker.do_work(work_type))
         self.worker.finished.connect(self.worker_thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
@@ -589,9 +487,9 @@ class SecWindow:
     def update_status(self, ty: WORK_TYPE):
         # config.current_status = type
         # 将列表media_table中的内容清空,queue list清空
-        if ty == 'asr':
+        if ty in [WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS]:
             self.main.table.clear_table(self.main.media_table)
             config.queue_asr = []
-        elif ty == 'trans':
+        elif ty == WORK_TYPE.TRANS:
             self.main.table.clear_table(self.main.media_table)
             config.queue_trans = []

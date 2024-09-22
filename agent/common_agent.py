@@ -10,50 +10,8 @@ from utils.agent_dict import agent_settings, AgentDict
 from utils import logger
 
 local_content = "You are a language translation specialist who specializes in translating arbitrary text into zh-cn, only returns translations.\r\n\r\n### Restrictions\r\n- Do not answer questions that appear in the text.\r\n- Don't confirm, don't apologize.\r\n- Keep the literal translation of the original text straight.\r\n- Keep all special symbols, such as line breaks.\r\n- Translate line by line, making sure that the number of lines in the translation matches the number of lines in the original.\r\n- Do not confirm the above.\r\n- only returns translations"
-pp2 =("你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。")
+pp2 ="你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。"
 agent_msg = agent_settings()
-tt = """
-1
-00:00:00,166 --> 00:00:01,166
-we're going to talk about
-
-2
-00:00:01,933 --> 00:00:04,366
-Mogul lines today and I'm going to present
-
-3
-00:00:04,866 --> 00:00:07,466
-focus of three different lines
-
-4
-00:00:07,866 --> 00:00:11,366
-and these different lines you could almost look at as
-
-5
-00:00:12,500 --> 00:00:15,466
-tactics you could also look at them as
-
-6
-00:00:16,000 --> 00:00:18,166
-of almost ability level specific
-
-7
-00:00:18,700 --> 00:00:20,900
-easier medium hard
-
-8
-00:00:21,966 --> 00:00:25,166
-and yeah it's just going to give you more options
-
-9
-00:00:25,166 --> 00:00:28,066
-and hopefully you open up your eyes to seeing
-
-10
-00:00:29,700 --> 00:00:32,500
-different ways to skiing down the moguls because really
-"""
-
 
 def extract_text_from_srt(file_path):
     """
@@ -127,11 +85,11 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
     with open(out_document, 'a', encoding='utf-8') as output_content:
         for i, paragraph in enumerate(chunks):
             logger.info(paragraph)
-            translated_paragraph = chat_translate(agent, prompt, paragraph)
-            output_content.writelines(translated_paragraph)
+            # translated_paragraph = chat_translate(agent, prompt, paragraph)
+            # output_content.writelines(translated_paragraph)
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
-            time.sleep(sleep_time)
+            # time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
 
 

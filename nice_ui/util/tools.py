@@ -946,101 +946,83 @@ class VideoFormatInfo(BaseModel):
   'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
   'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
   'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'job_type': 'asr'
+  'work_type': 'asr'
 }
     """
-    raw_name: str = Field(..., description="原始视频路径")
-    raw_dirname: str = Field(..., description="原始视频所在原始目录")
-    raw_basename: str = Field(..., description="原始视频原始名字带后缀")
-    raw_noextname: str = Field(..., description="原始视频名字不带后缀")
+    raw_name: str = Field(..., description="原始文件路径")
+    raw_dirname: str = Field(..., description="原始文件所在原始目录")
+    raw_basename: str = Field(..., description="原始文件原始名字带后缀")
+    raw_noextname: str = Field(..., description="原始文件名字不带后缀")
     raw_ext: str = Field(..., description="原始后缀不带 .")
     codec_type: str = Field(..., description="视频或音频")
     output: str = Field(..., description="最终存放的路径")
     wav_dirname: str = Field(..., description="ff处理完wav文件路径")
+    media_dirname:  Optional[str] = Field(..., description="媒体路径")
     srt_dirname: str = Field(..., description="funasr处理完srt文件路径")
     unid: str = Field(..., description="文件指纹")
-    source_mp4: str = Field(..., description="任务视频路径，原始视频路径")
+    source_mp4: str = Field(..., description="任务文件路径，原始文件路径")
     job_type: Optional[WORK_TYPE] = Field(default=None, description="任务类型，asr、trans 可选字段")
 
 
-# 格式化视频信息
-def format_video(name: str, out: Path) -> VideoFormatInfo:
+def format_job_msg(name: str, out: Path, work_type: WORK_TYPE) -> VideoFormatInfo:
     """
-    格式化视频信息
+    格式化任务信息
 
     Args:
         name: #需要处理的文件路径，如'C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4'
-        out:
+        out: #输出目录，result路径
+        work_type: #任务类型，asr、trans、asr+trans
 
     Returns:
-    {
-  'raw_name': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'raw_dirname': 'F:/ski/国外教学翻译',
-  'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
-  'raw_ext': 'mp4',
-  'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
-  'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
-  'srt_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.srt',
-  'unid': '5f421d80a8a6a9211a18e5ec06ee21e3',
-  'source_mp4': 'F:/ski/国外教学翻译/HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
-  'job_type': 'asr'
-}
+        VideoFormatInfo: 视频格式化信息
 
     """
-    logger.info(f'format_video {name}')
+    video_info = None
+    if work_type in (WORK_TYPE.ASR, WORK_TYPE.TRANS):
+        raw_pathlib = Path(name)
+        raw_basename = raw_pathlib.name
+        raw_noextname = raw_pathlib.stem
+        ext = raw_pathlib.suffix
+        raw_dirname = raw_pathlib.parent.resolve().as_posix()
 
-    raw_pathlib = Path(name)
-    raw_basename = raw_pathlib.name
-    raw_noextname = raw_pathlib.stem
-    ext = raw_pathlib.suffix
-    raw_dirname = raw_pathlib.parent.resolve().as_posix()
+        h = hashlib.md5()
+        h.update(name.encode('utf-8'))
+        h.update(config.params.get('source_module_name').encode('utf-8'))
+        current_time = str(time.time()).encode('utf-8')
+        h.update(current_time)
 
-    h = hashlib.md5()
-    h.update(name.encode('utf-8'))
-    h.update(config.params.get('source_module_name').encode('utf-8'))
-    current_time = str(time.time()).encode('utf-8')
-    h.update(current_time)
-
-    unid = h.hexdigest()
-    logger.info(f'out: {out}')
-    output_path: Path = out / unid
-    wav_path = output_path / f'{raw_noextname}.wav'
-    srt_path = output_path / f'{raw_noextname}.srt'
-    logger.info(f'output_path: {output_path}')
-    output_path.mkdir(parents=True, exist_ok=True)
-    # 判断文件是视频还是音频
-    media_type = detect_media_type(name)
-    logger.info(f'media_type: {media_type}')
-    # obj = {"raw_name":name,  # 原始视频路径
-    #        "raw_dirname":raw_dirname,  # 原始视频所在原始目录
-    #        "raw_basename":raw_basename,  # 原始视频原始名字带后缀
-    #        "raw_noextname":raw_noextname,  # 原始视频名字不带后缀
-    #        "raw_ext":ext[1:],  # 原始后缀不带 .
-    #        "dirname":"",  # 处理后 移动后符合规范的目录名
-    #        "basename":"",  # 符合规范的基本名带后缀
-    #        "noextname":"",  # 符合规范的不带后缀
-    #        "codec_type":media_type,  # 视频或音频
-    #        "output":output_path.as_posix(),  # 最终存放的路径
-    #        "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
-    #        "srt_dirname":srt_dirname.as_posix(),  # funasr处理完srt文件路径
-    #        "unid":unid,  # 文件指纹
-    #        "source_mp4":name  # 任务视频路径，原始视频路径
-    #        }
-
-    video_info = VideoFormatInfo(
-        raw_name=name,
-        raw_dirname=raw_dirname,
-        raw_basename=raw_basename,
-        raw_noextname=raw_noextname,
-        raw_ext=ext[1:],
-        codec_type=media_type,
-        output=output_path.as_posix(),
-        wav_dirname=wav_path.as_posix(),
-        srt_dirname=srt_path.as_posix(),
-        unid=unid,
-        source_mp4=name
-    )
+        unid = h.hexdigest()
+        logger.info(f'out: {out}')
+        output_path: Path = out / unid
+        wav_path = output_path / f'{raw_noextname}.wav'
+        srt_path = output_path / f'{raw_noextname}.srt'
+        srt_finally_path = srt_path.as_posix()
+        logger.info(f'output_path: {output_path}')
+        output_path.mkdir(parents=True, exist_ok=True)
+        # 判断文件是视频还是音频
+        media_type = detect_media_type(name)
+        logger.info(f'media_type: {media_type}')
+        if work_type == WORK_TYPE.ASR:
+            media_dirname = name
+            wav_finally_path = wav_path.as_posix()
+        else:
+            media_dirname = ""
+            wav_finally_path = ""
+        video_info = VideoFormatInfo(
+            raw_name=name,
+            raw_dirname=raw_dirname,
+            raw_basename=raw_basename,
+            raw_noextname=raw_noextname,
+            raw_ext=ext[1:],
+            codec_type=media_type,
+            output=output_path.as_posix(),
+            wav_dirname=wav_finally_path,
+            srt_dirname=srt_finally_path,
+            media_dirname=media_dirname,
+            unid=unid,
+            source_mp4=name,
+            job_type=work_type
+        )
 
     return video_info
 

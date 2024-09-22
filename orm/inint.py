@@ -35,13 +35,13 @@ class ToTranslation(Base):
     path = Column(String)  # 文件路径 原始音频或转换后的视频路径
     source_language = Column(String)  # 原始语言
     target_language = Column(String)  # 目标语言
-    translate_type = Column(String)  # 翻译渠道
-    job_type = Column(Integer)  # 任务类型 1:音视频转字幕自动翻译 2:字幕直接翻译
+    translate_channel = Column(String)  # 翻译渠道
+    trans_type = Column(Integer)  # 任务类型 1:音视频转字幕自动翻译 2:字幕直接翻译
     job_status = Column(Integer)  # 任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败 （目前只用到0，1，2）
     obj = Column(String)
 
     def __repr__(self):
-        return f"<ToTranslation(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_type}',job_type='{self.job_type}',job_status='{self.job_status}')>"
+        return f"<ToTranslation(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_channel}',job_type='{self.trans_type}',job_status='{self.job_status}')>"
 
 
 class Prompts(Base):

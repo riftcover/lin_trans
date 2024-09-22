@@ -1,3 +1,6 @@
-from typing import Literal
+from enum import IntEnum
 
-WORK_TYPE = Literal['asr', 'trans']
+class WORK_TYPE(IntEnum):
+    ASR = 1
+    TRANS = 2
+    ASR_TRANS = 3

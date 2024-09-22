@@ -16,7 +16,6 @@ from nice_ui.task.main_worker import work_queue
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
-from nice_ui.util.data_converter import convert_video_format_info_to_srt_edit_dict, SrtEditDict
 from nice_ui.util.tools import VideoFormatInfo
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
@@ -41,8 +40,8 @@ class TableWidgetColumn(IntEnum):
     JOB_OBJ = 5
 
 
-# 定义一个自定义角色用于存储 SrtEditDict 对象
-SrtEditDictRole = Qt.UserRole + 1
+# 定义一个自定义角色用于存储 VideoFormatInfo 对象
+VideoFormatInfoRole = Qt.UserRole + 1
 
 
 class TableApp(CardWidget):
@@ -168,12 +167,12 @@ class TableApp(CardWidget):
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
-        work_obj = item.data(SrtEditDictRole)
+        work_obj = item.data(VideoFormatInfoRole)
 
         work_type = work_obj.job_type
-        if work_type == 'asr':
+        if work_type == 1:
             return self.srt_orm
-        elif work_type == 'trans':
+        elif work_type == 2:
             return self.trans_orm
         else:
             logger.error(f'任务类型:{work_type}不存在')
@@ -190,15 +189,20 @@ class TableApp(CardWidget):
             filename_without_extension: 无扩展的文件名
         """
         # 从数据库中查询数据
+        obj_data = None
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
-            srt_edit_dict: Optional[SrtEditDict] = None
             try:
                 obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
-                srt_edit_dict = convert_video_format_info_to_srt_edit_dict(obj_data)
+                logger.debug(f'数据库查询到:{obj_data}')
+                if obj_data is not None:
+                    self._process_item(item, obj_data)
+                else:
+                    logger.warning(f'{item.unid} 该数据 obj为空')
+                    return
             except ValidationError as e:
                 logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
-            self._process_item(item, srt_edit_dict)
+            self._process_item(item, obj_data)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
@@ -222,7 +226,7 @@ class TableApp(CardWidget):
         button.clicked.connect(callback)
         return button
 
-    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: SrtEditDict) -> Tuple[CheckBox, QLabel]:
+    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: VideoFormatInfo) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
         chk.stateChanged.connect(self._update_buttons_visibility)
@@ -245,7 +249,7 @@ class TableApp(CardWidget):
 
         # 隐藏列数据:文件名
         file_full = QTableWidgetItem()
-        file_full.setData(SrtEditDictRole, obj_format)
+        file_full.setData(VideoFormatInfoRole, obj_format)
         self.table.setItem(row_position, TableWidgetColumn.JOB_OBJ, file_full)
 
         return chk, file_status
@@ -277,12 +281,12 @@ class TableApp(CardWidget):
         button_widget.setLayout(button_layout)
         self.table.setCellWidget(row, 3, button_widget)
 
-    def _process_item(self, item, edit_dict: SrtEditDict):
+    def _process_item(self, item, edit_dict: VideoFormatInfo):
         """
         处理单个项目并更新表格。
 
         :param item: 数据库查询返回的项目对象
-        :param edit_dict: srt_edit_dict = {"media_path":"", "srt_dirname":"", "job_type":"","raw_noextname":""}
+        :param edit_dict: srt_edit_dict = {"media_dirname":"", "srt_dirname":"", "work_type":"","raw_noextname":""}
 
         """
         if item.job_status in (0, 1):
@@ -297,31 +301,15 @@ class TableApp(CardWidget):
         new_status = 0
         orm_w = None
         work_type = edit_dict.job_type
-        if work_type == 'asr':
+        if work_type == 1:
             orm_w = self.srt_orm
-        elif work_type == 'trans':
+        elif work_type == 2:
             orm_w = self.trans_orm
 
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
-    def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
+    def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1):
         logger.info(f'table get obj_format:{obj_format}')
-        """ 
-        因为首次任务时，obj_format 是 VideoFormatInfo 类型，
-        而后续任务时，obj_format 是 SrtEditDict 类型，edit编辑时使用的也是 SrtEditDict 类型
-        所以需要转换为 SrtEditDict 类型
-        检查 obj_format 的类型，如果是 VideoFormatInfo，则转换为 SrtEditDict
-        """
-        if isinstance(obj_format, VideoFormatInfo):
-            try:
-                obj_format = convert_video_format_info_to_srt_edit_dict(obj_format)
-            except ValidationError as e:
-                logger.error(f'转换 VideoFormatInfo 到 SrtEditDict 失败: {e}')
-                return  # 如果转换失败，直接返回，不添加行
-        
-        if not isinstance(obj_format, SrtEditDict):
-            logger.error(f'无效的 obj_format 类型: {type(obj_format)}')
-            return  # 如果不是 SrtEditDict 类型，直接返回，不添加行
 
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
@@ -330,7 +318,6 @@ class TableApp(CardWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         logger.info('我的创作列表中添加新行')
-        # fix：VideoFormatInfo转成SrtEditDict
         chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
             file_status.set_status("排队中")
@@ -382,7 +369,7 @@ class TableApp(CardWidget):
             else:
                 logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
-    def addRow_init_all(self, edit_dict: SrtEditDict):
+    def addRow_init_all(self, edit_dict: VideoFormatInfo):
         filename_without_extension = edit_dict.raw_noextname
         unid = edit_dict.unid
         logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
@@ -405,7 +392,7 @@ class TableApp(CardWidget):
         if not os.path.isfile(job_path):
             logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
-        tools.format_video(job_path.replace('\\', '/'), config.params['target_dir'])
+        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'])
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self):
@@ -463,7 +450,7 @@ class TableApp(CardWidget):
             if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
                 job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
                 # work_obj 取值是_load_data中srt_edit_dict
-                work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+                work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
                 job_paths.append(work_obj.srt_dirname)
 
         dialog = ExportSubtitleDialog(job_paths, self)
@@ -473,7 +460,7 @@ class TableApp(CardWidget):
         row = self._get_row()
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
-        work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+        work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
         logger.trace(f'work_obj:{work_obj}')
         srt_path = work_obj.srt_dirname
         if not os.path.isfile(srt_path):
@@ -498,7 +485,7 @@ class TableApp(CardWidget):
     def _edit_row(self):
         row = self._get_row()
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
-        work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+        work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
         srt_path = work_obj.srt_dirname
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法编辑")
@@ -512,7 +499,7 @@ class TableApp(CardWidget):
         dialog.resize(SUBTITLE_EDIT_DIALOG_SIZE)  # 设置一个合适的初始大小
 
         # 创建SubtitleEditPage实例
-        subtitle_edit_page = SubtitleEditPage(work_obj.srt_dirname, work_obj.media_path, self.settings, parent=self)
+        subtitle_edit_page = SubtitleEditPage(work_obj.srt_dirname, work_obj.media_dirname, self.settings, parent=self)
 
         # 创建垂直布局并添加SubtitleEditPage
         layout = QVBoxLayout(dialog)
@@ -528,7 +515,7 @@ class TableApp(CardWidget):
         # 更新表格中的数据
         row = self._get_row()
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
-        item.setData(SrtEditDictRole, updated_srt_edit_dict)
+        item.setData(VideoFormatInfoRole, updated_srt_edit_dict)
 
         # 更新数据库
         orm_table = self._choose_sql_orm(row)

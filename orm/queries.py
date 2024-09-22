@@ -96,13 +96,13 @@ class ToTranslationOrm:
     # 添加ToTranslation数据
     @session_manager
     def add_data_to_table(self, unid, path,
-                          source_language, target_language, translate_type,
-                          job_type, job_status, obj=None, session=None):
+                          source_language, target_language, translate_channel,
+                          trans_type, job_status, obj=None, session=None):
         if obj is None:
             obj = {}
         new_entry = ToTranslation(unid=unid, path=path, source_language=source_language,
-                                  target_language=target_language, translate_type=translate_type,
-                                  job_type=job_type, job_status=job_status, obj=obj)
+                                  target_language=target_language, translate_channel=translate_channel,
+                                  trans_type=trans_type, job_status=job_status, obj=obj)
         session.add(new_entry)
         session.commit()
 
