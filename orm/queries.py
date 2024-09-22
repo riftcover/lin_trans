@@ -147,9 +147,8 @@ class ToTranslationOrm:
         return False
 
 
-
     @session_manager
-    def delete_to_translation(self, unid, session=None):
+    def delete_table_unid(self, unid, session=None):
         if entry := self.query_data_by_unid(unid):
             session.delete(entry)
             session.commit()
