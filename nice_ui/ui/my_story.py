@@ -201,7 +201,6 @@ class TableApp(CardWidget):
                     return
             except ValidationError as e:
                 logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
-            self._process_item(item, obj_data)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
