@@ -11,7 +11,7 @@ class SrtEditDict(BaseModel):
     """
     unid: str = Field(default="", description="文件指纹")
     media_path: str = Field(default="", description="媒体文件路径")
-    srt_path: str = Field(default="", description="SRT文件路径")
+    srt_dirname: str = Field(default="", description="SRT文件路径")
     job_type: WORK_TYPE = Field(default="", description="任务类型")
     raw_noextname: str = Field(default="", description="无扩展名的原始文件名")
 
@@ -28,7 +28,7 @@ def convert_video_format_info_to_srt_edit_dict(video_info: VideoFormatInfo) -> S
         """
     new_dict = SrtEditDict()
     job_t = video_info.job_type
-    new_dict.srt_path = video_info.srt_dirname
+    new_dict.srt_dirname = video_info.srt_dirname
     new_dict.unid = video_info.unid
     new_dict.job_type = job_t
     new_dict.raw_noextname = video_info.raw_noextname
