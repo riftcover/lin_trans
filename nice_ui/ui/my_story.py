@@ -189,7 +189,7 @@ class TableApp(CardWidget):
             srt_edit_dict: 字幕编辑器的字典
             filename_without_extension: 无扩展的文件名
         """
-
+        # 从数据库中查询数据
         all_data = orm.query_data_format_unid_path()
         for item in all_data:
             srt_edit_dict: Optional[SrtEditDict] = None
@@ -306,6 +306,23 @@ class TableApp(CardWidget):
 
     def table_row_init(self, obj_format: SrtEditDict, job_status: JOB_STATUS = 1):
         logger.info(f'table get obj_format:{obj_format}')
+        """ 
+        因为首次任务时，obj_format 是 VideoFormatInfo 类型，
+        而后续任务时，obj_format 是 SrtEditDict 类型，edit编辑时使用的也是 SrtEditDict 类型
+        所以需要转换为 SrtEditDict 类型
+        检查 obj_format 的类型，如果是 VideoFormatInfo，则转换为 SrtEditDict
+        """
+        if isinstance(obj_format, VideoFormatInfo):
+            try:
+                obj_format = convert_video_format_info_to_srt_edit_dict(obj_format)
+            except ValidationError as e:
+                logger.error(f'转换 VideoFormatInfo 到 SrtEditDict 失败: {e}')
+                return  # 如果转换失败，直接返回，不添加行
+        
+        if not isinstance(obj_format, SrtEditDict):
+            logger.error(f'无效的 obj_format 类型: {type(obj_format)}')
+            return  # 如果不是 SrtEditDict 类型，直接返回，不添加行
+
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
         filename = obj_format.raw_noextname
@@ -313,7 +330,7 @@ class TableApp(CardWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         logger.info('我的创作列表中添加新行')
-
+        # fix：VideoFormatInfo转成SrtEditDict
         chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
         if job_status == 1:
             file_status.set_status("排队中")
