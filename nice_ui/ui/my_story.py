@@ -282,7 +282,7 @@ class TableApp(CardWidget):
         处理单个项目并更新表格。
 
         :param item: 数据库查询返回的项目对象
-        :param edit_dict: srt_edit_dict = {"media_path":"", "srt_path":"", "job_type":"","raw_noextname":""}
+        :param edit_dict: srt_edit_dict = {"media_path":"", "srt_dirname":"", "job_type":"","raw_noextname":""}
 
         """
         if item.job_status in (0, 1):
@@ -447,7 +447,7 @@ class TableApp(CardWidget):
                 job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
                 # work_obj 取值是_load_data中srt_edit_dict
                 work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
-                job_paths.append(work_obj.srt_path)
+                job_paths.append(work_obj.srt_dirname)
 
         dialog = ExportSubtitleDialog(job_paths, self)
         dialog.exec()
@@ -457,12 +457,15 @@ class TableApp(CardWidget):
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
-        srt_path = work_obj.srt_path
+        logger.trace(f'work_obj:{work_obj}')
+        srt_path = work_obj.srt_dirname
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法导出")
             InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
                             parent=self)
             raise FileNotFoundError(f"The file {srt_path} does not exist.")
+
+        logger.info(f"导出字幕:{srt_path}")
 
         dialog = ExportSubtitleDialog([srt_path], self)
         dialog.exec()
@@ -477,16 +480,22 @@ class TableApp(CardWidget):
 
     def _edit_row(self):
         row = self._get_row()
-        item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
-        srt_edit_dict: SrtEditDict = item.data(SrtEditDictRole)
+        job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+        work_obj: SrtEditDict = job_obj.data(SrtEditDictRole)
+        srt_path = work_obj.srt_dirname
+        if not os.path.isfile(srt_path):
+            logger.error(f"文件:{srt_path}不存在,无法编辑")
+            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+                            parent=self)
+            raise FileNotFoundError(f"The file {srt_path} does not exist.")
 
         # 创建一个新的对话框窗口
         dialog = QDialog(self)
-        dialog.setWindowTitle(f"编辑字幕 - {srt_edit_dict.raw_noextname}")
+        dialog.setWindowTitle(f"编辑字幕 - {work_obj.raw_noextname}")
         dialog.resize(SUBTITLE_EDIT_DIALOG_SIZE)  # 设置一个合适的初始大小
 
         # 创建SubtitleEditPage实例
-        subtitle_edit_page = SubtitleEditPage(srt_edit_dict.srt_path, srt_edit_dict.media_path, self.settings, parent=self)
+        subtitle_edit_page = SubtitleEditPage(work_obj.srt_dirname, work_obj.media_path, self.settings, parent=self)
 
         # 创建垂直布局并添加SubtitleEditPage
         layout = QVBoxLayout(dialog)

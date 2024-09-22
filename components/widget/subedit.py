@@ -1,3 +1,4 @@
+import os
 from typing import Tuple, Any, List
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
@@ -7,7 +8,7 @@ from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWi
 from components.resource_manager import StyleManager
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
 from utils import logger
-from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
+from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition, InfoBar, InfoBarPosition
 
 
 class CustomItemDelegate(QStyledItemDelegate):
@@ -267,6 +268,10 @@ class SubtitleModel(QAbstractTableModel):
                 [start_time, end_time, content]
         """
         subtitles = []
+        if not os.path.isfile(self.file_path):
+            logger.error(f"文件:{self.file_path}不存在,无法编辑")
+            raise FileNotFoundError(f"The file {self.file_path} does not exist.")
+
         with open(self.file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
@@ -308,6 +313,10 @@ class SubtitleModel(QAbstractTableModel):
                 i += 1
         logger.debug(f"字幕文件行数: {len(subtitles)}")
         return subtitles
+
+    def get_subtitles(self):
+            # 返回已加载的字幕数据
+            return self.sub_data
 
     def rowCount(self, parent=QModelIndex()) -> int:
         return len(self.sub_data)
@@ -491,24 +500,31 @@ class SubtitleTable(QTableView):
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        if not os.path.isfile(file_path):
+            logger.error(f"文件:{file_path}不存在,无法编辑")
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
         # 预处理字幕数据 用于和播放器连接给他字幕的
-        self.subtitles = []
-
         self.model = SubtitleModel(self.file_path)
         self.delegate = CustomItemDelegate(self)
         self.visible_editors = set()
 
+        # 设置模型和代理
+        self.setModel(self.model)
+        self.setItemDelegate(self.delegate)
+
         # 预处理字幕数据
-        self.subtitles = self.model.load_subtitle()  # Load subtitles from model
-        
+        self.subtitles = self.model.load_subtitle()
+        # Load subtitles from model
+        # todo：不懂为什用get_subtitles就无法创建编辑器
+        # self.subtitles = self.model.get_subtitles()  # Load subtitles from model
+        logger.debug(f"字幕数据: {self.subtitles}")
+
         # 初始化一个计时器
         self.update_timer = QTimer(self)
         self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.delayed_update)
 
-        # 设置模型和代理
-        self.setModel(self.model)
-        self.setItemDelegate(self.delegate)
+
 
         # 连接信号
         self.delegate.signals.createEditor.connect(self.on_editor_created)
@@ -517,6 +533,10 @@ class SubtitleTable(QTableView):
         self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
 
         self.init_ui()
+        # 设置默认行高
+        self.default_row_height = 80  # 或者其他合适的值
+        self.verticalHeader().setDefaultSectionSize(self.default_row_height)
+
         self.tablet_action()
 
         self.process_subtitles()
@@ -598,18 +618,16 @@ class SubtitleTable(QTableView):
 
         # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = max(0, top_left.row())
-        end_row = 0
-        if not bottom_right.isValid():
-            logger.warning("end_row use self.model.rowCount()")
-            # 如果 bottom_right 无效，我们可以估算可见的行数
-            visible_height = visible_rect.height()
-            row_height = self.rowHeight(0)  # 假设所有行高相同
-            visible_rows = visible_height // row_height
-            end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
+        end_row = self.model.rowCount() - 1  # 默认到最后一行
+        if bottom_right.isValid():
+            end_row = min(bottom_right.row(), end_row)
         else:
-            end_row = bottom_right.row()
-
-        # logger.debug(f"Creating editors for rows {start_row} to {end_row}")
+            # 如果 bottom_right 无效，我们估算可见的行数
+            visible_height = visible_rect.height()
+            row_height = self.default_row_height  # 使用默认行高
+            if row_height > 0:
+                visible_rows = visible_height // row_height
+                end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
 
         for row in range(start_row, end_row + 1):
             for col in range(self.model.columnCount()):
@@ -793,10 +811,10 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
-    patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
+    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
     # a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
     # b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
-    # patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
