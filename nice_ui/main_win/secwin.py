@@ -392,7 +392,7 @@ class SecWindow:
 
         if translate_status:
             # 翻译语种
-            self.get_trans_setting()
+            self.get_trans_setting(language_name)
 
         save_setting(self.main.settings)
 
@@ -410,7 +410,27 @@ class SecWindow:
             self.add_queue_thread(queue_mp4_copy, WORK_TYPE.ASR_TRANS)
             self.update_status(WORK_TYPE.ASR_TRANS)
 
-    def get_trans_setting(self):
+    def check_translate(self):
+        self.main.add_queue_srt()
+        # 原始语言
+        language_name = self.main.source_language_combo.currentText()
+        logger.debug(f'==========language_name:{language_name}')
+        config.params['source_language'] = language_name
+
+        self.get_trans_setting(language_name)
+
+        if len(config.queue_trans) < 1:
+            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+            return False
+
+        save_setting(self.main.settings)
+
+        queue_srt_copy = copy.deepcopy(config.queue_trans)
+        self.add_queue_thread(queue_srt_copy, WORK_TYPE.TRANS)
+
+        self.update_status(WORK_TYPE.TRANS)
+
+    def get_trans_setting(self,language_name):
         # 翻译语种
         translate_language_name = self.main.translate_language_combo.currentText()
         logger.debug(f'==========translate_language_name:{translate_language_name}')
@@ -427,27 +447,10 @@ class SecWindow:
 
         prompt_name = self.main.ai_prompt.currentText()
         config.params['prompt_name'] = prompt_name
-        config.params['prompt_text'] = self.main.prompts_orm.query_data_by_name(prompt_name)
+        if prompt_body := self.main.prompts_orm.query_data_by_name(prompt_name):
+            config.params['prompt_text'] = prompt_body.prompt_content.format(translate_name=translate_language_name, source_language_name=language_name)
+            logger.debug(f'==========prompt_text:{config.params["prompt_text"]}')
 
-    def check_translate(self):
-        self.main.add_queue_srt()
-        # 原始语言
-        language_name = self.main.source_language_combo.currentText()
-        logger.debug(f'==========language_name:{language_name}')
-        config.params['source_language'] = language_name
-
-        self.get_trans_setting()
-
-        if len(config.queue_trans) < 1:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
-            return False
-
-        save_setting(self.main.settings)
-
-        queue_srt_copy = copy.deepcopy(config.queue_trans)
-        self.add_queue_thread(queue_srt_copy, WORK_TYPE.TRANS)
-
-        self.update_status(WORK_TYPE.TRANS)
 
     def add_queue_thread(self, data_copy:list, work_type:WORK_TYPE):
         # 添加需处理文件到队列的线程
@@ -480,7 +483,8 @@ class SecWindow:
         else:
             logger.debug("消费队列正在工作")
 
-    def handle_error(self, error_msg):
+    @staticmethod
+    def handle_error(error_msg):
         logger.error(f"Error: {error_msg}")
 
     # 更新执行状态
