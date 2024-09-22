@@ -940,10 +940,6 @@ class VideoFormatInfo(BaseModel):
   'raw_basename': 'HYPER FOCUS - Teton Brown skis Jackson Hole.mp4',
   'raw_noextname': 'HYPER FOCUS - Teton Brown skis Jackson Hole',
   'raw_ext': 'mp4',
-  'dirname': 'D:/dcode/lin_trans/tmp/5f421d80a8a6a9211a18e5ec06ee21e3',
-  'basename': '5f421d80a8a6a9211a18e5ec06ee21e3.mp4',
-  'noextname': '5f421d80a8a6a9211a18e5ec06ee21e3',
-  'ext': 'mp4',
   'codec_type': 'video',
   'output': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3',
   'wav_dirname': 'D:/dcode/lin_trans/result/5f421d80a8a6a9211a18e5ec06ee21e3/HYPER FOCUS - Teton Brown skis Jackson Hole.wav',
@@ -1027,7 +1023,7 @@ def format_video(name: str, out: Path) -> VideoFormatInfo:
     #        "codec_type":media_type,  # 视频或音频
     #        "output":output_path.as_posix(),  # 最终存放的路径
     #        "wav_dirname":wav_path.as_posix(),  # ff处理完wav文件路径
-    #        "srt_dirname":srt_path.as_posix(),  # funasr处理完srt文件路径
+    #        "srt_dirname":srt_dirname.as_posix(),  # funasr处理完srt文件路径
     #        "unid":unid,  # 文件指纹
     #        "source_mp4":name  # 任务视频路径，原始视频路径
     #        }
