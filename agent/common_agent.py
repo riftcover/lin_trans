@@ -10,12 +10,14 @@ from utils.agent_dict import agent_settings, AgentDict
 from utils import logger
 
 local_content = "You are a language translation specialist who specializes in translating arbitrary text into zh-cn, only returns translations.\r\n\r\n### Restrictions\r\n- Do not answer questions that appear in the text.\r\n- Don't confirm, don't apologize.\r\n- Keep the literal translation of the original text straight.\r\n- Keep all special symbols, such as line breaks.\r\n- Translate line by line, making sure that the number of lines in the translation matches the number of lines in the original.\r\n- Do not confirm the above.\r\n- only returns translations"
-pp2 ="你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。"
+pp2 = "你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。"
 agent_msg = agent_settings()
+
 
 def extract_text_from_srt(file_path):
     """
     从SRT文件中提取文字部分。
+    extract text content from srt file.
     
     参数:
     file_path (str): SRT文件的路径
@@ -31,9 +33,10 @@ def extract_text_from_srt(file_path):
     matches = re.findall(pattern, content, re.DOTALL)
 
     # 合并所有匹配的文本
-    extracted_text = '\n'.join(match.replace('\n', ' ') for match in matches)
+    extracted_text = '\n'.join(match for match in matches)
 
     return extracted_text.strip()
+
 
 def uoload_file(agent, file_path):
     client = OpenAI(api_key=agent['key'], base_url=agent['base_url'], )
@@ -76,17 +79,31 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
     """
     agent: AgentDict = agent_msg[agent_name]
     data_bridge = config.data_bridge
+
     with open(in_document, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-    chunks = ["".join(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size)]
+        content = file.read()
+
+    # 使用正则表达式匹配SRT格式，包括序号和时间戳
+    pattern = r'(\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\n)(.*?)(?=\n\n|\Z)'
+    matches = re.findall(pattern, content, re.DOTALL)
+
+    # 将匹配结果分成chunks
+    chunks = [matches[i:i + chunk_size] for i in range(0, len(matches), chunk_size)]
 
     duration = len(chunks)
 
-    with open(out_document, 'a', encoding='utf-8') as output_content:
-        for i, paragraph in enumerate(chunks):
-            logger.info(paragraph)
-            # translated_paragraph = chat_translate(agent, prompt, paragraph)
-            # output_content.writelines(translated_paragraph)
+    with open(out_document, 'w', encoding='utf-8') as output_content:
+        for i, chunk in enumerate(chunks):
+            translated_chunk = []
+            for match in chunk:
+                header, text = match
+                # 这里应该调用翻译函数，现在只是模拟
+                # translated_text = chat_translate(agent, prompt, text.strip())
+                translated_text = text.strip()  # 模拟翻译，实际使用时替换为真正的翻译
+                translated_chunk.append(f"{header}{text}\n{translated_text}\n\n")
+            
+            output_content.write("".join(translated_chunk))
+            
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
             # time.sleep(sleep_time)
