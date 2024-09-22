@@ -9,10 +9,11 @@ import threading
 # from faster_whisper import WhisperModel
 # from whisper.utils import get_writer, format_timestamp, make_safe
 
-from funasr import AutoModel
 from nice_ui.configure import config
 from utils.file_utils import get_segment_timestamps, funasr_write_srt_file
 from utils import logger
+from utils.lazy_loader import LazyLoader
+funasr = LazyLoader('funasr')
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -172,9 +173,9 @@ class SrtWriter:
     #     self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_to_srt(self, model_name: str = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'):
-
-        # 这里加载库慢
+        from funasr import AutoModel
         logger.info("使用FunASR开始识别")
+        
         model_dir = f'{config.root_path}/models/funasr/{model_name}'
         model = AutoModel(model=model_dir, model_revision="v2.0.4", vad_model="fsmn-vad", vad_model_revision="v2.0.4",
                           # punc_model="ct-punc-c",punc_model_revision="v2.0.4", # 标点符号
