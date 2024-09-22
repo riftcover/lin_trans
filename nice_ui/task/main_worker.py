@@ -62,6 +62,7 @@ class Worker(QObject):
             # 格式化每个字幕信息
             obj_format = self._check_obj(it)
             obj_format.job_type = 'trans'
+            obj_format.srt_dirname = f'{obj_format.output}/{obj_format.raw_noextname}_译文.srt'  # 原始文件名_译文.srt，用作最终输出文件名
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
