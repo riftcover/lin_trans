@@ -419,30 +419,30 @@ class SubtitleModel(QAbstractTableModel):
     def move_edit_down(self, row) -> bool:
         # 移动原文到下一行
         if row < self.rowCount() - 1:
-            current_text = self.data(self.index(row, 4), Qt.EditRole)
+            current_text = self.data(self.index(row, 5), Qt.EditRole)
 
             # Move current row's text to next row
-            self.setData(self.index(row + 1, 4), current_text, Qt.EditRole)
+            self.setData(self.index(row + 1, 5), current_text, Qt.EditRole)
 
             # Clear current row's text
-            self.setData(self.index(row, 4), "", Qt.EditRole)
+            self.setData(self.index(row, 5), "", Qt.EditRole)
 
-            self.dataChanged.emit(self.index(row, 4), self.index(row + 1, 4), [Qt.EditRole])
+            self.dataChanged.emit(self.index(row, 5), self.index(row + 1, 5), [Qt.EditRole])
             return True
         return False
 
     def move_edit_up(self, row) -> bool:
         # 移动原文到上一行
         if row > 0:
-            current_text = self.data(self.index(row, 4), Qt.EditRole)
+            current_text = self.data(self.index(row, 5), Qt.EditRole)
 
             # Move current row's text to next row
-            self.setData(self.index(row - 1, 4), current_text, Qt.EditRole)
+            self.setData(self.index(row - 1, 5), current_text, Qt.EditRole)
 
             # Clear current row's text
-            self.setData(self.index(row, 4), "", Qt.EditRole)
+            self.setData(self.index(row, 5), "", Qt.EditRole)
 
-            self.dataChanged.emit(self.index(row - 1, 4), self.index(row, 4), [Qt.EditRole])
+            self.dataChanged.emit(self.index(row - 1, 5), self.index(row, 5), [Qt.EditRole])
             return True
         return False
 
@@ -517,7 +517,6 @@ class SubtitleTable(QTableView):
         # Load subtitles from model
         # todo：不懂为什用get_subtitles就无法创建编辑器
         # self.subtitles = self.model.get_subtitles()  # Load subtitles from model
-        logger.debug(f"字幕数据: {self.subtitles}")
 
         # 初始化一个计时器
         self.update_timer = QTimer(self)

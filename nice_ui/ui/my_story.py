@@ -194,7 +194,6 @@ class TableApp(CardWidget):
         for item in all_data:
             try:
                 obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
-                logger.debug(f'数据库查询到:{obj_data}')
                 if obj_data is not None:
                     self._process_item(item, obj_data)
                 else:
