@@ -192,10 +192,7 @@ class PromptsOrm:
     def query_data_by_id(self, key_id: int, session=None):
         # 输入prompt_name查询数据
         try:
-            prompt = session.query(Prompts).filter(Prompts.id==key_id).first()
-            # session.refresh(prompt)
-            # session.expunge(prompt)
-            return prompt
+            return session.query(Prompts).filter(Prompts.id==key_id).first()
         except NoResultFound:
             return None
 
@@ -236,13 +233,14 @@ class PromptsOrm:
 if __name__ == "__main__":
     # 测试
     # to_srt_orm = PromptsOrm()
-    to_srt_orm = PromptsOrm()
+    to_orm = PromptsOrm()
 
     # to_srt_orm.add_data_to_table(prompt_name="默认", prompt_content="test2")
 
-    # print(one_srt.prompt_content)
-
+    print(to_orm.query_data_by_name("默认"))
+    a = to_orm.query_data_by_name("默认")
+    print(a.prompt_content.format(translate_name='中文', source_language_name='英文'))
     # 替换 {lang} 为 zh-cn
-    # modified_content = one_srt.prompt_content.format(lang='zh-cn', text='你好')
+    # modified_content = to_orm.prompt_content.format(lang='zh-cn', text='你好')
     # print(modified_content)
 

@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main_xx
+      - main
 #      - fluent_ui_ll
 
 jobs:
