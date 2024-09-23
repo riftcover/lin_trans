@@ -19,6 +19,7 @@ from nice_ui.ui.work_srt import WorkSrt
 from vendor.qfluentwidgets import FluentIcon as FIF
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor)
 from utils import logger
+from components import lin_resource_rc
 
 class Window(FluentWindow):
 
@@ -59,7 +60,7 @@ class Window(FluentWindow):
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
         # todo：更换成资源路径
-        self.setWindowIcon(QIcon('D:/dcode/lin_trans/components/assets/linlin.png'))
+        self.setWindowIcon(QIcon(':icon/assets/linlin.png'))
         self.setWindowTitle('林林字幕')
 
         desktop = QApplication.screens()[0].availableGeometry()
