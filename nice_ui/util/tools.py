@@ -964,7 +964,7 @@ class VideoFormatInfo(BaseModel):
     job_type: Optional[WORK_TYPE] = Field(default=None, description="任务类型，asr、trans 可选字段")
 
 
-def format_job_msg(name: str, out: Path, work_type: WORK_TYPE) -> VideoFormatInfo:
+def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     """
     格式化任务信息
 
@@ -977,52 +977,48 @@ def format_job_msg(name: str, out: Path, work_type: WORK_TYPE) -> VideoFormatInf
         VideoFormatInfo: 视频格式化信息
 
     """
-    video_info = None
-    if work_type in (WORK_TYPE.ASR, WORK_TYPE.TRANS):
-        raw_pathlib = Path(name)
-        raw_basename = raw_pathlib.name
-        raw_noextname = raw_pathlib.stem
-        ext = raw_pathlib.suffix
-        raw_dirname = raw_pathlib.parent.resolve().as_posix()
+    raw_pathlib = Path(name)
+    raw_basename = raw_pathlib.name
+    raw_noextname = raw_pathlib.stem
+    ext = raw_pathlib.suffix
+    raw_dirname = raw_pathlib.parent.resolve().as_posix()
 
-        h = hashlib.md5()
-        h.update(name.encode('utf-8'))
-        h.update(config.params.get('source_module_name').encode('utf-8'))
-        current_time = str(time.time()).encode('utf-8')
-        h.update(current_time)
+    h = hashlib.md5()
+    h.update(name.encode('utf-8'))
+    h.update(config.params.get('source_module_name').encode('utf-8'))
+    current_time = str(time.time()).encode('utf-8')
+    h.update(current_time)
 
-        unid = h.hexdigest()
-        logger.info(f'out: {out}')
-        output_path: Path = out / unid
-        wav_path = output_path / f'{raw_noextname}.wav'
-        srt_path = output_path / f'{raw_noextname}.srt'
-        srt_finally_path = srt_path.as_posix()
-        logger.info(f'output_path: {output_path}')
-        output_path.mkdir(parents=True, exist_ok=True)
-        # 判断文件是视频还是音频
-        media_type = detect_media_type(name)
-        logger.info(f'media_type: {media_type}')
-        if work_type == WORK_TYPE.ASR:
-            media_dirname = name
-            wav_finally_path = wav_path.as_posix()
-        else:
-            media_dirname = ""
-            wav_finally_path = ""
-        video_info = VideoFormatInfo(
-            raw_name=name,
-            raw_dirname=raw_dirname,
-            raw_basename=raw_basename,
-            raw_noextname=raw_noextname,
-            raw_ext=ext[1:],
-            codec_type=media_type,
-            output=output_path.as_posix(),
-            wav_dirname=wav_finally_path,
-            srt_dirname=srt_finally_path,
-            media_dirname=media_dirname,
-            unid=unid,
-            source_mp4=name,
-            job_type=work_type
-        )
+    unid = h.hexdigest()
+    logger.info(f'out: {out}')
+    output_path = out / unid
+    wav_path = output_path / f'{raw_noextname}.wav'
+    srt_path = output_path / f'{raw_noextname}.srt'
+    srt_finally_path = srt_path.as_posix()
+    output_path.mkdir(parents=True, exist_ok=True)
+    # 判断文件是视频还是音频
+    media_type = detect_media_type(name)
+    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS):
+        media_dirname = name
+        wav_finally_path = wav_path.as_posix()
+    else:
+        media_dirname = ""
+        wav_finally_path = ""
+    video_info = VideoFormatInfo(
+        raw_name=name,
+        raw_dirname=raw_dirname,
+        raw_basename=raw_basename,
+        raw_noextname=raw_noextname,
+        raw_ext=ext[1:],
+        codec_type=media_type,
+        output=output_path.as_posix(),
+        wav_dirname=wav_finally_path,
+        srt_dirname=srt_finally_path,
+        media_dirname=media_dirname,
+        unid=unid,
+        source_mp4=name,
+        job_type=work_type
+    )
 
     return video_info
 
@@ -1168,14 +1164,30 @@ def format_result(source_list, target_list, target_lang="zh"):
     print(f'{result=}')
     return result
 
+def list_model_files(model_dir: str = None) -> list:
+    """
+    遍历指定的model文件夹,输出所有文件名(不带后缀)
 
-# 删除翻译结果的特殊字符
-def cleartext(text):
-    return text.replace('"', '').replace("'", '').replace('&#39;', '').replace('&quot;', "").strip()
+    Args:
+        model_dir (str, optional): model文件夹的路径. 默认为None,此时使用配置中的路径.
 
+    Returns:
+        list: 包含所有文件名(不带后缀)的列表
+    """
+    if model_dir is None:
+        model_dir = config.root_path / 'models'
+    
+    model_files = []
+    
+    for root, dirs, files in os.walk(model_dir):
+        for file in files:
+            # 使用 Path 对象来处理文件路径,这样可以跨平台使用
+            file_path = Path(root) / file
+            # 获取文件名(不带后缀)
+            file_name = file_path.stem
+            model_files.append(file_name)
+    
+    return model_files
 
 if __name__ == '__main__':
-    job_video = ['C:/Users/gaosh/Videos/pyvideotrans/rename/BetterCarvedTurnsUsingTheSwordsDrill.mp4']
-    for it in job_video:
-        # print(format_video(it.replace('\\', '/'), config.params['target_dir']))
-        print(detect_media_type(it))
+    print(list_model_files())
