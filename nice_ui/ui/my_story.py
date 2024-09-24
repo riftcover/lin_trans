@@ -170,12 +170,10 @@ class TableApp(CardWidget):
         work_obj = item.data(VideoFormatInfoRole)
 
         work_type = work_obj.job_type
-        if work_type == 1:
+        if work_type in (1, 3):
             return self.srt_orm
         elif work_type == 2:
             return self.trans_orm
-        else:
-            logger.error(f'任务类型:{work_type}不存在')
 
     def _load_data(self, orm, st: int):
         """
@@ -299,7 +297,7 @@ class TableApp(CardWidget):
         new_status = 0
         orm_w = None
         work_type = edit_dict.job_type
-        if work_type == 1:
+        if work_type in (1,3):
             orm_w = self.srt_orm
         elif work_type == 2:
             orm_w = self.trans_orm
@@ -386,11 +384,13 @@ class TableApp(CardWidget):
         row = self._get_row()
         unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
         orm_table = self._choose_sql_orm(row)
-        job_path = orm_table.query_data_by_unid(unid_item).path
+        job_concent = orm_table.query_data_by_unid(unid_item)
+        job_path =job_concent.path
+        job_obj = json.loads(job_concent.obj)
         if not os.path.isfile(job_path):
             logger.error(f"文件:{job_path}不存在,无法开始处理")
             raise FileNotFoundError(f"The file {job_path} does not exist.")
-        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'])
+        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'],job_obj.work_type)
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self):
