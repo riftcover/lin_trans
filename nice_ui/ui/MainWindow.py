@@ -29,7 +29,6 @@ class Window(FluentWindow):
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))  # 使用RGB值设置蓝色
 
-
         self.initWindow()
         self.load_proxy_settings()  # 加载代理设置
         # todo 更新检查更改地址
@@ -135,8 +134,6 @@ class Window(FluentWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    # default_font = app.font()
-    # print(f"Current application font: {default_font.family()}, Size: {default_font.pointSize()}")
     w = Window()
     w.show()
     app.exec()
