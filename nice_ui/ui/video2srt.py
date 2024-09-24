@@ -3,8 +3,7 @@ import subprocess
 
 from PySide6.QtCore import (Qt, Slot, QSize)
 from PySide6.QtGui import (QDragEnterEvent, QDropEvent, QColor, QPalette)
-from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView,
-                               QStyle)
+from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle)
 
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
@@ -149,7 +148,7 @@ class Video2SRT(QWidget):
         self.media_table = TableWidget(self)
         # 设置表格表头不显示网格线
         self.media_table.setColumnCount(5)
-        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作','文件路径'])
+        self.media_table.setHorizontalHeaderLabels(['文件名', '时长', '算力消耗', '操作', '文件路径'])
 
         self.media_table.verticalHeader().setVisible(False)  # 隐藏行号
 
@@ -187,16 +186,16 @@ class Video2SRT(QWidget):
         main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
 
     def bind_action(self):
-        self.check_fanyi.stateChanged.connect(lambda:print(self.check_fanyi.isChecked()))
+        self.check_fanyi.stateChanged.connect(lambda: print(self.check_fanyi.isChecked()))
         self.start_btn.clicked.connect(self.util.check_asr)
         self.act_btn_get_video()
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
-        self.btn_get_video.clicked.connect(lambda:self.table.select_files(self.media_table))
+        self.btn_get_video.clicked.connect(lambda: self.table.select_files(self.media_table))
         self.btn_get_video.setAcceptDrops(True)
         self.btn_get_video.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_video.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
+        self.btn_get_video.dropEvent = lambda event: self.table.drop_event(self.media_table, event)
 
     def add_queue_mp4(self):
         # 获取self.main.media_table中第4列的数据
@@ -237,6 +236,9 @@ class TableWindow:
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
         logger.info(f'add_file_to_table: {file_path}')
+        # 不加这个log，mac系统上在check_asr函数中中target_dir就是空值
+        logger.trace('config.params:')
+        logger.trace(config.params)
         row_position = ui_table.rowCount()
         file_duration = self.get_video_duration(file_path)  # 获取视频时长
         if file_duration:
@@ -251,7 +253,7 @@ class TableWindow:
             # 操作
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
-            delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
+            delete_button.clicked.connect(lambda row=row_position: self.delete_file(ui_table, row))
 
             # 文件路径
             ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
@@ -271,7 +273,7 @@ class TableWindow:
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda r=row:self.delete_file(ui_table, r))
+            delete_button.clicked.connect(lambda r=row: self.delete_file(ui_table, r))
 
     def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
