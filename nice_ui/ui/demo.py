@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
 
-from qfluentwidgets import setTheme, Theme
+# from qfluentwidgets import setTheme, Theme
 
 from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
 from nice_ui.configure import config
