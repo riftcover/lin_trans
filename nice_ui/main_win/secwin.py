@@ -85,7 +85,7 @@ class SecWindow:
         self.worker_thread: Optional[QThread] = None
         self.main = main
         self.usetype: Optional[str] = None
-        self.data_bridge = DataBridge()
+        self.data_bridge = config.data_bridge 
 
     def is_separate_fun(self, state: bool):
         config.params['is_separate'] = state
@@ -294,6 +294,12 @@ class SecWindow:
         return bool(self.main.subtitle_area.toPlainText().strip())
 
     def check_asr(self) -> bool:
+        # logger.debug(f"Initial target_dir: {config.params['target_dir']}")
+        #
+        # if not config.params['target_dir']:
+        #     config.params['target_dir'] = config.root_path / "result"
+        #     logger.warning(f"target_dir was empty, reset to: {config.params['target_dir']}")
+
         self.main.add_queue_mp4()
         config.params['only_video'] = False
 
