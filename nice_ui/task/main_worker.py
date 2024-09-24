@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Slot
 
 from nice_ui.configure import config
 from utils import logger
@@ -20,8 +20,6 @@ class Worker(QObject):
     finished = Signal()
     error = Signal(str)
     queue_ready = Signal()  # 用于通知队列准备就绪 # 用于通知主线程更新表格
-    asr_finished = Signal(str)  # 用于通知 ASR 任务完成，参数为完成的文件的 unid
-
     def __init__(self, queue_copy):
         """
         初始化工作线程
@@ -31,6 +29,10 @@ class Worker(QObject):
         super().__init__()
         self.queue_copy = queue_copy
         self.data_bridge = config.data_bridge
+        logger.debug(f"Worker 初始化，data_bridge id: {id(self.data_bridge)}")
+        self.data_bridge.asr_trans_job_asr_finished.connect(self.add_trans_task)
+        logger.debug("asr_trans_job_asr_finished 信号已连接到 add_trans_task")
+
 
     def do_work(self, work_type: WORK_TYPE):
         """
@@ -51,7 +53,7 @@ class Worker(QObject):
     def asr_work(self):
         srt_orm = ToSrtOrm()
         for it in self.queue_copy:
-            logger.debug(f'do_work()线线程工作中,处理asr_work任务:{it}')
+            logger.debug(f'do_work线线程工作中,处理asr_work任务:{it}')
             # 格式化每个视频信息
             obj_format = self._check_obj(it, WORK_TYPE.ASR)
 
@@ -68,7 +70,7 @@ class Worker(QObject):
     def trans_work(self):
         trans_orm = ToTranslationOrm()
         for it in self.queue_copy:
-            logger.debug(f'do_work()线线程工作中,处理trans_work任务:{it}')
+            logger.debug(f'do_work线线程工作中,处理trans_work任务:{it}')
             # 格式化每个字幕信息
             obj_format = self._check_obj(it, WORK_TYPE.TRANS)
             obj_format.srt_dirname = f'{obj_format.output}/{obj_format.raw_noextname}_译文.srt'  # 原始文件名_译文.srt，用作最终输出文件名
@@ -83,47 +85,67 @@ class Worker(QObject):
 
     def asr_trans_work(self):
         srt_orm = ToSrtOrm()
-        trans_orm = ToTranslationOrm()
+
         for it in self.queue_copy:
-            logger.debug(f'do_work()线程工作中,处理asr_trans任务:{it}')
+            logger.debug(f'do_work线程工作中,处理asr_trans任务:{it}')
 
             # 添加ASR任务到工作队列
-            obj_format = self._check_obj(it, WORK_TYPE.ASR)
-            asr_task = copy.deepcopy(obj_format)
-            work_queue.lin_queue_put(asr_task)
+            obj_format = self._check_obj(it, WORK_TYPE.ASR_TRANS)
+            work_queue.lin_queue_put(obj_format)
 
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
+
 
             # 添加ASR任务到数据库
             srt_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['source_module_status'],
                                       config.params['source_module_name'], config.params['translate_status'], config.params['cuda'], obj_format.raw_ext, 1,
                                       obj_format.model_dump_json())
 
-            # 等待 ASR 任务完成
-            self.asr_finished.connect(lambda unid: self.add_trans_task(unid, obj_format, trans_orm))
 
+            logger.debug('asr_trans任务，添加asr完成')
+
+            # 等待 ASR 任务完成
+            # self.data_bridge.asr_trans_job_asr_finished.connect(lambda completed_unid: self.add_trans_task(completed_unid, obj_format, trans_orm))
+            self.current_asr_trans_task = obj_format
             logger.debug('添加ASR+翻译任务完成')
 
-    def add_trans_task(self, completed_unid, obj_format, trans_orm):
-        if completed_unid == obj_format.unid:
-            # 添加翻译任务到工作队列
-            trans_task = self.change_job_format(obj_format)
-            work_queue.lin_queue_put(trans_task)
-
-            # 添加翻译任务到数据库
-            trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
-                                        config.params['translate_channel'], 1, 1, obj_format.model_dump_json())
-            # 断开连接，避免重复添加任务
-            self.asr_finished.disconnect()
+    @Slot(str)
+    def add_trans_task(self,completed_unid):
+        trans_orm = ToTranslationOrm()
+        logger.debug(f'asr_trans任务,处理trans任务: {completed_unid}')
+        # if hasattr(self, 'current_asr_trans_task') and completed_unid == self.current_asr_trans_task.unid:
+        #     # 添加翻译任务到工作队列
+        #     trans_task = self.change_job_format(self.current_asr_trans_task)
+        #     work_queue.lin_queue_put(trans_task)
+        #
+        #     # 添加翻译任务到数据库
+        #     trans_orm.add_data_to_table(self.current_asr_trans_task.unid, self.current_asr_trans_task.raw_name,
+        #                                      config.params['source_language'], config.params['target_language'],
+        #                                      config.params['translate_channel'], 1, 1, self.current_asr_trans_task.model_dump_json())
+        #
+        #     logger.debug(f'已添加翻译任务: {completed_unid}')
+    # def add_trans_task(self, completed_unid, obj_format, trans_orm):
+        # if completed_unid == obj_format.unid:
+        #     # 添加翻译任务到工作队列
+        #     logger.debug(f'asr_trans任务,处理trans任务:{obj_format.unid}')
+        #     trans_task = self.change_job_format(obj_format)
+        #     work_queue.lin_queue_put(trans_task)
+        #
+        #     # 添加翻译任务到数据库
+        #     trans_orm.add_data_to_table(obj_format.unid, obj_format.raw_name, config.params['source_language'], config.params['target_language'],
+        #                                 config.params['translate_channel'], 1, 1, obj_format.model_dump_json())
+        #     # 断开连接，避免重复添加任务
+        #     self.data_bridge.asr_trans_job_asr_finished.disconnect()
 
     def _check_obj(self, it, job_type: WORK_TYPE) -> Optional[VideoFormatInfo]:
         """
         检查文件是否符合要求,并格式化文件信息
         要求:
         1. 文件名长度不超过250
-        2. 文件名中不能包含特殊字符
+        2. 文件名中不能包含特殊字
         """
+        logger.debug(f"检查target_dir:{config.params['target_dir']}")
         obj_format = tools.format_job_msg(it, config.params['target_dir'], job_type)
         target_path = f"{obj_format.output}/{obj_format.raw_noextname}.mp4"
 
@@ -135,7 +157,6 @@ class Worker(QObject):
             set_process(config.transobj['teshufuhao'] + "\n\n" + it, 'alert')
             self.stop()
             return
-        logger.debug(f'obj_format:{obj_format}')
         return obj_format
 
     def stop(self):
@@ -153,7 +174,7 @@ class Worker(QObject):
         new_task.raw_basename = raw_pathlib.name
         new_task.raw_noextname = raw_pathlib.stem
         new_task.raw_ext = raw_pathlib.suffix[1:]
-        new_task.job_type = WORK_TYPE.TRANS
+        new_task.job_type = WORK_TYPE.ASR_TRANS
         return new_task
 
 
