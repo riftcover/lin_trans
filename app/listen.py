@@ -195,6 +195,7 @@ class SrtWriter:
         # self.data_bridge.emit_whisper_working(self.unid, 90)
         funasr_write_srt_file(segments, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
+        self.data_bridge.emit_asr_finished(self.unid)
 
     def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
         if system_type != 'darwin':
