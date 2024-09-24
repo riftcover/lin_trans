@@ -8,6 +8,9 @@ from queue import Queue
 
 from nice_ui.configure import ModelDict
 from nice_ui.ui.SingalBridge import DataBridge
+from utils import logger
+
+
 # from utils.log import Logings
 #
 # logger = Logings().logger
@@ -302,7 +305,17 @@ lin_queue = Queue()  # 任务队列
 
 is_consuming = False
 
-data_bridge = DataBridge()
+class SingletonDataBridge:
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = DataBridge()
+        return cls._instance
+
+data_bridge = SingletonDataBridge.get_instance()
+logger.info(f"DataBridge instance created with id: {id(data_bridge)}")
 
 # 全局错误
 errorlist = {}
@@ -314,5 +327,4 @@ video_codec = None
 video_min_ms = 50
 
 if __name__ == '__main__':
-    logger.info(params)
-
+    print(params['target_dir'])
