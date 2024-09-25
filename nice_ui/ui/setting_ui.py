@@ -1,19 +1,14 @@
 import os
-import re
 import sys
 from typing import Optional
 
-import requests
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
     QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem
-from requests import RequestException
 
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
-from nice_ui.util import tools
-from nice_ui.util.get_size import get_font_size, get_widget_size
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
@@ -31,17 +26,17 @@ class LocalModelPage(QWidget):
         layout = QVBoxLayout(self)
 
         # 本地识别引擎选择
-        self.appCardContainer = AppCardContainer(self)
-        self.whisper_cpp_card = self.appCardContainer.addAppCard("Whisper.Cpp", "支持 apple 芯片加速", True)
-        self.faster_whisper_card = self.appCardContainer.addAppCard("FasterWhisper", "时间更精确，支持 cuda 加速")
+        # self.appCardContainer = AppCardContainer(self)
+        # self.whisper_cpp_card = self.appCardContainer.addAppCard("Whisper.Cpp", "支持 apple 芯片加速", True)
+        # self.faster_whisper_card = self.appCardContainer.addAppCard("FasterWhisper", "时间更精确，支持 cuda 加速")
+        #
+        # # "Whisper.Cpp"被点击时显示"Whisper.Cpp 模型列表"，"FasterWhisper"被点击时显示"FasterWhisper 模型列表"
+        # self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.show_model_list("Whisper.Cpp"))
+        # self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.model_type(1))
+        # self.faster_whisper_card.radioButton.clicked.connect(lambda: self.show_model_list("FasterWhisper"))
+        # self.faster_whisper_card.radioButton.clicked.connect(lambda: self.model_type(2))
 
-        # "Whisper.Cpp"被点击时显示"Whisper.Cpp 模型列表"，"FasterWhisper"被点击时显示"FasterWhisper 模型列表"
-        self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.show_model_list("Whisper.Cpp"))
-        self.whisper_cpp_card.radioButton.clicked.connect(lambda: self.model_type(1))
-        self.faster_whisper_card.radioButton.clicked.connect(lambda: self.show_model_list("FasterWhisper"))
-        self.faster_whisper_card.radioButton.clicked.connect(lambda: self.model_type(2))
-
-        layout.addWidget(self.appCardContainer)
+        # layout.addWidget(self.appCardContainer)
         # 模型存储路径
         path_layout = QHBoxLayout()
         path_layout.addWidget(BodyLabel("模型存储路径:"))  # Windows
@@ -59,28 +54,38 @@ class LocalModelPage(QWidget):
         layout.addWidget(tips1)
 
         # Whisper.Cpp 模型列表
-        self.cpp_model_title = BodyLabel("Whisper.Cpp 模型列表")
-        self.cpp_model_table = TableWidget(self)
-        self.cpp_model_table.setColumnCount(6)
-        self.cpp_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
-        self.cpp_model_table.verticalHeader().setVisible(False)
-        self.cpp_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.cpp_model_title = BodyLabel("Whisper.Cpp 模型列表")
+        # self.cpp_model_table = TableWidget(self)
+        # self.cpp_model_table.setColumnCount(6)
+        # self.cpp_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
+        # self.cpp_model_table.verticalHeader().setVisible(False)
+        # self.cpp_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        #
+        # # FasterWhisper 模型列表
+        # self.faster_model_title = BodyLabel("FasterWhisper 模型列表")
+        # self.faster_model_table = TableWidget(self)
+        # self.faster_model_table.setColumnCount(6)
+        # self.faster_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
+        # self.faster_model_table.verticalHeader().setVisible(False)
+        # self.faster_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        # FasterWhisper 模型列表
-        self.faster_model_title = BodyLabel("FasterWhisper 模型列表")
-        self.faster_model_table = TableWidget(self)
-        self.faster_model_table.setColumnCount(6)
-        self.faster_model_table.setHorizontalHeaderLabels(["模型", "语言支持", "准确度", "模型大小", "运行内存", "识别速度"])
-        self.faster_model_table.verticalHeader().setVisible(False)
-        self.faster_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.funasr_model_title = BodyLabel("FasterWhisper 模型列表")
+        self.funasr_model_table = TableWidget(self)
+        self.funasr_model_table.setColumnCount(3)
+        self.funasr_model_table.setHorizontalHeaderLabels(["模型","模型大小","安装状态"])
+        self.funasr_model_table.verticalHeader().setVisible(False)
+        self.funasr_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        layout.addWidget(self.cpp_model_title)
-        layout.addWidget(self.cpp_model_table)
-        layout.addWidget(self.faster_model_title)
-        layout.addWidget(self.faster_model_table)
+        # layout.addWidget(self.cpp_model_title)
+        # layout.addWidget(self.cpp_model_table)
+        # layout.addWidget(self.faster_model_title)
+        # layout.addWidget(self.faster_model_table)
+        layout.addWidget(self.funasr_model_title)
+        layout.addWidget(self.funasr_model_table)
+        self.show_funasr_table(self.funasr_model_table)
 
         # 初始化显示 Whisper.Cpp 模型列表
-        self.show_model_list("Whisper.Cpp")
+        # self.show_model_list("Whisper.Cpp")
 
         tips1 = CaptionLabel("不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请手动下载，并放到上面的模型存储路径中。")
         layout.addWidget(tips1)
@@ -126,28 +131,49 @@ class LocalModelPage(QWidget):
         table.resizeColumnsToContents()
         table.setColumnWidth(0, 150)  # 设置第一列宽度
 
-    def show_model_list(self, engine):
-        if engine == "Whisper.Cpp":
-            self.cpp_model_title.show()
-            self.cpp_model_table.show()
-            self.faster_model_title.hide()
-            self.faster_model_table.hide()
-            # 填充 Whisper.Cpp 模型数据
-            cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
-                          ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
-                          ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
-            self.populate_model_table(self.cpp_model_table, cpp_models)
-        else:
-            self.cpp_model_title.hide()
-            self.cpp_model_table.hide()
-            self.faster_model_title.show()
-            self.faster_model_table.show()
-            # 填充 FasterWhisper 模型数据
-            faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
-                             ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
-                             ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
+    # def show_model_list(self, engine):
+    #     if engine == "Whisper.Cpp":
+    #         self.cpp_model_title.show()
+    #         self.cpp_model_table.show()
+    #         self.faster_model_title.hide()
+    #         self.faster_model_table.hide()
+    #         # 填充 Whisper.Cpp 模型数据
+    #         cpp_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+    #                       ("全语言小模型", "多语言", 3, "465.01 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+    #                       ("英语小模型", "英语", 4, "465.03 MB", "1.00 GB", 5), ]
+    #         self.populate_model_table(self.cpp_model_table, cpp_models)
+    #     elif engine == "FasterWhisper":
+    #         self.cpp_model_title.hide()
+    #         self.cpp_model_table.hide()
+    #         self.faster_model_title.show()
+    #         self.faster_model_table.show()
+    #         # 填充 FasterWhisper 模型数据
+    #         faster_models = [("全语言大模型", "多语言", 5, "2.88 GB", "4.50 GB", 2), ("全语言中模型", "多语言", 4, "1.43 GB", "2.80 GB", 3),
+    #                          ("全语言小模型", "多语言", 3, "463.69 MB", "1.00 GB", 5), ("英语大模型", "英语", 5, "1.43 GB", "2.80 GB", 3),
+    #                          ("英语小模型", "英语", 4, "463.58 MB", "1.00 GB", 5), ]
+    #
+    #         self.populate_model_table(self.faster_model_table, faster_models)
 
-            self.populate_model_table(self.faster_model_table, faster_models)
+    def show_funasr_table(self, table):
+        faster_models = [("多语言模型","4.50 GB",),("中文模型","2.80 GB"),
+                         ("英语模型","1.00 GB"), ]
+
+        table.setRowCount(len(faster_models))
+        for row, model in enumerate(faster_models):
+            for col, value in enumerate(model):
+                item = QTableWidgetItem(str(value))
+                item.setTextAlignment(Qt.AlignCenter)
+                if col == 3:  # 状态列
+                    btn = PushButton(value)
+                    if value == "已安装":
+                        btn.setEnabled(False)
+                    table.setCellWidget(row, col, btn)
+                    continue
+                table.setItem(row, col, item)
+
+        table.resizeColumnsToContents()
+        table.setColumnWidth(0, 150)  # 设置第一列宽度
+
 
     def model_type(self, param: int):
         """
