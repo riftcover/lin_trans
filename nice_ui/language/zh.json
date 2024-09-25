@@ -417,21 +417,8 @@
     "vi":"越南语"
   },
   "model_code_list": {
-    "云-英语小模型":{"status": 1, "model_name": "small.en"},
-    "云-英语大模型":{"status": 2, "model_name": "medium.en"},
-    "云-大模型":{"status": 3, "model_name": "large-v2"},
-    "云-小模型":{"status": 4, "model_name": "small"},
-
-    "全语言大模型.fast":{"status": 101, "model_name": "large-v2"},
-    "全语言中模型.fast":{"status": 102, "model_name": "medium"},
-    "全语言小模型.fast":{"status": 103, "model_name": "small"},
-    "英语大模型.fast":{"status": 104, "model_name": "medium.en"},
-    "英语小模型.fast":{"status": 105, "model_name": "small.en"},
-
-    "全语言大模型":{"status": 201, "model_name": "ggml-large-v2.bin"},
-    "全语言中模型":{"status": 202, "model_name": "ggml-medium.bin"},
-    "全语言小模型":{"status": 203, "model_name": "ggml-small.bin"},
-    "英语大模型": {"status": 204, "model_name": "ggml-medium.en.bin"},
-    "英语小模型": {"status": 205, "model_name": "ggml-small.en.bin"}
+    "全语言模型":{"status": 301, "model_name": "SenseVoiceSmall"},
+    "中文模型":{"status": 302, "model_name": "speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch"},
+    "英语模型":{"status": 303, "model_name": "speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020"}
   }
 }

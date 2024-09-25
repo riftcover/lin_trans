@@ -442,6 +442,10 @@
     "全语言中模型":{"status": 202, "model_name": "ggml-medium.bin"},
     "全语言小模型":{"status": 203, "model_name": "ggml-small.bin"},
     "英语大模型": {"status": 204, "model_name": "ggml-medium.en.bin"},
-    "英语小模型": {"status": 205, "model_name": "ggml-small.en.bin"}
+    "英语小模型": {"status": 205, "model_name": "ggml-small.en.bin"},
+
+    "全语言模型":{"status": 201, "model_name": "SenseVoiceSmall"},
+    "中文模型":{"status": 202, "model_name": "speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch"},
+    "英语模型":{"status": 203, "model_name": "speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020"}
   }
 }
