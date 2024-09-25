@@ -165,35 +165,15 @@ class TableApp(CardWidget):
         srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
-        # 创建一个集合来存储已处理的 unid
         processed_unids = set()
 
-        # 首先处理翻译任务数据
         for item in trans_data:
-            try:
-                obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
-                if obj_data is not None:
-                    processed_unids.add(item.unid)
-                    self._process_item(item, obj_data)
+            self._process_item(item, processed_unids)
 
-                else:
-                    logger.warning(f'{item.unid} 该数据 obj为空')
-                    return
-            except ValidationError as e:
-                logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
-
-        # 然后处理 ASR 任务数据，但跳过已经在翻译任务中处理过的
         for item in srt_data:
             if item.unid not in processed_unids:
-                try:
-                    obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
-                    if obj_data is not None:
-                        self._process_item(item, obj_data)
-                    else:
-                        logger.warning(f'{item.unid} 该数据 obj为空')
-                        return
-                except ValidationError as e:
-                    logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
+                self._process_item(item, processed_unids)
+
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
