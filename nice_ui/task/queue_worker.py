@@ -16,7 +16,9 @@ class LinQueue:
         config.lin_queue.put(take)
 
     # 消费mp4_to_war_queue
+
     @staticmethod
+    @logger.catch
     def consume_queue():
 
         # 将mp4转为war,在QueueConsumer中消费

@@ -212,6 +212,7 @@ params = {#操作系统类型:win32、linux、darwin
     "source_mp4": "",  # 需要进行处理的文件
     "target_dir": root_path/"result",  # result文件夹
     "output_dir": "",  # 导出文件夹
+    "source_language_code": "en",  # 原语言
 
     "source_language": "en", "source_module_status": 4,  #语音转文本模型
     "source_module_name": "small", "detect_language": "en",

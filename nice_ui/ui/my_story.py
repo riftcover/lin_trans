@@ -5,7 +5,7 @@ import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple
 
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QThread
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
 from pydantic import ValidationError
 
@@ -13,7 +13,7 @@ from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
-from nice_ui.task.main_worker import work_queue
+from nice_ui.task.main_worker import work_queue, QueueConsumer
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util import tools
@@ -429,8 +429,29 @@ class TableApp(CardWidget):
                           parent=self)
             raise FileNotFoundError(f"The file {job_path} does not exist.")
 
-        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'], video_format_info.work_type)
-        work_queue.lin_queue_put(job_path)
+        # 将任务重新添加到工作队列
+        work_queue.lin_queue_put(video_format_info)
+
+        InfoBar.success(title='成功', content="任务已重新开始", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+
+        # 如果消费线程未运行，则启动它
+        if not config.is_consuming:
+            self.start_queue_consumer()
+
+    def start_queue_consumer(self):
+        logger.debug(f'检查config.is_consuming:{config.is_consuming}')
+        if not config.is_consuming:
+            logger.debug('开始消费队列')
+            self.queue_consumer_thread = QThread()
+            self.queue_consumer = QueueConsumer()
+            self.queue_consumer.moveToThread(self.queue_consumer_thread)
+            self.queue_consumer_thread.started.connect(self.queue_consumer.process_queue)
+            self.queue_consumer.finished.connect(self.queue_consumer_thread.quit)
+            self.queue_consumer.finished.connect(self.queue_consumer.deleteLater)
+            self.queue_consumer_thread.finished.connect(self.queue_consumer_thread.deleteLater)
+            self.queue_consumer_thread.start()
+        else:
+            logger.debug("消费队列正在工作")
 
     def _delete_row(self):
         button_row = self._get_row()
