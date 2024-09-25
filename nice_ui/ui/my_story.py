@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
+from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
@@ -20,8 +21,8 @@ from nice_ui.util.tools import VideoFormatInfo
 from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
-from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton,
-                                   ToolTipPosition, ToolTipFilter, TransparentToolButton)
+from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton, ToolTipPosition,
+                                   ToolTipFilter, TransparentToolButton)
 
 
 class ButtonType(Enum):
@@ -81,9 +82,9 @@ class TableApp(CardWidget):
         top_layout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
-        self.exportBtn = self._create_button(LinIcon.EXPORT(),"批量导出", self._export_batch)
+        self.exportBtn = self._create_button(LinIcon.EXPORT(), "批量导出", self._export_batch)
         self.exportBtn.setIconSize(GuiSize.row_button_icon_size)
-        self.deleteBtn = self._create_button(FluentIcon.DELETE,"批量删除", self._delete_batch)
+        self.deleteBtn = self._create_button(FluentIcon.DELETE, "批量删除", self._delete_batch)
         self.searchInput = self._create_search_input()
 
         top_layout.addWidget(self.selectAllBtn)
@@ -96,7 +97,7 @@ class TableApp(CardWidget):
         self._setup_table(layout)
 
     @staticmethod
-    def _create_button(icon,tooltip: str, callback: callable):
+    def _create_button(icon, tooltip: str, callback: callable):
         """
         生成顶部空间中的按钮
         """
@@ -181,7 +182,6 @@ class TableApp(CardWidget):
             except ValidationError as e:
                 logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
 
-
         # 然后处理 ASR 任务数据，但跳过已经在翻译任务中处理过的
         for item in srt_data:
             if item.unid not in processed_unids:
@@ -195,42 +195,18 @@ class TableApp(CardWidget):
                 except ValidationError as e:
                     logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
 
-
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj = item.data(VideoFormatInfoRole)
 
-        work_type = work_obj.job_type
-        if work_type in (1, 3):
+        work_type = work_obj.work_type
+        if work_type == WORK_TYPE.ASR:
             return self.srt_orm
-        elif work_type == 2:
+        elif work_type == WORK_TYPE.TRANS:
             return self.trans_orm
-
-    def _load_data(self, orm, st: int):
-        """
-        加载数据到表格
-        Args:
-            orm: 表名
-
-        Returns:
-            item: 数据库查询返回的项目对象
-            srt_edit_dict: 字幕编辑器的字典
-            filename_without_extension: 无扩展的文件名
-        """
-        # 从数据库中查询数据
-        obj_data = None
-        all_data = orm.query_data_format_unid_path()
-        for item in all_data:
-            try:
-                obj_data: VideoFormatInfo = VideoFormatInfo.model_validate_json(item.obj)
-                if obj_data is not None:
-                    self._process_item(item, obj_data)
-                else:
-                    logger.warning(f'{item.unid} 该数据 obj为空')
-                    return
-            except ValidationError as e:
-                logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
+        elif work_type == WORK_TYPE.ASR_TRANS:
+            return self.srt_orm, self.trans_orm
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
@@ -328,17 +304,15 @@ class TableApp(CardWidget):
     def _update_job_status(self, item, edit_dict):
         new_status = 0
         orm_w = None
-        work_type = edit_dict.job_type
-        if work_type in (1,3):
+        work_type = edit_dict.work_type
+        if work_type in (1, 3):
             orm_w = self.srt_orm
-        elif work_type == 2:
+        elif work_type in (2, 3):
             orm_w = self.trans_orm
 
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1):
-        logger.info(f'table get obj_format:{obj_format}')
-
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
         filename = obj_format.raw_noextname
@@ -389,8 +363,15 @@ class TableApp(CardWidget):
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
             progress_bar.set_status("已完成")
-            orm_table = self._choose_sql_orm(row)
-            orm_table.update_table_unid(unid, job_status=2)
+            orm_result = self._choose_sql_orm(row)
+
+            if isinstance(orm_result, tuple):
+                # ASR_TRANS 任务
+                srt_orm, trans_orm = orm_result
+                srt_orm.update_table_unid(unid, job_status=2)
+                trans_orm.update_table_unid(unid, job_status=2)
+            else:
+                orm_result.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
                 self._set_row_buttons(row, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
@@ -410,50 +391,101 @@ class TableApp(CardWidget):
         self._set_row_buttons(row_position, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
 
     def _start_row(self):
-        # todo 从数据库中获取数据，传到work_queue中的数据格式需要调整
-        # 1.和consume_mp4_queue接受的一样
-        # 2.检查一下config.params的值是否和旧任务时一样,不一样也需要存到库中,再加载出来
         row = self._get_row()
         unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-        orm_table = self._choose_sql_orm(row)
-        job_concent = orm_table.query_data_by_unid(unid_item)
-        job_path =job_concent.path
-        job_obj = json.loads(job_concent.obj)
+        orm_result = self._choose_sql_orm(row)
+
+        if isinstance(orm_result, tuple):
+            # ASR_TRANS 任务
+            srt_orm, trans_orm = orm_result
+            job_content = srt_orm.query_data_by_unid(unid_item.text())
+            # 可能需要额外处理 trans_orm 的数据
+        else:
+            job_content = orm_result.query_data_by_unid(unid_item.text())
+
+        if job_content is None:
+            logger.error(f"未找到 UNID 为 {unid_item.text()} 的任务")
+            return
+
+        try:
+            # 将 job_content.obj 从 JSON 字符串转换为 dict
+            job_obj_dict = json.loads(job_content.obj)
+            
+            # 使用 VideoFormatInfo 的 model_validate 方法将 dict 转换为 VideoFormatInfo 对象
+            video_format_info = VideoFormatInfo.model_validate(job_obj_dict)
+        except json.JSONDecodeError:
+            logger.error(f"解析 job_content.obj 失败: {job_content.obj}")
+            return
+        except ValidationError as e:
+            logger.error(f"验证 VideoFormatInfo 失败: {e}")
+            return
+
+        # 现在 video_format_info 是 VideoFormatInfo 类型的对象
+        job_path = video_format_info.media_dirname  # 假设 media_dirname 是正确的路径属性
+
         if not os.path.isfile(job_path):
             logger.error(f"文件:{job_path}不存在,无法开始处理")
+            InfoBar.error(title='错误', content="文件:{job_path}不存在,无法重新开始", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=3000,
+                          parent=self)
             raise FileNotFoundError(f"The file {job_path} does not exist.")
-        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'],job_obj.work_type)
+
+        tools.format_job_msg(job_path.replace('\\', '/'), config.params['target_dir'], video_format_info.work_type)
         work_queue.lin_queue_put(job_path)
 
     def _delete_row(self):
         button_row = self._get_row()
         unid_item = self.table.cellWidget(button_row, TableWidgetColumn.UNID)
-        """
-        删除这三步是有先后顺序的,先删除文件,再删除数据库中的数据,再删除表格行,最后清除缓存索引
-        删除result中对应文件
-        """
+        unid = unid_item.text()
 
-        text = unid_item.text()
-        logger.info(f"删除文件所在行:{button_row + 1} | unid:{text} ")
-        orm_table = self._choose_sql_orm(button_row)
-        if text:
-            job_obj = json.loads(orm_table.query_data_by_unid(text).obj)
-            result_dir = job_obj["output"]
+        logger.info(f"准备删除文件所在行:{button_row + 1} | unid:{unid}")
+
+        job_obj = self.table.item(button_row, TableWidgetColumn.JOB_OBJ)
+        work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
+
+        # 删除本地文件
+        result_dir = work_obj.output
+        if result_dir and os.path.exists(result_dir):
             try:
-                # 删除本地文件
                 shutil.rmtree(result_dir)
                 logger.info(f"删除目录:{result_dir} 成功")
             except Exception as e:
                 logger.error(f"删除目录:{result_dir} 失败:{e}")
-        # 在数据库中删除对应数据
-        orm_table.delete_table_unid(text)
-        # 删除表格行
-        self.table.removeRow(button_row)
-        # 清除缓存索引
-        logger.info(f'row_cache before deletion :{self.row_cache}')
-        self.row_cache.pop(text, None)  # 如果键不存在，返回 None 而不是引发异常
-        InfoBar.success(title='成功', content="文件已删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                        parent=self)
+                return
+
+        # 删除数据库记录
+        success = True
+        try:
+            orm_result = self._choose_sql_orm(button_row)
+            if isinstance(orm_result, tuple):
+                # ASR_TRANS 任务
+                srt_orm, trans_orm = orm_result
+                srt_success = srt_orm.delete_table_unid(unid)
+                trans_success = trans_orm.delete_table_unid(unid)
+                success = srt_success or trans_success
+                if not srt_success:
+                    logger.error(f"删除 srt 表中的记录失败: unid:{unid}")
+                if not trans_success:
+                    logger.error(f"删除 translation 表中的记录失败: unid:{unid}")
+            else:
+                # 单一任务
+                success = orm_result.delete_table_unid(unid)
+                if not success:
+                    logger.error(f"删除数据库记录失败: unid:{unid}")
+        except Exception as e:
+            success = False
+            logger.error(f"删除数据库记录时发生错误: unid:{unid}, 错误: {str(e)}")
+
+        if success:
+            # 删除表格行
+            self.table.removeRow(button_row)
+            # 清除缓存索引
+            self.row_cache.pop(unid, None)
+            logger.info(f'已删除 unid:{unid}, row_cache 更新后:{self.row_cache}')
+            InfoBar.success(title='成功', content="任务已删除", orient=Qt.Horizontal, 
+                            isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+        else:
+            InfoBar.error(title='错误', content="删除数据库记录失败", orient=Qt.Horizontal, 
+                          isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=3000, parent=self)
 
     def _get_row(self):
         # 获取操作所在行
@@ -496,7 +528,7 @@ class TableApp(CardWidget):
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法导出")
             InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                            parent=self)
+                          parent=self)
             raise FileNotFoundError(f"The file {srt_path} does not exist.")
 
         logger.info(f"导出字幕:{srt_path}")
@@ -504,7 +536,7 @@ class TableApp(CardWidget):
         dialog = ExportSubtitleDialog([srt_path], self)
         dialog.exec()
         InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                            parent=self)
+                        parent=self)
 
     def _update_buttons_visibility(self):
         # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
@@ -520,7 +552,7 @@ class TableApp(CardWidget):
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法编辑")
             InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                            parent=self)
+                          parent=self)
             raise FileNotFoundError(f"The file {srt_path} does not exist.")
 
         # 创建一个新的对话框窗口
@@ -541,20 +573,20 @@ class TableApp(CardWidget):
         # 显示对话框
         dialog.exec()
 
-    def _update_subtitle_data(self, updated_srt_edit_dict):
-        # 更新表格中的数据
-        row = self._get_row()
-        item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
-        item.setData(VideoFormatInfoRole, updated_srt_edit_dict)
-
-        # 更新数据库
-        orm_table = self._choose_sql_orm(row)
-        unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-        orm_table.update_table_unid(unid_item.text(), obj=updated_srt_edit_dict.model_dump_json())
-
-        # 可以在这里添加一个成功提示
-        InfoBar.success(title='成功', content="字幕已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-            parent=self)
+    # def _update_subtitle_data(self, updated_srt_edit_dict):
+    #     # 更新表格中的数据
+    #     row = self._get_row()
+    #     item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+    #     item.setData(VideoFormatInfoRole, updated_srt_edit_dict)
+    #
+    #     # 更新数据库
+    #     orm_table = self._choose_sql_orm(row)
+    #     unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
+    #     orm_table.update_table_unid(unid_item.text(), obj=updated_srt_edit_dict.model_dump_json())
+    #
+    #     # 可以在这里添加一个成功提示
+    #     InfoBar.success(title='成功', content="字幕已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
+    #                     parent=self)
 
 
 if __name__ == '__main__':
