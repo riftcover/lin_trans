@@ -2,13 +2,12 @@ from pathlib import Path
 
 from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 from typing import Literal
 
-
-
 Base = declarative_base()
-JOB_STATUS = Literal[0,1,2,3,4]
+JOB_STATUS = Literal[0, 1, 2, 3, 4]
+
 
 class ToSrt(Base):
     __tablename__ = 'tosrt'
@@ -60,3 +59,16 @@ engine = create_engine('sqlite:///' + str(hh_path / 'orm/linlin.db'))
 
 # 创建所有表
 Base.metadata.create_all(engine)
+
+# 创建会话
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# 检查 Prompts 表是否为空，如果为空则添加默认数据
+if session.query(Prompts).count() == 0:
+    default_prompt = Prompts(prompt_name='默认',
+                             prompt_content='你是一位精通{translate_name}的专业翻译,我会给你一份{source_language_name}文件，帮我把这段{source_language_name}翻译成{translate_name}.')
+    session.add(default_prompt)
+    session.commit()
+
+session.close()
