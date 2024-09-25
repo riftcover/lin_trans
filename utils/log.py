@@ -25,7 +25,7 @@ class Logings:
             os.makedirs(log_path)
         self.logger.configure(handlers=[{"sink": sys.stderr, "level": "TRACE"},
                                         {"sink": f'{log_path}/{DATE}.log', "level": "TRACE", "rotation": "1 day",
-                                         "retention": "1", "encoding": 'utf-8', "backtrace": True, "diagnose": True,
+                                         "retention": 1, "encoding": 'utf-8', "backtrace": True, "diagnose": True,
                                          "enqueue": True}])
 
 
