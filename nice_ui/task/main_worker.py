@@ -98,7 +98,7 @@ class Worker(QObject):
             logger.debug('asr_trans任务，添加asr完成')
 
 
-    def _check_obj(self, it, job_type: WORK_TYPE) -> Optional[VideoFormatInfo]:
+    def _check_obj(self, it, work_type: WORK_TYPE) -> Optional[VideoFormatInfo]:
         """
         检查文件是否符合要求,并格式化文件信息
         要求:
@@ -106,7 +106,7 @@ class Worker(QObject):
         2. 文件名中不能包含特殊字
         """
         logger.debug(f"检查target_dir:{config.params['target_dir']}")
-        obj_format = tools.format_job_msg(it, config.params['target_dir'], job_type)
+        obj_format = tools.format_job_msg(it, config.params['target_dir'], work_type)
         target_path = f"{obj_format.output}/{obj_format.raw_noextname}.mp4"
 
         if len(target_path) >= 250:

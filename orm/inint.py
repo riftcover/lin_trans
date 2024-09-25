@@ -40,7 +40,7 @@ class ToTranslation(Base):
     obj = Column(String)
 
     def __repr__(self):
-        return f"<ToTranslation(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_type='{self.translate_channel}',job_type='{self.trans_type}',job_status='{self.job_status}')>"
+        return f"<ToTranslation(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',target_language='{self.target_language}',translate_channel='{self.translate_channel}',trans_type='{self.trans_type}',job_status='{self.job_status}')>"
 
 
 class Prompts(Base):

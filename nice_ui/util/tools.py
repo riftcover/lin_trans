@@ -961,7 +961,7 @@ class VideoFormatInfo(BaseModel):
     srt_dirname: str = Field(..., description="funasr处理完srt文件路径")
     unid: str = Field(..., description="文件指纹")
     source_mp4: str = Field(..., description="任务文件路径，原始文件路径")
-    job_type: Optional[WORK_TYPE] = Field(default=None, description="任务类型，asr、trans 可选字段")
+    work_type: Optional[WORK_TYPE] = Field(default=None, description="任务类型，asr、trans 可选字段")
 
 
 def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
@@ -990,7 +990,6 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     h.update(current_time)
 
     unid = h.hexdigest()
-    logger.info(f'out: {out}')
     output_path = out / unid
     wav_path = output_path / f'{raw_noextname}.wav'
     srt_path = output_path / f'{raw_noextname}.srt'
@@ -1017,7 +1016,7 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
         media_dirname=media_dirname,
         unid=unid,
         source_mp4=name,
-        job_type=work_type
+        work_type=work_type
     )
 
     return video_info
@@ -1030,7 +1029,7 @@ def change_job_format(asr_task_finished: VideoFormatInfo) -> VideoFormatInfo:
     new_task.raw_basename = raw_pathlib.name
     new_task.raw_noextname = raw_pathlib.stem
     new_task.raw_ext = raw_pathlib.suffix[1:]
-    new_task.job_type = WORK_TYPE.ASR_TRANS
+    new_task.work_type = WORK_TYPE.ASR_TRANS
     return new_task
 def open_dir(self, dirname=None):
     if not dirname:

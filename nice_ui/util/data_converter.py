@@ -27,7 +27,7 @@ def convert_video_format_info_to_srt_edit_dict(video_info: VideoFormatInfo) -> S
             SrtEditDict: 转换后的 SrtEditDict 对象
         """
     new_dict = SrtEditDict()
-    job_t = video_info.job_type
+    job_t = video_info.work_type
     new_dict.srt_dirname = video_info.srt_dirname
     new_dict.unid = video_info.unid
     new_dict.job_type = job_t
