@@ -1,49 +1,69 @@
-class ProxyTestWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setup_ui()
-        self.network_manager = QNetworkAccessManager(self)
-        self.network_manager.finished.connect(self.handle_response)
+import sys
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
+from vendor.qfluentwidgets import (NavigationInterface, NavigationItemPosition, NavigationWidget, Theme, setTheme, FluentIcon as FIF, FluentWindow)
 
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        self.test_button = QPushButton("测试代理", self)
-        self.test_button.clicked.connect(self.test_proxy)
-        self.response_text = QTextEdit(self)
-        self.response_text.setReadOnly(True)
+class MainWindow(FluentWindow):
+    def __init__(self):
+        super().__init__()
 
-        layout.addWidget(self.test_button)
-        layout.addWidget(self.response_text)
+        # 设置窗口标题
+        self.setWindowTitle("Mac 风格 Fluent UI 示例")
 
-    def test_proxy(self):
-        url = QUrl("http://www.google.com")
-        request = QNetworkRequest(url)
-        self.network_manager.get(request)
+        # 创建堆叠小部件
+        self.stackedWidget = QStackedWidget(self)
 
-    def handle_response(self, reply):
-        if reply.error() == QNetworkReply.NoError:
-            content = reply.readAll()
-            self.response_text.setPlainText(str(content, encoding='utf-8'))
-            InfoBar.success(
-                title="成功",
-                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
-        else:
-            error_msg = reply.errorString()
-            self.response_text.setPlainText(f"错误: {error_msg}")
-            InfoBar.error(
-                title="错误",
-                content=f"测试失败: {error_msg}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+        # 创建并设置导航界面
+        self.navigationInterface = NavigationInterface(self, showMenuButton=True, showReturnButton=True)
 
-        reply.deleteLater()
+        # 添加示例页面
+        self.homeWidget = QWidget()
+        self.homeWidget.setObjectName("homeWidget")
+        self.settingsWidget = QWidget()
+        self.settingsWidget.setObjectName("settingsWidget")
+        self.stackedWidget.addWidget(self.homeWidget)
+        self.stackedWidget.addWidget(self.settingsWidget)
+
+        # 添加导航项
+        self.addSubInterface(self.homeWidget, FIF.HOME, "主页")
+        self.addSubInterface(self.settingsWidget, FIF.SETTING, "设置")
+
+        # 设置主题
+        setTheme(Theme.AUTO)
+
+        # 设置窗口大小
+        self.resize(900, 700)
+
+        # 对于 Mac 系统，设置统一的标题栏和工具栏
+        if sys.platform == "darwin":
+            self.setWindowFlag(Qt.WindowType.WindowFullscreenButtonHint, True)
+            self.setUnifiedTitleAndToolBarOnMac(True)  # 设置统一的标题栏和工具栏
+
+        # 初始化界面
+        # self.initNavigation()
+
+        self.navigationInterface.setFixedWidth(200)
+
+        # 设置主布局
+        mainLayout = QVBoxLayout(self)
+        mainLayout.addWidget(self.navigationInterface)
+        mainLayout.addWidget(self.stackedWidget)
+        self.setLayout(mainLayout)
+
+    def addSubInterface(self, widget, icon, text):
+        self.navigationInterface.addItem(
+            NavigationWidget(
+                self,  # 传递父窗口
+                icon
+            ),
+            text,
+            NavigationItemPosition.SCROLL
+        )
+        self.stackedWidget.addWidget(widget)  # 确保将 widget 添加到堆叠小部件中
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())

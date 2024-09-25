@@ -1022,7 +1022,16 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
 
     return video_info
 
-
+def change_job_format(asr_task_finished: VideoFormatInfo) -> VideoFormatInfo:
+    new_task = copy.deepcopy(asr_task_finished)
+    raw_pathlib = Path(asr_task_finished.srt_dirname)
+    new_task.raw_name = asr_task_finished.srt_dirname
+    new_task.raw_dirname = raw_pathlib.parent.resolve().as_posix()
+    new_task.raw_basename = raw_pathlib.name
+    new_task.raw_noextname = raw_pathlib.stem
+    new_task.raw_ext = raw_pathlib.suffix[1:]
+    new_task.job_type = WORK_TYPE.ASR_TRANS
+    return new_task
 def open_dir(self, dirname=None):
     if not dirname:
         return
