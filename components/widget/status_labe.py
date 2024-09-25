@@ -9,7 +9,7 @@ class StatusLabel(QLabel):
         self.setStyleSheet("""
             QLabel {
                 border-radius: 3px;
-                font-size: 11px;  # 稍微减小字体大小
+                font-size: 11px;
             }
         """)
 
@@ -24,7 +24,7 @@ class StatusLabel(QLabel):
                     border-radius: 3px;
                     font-size: 11px;
                 }
-                        """)
+            """)
         elif status == "处理失败":
             self.setStyleSheet("""
                 QLabel {
