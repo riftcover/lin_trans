@@ -5,14 +5,53 @@ from typing import Optional
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem
-
+    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar
+from PySide6.QtCore import QThread, Signal
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, )
+from agent.model_down import download_model
+
+class DownloadThread(QThread):
+    progress_signal = Signal(int)
+    finished_signal = Signal(bool)
+
+    def __init__(self, model_name):
+        super().__init__()
+        self.model_name = model_name
+
+    def run(self):
+        try:
+            download_model(self.model_name, progress_callback=self.update_progress)
+            self.finished_signal.emit(True)
+        except Exception as e:
+            logger.error(f"下载模型时发生错误: {str(e)}")
+            self.finished_signal.emit(False)
+
+    def update_progress(self, progress):
+        self.progress_signal.emit(progress)
+
+    progress_signal = Signal(int)
+    finished_signal = Signal(bool)
+
+    def __init__(self, model_name):
+        super().__init__()
+        self.model_name = model_name
+
+    def run(self):
+        try:
+            download_model(self.model_name, progress_callback=self.update_progress)
+            self.finished_signal.emit(True)
+        except Exception as e:
+            logger.error(f"下载模型时发生错误: {str(e)}")
+            self.finished_signal.emit(False)
+
+    def update_progress(self, progress):
+        self.progress_signal.emit(progress)
+
 
 
 class LocalModelPage(QWidget):
@@ -155,24 +194,132 @@ class LocalModelPage(QWidget):
     #         self.populate_model_table(self.faster_model_table, faster_models)
 
     def show_funasr_table(self, table):
-        faster_models = [("多语言模型","4.50 GB",),("中文模型","2.80 GB"),
-                         ("英语模型","1.00 GB"), ]
-
+        faster_models = [
+            ("多语言模型", "4.50 GB"),
+            ("中文模型", "2.80 GB"),
+            ("英语模型", "1.00 GB"),
+        ]
+        model_list = config.model_list
+        
         table.setRowCount(len(faster_models))
         for row, model in enumerate(faster_models):
-            for col, value in enumerate(model):
+            model_name, model_size = model
+            model_info = model_list.get(model_name, {})
+            model_folder = model_info.get('model_name', '')
+
+            # 检查模型是否已安装
+            is_installed = os.path.exists(os.path.join(config.models_path, 'funasr', model_folder))
+
+            for col, value in enumerate([model_name, model_size]):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignCenter)
-                if col == 3:  # 状态列
-                    btn = PushButton(value)
-                    if value == "已安装":
-                        btn.setEnabled(False)
-                    table.setCellWidget(row, col, btn)
-                    continue
                 table.setItem(row, col, item)
+
+            # 添加安装状态或安装按钮
+            if is_installed:
+                status_item = QTableWidgetItem("已安装")
+                status_item.setTextAlignment(Qt.AlignCenter)
+                table.setItem(row, 2, status_item)
+            else:
+                install_btn = QPushButton("安装")
+                install_btn.clicked.connect(lambda _, r=row, m=model_folder: self.install_model(r, m))
+                table.setCellWidget(row, 2, install_btn)
 
         table.resizeColumnsToContents()
         table.setColumnWidth(0, 150)  # 设置第一列宽度
+
+    def install_model(self, row, model_folder):
+        model_cn_name = self.funasr_model_table.item(row, 0).text()
+        model_info = config.model_list.get(model_cn_name, {})
+        model_name = model_info.get('model_name', '')
+
+        if not model_name:
+            InfoBar.error(
+                title="错误",
+                content="无法获取模型ID",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            return
+
+        # 创建进度条
+        progress_bar = QProgressBar(self)
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(0)
+        self.funasr_model_table.setCellWidget(row, 2, progress_bar)
+
+        # 创建下载线程
+        self.download_thread = DownloadThread(model_name)
+        self.download_thread.progress_signal.connect(progress_bar.setValue)
+        self.download_thread.finished_signal.connect(lambda success: self.download_finished(success, row, model_folder))
+
+        # 开始下载
+        self.download_thread.start()
+
+    def download_finished(self, success, row, model_folder):
+        if success:
+            InfoBar.success(
+                title="成功",
+                content="模型安装完成",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            self.update_model_status(row, True)
+        else:
+            InfoBar.error(
+                title="错误",
+                content="模型安装失败",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            self.update_model_status(row, False)
+
+        if success:
+            InfoBar.success(
+                title="成功",
+                content="模型安装完成",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            self.update_model_status(row, True)
+        else:
+            InfoBar.error(
+                title="错误",
+                content="模型安装失败",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+            self.update_model_status(row, False)
+
+    def update_model_status(self, row, is_installed):
+        if is_installed:
+            status_item = QTableWidgetItem("已安装")
+            status_item.setTextAlignment(Qt.AlignCenter)
+            self.funasr_model_table.setItem(row, 2, status_item)
+        else:
+            install_btn = QPushButton("安装")
+            install_btn.clicked.connect(lambda _, r=row, m=self.get_model_folder(row): self.install_model(r, m))
+            self.funasr_model_table.setCellWidget(row, 2, install_btn)
+
+    def get_model_folder(self, row):
+        model_name = self.funasr_model_table.item(row, 0).text()
+        return config.model_list.get(model_name, {}).get('model_name', '')
+
 
 
     def model_type(self, param: int):

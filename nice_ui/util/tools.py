@@ -1186,6 +1186,7 @@ def list_model_files(model_dir: str = None) -> list:
         model_dir = config.root_path / 'models'
     
     model_files = []
+    model_list = config.model_list
     
     for root, dirs, files in os.walk(model_dir):
         for file in files:
@@ -1198,4 +1199,4 @@ def list_model_files(model_dir: str = None) -> list:
     return model_files
 
 if __name__ == '__main__':
-    print(list_model_files())
+    print(config.model_list)
