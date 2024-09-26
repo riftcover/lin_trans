@@ -265,7 +265,7 @@ class TableApp(CardWidget):
         button_widget.setLayout(button_layout)
         self.table.setCellWidget(row, 3, button_widget)
 
-    def _process_item(self, item, edit_dict: VideoFormatInfo):
+    def _process_item(self, item, processed_unids):
         """
         处理单个项目并更新表格。
 
@@ -273,13 +273,20 @@ class TableApp(CardWidget):
         :param edit_dict: srt_edit_dict = {"media_dirname":"", "srt_dirname":"", "work_type":"","raw_noextname":""}
 
         """
-        if item.job_status in (0, 1):
-            if item.job_status == 1:
-                self._update_job_status(item, edit_dict)
-
-            self.table_row_init(edit_dict, 0)
-        elif item.job_status == 2:
-            self.addRow_init_all(edit_dict)
+        try:
+            obj_data = VideoFormatInfo.model_validate_json(item.obj)
+            if obj_data is not None:
+                processed_unids.add(item.unid)
+                if item.job_status in (0, 1):
+                    if item.job_status == 1:
+                        self._update_job_status(item, obj_data)
+                    self.table_row_init(obj_data, 0)
+                elif item.job_status == 2:
+                    self.addRow_init_all(obj_data)
+            else:
+                logger.warning(f'{item.unid} 该数据 obj为空')
+        except ValidationError as e:
+            logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
 
     def _update_job_status(self, item, edit_dict):
         new_status = 0
@@ -359,7 +366,11 @@ class TableApp(CardWidget):
                 logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
     def addRow_init_all(self, edit_dict: VideoFormatInfo):
-        filename_without_extension = edit_dict.raw_noextname
+        try:
+            filename_without_extension = edit_dict.raw_noextname
+        except AttributeError:
+            logger.error(f"添加行失败, 缺少必要参数: {edit_dict}")
+            return
         unid = edit_dict.unid
         logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
