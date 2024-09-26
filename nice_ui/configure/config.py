@@ -160,7 +160,11 @@ model_list: ModelDict = obj["model_code_list"]
 model_type: int = 2
 
 def init_model_code_key() -> list:
-    # 模型列表
+    """
+    模型列表的key值
+    example: ['多语言模型', '中文模型', '英语模型']
+    """
+
     # todo：应该先读取本地安装的模型，然后修改model_list的值
     code = [key.split('.')[0] for key in model_list.keys()]
 
@@ -328,4 +332,5 @@ video_codec = None
 video_min_ms = 50
 
 if __name__ == '__main__':
-    print(params['target_dir'])
+    a = init_model_code_key()
+    print(a[:4])

@@ -3,8 +3,8 @@ import asyncio
 import sys
 
 import httpx
-from PySide6.QtCore import QUrl, QSettings, QTimer
-from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
+from PySide6.QtCore import QUrl, QSettings
+from PySide6.QtGui import QIcon, QDesktopServices, QColor
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
@@ -58,7 +58,6 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        # todo：更换成资源路径
         self.setWindowIcon(QIcon(':icon/assets/linlin.png'))
         self.setWindowTitle('林林字幕')
 
