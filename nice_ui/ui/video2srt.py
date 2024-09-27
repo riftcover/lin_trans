@@ -52,6 +52,7 @@ class Video2SRT(QWidget):
 
         # 原始语种布局
         source_layout = QHBoxLayout()
+        source_layout.setSpacing(5)
         source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         source_language_label = BodyLabel("原始语种")
@@ -72,6 +73,7 @@ class Video2SRT(QWidget):
         # 识别引擎布局
 
         recognition_layout = QHBoxLayout()
+        recognition_layout.setSpacing(5)
         recognition_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         # 识别引擎
         recognition_label = BodyLabel("识别引擎")
@@ -98,6 +100,7 @@ class Video2SRT(QWidget):
 
         # 翻译语言布局
         translate_language_layout = QHBoxLayout()
+        translate_language_layout.setSpacing(5)
         translate_language_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_language_label = BodyLabel("翻译语种")
@@ -112,6 +115,7 @@ class Video2SRT(QWidget):
 
         # 翻译引擎布局
         translate_engine_layout = QHBoxLayout()
+        translate_engine_layout.setSpacing(5)
         translate_engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_model_name = BodyLabel("翻译引擎")
@@ -129,8 +133,8 @@ class Video2SRT(QWidget):
         translate_engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(translate_engine_layout)
 
-        # todo: 只有选择ai时才显示
         prompt_layout = QHBoxLayout()
+        prompt_layout.setSpacing(5)
         prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         ai_prompt_name = BodyLabel("提示词")
         self.ai_prompt = TransComboBox(self)

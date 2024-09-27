@@ -4,8 +4,9 @@ from nice_ui.configure import config
 import os
 from tqdm import tqdm
 
+
 #模型下载-中文
-def download_model(model_name:str,progress_callback=None):
+def download_model(model_name: str, progress_callback=None):
     download_path = os.path.join(config.root_path, 'models', 'funasr')
     os.makedirs(download_path, exist_ok=True)
 
@@ -22,9 +23,6 @@ def download_model(model_name:str,progress_callback=None):
 
     with ProgressBar(unit='B', unit_scale=True, miniters=1, desc=model_name) as t:
         snapshot_download(f'iic/{model_name}', cache_dir=download_path)
-
-
-
 
 
 # download_model('iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch')

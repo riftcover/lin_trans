@@ -49,6 +49,7 @@ class WorkSrt(QWidget):
 
         # 原始语种布局
         source_layout = QHBoxLayout()
+        source_layout.setSpacing(5)
         source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         source_language_name = BodyLabel("原始语种")
@@ -66,6 +67,7 @@ class WorkSrt(QWidget):
 
         # 翻译语种布局
         translate_layout = QHBoxLayout()
+        translate_layout.setSpacing(5)
         translate_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_language_name = BodyLabel("翻译语种")
@@ -82,6 +84,7 @@ class WorkSrt(QWidget):
 
         # 翻译引擎布局
         engine_layout = QHBoxLayout()
+        engine_layout.setSpacing(5)
         engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         translate_model_name = BodyLabel("翻译引擎")
@@ -101,6 +104,7 @@ class WorkSrt(QWidget):
 
         # todo: 只有选择ai时才显示
         prompt_layout = QHBoxLayout()
+        prompt_layout.setSpacing(5)
         prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         ai_prompt_name = BodyLabel("提示词")
         self.ai_prompt = TransComboBox(self)
