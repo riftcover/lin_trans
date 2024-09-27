@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 from enum import Enum, auto, IntEnum
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Literal
 
 from PySide6.QtCore import Qt, QSettings, QThread
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
@@ -16,14 +16,14 @@ from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue, QueueConsumer
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
-from nice_ui.util import tools
+
 from nice_ui.util.tools import VideoFormatInfo
-from orm.inint import JOB_STATUS
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton, ToolTipPosition,
                                    ToolTipFilter, TransparentToolButton)
 
+JOB_STATUS = Literal[0, 1, 2, 3, 4]
 
 class ButtonType(Enum):
     START = auto()
@@ -247,7 +247,7 @@ class TableApp(CardWidget):
 
         # 添加一个伸缩项,将按钮推到右侧
         button_layout.addStretch()
-
+        button = None
         for button_type in button_types:
 
             if button_type == ButtonType.EXPORT:

@@ -46,10 +46,12 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
     """
     翻译srt文件
     Args:
+        unid: 任务id
         in_document: 需要翻译的文件
         out_document: 翻译完成后的文件
         agent_name: 所选api提供方:qwen,kimi等等
         chunk_size: 每次翻译行数
+        prompt: 翻译提示
         sleep_time: 2次翻译间隔时间,根据各api提供方限流来设置
     """
     agent: AgentDict = agent_msg[agent_name]

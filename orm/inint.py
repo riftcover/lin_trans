@@ -3,10 +3,9 @@ from pathlib import Path
 from sqlalchemy import Column, Integer, String
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base, sessionmaker
-from typing import Literal
 
 Base = declarative_base()
-JOB_STATUS = Literal[0, 1, 2, 3, 4]
+
 
 
 class ToSrt(Base):

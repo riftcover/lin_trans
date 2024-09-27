@@ -419,7 +419,7 @@ class PopupWidget(QWidget):
                     parent=self.parent(), )
 
         self.close()
-        self.parent()._refresh_table_data()
+        self.parent().refresh_table_data()
 
 
 class LLMConfigPage(QWidget):
@@ -469,7 +469,7 @@ class LLMConfigPage(QWidget):
         prompts_header.addStretch()
         refresh_btn = ToolButton(FluentIcon.ROTATE)
         refresh_btn.setToolTip("刷新提示词")
-        refresh_btn.clicked.connect(self._refresh_table_data)
+        refresh_btn.clicked.connect(self.refresh_table_data)
 
         add_btn = ToolButton(FluentIcon.CHAT)
         add_btn.setToolTip("新增提示词")
@@ -542,7 +542,7 @@ class LLMConfigPage(QWidget):
 
         self.prompts_table.setCellWidget(row, 3, buttons_widget)
 
-    def _refresh_table_data(self):
+    def refresh_table_data(self):
         self.prompts_table.setRowCount(0)  # 清空表格
         all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
         for prompt in all_prompts:

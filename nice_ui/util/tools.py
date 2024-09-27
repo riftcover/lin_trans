@@ -689,35 +689,6 @@ def set_process(text, type="logs", *, qname='sp', func_name="", btnkey="", nolog
             print(f'[{type}]: {text}')
 
 
-# 获取目录下的所有文件和子目录
-def delete_files(directory, ext):
-    try:
-        files_and_dirs = os.listdir(directory)
-
-        # 遍历文件和子目录
-        for item in files_and_dirs:
-            item_path = os.path.join(directory, item)
-            # 如果是文件，且是 mp3 文件，删除之
-            if os.path.isfile(item_path) and item.lower().endswith(ext):
-                os.remove(item_path)
-
-            # 如果是子目录，递归调用删除函数
-            elif os.path.isdir(item_path):
-                delete_files(item_path)
-    except Exception:
-        pass
-
-
-def send_notification(title, message):
-    from plyer import notification
-    try:
-        notification.notify(title=title[:60], message=message[:120], ticker="pyVideoTrans", app_name="pyVideoTrans",
-                            # config.uilanglist['SP-video Translate Dubbing'],
-                            app_icon=os.path.join(config.rootdir, 'videotrans/styles/icon.ico'), timeout=10  # Display duration in seconds
-                            )
-    except Exception:
-        raise
-
 
 # 判断是否需要重命名，如果需要则重命名并转移
 def rename_move(file, *, is_dir=False):
