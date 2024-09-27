@@ -2,10 +2,10 @@ import os
 import sys
 from typing import Optional
 
-from PySide6.QtCore import QSettings, Qt, QUrl, QSize
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QTimer
 from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar
+    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, QLayoutItem
 from PySide6.QtCore import QThread, Signal
 from nice_ui.configure import config
 from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
@@ -111,7 +111,7 @@ class LocalModelPage(QWidget):
         self.funasr_model_title = BodyLabel("FasterWhisper 模型列表")
         self.funasr_model_table = TableWidget(self)
         self.funasr_model_table.setColumnCount(3)
-        self.funasr_model_table.setHorizontalHeaderLabels(["模型","模型大小","安装状态"])
+        self.funasr_model_table.setHorizontalHeaderLabels(["模型", "模型大小", "安装状态"])
         self.funasr_model_table.verticalHeader().setVisible(False)
         self.funasr_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -320,8 +320,6 @@ class LocalModelPage(QWidget):
         model_name = self.funasr_model_table.item(row, 0).text()
         return config.model_list.get(model_name, {}).get('model_name', '')
 
-
-
     def model_type(self, param: int):
         """
         设置模型类型，1为Whisper.Cpp，2为FasterWhisper
@@ -360,7 +358,7 @@ class PopupWidget(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout()
         self.name_input = None
-        
+
         if self.key_id is not None:
             # 编辑提示词
             self.setWindowTitle("编辑提示词")
@@ -397,65 +395,28 @@ class PopupWidget(QWidget):
         new_content = self.label.toPlainText()
         if not new_name or not new_content:
             logger.error("提示词不能为空")
-            InfoBar.error(
-                title="错误",
-                content="提示词不能为空",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+            InfoBar.error(title="错误", content="提示词不能为空", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
+                parent=self, )
             return
         if self.key_id is None:
             # 添加新提示词
             logger.info(f"添加新提示词: 名称={new_name}, 内容={new_content}")
-            if _ := self.parent().prompts_orm.insert_table_prompt(
-                prompt_name=new_name, prompt_content=new_content
-            ):
-                InfoBar.success(
-                    title="成功",
-                    content="新提示词已添加",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self.parent(),
-                )
+            if _ := self.parent().prompts_orm.insert_table_prompt(prompt_name=new_name, prompt_content=new_content):
+                InfoBar.success(title="成功", content="新提示词已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                    parent=self.parent(), )
             else:
-                InfoBar.error(
-                    title="错误",
-                    content="添加新提示词失败",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self.parent(),
-                )
+                InfoBar.error(title="错误", content="添加新提示词失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                    parent=self.parent(), )
         else:
             # 更新现有提示词
             logger.info(f"修改提示词: id={self.key_id}, 名称={new_name}, 内容={new_content}")
             success: bool = self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_name=new_name, prompt_content=new_content)
             if success:
-                InfoBar.success(
-                    title="成功",
-                    content="提示词已更新",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self.parent(),
-                )
+                InfoBar.success(title="成功", content="提示词已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                    parent=self.parent(), )
             else:
-                InfoBar.error(
-                    title="错误",
-                    content="更新提示词失败",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self.parent(),
-                )
+                InfoBar.error(title="错误", content="更新提示词失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+                    parent=self.parent(), )
 
         self.close()
         self.parent()._refresh_table_data()
@@ -609,7 +570,6 @@ class LLMConfigPage(QWidget):
 
         return edit_row
 
-
     def _add_prompt(self):
         self.popup = PopupWidget(key_id=None, prompt_name="", prompt_msg="", parent=self)
         self.popup.show()
@@ -675,29 +635,38 @@ class ProxyTestWidget(QWidget):
         if reply.error() == QNetworkReply.NoError:
             content = reply.readAll()
             self.response_text.setPlainText(str(content, encoding='utf-8'))
-            InfoBar.success(
-                title="成功",
-                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+            InfoBar.success(title="成功", content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}", orient=Qt.Horizontal,
+                isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
         else:
             error_msg = reply.errorString()
             self.response_text.setPlainText(f"错误: {error_msg}")
-            InfoBar.error(
-                title="错误",
-                content=f"测试失败: {error_msg}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+            InfoBar.error(title="错误", content=f"测试失败: {error_msg}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
+                parent=self, )
 
         reply.deleteLater()
+
+
+def print_height_difference(widget1, widget2):
+    # 确保窗口已经完成布局
+    QTimer.singleShot(0, lambda: _print_height_difference(widget1, widget2))
+
+def _print_height_difference(widget1, widget2):
+    pos1 = widget1.mapToGlobal(widget1.rect().topLeft())
+    pos2 = widget2.mapToGlobal(widget2.rect().topLeft())
+    
+    y1 = pos1.y()
+    height1 = widget1.height()
+    y2 = pos2.y()
+    
+    difference = y2 - (y1 + height1)
+    
+    print(f"Widget 1 ({widget1.__class__.__name__}):")
+    print(f"  Y position: {y1}")
+    print(f"  Height: {height1}")
+    print(f"Widget 2 ({widget2.__class__.__name__}):")
+    print(f"  Y position: {y2}")
+    print(f"Height difference: {difference}")
+
 
 
 class ProxyPage(QWidget):
@@ -708,6 +677,9 @@ class ProxyPage(QWidget):
         self.load_settings()  # 在初始化时加载设置
 
     def setup_ui(self):
+        # 定义一个统一的间距值
+        UNIFORM_SPACING = 10
+
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(30, 30, 30, 30)
@@ -715,15 +687,20 @@ class ProxyPage(QWidget):
         # Proxy Settings Card
         proxy_card = CardWidget(self)
         card_layout = QVBoxLayout(proxy_card)
+        card_layout.setSpacing(UNIFORM_SPACING)  # 设置卡片内部统一间距
+        card_layout.setContentsMargins(20, 20, 20, 20)  # 设置卡片内边距
+
 
         # 创建单选框
         self.no_proxy_radio = RadioButton("无代理")
         self.use_proxy_radio = RadioButton("手动代理配置")
 
         radio_layout = QVBoxLayout()
+        radio_layout.setSpacing(UNIFORM_SPACING) 
         self.proxy_radio_group = QButtonGroup(radio_layout)
         self.proxy_radio_group.addButton(self.no_proxy_radio)
         self.proxy_radio_group.addButton(self.use_proxy_radio)
+        radio_layout.setSpacing(15)
         radio_layout.addWidget(self.no_proxy_radio)
         radio_layout.addWidget(self.use_proxy_radio)
         card_layout.addLayout(radio_layout)
@@ -748,7 +725,7 @@ class ProxyPage(QWidget):
         host_label = BodyLabel("主机名(H):")
         self.host_input = LineEdit()
         self.host_input.setPlaceholderText("127.0.0.1")
-        host_layout.addSpacing(20)
+        # host_layout.addSpacing(20)
         host_layout.addWidget(host_label)
         host_layout.addWidget(self.host_input)
         card_layout.addLayout(host_layout)
@@ -760,7 +737,7 @@ class ProxyPage(QWidget):
         self.port_input = SpinBox()
         self.port_input.setRange(0, 65535)
         self.port_input.setValue(7890)
-        port_layout.addSpacing(20)
+        # port_layout.addSpacing(20)
         port_layout.addWidget(port_label)
         port_layout.addWidget(self.port_input)
         card_layout.addLayout(port_layout)
@@ -842,15 +819,8 @@ class ProxyPage(QWidget):
 
         if use_proxy:
             if not host or port == 0:
-                InfoBar.warning(
-                    title="警告",
-                    content="请输入有效的主机名和端口号",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self,
-                )
+                InfoBar.warning(title="警告", content="请输入有效的主机名和端口号", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                    duration=2000, parent=self, )
                 return
 
             proxy = f"{proxy_type}://{host}:{port}"
@@ -872,15 +842,8 @@ class ProxyPage(QWidget):
                 QNetworkProxy.setApplicationProxy(proxy_obj)
                 logger.info(f"设置代理: {proxy_obj}")
             except Exception as e:
-                InfoBar.error(
-                    title="错误",
-                    content=f"设置代理时出错: {str(e)}",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self,
-                )
+                InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                    duration=2000, parent=self, )
                 return
         else:
             self.settings.setValue("use_proxy", False)
@@ -888,15 +851,8 @@ class ProxyPage(QWidget):
             QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
             logger.info("禁用代理")
 
-        InfoBar.success(
-            title="成功",
-            content="代理设置已保存",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self,
-        )
+        InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
+            parent=self, )
 
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -909,15 +865,7 @@ class ProxyPage(QWidget):
         else:
             message = "当前未使用代理"
 
-        InfoBar.info(
-            title="当前代理设置",
-            content=message,
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=3000,
-            parent=self,
-        )
+        InfoBar.info(title="当前代理设置", content=message, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
 
     def test_proxy(self):
         use_proxy = self.use_proxy_radio.isChecked()
@@ -927,15 +875,8 @@ class ProxyPage(QWidget):
 
         if use_proxy:
             if not host or port == 0:
-                InfoBar.warning(
-                    title="警告",
-                    content="请输入有效的主机名和端口号",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self,
-                )
+                InfoBar.warning(title="警告", content="请输入有效的主机名和端口号", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
+                    duration=2000, parent=self, )
                 return
 
             proxy_obj = QNetworkProxy()
@@ -962,26 +903,12 @@ class ProxyPage(QWidget):
     def handle_response(self, reply):
         if reply.error() == QNetworkReply.NoError:
             reply.readAll()
-            InfoBar.success(
-                title="成功",
-                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+            InfoBar.success(title="成功", content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}", orient=Qt.Horizontal,
+                isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
         else:
             error_msg = reply.errorString()
-            InfoBar.error(
-                title="错误",
-                content=f"测试失败: {error_msg}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
+            InfoBar.error(title="错误", content=f"测试失败: {error_msg}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
+                parent=self, )
 
         reply.deleteLater()
 
