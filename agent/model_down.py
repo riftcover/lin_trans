@@ -25,7 +25,6 @@ def download_model(model_name: str, progress_callback=None):
         for root, dirs, files in os.walk(download_path):
             for file in files:
                 current_size += os.path.getsize(os.path.join(root, file))
-        logger.info(f"当前下载大小：{current_size}字节")
         if current_size > total_size:
             total_size = current_size
 
@@ -36,7 +35,7 @@ def download_model(model_name: str, progress_callback=None):
 
         downloaded_size = current_size - last_downloaded_size
         last_downloaded_size = current_size
-        logger.info(f"下载进度：{progress}%，已下载：{downloaded_size}字节")
+        logger.info(f"下载进度：{progress}%，已下载：{current_size}字节")
 
         return downloaded_size
 

@@ -263,7 +263,7 @@ class LocalModelPage(QWidget):
         self.funasr_model_table.removeCellWidget(row, 2)
 
         if success:
-            logger.info(f"模型安装成功: {model_folder}")
+            logger.success(f"模型安装成功: {model_folder}")
             InfoBar.success(
                 title="成功",
                 content="模型安装完成",
@@ -396,6 +396,7 @@ class PopupWidget(QWidget):
             if _ := self.parent().prompts_orm.insert_table_prompt(
                 prompt_name=new_name, prompt_content=new_content
             ):
+                logger.success(f"新提示词已添加: {new_name}")
                 InfoBar.success(
                     title="成功",
                     content="新提示词已添加",
@@ -406,6 +407,7 @@ class PopupWidget(QWidget):
                     parent=self.parent(),
                 )
             else:
+                logger.error(f"添加新提示词失败: {new_name}")
                 InfoBar.error(
                     title="错误",
                     content="添加新提示词失败",
@@ -423,6 +425,7 @@ class PopupWidget(QWidget):
             success: bool = self.parent().prompts_orm.update_table_prompt(
                 key_id=self.key_id, prompt_name=new_name, prompt_content=new_content
             )
+            logger.success(f"提示词已更新: {new_name}")
             if success:
                 InfoBar.success(
                     title="成功",
@@ -434,6 +437,7 @@ class PopupWidget(QWidget):
                     parent=self.parent(),
                 )
             else:
+                logger.error(f"更新提示词失败: {new_name}")
                 InfoBar.error(
                     title="错误",
                     content="更新提示词失败",
