@@ -4,7 +4,7 @@ from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
-from orm.queries import ToTranslationOrm
+from orm.queries import ToTranslationOrm, ToSrtOrm
 from utils import logger
 
 
@@ -36,9 +36,12 @@ class LinQueue:
             logger.debug(f'准备音视频转wav格式:{final_name}')
             FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
             # 处理音频转文本
-            srt_worker = SrtWriter(task.unid, task.wav_dirname, task.raw_noextname, config.params['source_language_code'], )
+            srt_orm = ToSrtOrm()
+            db_obj = srt_orm.query_data_by_unid(task.unid)
+            logger.trace(f"consume_queue_source_language_code: {config.params['source_language_code']}")
+            srt_worker = SrtWriter(task.unid, task.wav_dirname, task.raw_noextname, db_obj.source_language_code)
             # srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
-            srt_worker.funasr_to_srt()  # elif task['codec_type'] == 'audio':  #     final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'  #     FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)  #     srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )  #     srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
+            srt_worker.funasr_to_srt(db_obj.source_module_name)  # elif task['codec_type'] == 'audio':  #     final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'  #     FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)  #     srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )  #     srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
 
         elif task.work_type == WORK_TYPE.TRANS:
             logger.debug('消费translate任务')
@@ -55,9 +58,10 @@ class LinQueue:
             final_name = task.wav_dirname
             logger.debug(f'准备音视频转wav格式:{final_name}')
             FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
-            
-            srt_worker = SrtWriter(task.unid, task.wav_dirname, task.raw_noextname, config.params['source_language_code'])
-            srt_worker.funasr_to_srt()
+            srt_orm = ToSrtOrm()
+            db_obj = srt_orm.query_data_by_unid(task.unid)
+            srt_worker = SrtWriter(task.unid, task.wav_dirname, task.raw_noextname, db_obj.source_language_code)
+            srt_worker.funasr_to_srt(db_obj.source_module_name)
             
             logger.debug('ASR 任务完成，准备开始翻译任务')
 

@@ -37,11 +37,11 @@ class ToSrtOrm:
     # 添加ToSrt数据
 
     @session_manager
-    def add_data_to_table(self, unid, path, source_language, source_module_status, source_module_name, translate_status, cuda, raw_ext, job_status=0, obj=None,
+    def add_data_to_table(self, unid, path, source_language,source_language_code, source_module_status, source_module_name, translate_status, cuda, raw_ext, job_status=0, obj=None,
                           session=None):
         if obj is None:
             obj = {}
-        new_entry = ToSrt(unid=unid, path=path, source_language=source_language, source_module_status=source_module_status,
+        new_entry = ToSrt(unid=unid, path=path, source_language=source_language,source_language_code=source_language_code, source_module_status=source_module_status,
                           source_module_name=source_module_name, translate_status=translate_status, cuda=cuda, raw_ext=raw_ext, job_status=job_status,
                           obj=obj, )
         session.add(new_entry)
@@ -56,7 +56,7 @@ class ToSrtOrm:
         try:
             result = session.query(ToSrt).filter(ToSrt.unid == unid).first()
             if result:
-                logger.info('找到数据')
+                logger.info(f'找到{unid}的数据')
                 session.expunge(result)  # 从会话中分离对象，但保留其状态
             return result
         except NoResultFound:
@@ -96,11 +96,11 @@ class ToTranslationOrm:
     # 添加ToTranslation数据
     @session_manager
     def add_data_to_table(self, unid, path,
-                          source_language, target_language, translate_channel,
+                          source_language,source_language_code, target_language, translate_channel,
                           trans_type, job_status, obj=None, session=None):
         if obj is None:
             obj = {}
-        new_entry = ToTranslation(unid=unid, path=path, source_language=source_language,
+        new_entry = ToTranslation(unid=unid, path=path, source_language=source_language,source_language_code=source_language_code,
                                   target_language=target_language, translate_channel=translate_channel,
                                   trans_type=trans_type, job_status=job_status, obj=obj)
         session.add(new_entry)

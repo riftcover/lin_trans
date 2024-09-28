@@ -14,6 +14,7 @@ class ToSrt(Base):
     unid = Column(String)  # 唯一标识
     path = Column(String)  # 文件路径,原始视频或音频路径
     source_language = Column(String)  # 原始语言
+    source_language_code = Column(String)  # 原始语言code
     source_module_status = Column(Integer)  # 语音模型code
     source_module_name = Column(String)  # 语音模型名称
     translate_status = Column(BOOLEAN)  # 是否翻译
@@ -22,8 +23,8 @@ class ToSrt(Base):
     job_status = Column(Integer)  # 任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败
     obj = Column(String)
 
-    def __repr__(self):
-        return f"<ToSrt(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
+    # def __repr__(self):
+    #     return f"<ToSrt(id={self.id},path='{self.path}',unid='{self.unid}',source_language='{self.source_language}',source_module_status='{self.source_module_status}',source_module_name='{self.source_module_name}',translate_status='{self.translate_status}',cuda='{self.cuda}',raw_ext='{self.raw_ext}')>"
 
 
 class ToTranslation(Base):
@@ -32,6 +33,7 @@ class ToTranslation(Base):
     unid = Column(String)  # 唯一标识
     path = Column(String)  # 文件路径 原始音频或转换后的视频路径
     source_language = Column(String)  # 原始语言
+    source_language_code = Column(String)  # 原始语言code
     target_language = Column(String)  # 目标语言
     translate_channel = Column(String)  # 翻译渠道
     trans_type = Column(Integer)  # 任务类型 1:音视频转字幕自动翻译 2:字幕直接翻译
