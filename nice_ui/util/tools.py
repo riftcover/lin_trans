@@ -30,13 +30,28 @@ class ModelInfo(TypedDict):
 
 
 class StartTools:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(StartTools, cls).__new__(cls)
+        return cls._instance
 
     @staticmethod
     def match_source_model(source_model) -> ModelInfo:
+        # 匹配源模型
         return config.model_list[source_model]
 
-    def check_file(self):
-        pass
+    @staticmethod
+    def match_model_name(model_cn_name: str) -> str:
+        model_info = config.model_list.get(model_cn_name, {})
+        return model_info.get("model_name", "")
+
+    @staticmethod
+    def ask_model_folder(model_name: str) -> bool:
+        # todo：当前是写死funasr，后续需要改成根据模型名称来获取模型路径
+        is_installed = os.path.exists(os.path.join(config.models_path, "funasr", model_name))
+        return is_installed
 
 
 #  get role by edge tts
@@ -992,70 +1007,6 @@ def kill_ffmpeg_processes():
                     pid = int(line.split(None, 1)[0])
                     os.kill(pid, signal.SIGKILL)
 
-
-# input_file_path 可能是字符串：文件路径，也可能是音频数据
-def remove_silence_from_end(
-    input_file_path, silence_threshold=-50.0, chunk_size=10, is_start=True
-):
-    from pydub import AudioSegment
-    from pydub.silence import detect_nonsilent
-
-    """
-    Removes silence from the end of an audio file.
-
-    :param input_file_path: path to the input mp3 file
-    :param silence_threshold: the threshold in dBFS considered as silence
-    :param chunk_size: the chunk size to use in silence detection (in milliseconds)
-    :return: an AudioSegment without silence at the end
-    """
-    # Load the audio file
-    _format = "wav"
-    if isinstance(input_file_path, str):
-        _format = input_file_path.split(".")[-1].lower()
-        if _format in ["wav", "mp3", "m4a"]:
-            audio = AudioSegment.from_file(
-                input_file_path, format=_format if _format in ["wav", "mp3"] else "mp4"
-            )
-        else:
-            # 转为mp3
-            try:
-                runffmpeg(["-y", "-i", input_file_path, f"{input_file_path}.mp3"])
-                audio = AudioSegment.from_file(f"{input_file_path}.mp3", format="mp3")
-            except Exception:
-                return input_file_path
-
-    else:
-        audio = input_file_path
-
-    # Detect non-silent chunks
-    nonsilent_chunks = detect_nonsilent(
-        audio, min_silence_len=chunk_size, silence_thresh=silence_threshold
-    )
-
-    # If we have nonsilent chunks, get the start and end of the last nonsilent chunk
-    if nonsilent_chunks:
-        _, end_index = nonsilent_chunks[-1]
-    else:
-        # If the whole audio is silent, just return it as is
-        return input_file_path
-
-    # Remove the silence from the end by slicing the audio segment
-    trimmed_audio = audio[:end_index]
-    if is_start and nonsilent_chunks[0] and nonsilent_chunks[0][0] > 0:
-        trimmed_audio = audio[nonsilent_chunks[0][0] : end_index]
-    if isinstance(input_file_path, str):
-        if _format in ["wav", "mp3", "m4a"]:
-            trimmed_audio.export(
-                input_file_path, format=_format if _format in ["wav", "mp3"] else "mp4"
-            )
-            return input_file_path
-        with contextlib.suppress(Exception):
-            trimmed_audio.export(f"{input_file_path}.mp3", format="mp3")
-            runffmpeg(["-y", "-i", f"{input_file_path}.mp3", input_file_path])
-        return input_file_path
-    return trimmed_audio
-
-
 # 从 google_url 中获取可用地址
 def get_google_url():
     google_url = "https://translate.google.com"
@@ -1510,4 +1461,4 @@ def list_model_files(model_dir: str = None) -> list:
 
 
 if __name__ == "__main__":
-    print(config.model_list)
+    print(StartTools().match_model_name('多语言模型'))

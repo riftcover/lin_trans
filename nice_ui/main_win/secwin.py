@@ -342,6 +342,8 @@ class SecWindow:
         self.main.add_queue_mp4()
         config.params["only_video"] = False
 
+        # 判断是否有视频文件，如果没有，则提示错误信息
+        # check if there is any video file, if not, show error message
         if len(config.queue_asr) < 1:
             QMessageBox.critical(
                 self.main,
@@ -360,9 +362,21 @@ class SecWindow:
         source_model_info = start_tools.match_source_model(
             self.main.source_model.currentText()
         )
-        config.params["source_module_status"] = source_model_info["status"]
-        logger.debug(config.params["source_module_status"])
-        config.params["source_module_name"] = source_model_info["model_name"]
+
+        model_name = source_model_info["model_name"]
+
+        if start_tools.ask_model_folder(model_name):
+            config.params["source_module_name"] = model_name
+            config.params["source_module_status"] = source_model_info["status"]
+            logger.debug(config.params["source_module_status"])
+        else:
+            QMessageBox.critical(
+                self.main,
+                "错误",
+                "模型未下载，请在设置界面下载模型。"
+            )
+            return False
+
 
         translate_status = self.main.check_fanyi.isChecked()
         config.params["translate_status"] = translate_status

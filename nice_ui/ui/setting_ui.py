@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFile
 from agent.model_down import download_model
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
+from nice_ui.util.tools import StartTools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
@@ -227,8 +228,7 @@ class LocalModelPage(QWidget):
 
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
-        model_info = config.model_list.get(model_cn_name, {})
-        model_name = model_info.get("model_name", "")
+        model_name = StartTools().match_model_name(model_cn_name)
 
         if not model_name:
             InfoBar.error(
