@@ -7,8 +7,8 @@ import platform
 # 检查并安装必要的模块
 def install_required_modules():
     required_modules = [
-        "better_ffmpeg_progress", "colorthief", "darkdetect", "dashscope",
-        "edge_tts", "httpx", "loguru", "modelscope", "numpy", "openai",
+        "better_ffmpeg_progress", "colorthief", "darkdetect",
+        "httpx", "loguru", "modelscope", "numpy", "openai",
         "packaging", "path", "Pillow", "plyer", "pydantic", "pydub", "PySide6",
         "requests", "scipy", "sqlalchemy", "watchdog", "zhipuai", "socksio"
     ]
@@ -36,8 +36,6 @@ cmd = [
     "--include-module=better_ffmpeg_progress",
     "--include-module=colorthief",
     "--include-module=darkdetect",
-    "--include-module=dashscope",
-    "--include-module=edge_tts",
     "--include-module=httpx",
     "--include-module=loguru",
     "--include-module=modelscope",
@@ -50,10 +48,8 @@ cmd = [
     "--include-module=pydantic",
     "--include-module=pydub",
     "--include-module=PySide6",
-    "--include-module=requests",
     "--include-module=scipy",
     "--include-module=sqlalchemy",
-    "--include-module=watchdog",
     "--include-module=zhipuai",
     "--include-module=socksio",
     "--python-flag=no_site",

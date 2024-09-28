@@ -15,7 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict, Union, Optional
 
-import requests
+
 from pydantic import BaseModel, Field
 
 from nice_ui.configure import config
@@ -55,58 +55,6 @@ class StartTools:
 
 
 #  get role by edge tts
-def get_edge_rolelist():
-    video_list_json = config.rootdir + "/voice_list.json"
-    voice_list = {}
-    if vail_file(video_list_json):
-        try:
-            voice_list = json.load(open(video_list_json, "r", encoding="utf-8"))
-            if len(voice_list) > 0:
-                config.edgeTTS_rolelist = voice_list
-                return voice_list
-        except:
-            pass
-    try:
-        return _extracted_from_get_edge_rolelist(voice_list, video_list_json)
-    except Exception as e:
-        logger.error("获取edgeTTS角色失败" + str(e))
-        print("获取edgeTTS角色失败" + str(e))
-
-
-# TODO Rename this here and in `get_edge_rolelist`
-def _extracted_from_get_edge_rolelist(voice_list, video_list_json):
-    # 获取edgeTTS角色
-    import edge_tts
-    import asyncio
-
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    else:
-        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
-    v = asyncio.run(edge_tts.list_voices())
-    for it in v:
-        name = it["ShortName"]
-        prefix = name.split("-")[0].lower()
-        if prefix not in voice_list:
-            voice_list[prefix] = ["No", name]
-        else:
-            voice_list[prefix].append(name)
-    json.dump(voice_list, open(video_list_json, "w"))
-    config.edgeTTS_rolelist = voice_list
-    return voice_list
-
-
-def get_azure_rolelist():
-    voice_list = {}
-    if vail_file(config.rootdir + "/azure_voice_list.json"):
-        with contextlib.suppress(Exception):
-            voice_list = json.load(
-                open(config.rootdir + "/azure_voice_list.json", "r", encoding="utf-8")
-            )
-            if len(voice_list) > 0:
-                config.AzureTTS_rolelist = voice_list
-                return voice_list
-    return voice_list
 
 
 # 执行 ffmpeg
@@ -881,28 +829,7 @@ def cut_from_audio(*, ss, to, audio_file, out_file):
     return runffmpeg(cmd)
 
 
-# 获取clone-voice的角色列表
-def get_clone_role(set_p=False):
-    if not config.params["clone_api"]:
-        if set_p:
-            raise VideoProcessingError(config.transobj["bixutianxiecloneapi"])
-        return False
-    try:
-        url = config.params["clone_api"].strip().rstrip("/") + "/init"
-        res = requests.get(
-            "http://" + url.replace("http://", ""), proxies={"http": "", "https": ""}
-        )
-        if res.status_code == 200:
-            config.clone_voicelist = ["clone"] + res.json()
-            set_process("", "set_clone_role")
-            return True
-        raise VideoProcessingError(
-            f"code={res.status_code},{config.transobj['You must deploy and start the clone-voice service']}"
-        )
-    except Exception as e:
-        if set_p:
-            raise VideoProcessingError(f"clone-voice:{str(e)}") from e
-    return False
+
 
 
 # 工具箱写入日志队列
@@ -1008,31 +935,7 @@ def kill_ffmpeg_processes():
                     os.kill(pid, signal.SIGKILL)
 
 # 从 google_url 中获取可用地址
-def get_google_url():
-    google_url = "https://translate.google.com"
-    if vail_file(f"{config.rootdir}/google.txt"):
-        with open(os.path.join(config.rootdir, "google.txt"), "r") as f:
-            t = f.read().strip().splitlines()
-            if urls := [x for x in t if x.strip() and x.startswith("http")]:
-                n = 0
-                while n < 5:
-                    google_url = random.choice(urls).rstrip("/")
-                    try:
-                        res = requests.head(
-                            google_url, proxies={"http": "", "https": ""}
-                        )
-                        if res.status_code == 200:
-                            return google_url
-                    except Exception:
-                        msg = f"测试失败: {google_url}"
-                        logger.error(msg)
-                        continue
-                    finally:
-                        n += 1
-                raise VideoProcessingError(
-                    "从google.txt中随机获取5次url，均未找到可用的google翻译反代地址，请检查"
-                )
-    return google_url
+
 
 
 def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
