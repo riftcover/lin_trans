@@ -50,12 +50,6 @@ class SecWindow:
         elif os.environ.get("CUDA_OK"):
             os.environ.pop("CUDA_OK")
 
-
-
-
-
-
-
     def open_url(self, title: str):
         import webbrowser
 
