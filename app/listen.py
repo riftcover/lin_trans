@@ -175,11 +175,11 @@ class SrtWriter:
     def funasr_to_srt(self, model_name: str = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'):
         from funasr import AutoModel
         logger.info("使用FunASR开始识别")
-        
         model_dir = f'{config.root_path}/models/funasr/{model_name}'
+        vad_model_dir = f'{config.root_path}/models/funasr/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         model = AutoModel(model=model_dir, model_revision="v2.0.4", 
                           # todo fsmn-vad目前没有下载到本地,确认是否有必要加载这个模型
-                          vad_model="fsmn-vad", vad_model_revision="v2.0.4",
+                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
                           # punc_model="ct-punc-c",punc_model_revision="v2.0.4", # 标点符号
                           # spk_model="cam++", spk_model_revision="v2.0.2", # 说话人确认
                           disable_update=True)
