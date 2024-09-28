@@ -92,12 +92,16 @@ class LocalModelPage(QWidget):
         # self.faster_model_table.verticalHeader().setVisible(False)
         # self.faster_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.funasr_model_title = BodyLabel("FasterWhisper 模型列表")
+        self.funasr_model_title = BodyLabel("模型列表")
         self.funasr_model_table = TableWidget(self)
         self.funasr_model_table.setColumnCount(3)
         self.funasr_model_table.setHorizontalHeaderLabels(
             ["模型", "模型大小", "安装状态"]
         )
+        # 设置label的宽度
+        self.funasr_model_table.setColumnWidth(0, 150)
+        self.funasr_model_table.setColumnWidth(1, 100)
+        self.funasr_model_table.setColumnWidth(2, 130)
         self.funasr_model_table.verticalHeader().setVisible(False)
         self.funasr_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -113,7 +117,7 @@ class LocalModelPage(QWidget):
         # self.show_model_list("Whisper.Cpp")
 
         tips1 = CaptionLabel(
-            "不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请手动下载，并放到上面的模型存储路径中。"
+            "不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请耐心等待下载完成。"
         )
         layout.addWidget(tips1)
 
@@ -189,9 +193,9 @@ class LocalModelPage(QWidget):
 
     def show_funasr_table(self, table):
         faster_models = [
-            ("多语言模型", "940MB"),
-            ("中文模型", "909.6MB"),
-            ("英语模型", "1.00 GB"),
+            ("多语言模型", "940 MB"),
+            ("中文模型", "909.6 MB"),
+            ("英语模型", "880 MB"),
         ]
         model_list = config.model_list
 
@@ -201,9 +205,14 @@ class LocalModelPage(QWidget):
             model_info = model_list.get(model_name, {})
             model_folder = model_info.get("model_name", "")
 
-            # 检查模型是否已安装
+            """
+            检查模型是否已安装,因为下载过程可能会中断，下载支持断点续传，
+            所有下载完成的判断根据是最后一个文件是否存在来判断，
+            最后下载的是文件是tokens.json
+            """
+
             is_installed = os.path.exists(
-                os.path.join(config.funasr_model_path, model_folder)
+                os.path.join(config.funasr_model_path, model_folder,"tokens.json")
             )
 
             for col, value in enumerate([model_name, model_size]):
