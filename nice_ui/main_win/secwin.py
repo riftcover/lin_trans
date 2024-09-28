@@ -1,11 +1,9 @@
 import copy
 import os
-from enum import Enum
 from typing import List, Optional
 
-from PySide6.QtCore import QUrl, Qt, QThread
-from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QMessageBox, QFileDialog, QLabel, QHBoxLayout, QProgressBar, )
+from PySide6.QtCore import QThread
+from PySide6.QtWidgets import (QMessageBox, )
 
 from agent import translate_api_name
 from nice_ui.configure import config
@@ -24,54 +22,6 @@ DEFAULT_PROGRESS_RANGE = (0, 100)
 PROGRESS_BAR_HEIGHT = 35
 
 
-class ProgressBarStyle(Enum):
-    DEFAULT = """
-        QProgressBar {
-            background-color: transparent;
-            border: 1px solid #32414B;
-            color: #fff;
-            height: 35px;
-            text-align: left;
-            border-radius: 3px;                
-        }
-        QProgressBar::chunk {
-            width: 8px;
-            border-radius: 0;           
-        }
-    """
-
-
-class ClickableProgressBar(QLabel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.target_dir: Optional[str] = None
-        self.msg: Optional[str] = None
-        self.parent = parent
-
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setFixedHeight(PROGRESS_BAR_HEIGHT)
-        self.progress_bar.setRange(*DEFAULT_PROGRESS_RANGE)
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setStyleSheet(ProgressBarStyle.DEFAULT.value)
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(self.progress_bar)
-
-    def setMsg(self, text: str):
-        if text and config.defaulelang == "zh":
-            text += "\n\n请尝试在文档站 pyvideotrans.com 搜索错误解决方案\n"
-        self.msg = text
-
-    def setText(self, text: str):
-        if self.progress_bar:
-            self.progress_bar.setFormat(f" {text}")
-
-    def mousePressEvent(self, event):
-        if self.target_dir and event.button() == Qt.LeftButton:
-            QDesktopServices.openUrl(QUrl.fromLocalFile(self.target_dir))
-        elif not self.target_dir and self.msg:
-            QMessageBox.critical(self, config.transobj["anerror"], self.msg)
-
 
 class SecWindow:
     def __init__(self, main=None):
@@ -82,9 +32,6 @@ class SecWindow:
         self.main = main
         self.usetype: Optional[str] = None
         self.data_bridge = config.data_bridge
-
-    def is_separate_fun(self, state: bool):
-        config.params["is_separate"] = state
 
     def check_cuda(self, state: bool):
         import torch
@@ -103,46 +50,11 @@ class SecWindow:
         elif os.environ.get("CUDA_OK"):
             os.environ.pop("CUDA_OK")
 
-    def voice_rate_changed(self, text: int):
-        config.params["voice_rate"] = f"+{text}%" if text >= 0 else f"{text}%"
 
-    def autorate_changed(self, state: bool, name: str):
-        if name == "voice":
-            config.params["voice_autorate"] = state
-        elif name == "auto_ajust":
-            config.params["auto_ajust"] = state
-        elif name == "video":
-            config.params["video_autorate"] = state
-        elif name == "append_video":
-            config.params["append_video"] = state
 
-    def delete_process(self):
-        for i in range(self.main.processlayout.count()):
-            item = self.main.processlayout.itemAt(i)
-            if item.widget():
-                item.widget().deleteLater()
-        self.main.processbtns = {}
 
-    def export_sub_fun(self):
-        srttxt = self.main.subtitle_area.toPlainText().strip()
-        if not srttxt:
-            return
 
-        dialog = QFileDialog()
-        dialog.setWindowTitle(config.transobj["savesrtto"])
-        dialog.setNameFilters(["subtitle files (*.srt)"])
-        dialog.setAcceptMode(QFileDialog.AcceptSave)
-        dialog.exec_()
-        if not dialog.selectedFiles():
-            return
 
-        path_to_file = dialog.selectedFiles()[0]
-        ext = ".srt"
-        if not path_to_file.endswith((".srt", ".txt")):
-            path_to_file += ext
-
-        with open(path_to_file, "w", encoding="utf-8") as file:
-            file.write(srttxt)
 
     def open_url(self, title: str):
         import webbrowser
@@ -200,34 +112,8 @@ class SecWindow:
 本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。                
         """
 
-    def set_djs_timeout(self):
-        config.task_countdown = 0
-        self.main.continue_compos.setText(config.transobj["jixuzhong"])
-        self.main.continue_compos.setDisabled(True)
-        self.main.stop_djs.hide()
-        if self.main.shitingobj:
-            self.main.shitingobj.stop = True
 
-    def reset_timeid(self):
-        self.main.stop_djs.hide()
-        config.task_countdown = 86400
-        self.main.continue_compos.setDisabled(False)
-        self.main.continue_compos.setText(config.transobj["nextstep"])
 
-    def check_whisper_type(self, index: int):
-        whisper_types = ["all", "split", "avg"]
-        if 0 <= index < len(whisper_types):
-            config.params["whisper_type"] = whisper_types[index]
-
-    def show_listen_btn(self, role: str):
-        config.params["voice_role"] = role
-        disable_condition = role == "No" or (
-            config.params["tts_type"] == "clone-voice"
-            and config.params["voice_role"] == "clone"
-        )
-        self.main.listen_btn.setDisabled(disable_condition)
-        if not disable_condition:
-            self.main.listen_btn.show()
 
     def set_voice_role(self, t: str):
         role = self.main.voice_role.currentText()
@@ -290,47 +176,6 @@ class SecWindow:
         except:
             self.main.voice_role.addItems(["No"])
 
-    def get_mp4(self):
-        fnames, _ = QFileDialog.getOpenFileNames(
-            self.main,
-            config.transobj["selectmp4"],
-            config.last_opendir,
-            "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)",
-        )
-        if not fnames:
-            return
-
-        fnames = [it.replace("\\", "/") for it in fnames]
-        if fnames:
-            self.main.source_mp4.setText(f"{len(fnames)} videos")
-            config.last_opendir = os.path.dirname(fnames[0])
-            self.main.settings.setValue("last_dir", config.last_opendir)
-            config.queue_asr = fnames
-
-    def get_background(self):
-        fname, _ = QFileDialog.getOpenFileName(
-            self.main,
-            "Background music",
-            config.last_opendir,
-            "Audio files(*.mp3 *.wav *.flac)",
-        )
-        if fname:
-            self.main.back_audio.setText(fname.replace("\\", "/"))
-
-    def dont_translate(self) -> bool:
-        if len(config.queue_asr) < 1:
-            return True
-        if (
-            self.main.translate_language.currentText() == "-"
-            or self.main.source_language.currentText() == "-"
-        ):
-            return True
-        if (
-            self.main.translate_language.currentText()
-            == self.main.source_language.currentText()
-        ):
-            return True
-        return bool(self.main.subtitle_area.toPlainText().strip())
 
     def check_asr(self) -> bool:
         # logger.debug(f"Initial target_dir: {config.params['target_dir']}")
