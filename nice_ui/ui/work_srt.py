@@ -12,7 +12,7 @@ from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from orm.queries import PromptsOrm
 from utils import logger
-from vendor.qfluentwidgets import PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget
+from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget, )
 
 
 class WorkSrt(QWidget):
@@ -32,7 +32,6 @@ class WorkSrt(QWidget):
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
-
         # 文件选择按钮
         self.btn_get_srt = PushButton("选择字幕文件或拖放至此")
 
@@ -50,15 +49,22 @@ class WorkSrt(QWidget):
         # 原始语种布局
         source_layout = QHBoxLayout()
         source_layout.setSpacing(5)
-        source_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        source_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
         source_language_name = BodyLabel("原始语种")
 
         self.source_language_combo = TransComboBox(self)
         self.source_language_combo.setFixedWidth(98)
         self.source_language_combo.addItems(self.language_name)
-        if config.params['source_language'] and config.params['source_language'] in self.language_name:
-            self.source_language_combo.setCurrentText(config.params['source_language'])
+        if (
+            config.params["source_language"]
+            and config.params["source_language"] in self.language_name
+        ):
+            self.source_language_combo.setCurrentText(config.params["source_language"])
         else:
             self.source_language_combo.setCurrentIndex(2)
         source_layout.addWidget(source_language_name)
@@ -68,15 +74,24 @@ class WorkSrt(QWidget):
         # 翻译语种布局
         translate_layout = QHBoxLayout()
         translate_layout.setSpacing(5)
-        translate_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        translate_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
         translate_language_name = BodyLabel("翻译语种")
 
         self.translate_language_combo = TransComboBox(self)
         self.translate_language_combo.setFixedWidth(117)
         self.translate_language_combo.addItems(self.language_name)
-        if config.params['target_language'] and config.params['target_language'] in self.language_name:
-            self.translate_language_combo.setCurrentText(config.params['target_language'])
+        if (
+            config.params["target_language"]
+            and config.params["target_language"] in self.language_name
+        ):
+            self.translate_language_combo.setCurrentText(
+                config.params["target_language"]
+            )
 
         translate_layout.addWidget(translate_language_name)
         translate_layout.addWidget(self.translate_language_combo)
@@ -85,7 +100,11 @@ class WorkSrt(QWidget):
         # 翻译引擎布局
         engine_layout = QHBoxLayout()
         engine_layout.setSpacing(5)
-        engine_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        engine_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
         translate_model_name = BodyLabel("翻译引擎")
 
@@ -105,7 +124,11 @@ class WorkSrt(QWidget):
         # todo: 只有选择ai时才显示
         prompt_layout = QHBoxLayout()
         prompt_layout.setSpacing(5)
-        prompt_layout.setAlignment(Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        prompt_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
         ai_prompt_name = BodyLabel("提示词")
         self.ai_prompt = TransComboBox(self)
         self.ai_prompt.setFixedWidth(98)
@@ -121,20 +144,23 @@ class WorkSrt(QWidget):
 
         self.media_table = TableWidget(self)
         self.media_table.setColumnCount(5)
-        self.media_table.setHorizontalHeaderLabels(['文件名', '字符数', '算力消耗', '操作', '文件路径'])
+        self.media_table.setHorizontalHeaderLabels(
+            ["文件名", "字符数", "算力消耗", "操作", "文件路径"]
+        )
 
-
-        self.media_table.verticalHeader().setVisible(False) # 隐藏行号
+        self.media_table.verticalHeader().setVisible(False)  # 隐藏行号
         # 设置表头样式
         header = self.media_table.horizontalHeader()
-        header.setStyleSheet("""
+        header.setStyleSheet(
+            """
             QHeaderView::section {
                 background-color: white;
                 border: none;
                 border-bottom: 1px solid #E0E0E0;
                 padding: 4px;
             }
-        """)
+        """
+        )
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # 文件名列自适应宽度
         header.setSectionResizeMode(1, QHeaderView.Fixed)
         header.setSectionResizeMode(2, QHeaderView.Fixed)
@@ -146,7 +172,7 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(4, 100)
         self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
         self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
-        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers) # 禁止编辑
+        self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
         table_layout.addWidget(self.media_table)
         main_layout.addWidget(table_card)
@@ -158,15 +184,18 @@ class WorkSrt(QWidget):
 
         main_layout.addWidget(self.start_btn, alignment=Qt.AlignCenter)
 
-
     def bind_action(self):
         # 选择文件,并显示路径
-        self.btn_get_srt.clicked.connect(lambda:self.table.select_files(self.media_table))
+        self.btn_get_srt.clicked.connect(
+            lambda: self.table.select_files(self.media_table)
+        )
 
         # 设置拖放功能
         self.btn_get_srt.setAcceptDrops(True)
         self.btn_get_srt.dragEnterEvent = self.table.drag_enter_event
-        self.btn_get_srt.dropEvent = lambda event:self.table.drop_event(self.media_table, event)
+        self.btn_get_srt.dropEvent = lambda event: self.table.drop_event(
+            self.media_table, event
+        )
 
         self.start_btn.clicked.connect(self.util.check_translate)
 
@@ -191,11 +220,16 @@ class LTableWindow:
 
     # 列表的操作
     @Slot()
-    def select_files(self,ui_table: QTableWidget):
+    def select_files(self, ui_table: QTableWidget):
         # 选择文件
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_paths, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectsrt'], config.last_opendir, "Srt files(*.srt)")
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self.main,
+            config.transobj["selectsrt"],
+            config.last_opendir,
+            "Srt files(*.srt)",
+        )
 
         if file_paths:
             for file_path in file_paths:
@@ -206,7 +240,7 @@ class LTableWindow:
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
-        logger.info(f'add_file_to_table: {file_path}')
+        logger.info(f"add_file_to_table: {file_path}")
         row_position = ui_table.rowCount()
         if file_character_count := self.get_file_character_count(file_path):
             ui_table.insertRow(row_position)
@@ -218,18 +252,29 @@ class LTableWindow:
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数
-            ui_table.setItem(row_position, 1, QTableWidgetItem(str(file_character_count)))
+            ui_table.setItem(
+                row_position, 1, QTableWidgetItem(str(file_character_count))
+            )
             # 算力消耗
             ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
             # 操作
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
-            delete_button.clicked.connect(lambda row=row_position:self.delete_file(ui_table, row))
+            delete_button.clicked.connect(
+                lambda row=row_position: self.delete_file(ui_table, row)
+            )
             # 文件路径
             ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
         else:
-            InfoBar.error(title='失败', content="文件内容错误，请检查文件内容", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT,
-                          duration=2000, parent=self.main)
+            InfoBar.error(
+                title="失败",
+                content="文件内容错误，请检查文件内容",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self.main,
+            )
 
     # 获取文件字符数
     def get_file_character_count(self, file_path: path) -> int | bool:
@@ -243,7 +288,10 @@ class LTableWindow:
                 return False
             for line in lines:
                 # 跳过序号和时间戳
-                if re.match(r"^\d+$", line.strip()) or re.match(r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$", line.strip(), ):
+                if re.match(r"^\d+$", line.strip()) or re.match(
+                    r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
+                    line.strip(),
+                ):
                     continue
                 character_count += len(line.strip())
         return character_count
@@ -260,7 +308,7 @@ class LTableWindow:
         for row in range(ui_table.rowCount()):
             delete_button = ui_table.cellWidget(row, 3)
             delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda r=row:self.delete_file(ui_table, r))
+            delete_button.clicked.connect(lambda r=row: self.delete_file(ui_table, r))
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入

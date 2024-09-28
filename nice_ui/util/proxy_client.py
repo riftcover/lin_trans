@@ -1,6 +1,6 @@
+import httpx
 from PySide6.QtCore import QSettings
 from openai import OpenAI
-import httpx
 
 
 def get_proxy_from_settings():

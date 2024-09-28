@@ -16,10 +16,10 @@ from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
-from vendor.qfluentwidgets import FluentIcon as FIF
-from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor)
 from utils import logger
-from components import lin_resource_rc
+from vendor.qfluentwidgets import FluentIcon as FIF
+from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
+
 
 class Window(FluentWindow):
 
@@ -35,20 +35,20 @@ class Window(FluentWindow):
         # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
-        self.vide2srt = Video2SRT('音视频转字幕', self, self.settings)
-        self.translate_srt = WorkSrt('字幕翻译', self, self.settings)
-        self.my_story = TableApp('我的创作', self, self.settings)
-        self.settingInterface = SettingInterface('设置', self, self.settings)
+        self.vide2srt = Video2SRT("音视频转字幕", self, self.settings)
+        self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
+        self.my_story = TableApp("我的创作", self, self.settings)
+        self.settingInterface = SettingInterface("设置", self, self.settings)
 
         self.initNavigation()
 
     def initNavigation(self):
         # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
-        self.addSubInterface(self.vide2srt, FIF.VIDEO, '音视频转字幕')
-        self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, '字幕翻译')
-        self.addSubInterface(self.my_story, FIF.PALETTE, '我的创作')
+        self.addSubInterface(self.vide2srt, FIF.VIDEO, "音视频转字幕")
+        self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
+        self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, '设置')
+        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置")
 
         # add badge to navigation item
         # self.navigationInterface.addSeparator()
@@ -58,8 +58,8 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        self.setWindowIcon(QIcon(':icon/assets/linlin.png'))
-        self.setWindowTitle('林林字幕')
+        self.setWindowIcon(QIcon(":icon/assets/linlin.png"))
+        self.setWindowTitle("林林字幕")
 
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
@@ -71,12 +71,18 @@ class Window(FluentWindow):
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
         get_setting_cache(self.settings)
-        all_keys = self.settings.allKeys()  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
+        all_keys = (
+            self.settings.allKeys()
+        )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
 
     def showMessageBox(self):
-        w = MessageBox('支持作者🥰', '个人开发不易，如果这个项目帮助到了您，可以考虑请作者喝一瓶快乐水🥤。您的支持就是作者开发和维护项目的动力🚀', self)
-        w.yesButton.setText('来啦老弟')
-        w.cancelButton.setText('下次一定')
+        w = MessageBox(
+            "支持作者🥰",
+            "个人开发不易，如果这个项目帮助到了您，可以考虑请作者喝一瓶快乐水🥤。您的支持就是作者开发和维护项目的动力🚀",
+            self,
+        )
+        w.yesButton.setText("来啦老弟")
+        w.cancelButton.setText("下次一定")
 
         if w.exec():
             QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
@@ -104,7 +110,9 @@ class Window(FluentWindow):
     async def fetch_latest_version(self):
         async with httpx.AsyncClient() as client:
             # todo 更新检查更改地址
-            response = await client.get("https://api.github.com/repos/your_username/your_repo/releases/latest")
+            response = await client.get(
+                "https://api.github.com/repos/your_username/your_repo/releases/latest"
+            )
             response.raise_for_status()
             return response.json()["tag_name"]
 
@@ -120,18 +128,18 @@ class Window(FluentWindow):
 
     def show_update_dialog(self, latest_version):
         dialog = MessageBox(
-            "更新可用",
-            f"新版本 {latest_version} 已经可用。是否要现在更新？",
-            self
+            "更新可用", f"新版本 {latest_version} 已经可用。是否要现在更新？", self
         )
         dialog.yesButton.setText("更新")
         dialog.cancelButton.setText("稍后")
 
         if dialog.exec():
-            QDesktopServices.openUrl(QUrl("https://github.com/your_username/your_repo/releases/latest"))
+            QDesktopServices.openUrl(
+                QUrl("https://github.com/your_username/your_repo/releases/latest")
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = Window()
     w.show()

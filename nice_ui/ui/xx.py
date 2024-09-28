@@ -1,8 +1,10 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget
-from PySide6.QtGui import QIcon
+
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget
+
 from vendor.qfluentwidgets import (NavigationInterface, NavigationItemPosition, NavigationWidget, Theme, setTheme, FluentIcon as FIF, FluentWindow)
+
 
 class MainWindow(FluentWindow):
     def __init__(self):

@@ -6,7 +6,7 @@ from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
 from PySide6.QtCore import Qt, QSettings, QThread
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
 from pydantic import ValidationError
 
 from components import LinIcon, GuiSize
@@ -16,14 +16,14 @@ from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import work_queue, QueueConsumer
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
-
 from nice_ui.util.tools import VideoFormatInfo
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton, ToolTipPosition,
-                                   ToolTipFilter, TransparentToolButton)
+                                   ToolTipFilter, TransparentToolButton, )
 
 JOB_STATUS = Literal[0, 1, 2, 3, 4]
+
 
 class ButtonType(Enum):
     START = auto()
@@ -51,7 +51,7 @@ class TableApp(CardWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace('', '-'))
+        self.setObjectName(text.replace("", "-"))
         self.setupUi()
         self.data_bridge = config.data_bridge
         self._connect_signals()
@@ -82,9 +82,13 @@ class TableApp(CardWidget):
         top_layout.setContentsMargins(10, 10, 10, 10)
 
         self.selectAllBtn = CheckBox("全选")
-        self.exportBtn = self._create_button(LinIcon.EXPORT(), "批量导出", self._export_batch)
+        self.exportBtn = self._create_button(
+            LinIcon.EXPORT(), "批量导出", self._export_batch
+        )
         self.exportBtn.setIconSize(GuiSize.row_button_icon_size)
-        self.deleteBtn = self._create_button(FluentIcon.DELETE, "批量删除", self._delete_batch)
+        self.deleteBtn = self._create_button(
+            FluentIcon.DELETE, "批量删除", self._delete_batch
+        )
         self.searchInput = self._create_search_input()
 
         top_layout.addWidget(self.selectAllBtn)
@@ -105,7 +109,9 @@ class TableApp(CardWidget):
         button.setFixedSize(GuiSize.top_button_size)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setToolTip(tooltip)
-        button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+        button.installEventFilter(
+            ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT)
+        )
         button.clicked.connect(callback)
         button.setVisible(False)
         return button
@@ -150,7 +156,9 @@ class TableApp(CardWidget):
         widths = [50, -1, 120, 160]  # 调整列宽
         for i, width in enumerate(widths):
             if width == -1:
-                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
+                self.table.horizontalHeader().setSectionResizeMode(
+                    i, QHeaderView.Stretch
+                )
             else:
                 self.table.setColumnWidth(i, width)
 
@@ -173,7 +181,6 @@ class TableApp(CardWidget):
         for item in srt_data:
             if item.unid not in processed_unids:
                 self._process_item(item, processed_unids)
-
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
@@ -206,11 +213,20 @@ class TableApp(CardWidget):
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setToolTip(tooltip)
         # 设置工具提示立即显示
-        button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+        button.installEventFilter(
+            ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT)
+        )
         button.clicked.connect(callback)
         return button
 
-    def _add_common_widgets(self, row_position: int, filename: str, unid: str, job_status: JOB_STATUS, obj_format: VideoFormatInfo) -> Tuple[CheckBox, QLabel]:
+    def _add_common_widgets(
+        self,
+        row_position: int,
+        filename: str,
+        unid: str,
+        job_status: JOB_STATUS,
+        obj_format: VideoFormatInfo,
+    ) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
         chk.stateChanged.connect(self._update_buttons_visibility)
@@ -224,7 +240,9 @@ class TableApp(CardWidget):
         # 添加状态
         file_status = StatusLabel("")
         file_status.setAlignment(Qt.AlignCenter)
-        self.table.setCellWidget(row_position, TableWidgetColumn.JOB_STATUS, file_status)
+        self.table.setCellWidget(
+            row_position, TableWidgetColumn.JOB_STATUS, file_status
+        )
 
         # 添加UNID
         file_unid = QLabel(unid)
@@ -251,14 +269,22 @@ class TableApp(CardWidget):
         for button_type in button_types:
 
             if button_type == ButtonType.EXPORT:
-                button = self._create_action_button(LinIcon.EXPORT(), "导出字幕", self._export_row)
+                button = self._create_action_button(
+                    LinIcon.EXPORT(), "导出字幕", self._export_row
+                )
                 button.setIconSize(GuiSize.row_button_icon_size)
             elif button_type == ButtonType.EDIT:
-                button = self._create_action_button(FluentIcon.EDIT, "编辑字幕", self._edit_row)
+                button = self._create_action_button(
+                    FluentIcon.EDIT, "编辑字幕", self._edit_row
+                )
             elif button_type == ButtonType.START:
-                button = self._create_action_button(FluentIcon.PLAY, "开始任务", self._start_row)
+                button = self._create_action_button(
+                    FluentIcon.PLAY, "开始任务", self._start_row
+                )
             elif button_type == ButtonType.DELETE:
-                button = self._create_action_button(FluentIcon.DELETE, "删除字幕", self._delete_row)
+                button = self._create_action_button(
+                    FluentIcon.DELETE, "删除字幕", self._delete_row
+                )
             button_layout.addWidget(button)
 
         button_widget = QWidget()
@@ -284,9 +310,9 @@ class TableApp(CardWidget):
                 elif item.job_status == 2:
                     self.addRow_init_all(obj_data)
             else:
-                logger.warning(f'{item.unid} 该数据 obj为空')
+                logger.warning(f"{item.unid} 该数据 obj为空")
         except ValidationError as e:
-            logger.error(f'{item.unid} 该数据 obj解析失败: {e}')
+            logger.error(f"{item.unid} 该数据 obj解析失败: {e}")
 
     def _update_job_status(self, item, edit_dict):
         new_status = 0
@@ -306,8 +332,10 @@ class TableApp(CardWidget):
         unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
-        logger.info('我的创作列表中添加新行')
-        chk, file_status = self._add_common_widgets(row_position, filename, unid, job_status, obj_format)
+        logger.info("我的创作列表中添加新行")
+        chk, file_status = self._add_common_widgets(
+            row_position, filename, unid, job_status, obj_format
+        )
         if job_status == 1:
             file_status.set_status("排队中")
         elif job_status == 0:
@@ -361,7 +389,15 @@ class TableApp(CardWidget):
                 orm_result.update_table_unid(unid, job_status=2)
 
             if unid in item.text():
-                self._set_row_buttons(row, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
+                self._set_row_buttons(
+                    row,
+                    [
+                        ButtonType.EDIT,
+                        ButtonType.EXPORT,
+                        ButtonType.START,
+                        ButtonType.DELETE,
+                    ],
+                )
             else:
                 logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
 
@@ -376,10 +412,15 @@ class TableApp(CardWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        _, file_status = self._add_common_widgets(row_position, filename_without_extension, unid, 2, edit_dict)
+        _, file_status = self._add_common_widgets(
+            row_position, filename_without_extension, unid, 2, edit_dict
+        )
         file_status.set_status("已完成")
 
-        self._set_row_buttons(row_position, [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE])
+        self._set_row_buttons(
+            row_position,
+            [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE],
+        )
 
     def _start_row(self):
         row = self._get_row()
@@ -401,7 +442,7 @@ class TableApp(CardWidget):
         try:
             # 将 job_content.obj 从 JSON 字符串转换为 dict
             job_obj_dict = json.loads(job_content.obj)
-            
+
             # 使用 VideoFormatInfo 的 model_validate 方法将 dict 转换为 VideoFormatInfo 对象
             video_format_info = VideoFormatInfo.model_validate(job_obj_dict)
         except json.JSONDecodeError:
@@ -412,34 +453,55 @@ class TableApp(CardWidget):
             return
 
         # 现在 video_format_info 是 VideoFormatInfo 类型的对象
-        job_path = video_format_info.media_dirname  # 假设 media_dirname 是正确的路径属性
+        job_path = (
+            video_format_info.media_dirname
+        )  # 假设 media_dirname 是正确的路径属性
 
         if not os.path.isfile(job_path):
             logger.error(f"文件:{job_path}不存在,无法开始处理")
-            InfoBar.error(title='错误', content="文件:{job_path}不存在,无法重新开始", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=3000,
-                          parent=self)
+            InfoBar.error(
+                title="错误",
+                content="文件:{job_path}不存在,无法重新开始",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=3000,
+                parent=self,
+            )
             raise FileNotFoundError(f"The file {job_path} does not exist.")
 
         # 将任务重新添加到工作队列
         work_queue.lin_queue_put(video_format_info)
 
-        InfoBar.success(title='成功', content="任务已重新开始", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+        InfoBar.success(
+            title="成功",
+            content="任务已重新开始",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self,
+        )
 
         # 如果消费线程未运行，则启动它
         if not config.is_consuming:
             self.start_queue_consumer()
 
     def start_queue_consumer(self):
-        logger.debug(f'检查config.is_consuming:{config.is_consuming}')
+        logger.debug(f"检查config.is_consuming:{config.is_consuming}")
         if not config.is_consuming:
-            logger.debug('开始消费队列')
+            logger.debug("开始消费队列")
             self.queue_consumer_thread = QThread()
             self.queue_consumer = QueueConsumer()
             self.queue_consumer.moveToThread(self.queue_consumer_thread)
-            self.queue_consumer_thread.started.connect(self.queue_consumer.process_queue)
+            self.queue_consumer_thread.started.connect(
+                self.queue_consumer.process_queue
+            )
             self.queue_consumer.finished.connect(self.queue_consumer_thread.quit)
             self.queue_consumer.finished.connect(self.queue_consumer.deleteLater)
-            self.queue_consumer_thread.finished.connect(self.queue_consumer_thread.deleteLater)
+            self.queue_consumer_thread.finished.connect(
+                self.queue_consumer_thread.deleteLater
+            )
             self.queue_consumer_thread.start()
         else:
             logger.debug("消费队列正在工作")
@@ -492,12 +554,26 @@ class TableApp(CardWidget):
             self.table.removeRow(button_row)
             # 清除缓存索引
             self.row_cache.pop(unid, None)
-            logger.info(f'已删除 unid:{unid}, row_cache 更新后:{self.row_cache}')
-            InfoBar.success(title='成功', content="任务已删除", orient=Qt.Horizontal, 
-                            isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000, parent=self)
+            logger.info(f"已删除 unid:{unid}, row_cache 更新后:{self.row_cache}")
+            InfoBar.success(
+                title="成功",
+                content="任务已删除",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self,
+            )
         else:
-            InfoBar.error(title='错误', content="删除数据库记录失败", orient=Qt.Horizontal, 
-                          isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=3000, parent=self)
+            InfoBar.error(
+                title="错误",
+                content="删除数据库记录失败",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=3000,
+                parent=self,
+            )
 
     def _get_row(self):
         # 获取操作所在行
@@ -535,24 +611,41 @@ class TableApp(CardWidget):
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         # work_obj 取值是_load_data中srt_edit_dict
         work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
-        logger.trace(f'work_obj:{work_obj}')
+        logger.trace(f"work_obj:{work_obj}")
         srt_path = work_obj.srt_dirname
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法导出")
-            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                          parent=self)
+            InfoBar.error(
+                title="错误",
+                content="文件不存在",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self,
+            )
             raise FileNotFoundError(f"The file {srt_path} does not exist.")
 
         logger.info(f"导出字幕:{srt_path}")
 
         dialog = ExportSubtitleDialog([srt_path], self)
         dialog.exec()
-        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                        parent=self)
+        InfoBar.success(
+            title="成功",
+            content="文件已导出",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self,
+        )
 
     def _update_buttons_visibility(self):
         # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
-        any_checked = any(self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked() for row in range(self.table.rowCount()))
+        any_checked = any(
+            self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked()
+            for row in range(self.table.rowCount())
+        )
         self.deleteBtn.setVisible(any_checked)
         self.exportBtn.setVisible(any_checked)
 
@@ -563,8 +656,15 @@ class TableApp(CardWidget):
         srt_path = work_obj.srt_dirname
         if not os.path.isfile(srt_path):
             logger.error(f"文件:{srt_path}不存在,无法编辑")
-            InfoBar.error(title='错误', content="文件不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-                          parent=self)
+            InfoBar.error(
+                title="错误",
+                content="文件不存在",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self,
+            )
             raise FileNotFoundError(f"The file {srt_path} does not exist.")
 
         # 创建一个新的对话框窗口
@@ -573,7 +673,9 @@ class TableApp(CardWidget):
         dialog.resize(SUBTITLE_EDIT_DIALOG_SIZE)  # 设置一个合适的初始大小
 
         # 创建SubtitleEditPage实例
-        subtitle_edit_page = SubtitleEditPage(work_obj.srt_dirname, work_obj.media_dirname, self.settings, parent=self)
+        subtitle_edit_page = SubtitleEditPage(
+            work_obj.srt_dirname, work_obj.media_dirname, self.settings, parent=self
+        )
 
         # 创建垂直布局并添加SubtitleEditPage
         layout = QVBoxLayout(dialog)
@@ -601,7 +703,7 @@ class TableApp(CardWidget):
     #                     parent=self)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
     ex = TableApp("我的创作列表", settings=settings)

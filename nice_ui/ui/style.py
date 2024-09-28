@@ -1,23 +1,23 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, QLineEdit
+from PySide6.QtWidgets import (QHBoxLayout, QVBoxLayout, QApplication, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, )
 from PySide6.QtWidgets import QWidget, QButtonGroup
 
 from agent import translate_api_name
+from components.resource_manager import StyleManager
 from utils import logger
 from vendor.qfluentwidgets import (CaptionLabel, RadioButton, InfoBarPosition, InfoBar, TransparentToolButton, FluentIcon, CheckBox, ToolTipFilter,
-                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel, PasswordLineEdit)
-from components.resource_manager import StyleManager
+                                   ToolTipPosition, CardWidget, LineEdit, PrimaryPushButton, BodyLabel, HyperlinkLabel, PasswordLineEdit, )
+
 HH_MM_SS_ZZZ = "hh:mm:ss,zzz"
 
 
 # 这里放的是自定义样式组件
 
 
-
 class AppCard(CardWidget):
-    """ App card
+    """App card
     用在本地识别页，创建whisper选择卡片
-     """
+    """
 
     def __init__(self, title, content, button_status: bool = False, parent=None):
         super().__init__(parent)
@@ -46,7 +46,7 @@ class AppCard(CardWidget):
 
 
 class AppCardContainer(QWidget):
-    """ Container for App cards """
+    """Container for App cards"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -63,7 +63,7 @@ class AppCardContainer(QWidget):
 
 
 class KeyLineEdit(PasswordLineEdit):
-    """ Key Line Edit
+    """Key Line Edit
     用在llm配置页 创建api key 输入框
     """
 
@@ -76,7 +76,8 @@ class KeyLineEdit(PasswordLineEdit):
         self.setPasswordVisible(True)
         self.setAttribute(Qt.WA_MacShowFocusRect, False)
         self.setObjectName("KeyLineEdit")  # 设置对象名称
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
                     KeyLineEdit {
                         color: black !important;
                         background-color: white !important;
@@ -95,31 +96,41 @@ class KeyLineEdit(PasswordLineEdit):
                     KeyLineEdit::selection {
                         background-color: palette(highlight) !important;
                     }
-                """)
+                """
+        )
 
 
 class SaveButton(PrimaryPushButton):
-    """ Key Button
+    """Key Button
     用在llm配置页 创建api key 按钮
     """
 
-    def __init__(self, settings: QSettings, lineedit: LineEdit, api_key: str, parent=None):
+    def __init__(
+        self, settings: QSettings, lineedit: LineEdit, api_key: str, parent=None
+    ):
         super().__init__(parent)
         self.setText("保存")
         self.settings = settings
         self.lineEdit = lineedit
-        self.clicked.connect(lambda:self.save_api_key(api_key))
+        self.clicked.connect(lambda: self.save_api_key(api_key))
 
     def save_api_key(self, api_key):
         # 实现保存API Key的逻辑，在主窗口的QSettings中保存
         key_text = self.lineEdit.text()
         self.settings.setValue(api_key, key_text)
-        InfoBar.success(title="成功", content="API已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                        parent=self.parent().parent(), )
+        InfoBar.success(
+            title="成功",
+            content="API已保存",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self.parent().parent(),
+        )
 
 
 class LLMKeySet(QWidget):
-    """ LLM Key Set
+    """LLM Key Set
     用在llm配置页 创建api key 卡片
     """
 
@@ -149,7 +160,9 @@ class LLMKeySet(QWidget):
 
         # 第二排布局
         input_layout = QHBoxLayout()
-        self.api_key_input = KeyLineEdit(self.parent().settings.value(api_key, type=str))
+        self.api_key_input = KeyLineEdit(
+            self.parent().settings.value(api_key, type=str)
+        )
         save_button = SaveButton(self.parent().settings, self.api_key_input, api_key)
         input_layout.addWidget(self.api_key_input)
         input_layout.addWidget(save_button)
@@ -163,7 +176,7 @@ class LLMKeySet(QWidget):
 
 
 class TranslateKeySet(QWidget):
-    """ Translate Key Set
+    """Translate Key Set
     用在翻译页 创建api key 卡片
 
     """
@@ -178,7 +191,9 @@ class TranslateKeySet(QWidget):
         """
         main_layout = QHBoxLayout()
         title_label = BodyLabel(translate_api_name.get(api_key))
-        self.api_key_input = KeyLineEdit(self.parent().settings.value(api_key, type=str))
+        self.api_key_input = KeyLineEdit(
+            self.parent().settings.value(api_key, type=str)
+        )
         save_button = SaveButton(self.parent().settings, self.api_key_input, api_key)
         # 将两排布局添加到主布局
         main_layout.addWidget(title_label)
@@ -197,7 +212,7 @@ class LTimeEdit(QTimeEdit):
 
         # 设置默认选中毫秒部分
         self.setSelectedSection(QTimeEdit.Section.MSecSection)
-        StyleManager.apply_style(self, 'time_edit')
+        StyleManager.apply_style(self, "time_edit")
 
     def initTime(self, time_str):
         self.setDisplayFormat(HH_MM_SS_ZZZ)
@@ -277,7 +292,7 @@ class SubtitleTable(QTableWidget):
                 [start_time, end_time, content]
         """
         subtitles = []
-        with open(self.file_path, 'r', encoding='utf-8') as f:
+        with open(self.file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         i = 0
@@ -289,7 +304,7 @@ class SubtitleTable(QTableWidget):
             # 读取时间范围
             time_range = lines[i].strip()
             try:
-                start_time, end_time = time_range.split(' --> ')
+                start_time, end_time = time_range.split(" --> ")
             except ValueError:
                 logger.error(f"字幕文件第{i+1}行时间范围格式错误：{time_range}")
                 i += 1
@@ -307,11 +322,13 @@ class SubtitleTable(QTableWidget):
                 chinese_content.append(lines[i].strip())
                 i += 1
 
-            english_content_str = ' '.join(english_content)
-            chinese_content_str = ' '.join(chinese_content)
+            english_content_str = " ".join(english_content)
+            chinese_content_str = " ".join(chinese_content)
 
             # 添加到字幕列表
-            subtitles.append((start_time, end_time, english_content_str, chinese_content_str))
+            subtitles.append(
+                (start_time, end_time, english_content_str, chinese_content_str)
+            )
 
             # 跳过空行
             while i < len(lines) and not lines[i].strip():
@@ -320,7 +337,7 @@ class SubtitleTable(QTableWidget):
         return subtitles
 
     def process_subtitles(self):
-        """ 预处理字幕数据 """
+        """预处理字幕数据"""
         self.subtitles.clear()
         logger.debug("预处理字幕")
         for row in range(self.rowCount()):
@@ -330,8 +347,12 @@ class SubtitleTable(QTableWidget):
                 start_time = time_widget.findChild(LTimeEdit, "start_time")
                 end_time = time_widget.findChild(LTimeEdit, "end_time")
 
-                start_ms = self.time_to_milliseconds(start_time.time().toString("HH:mm:ss,zzz"))
-                end_ms = self.time_to_milliseconds(end_time.time().toString("HH:mm:ss,zzz"))
+                start_ms = self.time_to_milliseconds(
+                    start_time.time().toString("HH:mm:ss,zzz")
+                )
+                end_ms = self.time_to_milliseconds(
+                    end_time.time().toString("HH:mm:ss,zzz")
+                )
 
                 subtitle_widget = self.cellWidget(row, 4)
                 subtitle_text = subtitle_widget.toPlainText()
@@ -341,7 +362,7 @@ class SubtitleTable(QTableWidget):
                 logger.error(f"字幕rowCount:{row} 错误：{e}")
 
         # 按开始时间排序
-        self.subtitles.sort(key=lambda x:x[0])
+        self.subtitles.sort(key=lambda x: x[0])
 
     def initUI(self):
         _data = self.load_subtitle()
@@ -349,7 +370,9 @@ class SubtitleTable(QTableWidget):
         self.setColumnCount(7)
         self.setRowCount(len(_data))
         # self.setHorizontalHeaderLabels(["操作", "行号", "时间", "时长", "原文", "译文", "编辑"])
-        self.setHorizontalHeaderLabels(["", "操作", "行号", "时间", "原文", "译文", "编辑"])
+        self.setHorizontalHeaderLabels(
+            ["", "操作", "行号", "时间", "原文", "译文", "编辑"]
+        )
 
         self.setColumnWidth(0, 50)
         self.setColumnWidth(1, 50)
@@ -422,14 +445,14 @@ class SubtitleTable(QTableWidget):
         text_size = QSize(190, 50)
         your_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 4, your_text)
-        your_text.textChanged.connect(lambda:self._on_item_changed())
+        your_text.textChanged.connect(lambda: self._on_item_changed())
 
         # 第六列：译文
         translated_text = LinLineEdit()
         translated_text.setText(srt_data[3])
         translated_text.setFixedSize(text_size)
         self.setCellWidget(row_position, 5, translated_text)
-        translated_text.textChanged.connect(lambda:self._on_item_changed())
+        translated_text.textChanged.connect(lambda: self._on_item_changed())
 
         # 第七列：编辑按钮
         edit_layout = QVBoxLayout()
@@ -438,14 +461,22 @@ class SubtitleTable(QTableWidget):
 
         delete_button = TransparentToolButton(FluentIcon.DELETE)
         delete_button.setToolTip("删除本行字幕")
-        delete_button.installEventFilter(ToolTipFilter(delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+        delete_button.installEventFilter(
+            ToolTipFilter(
+                delete_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+            )
+        )
         delete_button.setObjectName("delete_button")
-        delete_button.clicked.connect(lambda _, r=row_position:self._delete_row(r))
+        delete_button.clicked.connect(lambda _, r=row_position: self._delete_row(r))
         add_button = TransparentToolButton(FluentIcon.ADD)
         add_button.setObjectName("add_button")
         add_button.setToolTip("下方添加一行")
-        add_button.installEventFilter(ToolTipFilter(add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        add_button.clicked.connect(lambda _, r=row_position:self._insert_row_below(r))
+        add_button.installEventFilter(
+            ToolTipFilter(
+                add_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+            )
+        )
+        add_button.clicked.connect(lambda _, r=row_position: self._insert_row_below(r))
 
         delete_button.setFixedSize(button_size)
         add_button.setFixedSize(button_size)
@@ -454,13 +485,23 @@ class SubtitleTable(QTableWidget):
         down_row_button = TransparentToolButton(FluentIcon.DOWN)
         down_row_button.setObjectName("down_button")
         down_row_button.setToolTip("移动译文到下一行")
-        down_row_button.installEventFilter(ToolTipFilter(down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        down_row_button.clicked.connect(lambda _, r=row_position:self._move_row_down(r))
+        down_row_button.installEventFilter(
+            ToolTipFilter(
+                down_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+            )
+        )
+        down_row_button.clicked.connect(
+            lambda _, r=row_position: self._move_row_down(r)
+        )
         up_row_button = TransparentToolButton(FluentIcon.UP)
         up_row_button.setObjectName("up_button")
         up_row_button.setToolTip("移动译文到上一行")
-        up_row_button.installEventFilter(ToolTipFilter(up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
-        up_row_button.clicked.connect(lambda _, r=row_position:self._move_row_up(r))
+        up_row_button.installEventFilter(
+            ToolTipFilter(
+                up_row_button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+            )
+        )
+        up_row_button.clicked.connect(lambda _, r=row_position: self._move_row_up(r))
 
         down_row_button.setFixedSize(button_size)
         up_row_button.setFixedSize(button_size)
@@ -490,25 +531,35 @@ class SubtitleTable(QTableWidget):
             if item:
                 item.setText(str(row + 1))
             if edit_widget:
-                delete_button = edit_widget.findChild(TransparentToolButton, "delete_button")
+                delete_button = edit_widget.findChild(
+                    TransparentToolButton, "delete_button"
+                )
                 add_button = edit_widget.findChild(TransparentToolButton, "add_button")
                 if delete_button:
                     delete_button.clicked.disconnect()
-                    delete_button.clicked.connect(lambda _, r=row:self._delete_row(r))
+                    delete_button.clicked.connect(lambda _, r=row: self._delete_row(r))
                 if add_button:
                     add_button.clicked.disconnect()
-                    add_button.clicked.connect(lambda _, r=row:self._insert_row_below(r))
+                    add_button.clicked.connect(
+                        lambda _, r=row: self._insert_row_below(r)
+                    )
                 # 更新移动按钮行号
 
-                down_row_button = edit_widget.findChild(TransparentToolButton, "down_button")
-                up_row_button = edit_widget.findChild(TransparentToolButton, "up_button")
+                down_row_button = edit_widget.findChild(
+                    TransparentToolButton, "down_button"
+                )
+                up_row_button = edit_widget.findChild(
+                    TransparentToolButton, "up_button"
+                )
                 if down_row_button:
                     # 更新向下按钮
                     down_row_button.clicked.disconnect()
-                    down_row_button.clicked.connect(lambda _, r=row:self._move_row_down(r))
+                    down_row_button.clicked.connect(
+                        lambda _, r=row: self._move_row_down(r)
+                    )
                 if up_row_button:
                     up_row_button.clicked.disconnect()
-                    up_row_button.clicked.connect(lambda _, r=row:self._move_row_up(r))
+                    up_row_button.clicked.connect(lambda _, r=row: self._move_row_up(r))
         # 变更行好时发出信号
         self._on_item_changed()
 
@@ -536,7 +587,7 @@ class SubtitleTable(QTableWidget):
         end_time_str = new_end_time.toString(HH_MM_SS_ZZZ)
 
         # 创建新的srt_data元组
-        new_srt_data = (start_time_str, end_time_str, '', '')
+        new_srt_data = (start_time_str, end_time_str, "", "")
 
         # 在当前行下方插入新行
         self._add_row(new_row_position, new_srt_data)
@@ -652,7 +703,7 @@ class SubtitleTable(QTableWidget):
             # 添加到字幕列表
             subtitles.append((start_time_str, end_time_str, your_text, translated_text))
         # 保存字幕文件
-        with open(self.file_path, 'w', encoding='utf-8') as f:
+        with open(self.file_path, "w", encoding="utf-8") as f:
             for i, j in enumerate(subtitles):
                 f.write(f"{i + 1}\n")
                 f.write(f"{j[0]} --> {j[1]}\n")
@@ -660,9 +711,9 @@ class SubtitleTable(QTableWidget):
                 f.write(f"{j[3]}\n\n")
 
     def time_to_milliseconds(self, time_str):
-        """ 将时间字符串转换为毫秒 """
-        h, m, s = time_str.split(':')
-        s, ms = s.split(',')
+        """将时间字符串转换为毫秒"""
+        h, m, s = time_str.split(":")
+        s, ms = s.split(",")
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
     def _on_item_changed(self):
@@ -671,12 +722,12 @@ class SubtitleTable(QTableWidget):
         self.tableChanged.emit(self.subtitles)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     # patt = r'D:\dcode\lin_trans\result\tt1\dd1.srt'
     # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    patt = 'D:/dcode/lin_trans/result/tt1/tt.srt'
+    patt = "D:/dcode/lin_trans/result/tt1/tt.srt"
     app = QApplication(sys.argv)
     card = SubtitleTable(patt)
     card.show()

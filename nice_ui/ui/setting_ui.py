@@ -3,17 +3,19 @@ import sys
 from typing import Optional
 
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QTimer
-from PySide6.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from PySide6.QtWidgets import QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, \
-    QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, QLayoutItem
 from PySide6.QtCore import QThread, Signal
+from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
+from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
+                               QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
+
+from agent.model_down import download_model
 from nice_ui.configure import config
-from nice_ui.ui.style import AppCardContainer, LLMKeySet, TranslateKeySet
+from nice_ui.ui.style import LLMKeySet, TranslateKeySet
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, )
-from agent.model_down import download_model
+
 
 class DownloadThread(QThread):
     progress_signal = Signal(int)
@@ -51,7 +53,6 @@ class DownloadThread(QThread):
 
     def update_progress(self, progress):
         self.progress_signal.emit(progress)
-
 
 
 class LocalModelPage(QWidget):
@@ -111,7 +112,9 @@ class LocalModelPage(QWidget):
         self.funasr_model_title = BodyLabel("FasterWhisper 模型列表")
         self.funasr_model_table = TableWidget(self)
         self.funasr_model_table.setColumnCount(3)
-        self.funasr_model_table.setHorizontalHeaderLabels(["模型", "模型大小", "安装状态"])
+        self.funasr_model_table.setHorizontalHeaderLabels(
+            ["模型", "模型大小", "安装状态"]
+        )
         self.funasr_model_table.verticalHeader().setVisible(False)
         self.funasr_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -126,7 +129,9 @@ class LocalModelPage(QWidget):
         # 初始化显示 Whisper.Cpp 模型列表
         # self.show_model_list("Whisper.Cpp")
 
-        tips1 = CaptionLabel("不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请手动下载，并放到上面的模型存储路径中。")
+        tips1 = CaptionLabel(
+            "不同引擎的模型准确度和识别速度可能会有所差异，由于文件比较大，请手动下载，并放到上面的模型存储路径中。"
+        )
         layout.addWidget(tips1)
 
     def bind_action(self):
@@ -138,7 +143,11 @@ class LocalModelPage(QWidget):
         path = self.path_input.text()
         if os.path.exists(path):
             # 用 os.startfile (Windows) 或 os.system('open ...') (macOS/Linux) 来打开文件夹。
-            os.startfile(path) if sys.platform == "win32" else os.system(f'open "{path}"')
+            (
+                os.startfile(path)
+                if sys.platform == "win32"
+                else os.system(f'open "{path}"')
+            )
 
         else:
             logger.error(f"路径不存在: {path}")
@@ -149,7 +158,9 @@ class LocalModelPage(QWidget):
             self.path_input.setText(new_path)
             # logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
-            self.settings.setValue("models_path", config.models_path)  # self.settings.sync()
+            self.settings.setValue(
+                "models_path", config.models_path
+            )  # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -200,15 +211,17 @@ class LocalModelPage(QWidget):
             ("英语模型", "1.00 GB"),
         ]
         model_list = config.model_list
-        
+
         table.setRowCount(len(faster_models))
         for row, model in enumerate(faster_models):
             model_name, model_size = model
             model_info = model_list.get(model_name, {})
-            model_folder = model_info.get('model_name', '')
+            model_folder = model_info.get("model_name", "")
 
             # 检查模型是否已安装
-            is_installed = os.path.exists(os.path.join(config.models_path, 'funasr', model_folder))
+            is_installed = os.path.exists(
+                os.path.join(config.models_path, "funasr", model_folder)
+            )
 
             for col, value in enumerate([model_name, model_size]):
                 item = QTableWidgetItem(str(value))
@@ -222,7 +235,9 @@ class LocalModelPage(QWidget):
                 table.setItem(row, 2, status_item)
             else:
                 install_btn = QPushButton("安装")
-                install_btn.clicked.connect(lambda _, r=row, m=model_folder: self.install_model(r, m))
+                install_btn.clicked.connect(
+                    lambda _, r=row, m=model_folder: self.install_model(r, m)
+                )
                 table.setCellWidget(row, 2, install_btn)
 
         table.resizeColumnsToContents()
@@ -231,7 +246,7 @@ class LocalModelPage(QWidget):
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
         model_info = config.model_list.get(model_cn_name, {})
-        model_name = model_info.get('model_name', '')
+        model_name = model_info.get("model_name", "")
 
         if not model_name:
             InfoBar.error(
@@ -254,7 +269,9 @@ class LocalModelPage(QWidget):
         # 创建下载线程
         self.download_thread = DownloadThread(model_name)
         self.download_thread.progress_signal.connect(progress_bar.setValue)
-        self.download_thread.finished_signal.connect(lambda success: self.download_finished(success, row, model_folder))
+        self.download_thread.finished_signal.connect(
+            lambda success: self.download_finished(success, row, model_folder)
+        )
 
         # 开始下载
         self.download_thread.start()
@@ -313,12 +330,14 @@ class LocalModelPage(QWidget):
             self.funasr_model_table.setItem(row, 2, status_item)
         else:
             install_btn = QPushButton("安装")
-            install_btn.clicked.connect(lambda _, r=row, m=self.get_model_folder(row): self.install_model(r, m))
+            install_btn.clicked.connect(
+                lambda _, r=row, m=self.get_model_folder(row): self.install_model(r, m)
+            )
             self.funasr_model_table.setCellWidget(row, 2, install_btn)
 
     def get_model_folder(self, row):
         model_name = self.funasr_model_table.item(row, 0).text()
-        return config.model_list.get(model_name, {}).get('model_name', '')
+        return config.model_list.get(model_name, {}).get("model_name", "")
 
     def model_type(self, param: int):
         """
@@ -330,7 +349,9 @@ class LocalModelPage(QWidget):
 
 
 class PopupWidget(QWidget):
-    def __init__(self, key_id: Optional[int], prompt_name: str, prompt_msg: str, parent=None):
+    def __init__(
+        self, key_id: Optional[int], prompt_name: str, prompt_msg: str, parent=None
+    ):
         super().__init__(parent=parent)
         self.key_id = key_id
         self.name = prompt_name
@@ -395,28 +416,69 @@ class PopupWidget(QWidget):
         new_content = self.label.toPlainText()
         if not new_name or not new_content:
             logger.error("提示词不能为空")
-            InfoBar.error(title="错误", content="提示词不能为空", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
-                parent=self, )
+            InfoBar.error(
+                title="错误",
+                content="提示词不能为空",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
             return
         if self.key_id is None:
             # 添加新提示词
             logger.info(f"添加新提示词: 名称={new_name}, 内容={new_content}")
-            if _ := self.parent().prompts_orm.insert_table_prompt(prompt_name=new_name, prompt_content=new_content):
-                InfoBar.success(title="成功", content="新提示词已添加", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                    parent=self.parent(), )
+            if _ := self.parent().prompts_orm.insert_table_prompt(
+                prompt_name=new_name, prompt_content=new_content
+            ):
+                InfoBar.success(
+                    title="成功",
+                    content="新提示词已添加",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
             else:
-                InfoBar.error(title="错误", content="添加新提示词失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                    parent=self.parent(), )
+                InfoBar.error(
+                    title="错误",
+                    content="添加新提示词失败",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
         else:
             # 更新现有提示词
-            logger.info(f"修改提示词: id={self.key_id}, 名称={new_name}, 内容={new_content}")
-            success: bool = self.parent().prompts_orm.update_table_prompt(key_id=self.key_id, prompt_name=new_name, prompt_content=new_content)
+            logger.info(
+                f"修改提示词: id={self.key_id}, 名称={new_name}, 内容={new_content}"
+            )
+            success: bool = self.parent().prompts_orm.update_table_prompt(
+                key_id=self.key_id, prompt_name=new_name, prompt_content=new_content
+            )
             if success:
-                InfoBar.success(title="成功", content="提示词已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                    parent=self.parent(), )
+                InfoBar.success(
+                    title="成功",
+                    content="提示词已更新",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
             else:
-                InfoBar.error(title="错误", content="更新提示词失败", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                    parent=self.parent(), )
+                InfoBar.error(
+                    title="错误",
+                    content="更新提示词失败",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.parent(),
+                )
 
         self.close()
         self.parent().refresh_table_data()
@@ -445,9 +507,9 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
         cards_layout.setSpacing(0)
 
-        kimi_card = LLMKeySet('kimi', 'hurl', self)
-        zhipu_card = LLMKeySet('zhipu', 'zhipu', self)
-        qwen_card = LLMKeySet('qwen', 'qwen', self)
+        kimi_card = LLMKeySet("kimi", "hurl", self)
+        zhipu_card = LLMKeySet("zhipu", "zhipu", self)
+        qwen_card = LLMKeySet("qwen", "qwen", self)
 
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
@@ -483,14 +545,20 @@ class LLMConfigPage(QWidget):
         self.prompts_table = TableWidget(self)
         # 设置表格为交替行颜色
         self.prompts_table.setAlternatingRowColors(True)
-        self.prompts_table.verticalHeader().setDefaultSectionSize(40)  # 设置默认行高为 40
-        self.prompts_table.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)  # 固定行高
+        self.prompts_table.verticalHeader().setDefaultSectionSize(
+            40
+        )  # 设置默认行高为 40
+        self.prompts_table.verticalHeader().setSectionResizeMode(
+            QHeaderView.Fixed
+        )  # 固定行高
 
         # 不显示表头
         self.prompts_table.horizontalHeader().setVisible(False)
 
         self.prompts_table.setColumnCount(4)
-        self.prompts_table.setHorizontalHeaderLabels(["主键id", "提示词名称", "提示词内容", "操作"])
+        self.prompts_table.setHorizontalHeaderLabels(
+            ["主键id", "提示词名称", "提示词内容", "操作"]
+        )
         self.prompts_table.verticalHeader().setVisible(False)
         self.prompts_table.setColumnWidth(0, 50)
         self.prompts_table.setColumnWidth(1, 150)
@@ -498,13 +566,17 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setColumnHidden(0, True)
 
         # 让第三列（索引为2）占据剩余空间
-        self.prompts_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.prompts_table.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.Stretch
+        )
 
         # 其他列保持固定宽度
         self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
         self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
 
-        self.prompts_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 设置表格为不可编辑
+        self.prompts_table.setEditTriggers(
+            QAbstractItemView.NoEditTriggers
+        )  # 设置表格为不可编辑
 
         prompts_layout.addWidget(self.prompts_table)
 
@@ -513,7 +585,11 @@ class LLMConfigPage(QWidget):
     def _init_table(self):
         all_prompts = self.prompts_orm.get_data_with_id_than_one()
         for prompt in all_prompts:
-            self._init_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)
+            self._init_prompt(
+                prompt_id=prompt.id,
+                prompt_name=prompt.prompt_name,
+                prompt_content=prompt.prompt_content,
+            )
 
     def _init_prompt(self, prompt_id, prompt_name, prompt_content):
         row = self.prompts_table.rowCount()
@@ -530,13 +606,17 @@ class LLMConfigPage(QWidget):
 
         edit_btn = TransparentToolButton(FluentIcon.EDIT)
         edit_btn.setFixedSize(QSize(30, 28))
-        edit_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+        edit_btn.setSizePolicy(
+            QSizePolicy.Fixed, QSizePolicy.Fixed
+        )  # 设置大小策略为Fixed
         edit_btn.clicked.connect(self._edit_prompt(edit_btn))
         buttons_layout.addWidget(edit_btn)
 
         delete_btn = TransparentToolButton(FluentIcon.DELETE)
         delete_btn.setFixedSize(QSize(30, 28))
-        delete_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # 设置大小策略为Fixed
+        delete_btn.setSizePolicy(
+            QSizePolicy.Fixed, QSizePolicy.Fixed
+        )  # 设置大小策略为Fixed
         delete_btn.clicked.connect(self._delete_row(delete_btn))
         buttons_layout.addWidget(delete_btn)
 
@@ -546,7 +626,11 @@ class LLMConfigPage(QWidget):
         self.prompts_table.setRowCount(0)  # 清空表格
         all_prompts = self.prompts_orm.get_data_with_id_than_one()  # 获取最新数据
         for prompt in all_prompts:
-            self._init_prompt(prompt_id=prompt.id, prompt_name=prompt.prompt_name, prompt_content=prompt.prompt_content)  #
+            self._init_prompt(
+                prompt_id=prompt.id,
+                prompt_name=prompt.prompt_name,
+                prompt_content=prompt.prompt_content,
+            )  #
 
     def _delete_row(self, button):
         def delete_row():
@@ -571,7 +655,9 @@ class LLMConfigPage(QWidget):
         return edit_row
 
     def _add_prompt(self):
-        self.popup = PopupWidget(key_id=None, prompt_name="", prompt_msg="", parent=self)
+        self.popup = PopupWidget(
+            key_id=None, prompt_name="", prompt_msg="", parent=self
+        )
         self.popup.show()
 
 
@@ -584,13 +670,15 @@ class TranslationPage(QWidget):
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
-        tips_label = CaptionLabel("请填写服务商提供的API Key，在翻译任务中可以免除算力，所有Key只会保存在本地。")
+        tips_label = CaptionLabel(
+            "请填写服务商提供的API Key，在翻译任务中可以免除算力，所有Key只会保存在本地。"
+        )
         main_layout.addWidget(tips_label)
 
         title_layout = QHBoxLayout()
         title_label = BodyLabel("翻译API Key")
         tutorial_link = HyperlinkLabel("设置教程")
-        tutorial_link.setUrl('xdd')
+        tutorial_link.setUrl("xdd")
 
         title_layout.addWidget(title_label)
         title_layout.addWidget(tutorial_link)
@@ -626,22 +714,41 @@ class ProxyTestWidget(QWidget):
     def ask_proxy(self):
         url = QUrl("http://www.google.com")
         request = QNetworkRequest(url)
-        request.setAttribute(QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork)
-        request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
+        request.setAttribute(
+            QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork
+        )
+        request.setAttribute(
+            QNetworkRequest.RedirectPolicyAttribute,
+            QNetworkRequest.NoLessSafeRedirectPolicy,
+        )
         request.setTransferTimeout(10000)  # 设置 10 秒超时
         self.network_manager.get(request)
 
     def handle_response(self, reply):
         if reply.error() == QNetworkReply.NoError:
             content = reply.readAll()
-            self.response_text.setPlainText(str(content, encoding='utf-8'))
-            InfoBar.success(title="成功", content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}", orient=Qt.Horizontal,
-                isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+            self.response_text.setPlainText(str(content, encoding="utf-8"))
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
         else:
             error_msg = reply.errorString()
             self.response_text.setPlainText(f"错误: {error_msg}")
-            InfoBar.error(title="错误", content=f"测试失败: {error_msg}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
-                parent=self, )
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {error_msg}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
 
         reply.deleteLater()
 
@@ -650,23 +757,23 @@ def print_height_difference(widget1, widget2):
     # 确保窗口已经完成布局
     QTimer.singleShot(0, lambda: _print_height_difference(widget1, widget2))
 
+
 def _print_height_difference(widget1, widget2):
     pos1 = widget1.mapToGlobal(widget1.rect().topLeft())
     pos2 = widget2.mapToGlobal(widget2.rect().topLeft())
-    
+
     y1 = pos1.y()
     height1 = widget1.height()
     y2 = pos2.y()
-    
+
     difference = y2 - (y1 + height1)
-    
+
     print(f"Widget 1 ({widget1.__class__.__name__}):")
     print(f"  Y position: {y1}")
     print(f"  Height: {height1}")
     print(f"Widget 2 ({widget2.__class__.__name__}):")
     print(f"  Y position: {y2}")
     print(f"Height difference: {difference}")
-
 
 
 class ProxyPage(QWidget):
@@ -690,13 +797,12 @@ class ProxyPage(QWidget):
         card_layout.setSpacing(UNIFORM_SPACING)  # 设置卡片内部统一间距
         card_layout.setContentsMargins(20, 20, 20, 20)  # 设置卡片内边距
 
-
         # 创建单选框
         self.no_proxy_radio = RadioButton("无代理")
         self.use_proxy_radio = RadioButton("手动代理配置")
 
         radio_layout = QVBoxLayout()
-        radio_layout.setSpacing(UNIFORM_SPACING) 
+        radio_layout.setSpacing(UNIFORM_SPACING)
         self.proxy_radio_group = QButtonGroup(radio_layout)
         self.proxy_radio_group.addButton(self.no_proxy_radio)
         self.proxy_radio_group.addButton(self.use_proxy_radio)
@@ -748,7 +854,9 @@ class ProxyPage(QWidget):
         # Buttons Card
 
         # 添加一个垂直间隔
-        card_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        card_layout.addItem(
+            QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        )
 
         # 按钮布局
         buttons_layout = QHBoxLayout()
@@ -819,8 +927,15 @@ class ProxyPage(QWidget):
 
         if use_proxy:
             if not host or port == 0:
-                InfoBar.warning(title="警告", content="请输入有效的主机名和端口号", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
-                    duration=2000, parent=self, )
+                InfoBar.warning(
+                    title="警告",
+                    content="请输入有效的主机名和端口号",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
                 return
 
             proxy = f"{proxy_type}://{host}:{port}"
@@ -842,8 +957,15 @@ class ProxyPage(QWidget):
                 QNetworkProxy.setApplicationProxy(proxy_obj)
                 logger.info(f"设置代理: {proxy_obj}")
             except Exception as e:
-                InfoBar.error(title="错误", content=f"设置代理时出错: {str(e)}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
-                    duration=2000, parent=self, )
+                InfoBar.error(
+                    title="错误",
+                    content=f"设置代理时出错: {str(e)}",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
                 return
         else:
             self.settings.setValue("use_proxy", False)
@@ -851,8 +973,15 @@ class ProxyPage(QWidget):
             QNetworkProxy.setApplicationProxy(QNetworkProxy.NoProxy)
             logger.info("禁用代理")
 
-        InfoBar.success(title="成功", content="代理设置已保存", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-            parent=self, )
+        InfoBar.success(
+            title="成功",
+            content="代理设置已保存",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self,
+        )
 
     def show_current_settings(self):
         use_proxy = self.settings.value("use_proxy", False, type=bool)
@@ -865,7 +994,15 @@ class ProxyPage(QWidget):
         else:
             message = "当前未使用代理"
 
-        InfoBar.info(title="当前代理设置", content=message, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+        InfoBar.info(
+            title="当前代理设置",
+            content=message,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
 
     def test_proxy(self):
         use_proxy = self.use_proxy_radio.isChecked()
@@ -875,8 +1012,15 @@ class ProxyPage(QWidget):
 
         if use_proxy:
             if not host or port == 0:
-                InfoBar.warning(title="警告", content="请输入有效的主机名和端口号", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP,
-                    duration=2000, parent=self, )
+                InfoBar.warning(
+                    title="警告",
+                    content="请输入有效的主机名和端口号",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
                 return
 
             proxy_obj = QNetworkProxy()
@@ -895,20 +1039,39 @@ class ProxyPage(QWidget):
         self.network_manager.finished.connect(self.handle_response)
 
         request = QNetworkRequest(QUrl("http://www.google.com"))
-        request.setAttribute(QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork)
-        request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
+        request.setAttribute(
+            QNetworkRequest.CacheLoadControlAttribute, QNetworkRequest.AlwaysNetwork
+        )
+        request.setAttribute(
+            QNetworkRequest.RedirectPolicyAttribute,
+            QNetworkRequest.NoLessSafeRedirectPolicy,
+        )
         request.setTransferTimeout(10000)  # 设置 10 秒超时
         self.network_manager.get(request)
 
     def handle_response(self, reply):
         if reply.error() == QNetworkReply.NoError:
             reply.readAll()
-            InfoBar.success(title="成功", content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}", orient=Qt.Horizontal,
-                isClosable=True, position=InfoBarPosition.TOP, duration=3000, parent=self, )
+            InfoBar.success(
+                title="成功",
+                content=f"测试成功: 状态码 {reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
         else:
             error_msg = reply.errorString()
-            InfoBar.error(title="错误", content=f"测试失败: {error_msg}", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=3000,
-                parent=self, )
+            InfoBar.error(
+                title="错误",
+                content=f"测试失败: {error_msg}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
 
         reply.deleteLater()
 
@@ -917,7 +1080,7 @@ class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace(' ', '-'))
+        self.setObjectName(text.replace(" ", "-"))
         self.initUI()
 
     def initUI(self):
@@ -940,7 +1103,7 @@ class SettingInterface(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingInterface('settings', settings=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface("settings", settings=QSettings("Locoweed", "LinLInTrans"))
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())

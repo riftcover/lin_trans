@@ -1,5 +1,4 @@
 import json
-import locale
 import os
 import re
 import sys
@@ -18,11 +17,11 @@ from utils import logger
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         # 如果程序是被“冻结”打包的，使用这个路径
-        return os.path.dirname(sys.executable).replace('\\', '/')
+        return os.path.dirname(sys.executable).replace("\\", "/")
     else:
-        return str(Path.cwd()).replace('\\', '/')
+        return str(Path.cwd()).replace("\\", "/")
 
 
 # root dir
@@ -31,13 +30,13 @@ root_path = Path(__file__).parent.parent.parent  # 项目目录
 sys_platform = sys.platform
 
 # models_path = os.path.join(root_path,'models')
-models_path = root_path / 'models'
+models_path = root_path / "models"
 temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
 
 # home
-homepath = Path.home() / 'Videos/linlin'
+homepath = Path.home() / "Videos/linlin"
 homepath.mkdir(parents=True, exist_ok=True)
 homedir = homepath.as_posix()
 
@@ -51,14 +50,15 @@ result_path = root_path / "result"
 
 defaulelang = "zh"
 
+
 def parse_init():
     # 加载init
     init_settings = {
         "lang": defaulelang,
         "dubbing_thread": 3,
         "trans_row": 40,  # 每次翻译的行数
-        "trans_sleep":22,
-        "agent_rpm":2, # api每分钟请求次数
+        "trans_sleep": 22,
+        "agent_rpm": 2,  # api每分钟请求次数
         "cuda_com_type": "float16",
         "whisper_threads": 4,
         "whisper_worker": 1,
@@ -97,37 +97,40 @@ def parse_init():
         "vsync": "passthrough",
         "force_edit_srt": True,
         "loop_backaudio": False,
-        "chattts_voice": '1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869',
-        "cors_run": True
+        "chattts_voice": "1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869",
+        "cors_run": True,
     }
-    file = root_path / 'nice_ui/set.ini'
+    file = root_path / "nice_ui/set.ini"
     if file.exists():
         try:
-            with file.open('r', encoding="utf-8") as f:
+            with file.open("r", encoding="utf-8") as f:
                 # 遍历.ini文件中的每个section
                 for it in f.readlines():
 
                     it = it.strip()
-                    if not it or it.startswith(';') or it.startswith('#'):
+                    if not it or it.startswith(";") or it.startswith("#"):
                         continue
-                    key, value = it.split('=', maxsplit=1)
+                    key, value = it.split("=", maxsplit=1)
                     # 遍历每个section中的每个option
                     key = key.strip()
                     value = value.strip()
-                    if re.match(r'^\d+$', value):
+                    if re.match(r"^\d+$", value):
                         init_settings[key] = int(value)
-                    elif re.match(r'^\d+\.\d$', value):
+                    elif re.match(r"^\d+\.\d$", value):
                         init_settings[key] = round(float(value), 1)
-                    elif value.lower() == 'true':
+                    elif value.lower() == "true":
                         init_settings[key] = True
-                    elif value.lower() == 'false':
+                    elif value.lower() == "false":
                         init_settings[key] = False
                     else:
                         init_settings[key] = str(value.lower()) if value else ""
         except Exception as e:
-            logger.error(f'set.ini 中有语法错误:{str(e)}')
-        if isinstance(init_settings['fontsize'], str) and init_settings['fontsize'].find('px') > 0:
-            init_settings['fontsize'] = int(init_settings['fontsize'].replace('px', ''))
+            logger.error(f"set.ini 中有语法错误:{str(e)}")
+        if (
+            isinstance(init_settings["fontsize"], str)
+            and init_settings["fontsize"].find("px") > 0
+        ):
+            init_settings["fontsize"] = int(init_settings["fontsize"].replace("px", ""))
     return init_settings
 
 
@@ -135,15 +138,15 @@ def parse_init():
 settings = parse_init()
 
 # default language 如果 ini中设置了，则直接使用，否则自动判断
-if settings['lang']:
-    defaulelang = settings['lang'].lower()
+if settings["lang"]:
+    defaulelang = settings["lang"].lower()
 # 语言代码文件是否存在
-lang_path = root_path / f'nice_ui/language/{defaulelang}.json'
+lang_path = root_path / f"nice_ui/language/{defaulelang}.json"
 if not lang_path.exists():
     defaulelang = "en"
-    lang_path = root_path / f'nice_ui/language/{defaulelang}.json'
+    lang_path = root_path / f"nice_ui/language/{defaulelang}.json"
 
-obj = json.load(lang_path.open('r', encoding='utf-8'))
+obj = json.load(lang_path.open("r", encoding="utf-8"))
 # 交互语言代码
 transobj = obj["translate_language"]
 # 软件界面
@@ -159,6 +162,7 @@ langnamelist = list(langlist.values())
 model_list: ModelDict = obj["model_code_list"]
 model_type: int = 2
 
+
 def init_model_code_key() -> list:
     """
     模型列表的key值
@@ -166,7 +170,7 @@ def init_model_code_key() -> list:
     """
 
     # todo：应该先读取本地安装的模型，然后修改model_list的值
-    code = [key.split('.')[0] for key in model_list.keys()]
+    code = [key.split(".")[0] for key in model_list.keys()]
 
     return code
 
@@ -174,20 +178,20 @@ def init_model_code_key() -> list:
 model_code_list = init_model_code_key()
 
 # 工具箱语言
-box_lang = obj['toolbox_lang']
+box_lang = obj["toolbox_lang"]
 
 # ffmpeg,whisper.cpp
-if sys.platform == 'win32':
-    PWD = rootdir.replace('/', '\\')
-    os.environ['PATH'] = f'{root_path}/lib/ffmpeg;' + os.environ['PATH']
-    os.environ['PATH'] = f'{root_path}/whisper.cpp;' + os.environ['PATH']
+if sys.platform == "win32":
+    PWD = rootdir.replace("/", "\\")
+    os.environ["PATH"] = f"{root_path}/lib/ffmpeg;" + os.environ["PATH"]
+    os.environ["PATH"] = f"{root_path}/whisper.cpp;" + os.environ["PATH"]
 
 else:
-    os.environ['PATH'] = f'{root_path}/lib/ffmpeg:' + os.environ['PATH']
-    os.environ['PATH'] = f'{root_path}/whisper.cpp:' + os.environ['PATH']
+    os.environ["PATH"] = f"{root_path}/lib/ffmpeg:" + os.environ["PATH"]
+    os.environ["PATH"] = f"{root_path}/whisper.cpp:" + os.environ["PATH"]
 
-os.environ['QT_API'] = 'pyside6'
-os.environ['SOFT_NAME'] = 'linlintrans'
+os.environ["QT_API"] = "pyside6"
+os.environ["SOFT_NAME"] = "linlintrans"
 # spwin主窗口
 queue_logs = Queue(1000)
 # box窗口
@@ -200,78 +204,104 @@ geshi_num = 0
 
 clone_voicelist = ["clone"]
 
-ChatTTS_voicelist = re.split('\,|，', settings['chattts_voice'])
+ChatTTS_voicelist = re.split("\,|，", settings["chattts_voice"])
 
 openaiTTS_rolelist = "alloy,echo,fable,onyx,nova,shimmer"
-chatgpt_model_list = [it.strip() for it in settings['chatgpt_model'].split(',')]
-localllm_model_list = [it.strip() for it in settings['localllm_model'].split(',')]
-zijiehuoshan_model_list = [it.strip() for it in settings['zijiehuoshan_model'].split(',')]
+chatgpt_model_list = [it.strip() for it in settings["chatgpt_model"].split(",")]
+localllm_model_list = [it.strip() for it in settings["localllm_model"].split(",")]
+zijiehuoshan_model_list = [
+    it.strip() for it in settings["zijiehuoshan_model"].split(",")
+]
 # 存放 edget-tts 角色列表
 edgeTTS_rolelist = None
 AzureTTS_rolelist = None
 proxy = None
 
 # 配置
-params = {#操作系统类型:win32、linux、darwin
+params = {  # 操作系统类型:win32、linux、darwin
     "source_mp4": "",  # 需要进行处理的文件
-    "target_dir": root_path/"result",  # result文件夹
+    "target_dir": root_path / "result",  # result文件夹
     "output_dir": "",  # 导出文件夹
     "source_language_code": "en",  # 原语言
-
-    "source_language": "en", "source_module_status": 4,  #语音转文本模型
-    "source_module_name": "small", "detect_language": "en",
-
+    "source_language": "en",
+    "source_module_status": 4,  # 语音转文本模型
+    "source_module_name": "small",
+    "detect_language": "en",
     "translate_status": False,
-    "target_language": "zh-cn", "translate_channel": "通义千问",
+    "target_language": "zh-cn",
+    "translate_channel": "通义千问",
     "subtitle_language": "chi",
     "prompt_name": "默认",
     "prompt_text": "",
-
-
     "cuda": False,
     "is_separate": False,
-
     "voice_role": "No",
     "voice_rate": "0",
-
     "tts_type": "edgeTTS",  # 所选的tts==edge-tts:openaiTTS|coquiTTS|elevenlabsTTS
-    "tts_type_list": ["edgeTTS", "ChatTTS", "gtts", "AzureTTS", "GPT-SoVITS", "clone-voice", "openaiTTS", "elevenlabsTTS", "TTS-API"],
-
-    "only_video": False, "subtitle_type": 0,  # embed soft
-    "voice_autorate": False, "auto_ajust": True,
-
-    "deepl_authkey": "", "deepl_api": "", "deeplx_address": "", "ott_address": "",
-
-    "tencent_SecretId": "", "tencent_SecretKey": "",
-
-    "baidu_appid": "", "baidu_miyue": "",
-
-    "coquitts_role": "", "coquitts_key": "",
-
-    "elevenlabstts_role": [], "elevenlabstts_key": "",
-
-    "clone_api": "", "zh_recogn_api": "",
-
-    "chatgpt_api": "", "chatgpt_key": "", "localllm_api": "", "localllm_key": "", "zijiehuoshan_key": "", "chatgpt_model": chatgpt_model_list[0],
-    "localllm_model": localllm_model_list[0], "zijiehuoshan_model": zijiehuoshan_model_list[0], "chatgpt_template": "", "localllm_template": "",
-    "zijiehuoshan_template": "", "azure_api": "", "azure_key": "", "azure_model": "gpt-3.5-turbo", "azure_template": "", "openaitts_role": openaiTTS_rolelist,
-    "gemini_key": "", "gemini_template": "",
-
-    "ttsapi_url": "", "ttsapi_voice_role": "", "ttsapi_extra": "linlin",
-
-    "trans_api_url": "", "trans_secret": "",
-
-    "azure_speech_region": "", "azure_speech_key": "",
-
-    "gptsovits_url": "", "gptsovits_role": "", "gptsovits_extra": "linlin"
-
+    "tts_type_list": [
+        "edgeTTS",
+        "ChatTTS",
+        "gtts",
+        "AzureTTS",
+        "GPT-SoVITS",
+        "clone-voice",
+        "openaiTTS",
+        "elevenlabsTTS",
+        "TTS-API",
+    ],
+    "only_video": False,
+    "subtitle_type": 0,  # embed soft
+    "voice_autorate": False,
+    "auto_ajust": True,
+    "deepl_authkey": "",
+    "deepl_api": "",
+    "deeplx_address": "",
+    "ott_address": "",
+    "tencent_SecretId": "",
+    "tencent_SecretKey": "",
+    "baidu_appid": "",
+    "baidu_miyue": "",
+    "coquitts_role": "",
+    "coquitts_key": "",
+    "elevenlabstts_role": [],
+    "elevenlabstts_key": "",
+    "clone_api": "",
+    "zh_recogn_api": "",
+    "chatgpt_api": "",
+    "chatgpt_key": "",
+    "localllm_api": "",
+    "localllm_key": "",
+    "zijiehuoshan_key": "",
+    "chatgpt_model": chatgpt_model_list[0],
+    "localllm_model": localllm_model_list[0],
+    "zijiehuoshan_model": zijiehuoshan_model_list[0],
+    "chatgpt_template": "",
+    "localllm_template": "",
+    "zijiehuoshan_template": "",
+    "azure_api": "",
+    "azure_key": "",
+    "azure_model": "gpt-3.5-turbo",
+    "azure_template": "",
+    "openaitts_role": openaiTTS_rolelist,
+    "gemini_key": "",
+    "gemini_template": "",
+    "ttsapi_url": "",
+    "ttsapi_voice_role": "",
+    "ttsapi_extra": "linlin",
+    "trans_api_url": "",
+    "trans_secret": "",
+    "azure_speech_region": "",
+    "azure_speech_key": "",
+    "gptsovits_url": "",
+    "gptsovits_role": "",
+    "gptsovits_extra": "linlin",
 }
 
-chatgpt_path = root_path / 'nice_ui/chatgpt.txt'
-localllm_path = root_path / 'nice_ui/localllm.txt'
-zijiehuoshan_path = root_path / 'nice_ui/zijie.txt'
-azure_path = root_path / 'nice_ui/azure.txt'
-gemini_path = root_path / 'nice_ui/gemini.txt'
+chatgpt_path = root_path / "nice_ui/chatgpt.txt"
+localllm_path = root_path / "nice_ui/localllm.txt"
+zijiehuoshan_path = root_path / "nice_ui/zijie.txt"
+azure_path = root_path / "nice_ui/azure.txt"
+gemini_path = root_path / "nice_ui/gemini.txt"
 
 # params['localllm_template'] = localllm_path.read_text(encoding='utf-8').strip() + "\n"
 # params['zijiehuoshan_template'] = zijiehuoshan_path.read_text(encoding='utf-8').strip() + "\n"
@@ -279,8 +309,13 @@ gemini_path = root_path / 'nice_ui/gemini.txt'
 # params['azure_template'] = azure_path.read_text(encoding='utf-8').strip() + "\n"
 # params['gemini_template'] = gemini_path.read_text(encoding='utf-8').strip() + "\n"
 
-agent_settings = {"qwen": {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen2-57b-a14b-instruct"},
-        "kimi": {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}}
+agent_settings = {
+    "qwen": {
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "model": "qwen2-57b-a14b-instruct",
+    },
+    "kimi": {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"},
+}
 # 存放一次性多选的视频
 queue_asr = []
 # 存放视频分离为无声视频进度，noextname为key，用于判断某个视频是否是否已预先创建好 novice_mp4, “ing”=需等待，end=成功完成，error=出错了
@@ -300,7 +335,7 @@ canceldown = False
 box_trans = "stop"
 
 # 中断win背景分离
-separate_status = 'stop'
+separate_status = "stop"
 # 最后一次打开的目录
 last_opendir = homedir
 # 软件退出
@@ -310,6 +345,7 @@ lin_queue = Queue()  # 任务队列
 
 is_consuming = False
 
+
 class SingletonDataBridge:
     _instance = None
 
@@ -318,6 +354,7 @@ class SingletonDataBridge:
         if cls._instance is None:
             cls._instance = DataBridge()
         return cls._instance
+
 
 data_bridge = SingletonDataBridge.get_instance()
 logger.info(f"DataBridge instance created with id: {id(data_bridge)}")
@@ -331,6 +368,6 @@ video_codec = None
 # 视频慢速时最小间隔毫秒，默认50ms，小于这个值的视频片段将舍弃，避免出错
 video_min_ms = 50
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     a = init_model_code_key()
     print(a[:4])

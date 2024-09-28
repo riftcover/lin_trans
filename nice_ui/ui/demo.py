@@ -1,14 +1,15 @@
 # coding: utf-8
 import sys
-from pathlib import Path
 
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
+
+from nice_ui.configure import config
+from vendor.qfluentwidgets.multimedia import (SimpleMediaPlayBar, LinVideoWidget, )
+
 
 # from qfluentwidgets import setTheme, Theme
 
-from vendor.qfluentwidgets.multimedia import SimpleMediaPlayBar, StandardMediaPlayBar, VideoWidget, LinVideoWidget
-from nice_ui.configure import config
 
 class Demo1(QWidget):
 
@@ -29,7 +30,7 @@ class Demo1(QWidget):
         # self.vBoxLayout.addWidget(self.standardPlayBar)
 
         # online music
-        url = QUrl('/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4')
+        url = QUrl("/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4")
         self.simplePlayBar.player.setSource(url)
 
         # local music
@@ -47,8 +48,7 @@ class Demo2(QWidget):
         self.videoWidget = LinVideoWidget()
         # self.videoWidget = VideoWidget()
 
-        self.videoWidget.setVideo(QUrl(
-            'D:/dcode/lin_trans/result/tt1/tt.mp4'))
+        self.videoWidget.setVideo(QUrl("D:/dcode/lin_trans/result/tt1/tt.mp4"))
         # self.videoWidget.play()
         # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/tt.srt')
         # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/dd.srt')
@@ -56,16 +56,16 @@ class Demo2(QWidget):
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.addWidget(self.videoWidget)
         # self.resize(634, 412)
-        video_size_x,video_size_y = 1920/3, 1080/3
+        video_size_x, video_size_y = 1920 / 3, 1080 / 3
         config.logger.debug(f"Video size: {video_size_x}x{video_size_y}")
-        self.resize(video_size_x, video_size_y+40)
+        self.resize(video_size_x, video_size_y + 40)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         config.logger.debug(f"Window size: {self.size()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication([])
     # demo1 = Demo1()
     # demo1.show()

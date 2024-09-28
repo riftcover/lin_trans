@@ -1,26 +1,22 @@
 import copy
-import json
 import os
-import warnings
 from enum import Enum
 from typing import List, Optional
 
-from PySide6 import QtCore
 from PySide6.QtCore import QUrl, Qt, QThread
-from PySide6.QtGui import QTextCursor, QDesktopServices
-from PySide6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton, QHBoxLayout, QProgressBar
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import (QMessageBox, QFileDialog, QLabel, QHBoxLayout, QProgressBar, )
 
 from agent import translate_api_name
+from nice_ui.configure import config
+from nice_ui.configure.setting_cache import save_setting
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import QueueConsumer, Worker
-from nice_ui.ui.SingalBridge import DataBridge
-from nice_ui.configure.setting_cache import save_setting
-from nice_ui.util.code_tools import language_code
 from nice_ui.util import tools
-from videotrans import translator
-from nice_ui.configure import config
+from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import StartTools
 from utils import logger
+from videotrans import translator
 
 start_tools = StartTools()
 # 提取常量
@@ -62,19 +58,19 @@ class ClickableProgressBar(QLabel):
         layout.addWidget(self.progress_bar)
 
     def setMsg(self, text: str):
-        if text and config.defaulelang == 'zh':
-            text += '\n\n请尝试在文档站 pyvideotrans.com 搜索错误解决方案\n'
+        if text and config.defaulelang == "zh":
+            text += "\n\n请尝试在文档站 pyvideotrans.com 搜索错误解决方案\n"
         self.msg = text
 
     def setText(self, text: str):
         if self.progress_bar:
-            self.progress_bar.setFormat(f' {text}')
+            self.progress_bar.setFormat(f" {text}")
 
     def mousePressEvent(self, event):
         if self.target_dir and event.button() == Qt.LeftButton:
             QDesktopServices.openUrl(QUrl.fromLocalFile(self.target_dir))
         elif not self.target_dir and self.msg:
-            QMessageBox.critical(self, config.transobj['anerror'], self.msg)
+            QMessageBox.critical(self, config.transobj["anerror"], self.msg)
 
 
 class SecWindow:
@@ -85,37 +81,40 @@ class SecWindow:
         self.worker_thread: Optional[QThread] = None
         self.main = main
         self.usetype: Optional[str] = None
-        self.data_bridge = config.data_bridge 
+        self.data_bridge = config.data_bridge
 
     def is_separate_fun(self, state: bool):
-        config.params['is_separate'] = state
+        config.params["is_separate"] = state
 
     def check_cuda(self, state: bool):
         import torch
+
         res = state
         if state and not torch.cuda.is_available():
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nocuda'])
+            QMessageBox.critical(
+                self.main, config.transobj["anerror"], config.transobj["nocuda"]
+            )
             self.main.enable_cuda.setChecked(False)
             self.main.enable_cuda.setDisabled(True)
             res = False
-        config.params['cuda'] = res
+        config.params["cuda"] = res
         if res:
-            os.environ['CUDA_OK'] = "yes"
-        elif os.environ.get('CUDA_OK'):
-            os.environ.pop('CUDA_OK')
+            os.environ["CUDA_OK"] = "yes"
+        elif os.environ.get("CUDA_OK"):
+            os.environ.pop("CUDA_OK")
 
     def voice_rate_changed(self, text: int):
-        config.params['voice_rate'] = f'+{text}%' if text >= 0 else f'{text}%'
+        config.params["voice_rate"] = f"+{text}%" if text >= 0 else f"{text}%"
 
     def autorate_changed(self, state: bool, name: str):
-        if name == 'voice':
-            config.params['voice_autorate'] = state
-        elif name == 'auto_ajust':
-            config.params['auto_ajust'] = state
-        elif name == 'video':
-            config.params['video_autorate'] = state
-        elif name == 'append_video':
-            config.params['append_video'] = state
+        if name == "voice":
+            config.params["voice_autorate"] = state
+        elif name == "auto_ajust":
+            config.params["auto_ajust"] = state
+        elif name == "video":
+            config.params["video_autorate"] = state
+        elif name == "append_video":
+            config.params["append_video"] = state
 
     def delete_process(self):
         for i in range(self.main.processlayout.count()):
@@ -130,7 +129,7 @@ class SecWindow:
             return
 
         dialog = QFileDialog()
-        dialog.setWindowTitle(config.transobj['savesrtto'])
+        dialog.setWindowTitle(config.transobj["savesrtto"])
         dialog.setNameFilters(["subtitle files (*.srt)"])
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         dialog.exec_()
@@ -139,36 +138,37 @@ class SecWindow:
 
         path_to_file = dialog.selectedFiles()[0]
         ext = ".srt"
-        if not path_to_file.endswith(('.srt', '.txt')):
+        if not path_to_file.endswith((".srt", ".txt")):
             path_to_file += ext
 
-        with open(path_to_file, "w", encoding='utf-8') as file:
+        with open(path_to_file, "w", encoding="utf-8") as file:
             file.write(srttxt)
 
     def open_url(self, title: str):
         import webbrowser
+
         url_map = {
-            'blog': "https://juejin.cn/user/4441682704623992/columns",
-            'ffmpeg': "https://www.ffmpeg.org/download.html",
-            'git': "https://github.com/jianchang512/pyvideotrans",
-            'issue': "https://github.com/jianchang512/pyvideotrans/issues",
-            'discord': "https://discord.gg/y9gUweVCCJ",
-            'models': "https://github.com/jianchang512/stt/releases/tag/0.0",
-            'dll': "https://github.com/jianchang512/stt/releases/tag/v0.0.1",
-            'gtrans': "https://www.pyvideotrans.com/15.html",
-            'cuda': "https://www.pyvideotrans.com/gpu.html",
-            'website': "https://pyvideotrans.com",
-            'help': "https://pyvideotrans.com",
-            'xinshou': "https://www.pyvideotrans.com/guide.html",
-            'about': "https://github.com/jianchang512/pyvideotrans/blob/main/about.md",
-            'download': "https://github.com/jianchang512/pyvideotrans/releases",
-            'openvoice': "https://github.com/kungful/openvoice-api"
+            "blog": "https://juejin.cn/user/4441682704623992/columns",
+            "ffmpeg": "https://www.ffmpeg.org/download.html",
+            "git": "https://github.com/jianchang512/pyvideotrans",
+            "issue": "https://github.com/jianchang512/pyvideotrans/issues",
+            "discord": "https://discord.gg/y9gUweVCCJ",
+            "models": "https://github.com/jianchang512/stt/releases/tag/0.0",
+            "dll": "https://github.com/jianchang512/stt/releases/tag/v0.0.1",
+            "gtrans": "https://www.pyvideotrans.com/15.html",
+            "cuda": "https://www.pyvideotrans.com/gpu.html",
+            "website": "https://pyvideotrans.com",
+            "help": "https://pyvideotrans.com",
+            "xinshou": "https://www.pyvideotrans.com/guide.html",
+            "about": "https://github.com/jianchang512/pyvideotrans/blob/main/about.md",
+            "download": "https://github.com/jianchang512/pyvideotrans/releases",
+            "openvoice": "https://github.com/kungful/openvoice-api",
         }
 
         if title in url_map:
             webbrowser.open_new_tab(url_map[title])
-        elif title == 'online':
-            QMessageBox.information(self.main, '免责声明', self.get_disclaimer_text())
+        elif title == "online":
+            QMessageBox.information(self.main, "免责声明", self.get_disclaimer_text())
 
     @staticmethod
     def get_disclaimer_text():
@@ -202,7 +202,7 @@ class SecWindow:
 
     def set_djs_timeout(self):
         config.task_countdown = 0
-        self.main.continue_compos.setText(config.transobj['jixuzhong'])
+        self.main.continue_compos.setText(config.transobj["jixuzhong"])
         self.main.continue_compos.setDisabled(True)
         self.main.stop_djs.hide()
         if self.main.shitingobj:
@@ -212,16 +212,19 @@ class SecWindow:
         self.main.stop_djs.hide()
         config.task_countdown = 86400
         self.main.continue_compos.setDisabled(False)
-        self.main.continue_compos.setText(config.transobj['nextstep'])
+        self.main.continue_compos.setText(config.transobj["nextstep"])
 
     def check_whisper_type(self, index: int):
-        whisper_types = ['all', 'split', 'avg']
+        whisper_types = ["all", "split", "avg"]
         if 0 <= index < len(whisper_types):
-            config.params['whisper_type'] = whisper_types[index]
+            config.params["whisper_type"] = whisper_types[index]
 
     def show_listen_btn(self, role: str):
         config.params["voice_role"] = role
-        disable_condition = role == 'No' or (config.params['tts_type'] == 'clone-voice' and config.params['voice_role'] == 'clone')
+        disable_condition = role == "No" or (
+            config.params["tts_type"] == "clone-voice"
+            and config.params["voice_role"] == "clone"
+        )
         self.main.listen_btn.setDisabled(disable_condition)
         if not disable_condition:
             self.main.listen_btn.show()
@@ -230,66 +233,102 @@ class SecWindow:
         role = self.main.voice_role.currentText()
         code = translator.get_code(show_text=t)
 
-        if code and code != '-':
-            if config.params['tts_type'] == 'GPT-SoVITS' and code[:2] not in ['zh', 'ja', 'en']:
-                config.params['tts_type'] = 'edgeTTS'
-                self.main.tts_type.setCurrentText('edgeTTS')
-                return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['nogptsovitslanguage'])
+        if code and code != "-":
+            if config.params["tts_type"] == "GPT-SoVITS" and code[:2] not in [
+                "zh",
+                "ja",
+                "en",
+            ]:
+                config.params["tts_type"] = "edgeTTS"
+                self.main.tts_type.setCurrentText("edgeTTS")
+                return QMessageBox.critical(
+                    self.main,
+                    config.transobj["anerror"],
+                    config.transobj["nogptsovitslanguage"],
+                )
 
-            if config.params['tts_type'] == 'ChatTTS' and code[:2] not in ['zh', 'en']:
-                config.params['tts_type'] = 'edgeTTS'
-                self.main.tts_type.setCurrentText('edgeTTS')
-                return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['onlycnanden'])
+            if config.params["tts_type"] == "ChatTTS" and code[:2] not in ["zh", "en"]:
+                config.params["tts_type"] = "edgeTTS"
+                self.main.tts_type.setCurrentText("edgeTTS")
+                return QMessageBox.critical(
+                    self.main,
+                    config.transobj["anerror"],
+                    config.transobj["onlycnanden"],
+                )
 
-        if config.params['tts_type'] not in ['edgeTTS', 'AzureTTS']:
-            self.main.listen_btn.setDisabled(role == 'No')
-            if role != 'No':
+        if config.params["tts_type"] not in ["edgeTTS", "AzureTTS"]:
+            self.main.listen_btn.setDisabled(role == "No")
+            if role != "No":
                 self.main.listen_btn.show()
             return
 
         self.main.listen_btn.hide()
-        show_rolelist = tools.get_edge_rolelist() if config.params['tts_type'] == 'edgeTTS' else tools.get_azure_rolelist()
+        show_rolelist = (
+            tools.get_edge_rolelist()
+            if config.params["tts_type"] == "edgeTTS"
+            else tools.get_azure_rolelist()
+        )
 
         if not show_rolelist:
             show_rolelist = tools.get_edge_rolelist()
         if not show_rolelist:
-            self.main.translate_language.setCurrentText('-')
-            return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+            self.main.translate_language.setCurrentText("-")
+            return QMessageBox.critical(
+                self.main, config.transobj["anerror"], config.transobj["waitrole"]
+            )
 
         try:
-            vt = code.split('-')[0]
+            vt = code.split("-")[0]
             if vt not in show_rolelist or len(show_rolelist[vt]) < 2:
-                self.main.translate_language.setCurrentText('-')
-                return QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['waitrole'])
+                self.main.translate_language.setCurrentText("-")
+                return QMessageBox.critical(
+                    self.main, config.transobj["anerror"], config.transobj["waitrole"]
+                )
 
             self.main.current_rolelist = show_rolelist[vt]
             self.main.voice_role.addItems(show_rolelist[vt])
         except:
-            self.main.voice_role.addItems(['No'])
+            self.main.voice_role.addItems(["No"])
 
     def get_mp4(self):
-        fnames, _ = QFileDialog.getOpenFileNames(self.main, config.transobj['selectmp4'], config.last_opendir, "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)")
+        fnames, _ = QFileDialog.getOpenFileNames(
+            self.main,
+            config.transobj["selectmp4"],
+            config.last_opendir,
+            "Video files(*.mp4 *.avi *.mov *.mpg *.mkv)",
+        )
         if not fnames:
             return
 
-        fnames = [it.replace('\\', '/') for it in fnames]
+        fnames = [it.replace("\\", "/") for it in fnames]
         if fnames:
-            self.main.source_mp4.setText(f'{len(fnames)} videos')
+            self.main.source_mp4.setText(f"{len(fnames)} videos")
             config.last_opendir = os.path.dirname(fnames[0])
             self.main.settings.setValue("last_dir", config.last_opendir)
             config.queue_asr = fnames
 
     def get_background(self):
-        fname, _ = QFileDialog.getOpenFileName(self.main, 'Background music', config.last_opendir, "Audio files(*.mp3 *.wav *.flac)")
+        fname, _ = QFileDialog.getOpenFileName(
+            self.main,
+            "Background music",
+            config.last_opendir,
+            "Audio files(*.mp3 *.wav *.flac)",
+        )
         if fname:
-            self.main.back_audio.setText(fname.replace('\\', '/'))
+            self.main.back_audio.setText(fname.replace("\\", "/"))
 
     def dont_translate(self) -> bool:
         if len(config.queue_asr) < 1:
             return True
-        if self.main.translate_language.currentText() == '-' or self.main.source_language.currentText() == '-':
+        if (
+            self.main.translate_language.currentText() == "-"
+            or self.main.source_language.currentText() == "-"
+        ):
             return True
-        if self.main.translate_language.currentText() == self.main.source_language.currentText():
+        if (
+            self.main.translate_language.currentText()
+            == self.main.source_language.currentText()
+        ):
             return True
         return bool(self.main.subtitle_area.toPlainText().strip())
 
@@ -301,33 +340,39 @@ class SecWindow:
         #     logger.warning(f"target_dir was empty, reset to: {config.params['target_dir']}")
 
         self.main.add_queue_mp4()
-        config.params['only_video'] = False
+        config.params["only_video"] = False
 
         if len(config.queue_asr) < 1:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+            QMessageBox.critical(
+                self.main,
+                config.transobj["anerror"],
+                config.transobj["bukedoubucunzai"],
+            )
             return False
 
-        config.params['only_video'] = True
+        config.params["only_video"] = True
 
         language_name = self.main.source_language.currentText()
-        logger.debug(f'==========language_name:{language_name}')
-        config.params['source_language'] = language_name
-        config.params['source_language_code'] = language_code(language_name)
+        logger.debug(f"==========language_name:{language_name}")
+        config.params["source_language"] = language_name
+        config.params["source_language_code"] = language_code(language_name)
 
-        source_model_info = start_tools.match_source_model(self.main.source_model.currentText())
-        config.params['source_module_status'] = source_model_info['status']
-        logger.debug(config.params['source_module_status'])
-        config.params['source_module_name'] = source_model_info['model_name']
+        source_model_info = start_tools.match_source_model(
+            self.main.source_model.currentText()
+        )
+        config.params["source_module_status"] = source_model_info["status"]
+        logger.debug(config.params["source_module_status"])
+        config.params["source_module_name"] = source_model_info["model_name"]
 
         translate_status = self.main.check_fanyi.isChecked()
-        config.params['translate_status'] = translate_status
+        config.params["translate_status"] = translate_status
 
         if translate_status:
             self.get_trans_setting(language_name)
 
         save_setting(self.main.settings)
 
-        logger.info(f'update later config.queue_mp4:{config.queue_asr}')
+        logger.info(f"update later config.queue_mp4:{config.queue_asr}")
         logger.debug("====config.settings====")
         logger.debug(config.settings)
         logger.debug("====config.params====")
@@ -344,13 +389,17 @@ class SecWindow:
     def check_translate(self) -> bool:
         self.main.add_queue_srt()
         language_name = self.main.source_language_combo.currentText()
-        logger.debug(f'==========language_name:{language_name}')
-        config.params['source_language'] = language_name
+        logger.debug(f"==========language_name:{language_name}")
+        config.params["source_language"] = language_name
 
         self.get_trans_setting(language_name)
 
         if len(config.queue_trans) < 1:
-            QMessageBox.critical(self.main, config.transobj['anerror'], config.transobj['bukedoubucunzai'])
+            QMessageBox.critical(
+                self.main,
+                config.transobj["anerror"],
+                config.transobj["bukedoubucunzai"],
+            )
             return False
 
         save_setting(self.main.settings)
@@ -363,19 +412,28 @@ class SecWindow:
 
     def get_trans_setting(self, language_name: str):
         translate_language_name = self.main.translate_language_combo.currentText()
-        logger.debug(f'==========translate_language_name:{translate_language_name}')
-        config.params['target_language'] = translate_language_name
+        logger.debug(f"==========translate_language_name:{translate_language_name}")
+        config.params["target_language"] = translate_language_name
 
         translate_language_channel_name = self.main.translate_model.currentText()
-        translate_language_key = next((key for key, value in translate_api_name.items() if value == translate_language_channel_name),
-                                      config.params["translate_channel"])
-        logger.debug(f'==========translate_language_name:{translate_language_key}')
-        config.params['translate_channel'] = translate_language_key
+        translate_language_key = next(
+            (
+                key
+                for key, value in translate_api_name.items()
+                if value == translate_language_channel_name
+            ),
+            config.params["translate_channel"],
+        )
+        logger.debug(f"==========translate_language_name:{translate_language_key}")
+        config.params["translate_channel"] = translate_language_key
 
         prompt_name = self.main.ai_prompt.currentText()
-        config.params['prompt_name'] = prompt_name
+        config.params["prompt_name"] = prompt_name
         if prompt_body := self.main.prompts_orm.query_data_by_name(prompt_name):
-            config.params['prompt_text'] = prompt_body.prompt_content.format(translate_name=translate_language_name, source_language_name=language_name)
+            config.params["prompt_text"] = prompt_body.prompt_content.format(
+                translate_name=translate_language_name,
+                source_language_name=language_name,
+            )
 
     def add_queue_thread(self, data_copy: List[str], work_type: WORK_TYPE):
         self.worker_thread = QThread()
@@ -386,21 +444,25 @@ class SecWindow:
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker.error.connect(self.handle_error)
-        logger.debug('通知消费线程')
+        logger.debug("通知消费线程")
         self.worker.queue_ready.connect(self.start_queue_consumer)
         self.worker_thread.start()
 
     def start_queue_consumer(self):
-        logger.debug(f'检查config.is_consuming:{config.is_consuming}')
+        logger.debug(f"检查config.is_consuming:{config.is_consuming}")
         if not config.is_consuming:
-            logger.debug('开始消费队列')
+            logger.debug("开始消费队列")
             self.queue_consumer_thread = QThread()
             self.queue_consumer = QueueConsumer()
             self.queue_consumer.moveToThread(self.queue_consumer_thread)
-            self.queue_consumer_thread.started.connect(self.queue_consumer.process_queue)
+            self.queue_consumer_thread.started.connect(
+                self.queue_consumer.process_queue
+            )
             self.queue_consumer.finished.connect(self.queue_consumer_thread.quit)
             self.queue_consumer.finished.connect(self.queue_consumer.deleteLater)
-            self.queue_consumer_thread.finished.connect(self.queue_consumer_thread.deleteLater)
+            self.queue_consumer_thread.finished.connect(
+                self.queue_consumer_thread.deleteLater
+            )
             self.queue_consumer.error.connect(self.handle_error)
             self.queue_consumer_thread.start()
         else:

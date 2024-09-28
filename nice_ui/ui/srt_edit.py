@@ -3,13 +3,13 @@ import shutil
 import sys
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QWidget, QLineEdit, QPushButton, QRadioButton,
-                               QFileDialog, QDialog, QLabel)
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QWidget, QLineEdit, QPushButton, QRadioButton, QFileDialog,
+                               QDialog, QLabel, )
 
 from components.widget.custom_splitter import CustomSplitter
-from utils import logger
 from nice_ui.util.tools import get_default_documents_path
-from vendor.qfluentwidgets import CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition
+from utils import logger
+from vendor.qfluentwidgets import (CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition, )
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 
 
@@ -32,8 +32,11 @@ class AspectRatioWidget(QWidget):
 
 class SubtitleEditPage(QWidget):
 
-    def __init__(self, patt: str, med_path: str, settings: QSettings = None, parent=None):
+    def __init__(
+        self, patt: str, med_path: str, settings: QSettings = None, parent=None
+    ):
         from components.widget import SubtitleTable
+
         """
 
         Args:
@@ -89,10 +92,28 @@ class SubtitleEditPage(QWidget):
         top_layout.setContentsMargins(15, 10, 15, 10)
 
         # 添加按钮
-        buttons = [(TransparentToolButton(FluentIcon.DOWN), self.move_row_down_more, "将勾选的译文整体向下移动"),
-                   (TransparentToolButton(FluentIcon.UP), self.move_row_up_more, "将勾选的译文向上移动译文"),
-                   (TransparentToolButton(FluentIcon.SAVE), self.save_srt, "保存到本地，以免丢失"),
-                   (TransparentToolButton(FluentIcon.EMBED), self.export_srt, "导出srt格式字幕文件"), ]
+        buttons = [
+            (
+                TransparentToolButton(FluentIcon.DOWN),
+                self.move_row_down_more,
+                "将勾选的译文整体向下移动",
+            ),
+            (
+                TransparentToolButton(FluentIcon.UP),
+                self.move_row_up_more,
+                "将勾选的译文向上移动译文",
+            ),
+            (
+                TransparentToolButton(FluentIcon.SAVE),
+                self.save_srt,
+                "保存到本地，以免丢失",
+            ),
+            (
+                TransparentToolButton(FluentIcon.EMBED),
+                self.export_srt,
+                "导出srt格式字幕文件",
+            ),
+        ]
 
         top_layout.addStretch(1)
         for button, callback, tooltip in buttons:
@@ -100,7 +121,11 @@ class SubtitleEditPage(QWidget):
             button.setFixedSize(QSize(30, 30))
             button.clicked.connect(callback)
             button.setToolTip(tooltip)
-            button.installEventFilter(ToolTipFilter(button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT))
+            button.installEventFilter(
+                ToolTipFilter(
+                    button, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+                )
+            )
             top_layout.addWidget(button)
 
         return top_card
@@ -110,12 +135,16 @@ class SubtitleEditPage(QWidget):
         video_layout = QVBoxLayout(right_widget)
         video_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.videoWidget = LinVideoWidget(self.subtitle_table, self.subtitle_table.subtitles, self)  # Pass subtitles here
+        self.videoWidget = LinVideoWidget(
+            self.subtitle_table, self.subtitle_table.subtitles, self
+        )  # Pass subtitles here
         self.videoWidget.setVideo(QUrl(self.media_path))
         video_container = AspectRatioWidget(self.videoWidget, 16 / 9)
 
         video_layout.addWidget(video_container)
-        video_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        video_layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        )
 
         # 视频部件
 
@@ -180,7 +209,9 @@ class ExportSubtitleDialog(QDialog):
         # 第二行：导出路径
         path_layout = QHBoxLayout()
         path_label = QLabel("导出路径:")
-        last_export_path = self.settings.value("last_export_path", get_default_documents_path())
+        last_export_path = self.settings.value(
+            "last_export_path", get_default_documents_path()
+        )
         self.path_input = QLineEdit(last_export_path)
         choose_button = QPushButton("选择路径")
         choose_button.clicked.connect(self.choose_path)
@@ -212,16 +243,30 @@ class ExportSubtitleDialog(QDialog):
         export_format = "srt" if self.srt_radio.isChecked() else "txt"
         # 检查导出路径是否存在
         if not os.path.exists(export_path):
-            logger.error(f'导出目录不存在: {export_path}')
-            InfoBar.error(title='错误', content="导出目录不存在", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                          parent=self)
+            logger.error(f"导出目录不存在: {export_path}")
+            InfoBar.error(
+                title="错误",
+                content="导出目录不存在",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
             return
 
         for path in self.paths:
             if not os.path.exists(path):
-                logger.error(f'字幕文件被删除: {path}')
-                InfoBar.error(title='错误', content="字幕文件被删除", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000,
-                              parent=self)
+                logger.error(f"字幕文件被删除: {path}")
+                InfoBar.error(
+                    title="错误",
+                    content="字幕文件被删除",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
                 return
             if export_format == "srt":
                 shutil.copy(str(path), export_path)  # 复制文件
@@ -229,11 +274,19 @@ class ExportSubtitleDialog(QDialog):
                 self._export_txt(path, export_path)
 
         self.accept()  # 关闭对话框
-        InfoBar.success(title='成功', content="文件已导出", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self)
+        InfoBar.success(
+            title="成功",
+            content="文件已导出",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self,
+        )
 
     def _export_txt(self, src_path, export_path: str):
         # 实现语种文本提取
-        with open(src_path, 'r', encoding='utf-8') as src_file:
+        with open(src_path, "r", encoding="utf-8") as src_file:
             lines = src_file.readlines()
 
         # 提取第一行和第二行字幕
@@ -263,19 +316,25 @@ class ExportSubtitleDialog(QDialog):
         logger.info(second_line_subtitles)
         # 保存提取的文本到 export_path
         export_name = os.path.splitext(os.path.basename(src_path))[0]
-        with open(f'{export_path}/{export_name}.txt', 'w', encoding='utf-8') as dest_file:
+        with open(
+            f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
+        ) as dest_file:
             # 写入第一行字幕
-            dest_file.write('\n'.join(first_line_subtitles) + '\n')
+            dest_file.write("\n".join(first_line_subtitles) + "\n")
             # 写入第二行字幕（如果存在）
             if second_line_subtitles:
-                dest_file.write('\n'.join(second_line_subtitles) + '\n')
+                dest_file.write("\n".join(second_line_subtitles) + "\n")
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     settings = QSettings("Locoweed", "LinLInTrans")
     # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/如何获取需求.srt', med_path='D:/dcode/lin_trans/result/tt1/tt.mp4', settings=settings)
+    window = SubtitleEditPage(
+        patt="D:/dcode/lin_trans/result/tt1/如何获取需求.srt",
+        med_path="D:/dcode/lin_trans/result/tt1/tt.mp4",
+        settings=settings,
+    )
     window.resize(1300, 800)
     window.show()
     sys.exit(app.exec())

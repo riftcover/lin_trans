@@ -1,6 +1,5 @@
 from PySide6.QtCore import Signal, QObject
 
-
 from utils import logger
 
 
