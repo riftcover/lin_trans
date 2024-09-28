@@ -36,24 +36,6 @@ class DownloadThread(QThread):
     def update_progress(self, progress):
         self.progress_signal.emit(progress)
 
-    progress_signal = Signal(int)
-    finished_signal = Signal(bool)
-
-    def __init__(self, model_name):
-        super().__init__()
-        self.model_name = model_name
-
-    def run(self):
-        try:
-            download_model(self.model_name, progress_callback=self.update_progress)
-            self.finished_signal.emit(True)
-        except Exception as e:
-            logger.error(f"下载模型时发生错误: {str(e)}")
-            self.finished_signal.emit(False)
-
-    def update_progress(self, progress):
-        self.progress_signal.emit(progress)
-
 
 class LocalModelPage(QWidget):
     def __init__(self, settings, parent=None):
