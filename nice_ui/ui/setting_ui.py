@@ -189,8 +189,8 @@ class LocalModelPage(QWidget):
 
     def show_funasr_table(self, table):
         faster_models = [
-            ("多语言模型", "4.50 GB"),
-            ("中文模型", "2.80 GB"),
+            ("多语言模型", "940MB"),
+            ("中文模型", "909.6MB"),
             ("英语模型", "1.00 GB"),
         ]
         model_list = config.model_list
@@ -203,7 +203,7 @@ class LocalModelPage(QWidget):
 
             # 检查模型是否已安装
             is_installed = os.path.exists(
-                os.path.join(config.models_path, "funasr", model_folder)
+                os.path.join(config.funasr_model_path, model_folder)
             )
 
             for col, value in enumerate([model_name, model_size]):
@@ -259,30 +259,11 @@ class LocalModelPage(QWidget):
         self.download_thread.start()
 
     def download_finished(self, success, row, model_folder):
-        if success:
-            InfoBar.success(
-                title="成功",
-                content="模型安装完成",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
-            self.update_model_status(row, True)
-        else:
-            InfoBar.error(
-                title="错误",
-                content="模型安装失败",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
-            )
-            self.update_model_status(row, False)
+        # 移除进度条
+        self.funasr_model_table.removeCellWidget(row, 2)
 
         if success:
+            logger.info(f"模型安装成功: {model_folder}")
             InfoBar.success(
                 title="成功",
                 content="模型安装完成",
@@ -294,6 +275,7 @@ class LocalModelPage(QWidget):
             )
             self.update_model_status(row, True)
         else:
+            logger.error(f"模型安装失败: {model_folder}")
             InfoBar.error(
                 title="错误",
                 content="模型安装失败",
