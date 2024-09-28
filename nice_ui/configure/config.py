@@ -358,7 +358,6 @@ class SingletonDataBridge:
 
 
 data_bridge = SingletonDataBridge.get_instance()
-logger.info(f"DataBridge instance created with id: {id(data_bridge)}")
 
 # 全局错误
 errorlist = {}

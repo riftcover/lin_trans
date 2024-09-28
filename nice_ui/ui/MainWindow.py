@@ -1,10 +1,11 @@
 # coding:utf-8
 import asyncio
 import sys
+import platform
 
 import httpx
 from PySide6.QtCore import QUrl, QSettings
-from PySide6.QtGui import QIcon, QDesktopServices, QColor
+from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
@@ -27,7 +28,10 @@ class Window(FluentWindow):
         super().__init__()
         self.settings = QSettings("Locoweed", "LinLInTrans")
         # 设置主题颜色为蓝色
-        setThemeColor(QColor("#0078d4"))  # 使用RGB值设置蓝色
+        setThemeColor(QColor("#0078d4"))
+        
+        # 根据操作系统设置字体
+        self.set_font()
 
         self.initWindow()
         self.load_proxy_settings()  # 加载代理设置
@@ -41,6 +45,16 @@ class Window(FluentWindow):
         self.settingInterface = SettingInterface("设置", self, self.settings)
 
         self.initNavigation()
+
+    def set_font(self):
+        system = platform.system()
+        font = QFont()
+        if system == "Windows":
+            font.setFamily("Microsoft YaHei")
+        elif system == "Darwin":  # macOS
+            font.setFamily("PingFang SC")
+        else:  # 其他系统（如Linux）使用默认字体
+            return
 
     def initNavigation(self):
         # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
