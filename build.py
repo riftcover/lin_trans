@@ -51,7 +51,6 @@ cmd = [
     "--include-package=openai",
     "--include-package=packaging",
     "--include-package=path",
-    "--include-package=plyer",
     "--include-package=pydantic",
     "--include-package=sqlalchemy",
     "--include-package=socksio",
