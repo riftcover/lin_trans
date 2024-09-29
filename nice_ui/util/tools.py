@@ -487,38 +487,6 @@ def speed_up_mp3(*, filename=None, speed=1, out=None):
     )
 
 
-def precise_speed_up_audio(
-    *, file_path=None, out=None, target_duration_ms=None, max_rate=100
-):
-    from pydub import AudioSegment
-
-    audio = AudioSegment.from_file(file_path)
-
-    # 首先确保原时长和目标时长单位一致（毫秒）
-    current_duration_ms = len(audio)
-    # 计算音频变速比例
-    # current_duration_ms = len(audio)
-    # speedup_ratio = current_duration_ms / target_duration_ms
-    # 计算速度变化率
-    speedup_ratio = current_duration_ms / target_duration_ms
-    if target_duration_ms <= 0 or speedup_ratio <= 1:
-        return True
-    rate = min(max_rate, speedup_ratio)
-    # 变速处理
-    try:
-        fast_audio = audio.speedup(playback_speed=rate)
-        # 如果处理后的音频时长稍长于目标时长，进行剪裁
-        if len(fast_audio) > target_duration_ms:
-            fast_audio = fast_audio[:target_duration_ms]
-    except Exception:
-        fast_audio = audio[:target_duration_ms]
-
-    if out:
-        fast_audio.export(out, format=out.split(".")[-1])
-        return True
-    fast_audio.export(file_path, format=file_path.split(".")[-1])
-    # 返回速度调整后的音频
-    return True
 
 
 def show_popup(title, text, parent=None):

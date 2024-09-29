@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "lin-trans"
+version = "0.1.0"
+description = ""
+authors = ["riftcover <44368727+riftcover@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+httpx = "^0.27.2"
+pyside6 = "6.6.3.1"
+loguru = "^0.7.2"
+modelscope = "^1.18.1"
+openai = "^1.50.2"
+sqlalchemy = "^2.0.35"
+socksio = "^1.0.0"
+packaging = "^24.1"
+darkdetect = "^0.8.0"
+colorthief = "^0.2.1"
+path = "^17.0.0"
+scipy = "^1.14.1"
+better-ffmpeg-progress = "^2.1.5"
+nuitka = "^2.4.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
