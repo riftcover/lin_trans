@@ -40,8 +40,8 @@ cmd = [
     "--standalone",
     "--remove-output",
     "--plugin-enable=pyside6",
-    "--plugin-enable=numpy",
-    "--plugin-enable=scipy",
+    "--include-package=scipy",
+    "--include-package=numpy",
     "--include-package=better_ffmpeg_progress",
     "--include-package=colorthief",
     "--include-package=darkdetect",
@@ -58,8 +58,21 @@ cmd = [
     "--nofollow-import-to=torch,torchaudio",  # 排除torch和torchaudio
     "--python-flag=no_site",
     "--output-dir=dist",
+    "--include-data-dir=models=models",  # 包含models文件夹
+    "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
 ]
 
+# 在 cmd 列表中添加以下选项
+cmd.extend([
+    "--debug",
+    "--verbose",
+    "--show-memory",
+    "--show-progress",
+])
+
+# 如果是 macOS，移除 app bundle 创建（为了更容易调试）
+if platform.system() == "Darwin":
+    cmd = [opt for opt in cmd if opt != "--macos-create-app-bundle"]
 
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
@@ -81,5 +94,33 @@ cmd.append("run.py")
 
 # 执行打包命令
 subprocess.run(cmd, check=True)
+# 复制 models 文件夹到打包目录
+if platform.system() == "Darwin":  # macOS
+    app_name = "run.app"  # 替换为您的应用程序名称
+    models_src = "models"
+    models_dst = os.path.join("dist", app_name, "Contents", "Resources", "models")
+    if os.path.exists(models_src):
+        shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
+
+    # 确保 orm 目录存在，并复制 linlin.db
+    orm_dir = os.path.join("dist", app_name, "Contents", "Resources", "orm")
+    os.makedirs(orm_dir, exist_ok=True)
+    linlin_db_src = "orm/linlin.db"
+    linlin_db_dst = os.path.join(orm_dir, "linlin.db")
+    if os.path.exists(linlin_db_src):
+        shutil.copy2(linlin_db_src, linlin_db_dst)
+else:
+    models_src = "models"
+    models_dst = os.path.join("dist", "models")
+    if os.path.exists(models_src):
+        shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
+
+    # 确保 orm 目录存在，并复制 linlin.db
+    orm_dir = os.path.join("dist", "orm")
+    os.makedirs(orm_dir, exist_ok=True)
+    linlin_db_src = "orm/linlin.db"
+    linlin_db_dst = os.path.join(orm_dir, "linlin.db")
+    if os.path.exists(linlin_db_src):
+        shutil.copy2(linlin_db_src, linlin_db_dst)
 
 print("打包完成!")
