@@ -82,6 +82,3 @@ def download_model(model_name: str, progress_callback=None):
 
     logger.info(f"模型 {model_name} 下载完成，用时 {time.time() - start_time:.2f} 秒")
     return download_path
-
-if __name__ == '__main__':
-    download_model('SenseVoiceSmall')

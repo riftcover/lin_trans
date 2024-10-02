@@ -330,14 +330,3 @@ class LTableWindow:
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
-
-
-if __name__ == "__main__":
-    import sys
-    from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
-
-    app = QApplication(sys.argv)
-    window = WorkSrt("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-    window.show()
-    sys.exit(app.exec())

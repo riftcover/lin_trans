@@ -44,9 +44,3 @@ def translate_document(in_document, out_document, chunk_size=40):
             print(translated_paragraph)
             output_content.writelines(translated_paragraph)
             time.sleep(32)
-
-
-if __name__ == '__main__':
-    filter = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.srt'
-    out_file = r'D:\dcode\lin_trans\result\tt1\finish_kimi.srt'
-    translate_document(filter, out_file)

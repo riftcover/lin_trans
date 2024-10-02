@@ -1,74 +1,21 @@
-# coding: utf-8
 import sys
-
-from PySide6.QtCore import QUrl
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
-
-from nice_ui.configure import config
-from vendor.qfluentwidgets.multimedia import (SimpleMediaPlayBar, LinVideoWidget, )
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget
 
 
-# from qfluentwidgets import setTheme, Theme
-
-
-class Demo1(QWidget):
-
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        setTheme(Theme.DARK)
-        self.vBoxLayout = QVBoxLayout(self)
-        self.resize(500, 300)
+        self.setWindowTitle("PySide6 示例")
 
-        # self.player = QMediaPlayer(self)
-        # self.player.setMedia(QUrl.fromLocalFile(filename))
-        # self.player.setPosition()
+        self.label = QLabel("欢迎使用PySide6!")
+        self.button = QPushButton("点击我")
+        self.button.clicked.connect(self.update_label)
 
-        self.simplePlayBar = SimpleMediaPlayBar(self)
-        # self.standardPlayBar = StandardMediaPlayBar(self)
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.button)
 
-        self.vBoxLayout.addWidget(self.simplePlayBar)
-        # self.vBoxLayout.addWidget(self.standardPlayBar)
+        self.setLayout(layout)
 
-        # online music
-        url = QUrl("/Users/locodol/my_own/code/lin_trans/result/tt1/vv2.mp4")
-        self.simplePlayBar.player.setSource(url)
-
-        # local music
-        # url = QUrl.fromLocalFile(str(Path('resource/aiko - シアワセ.mp3').absolute()))
-        # self.standardPlayBar.player.setSource(url)
-
-        # self.standardPlayBar.play()
-
-
-class Demo2(QWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.vBoxLayout = QVBoxLayout(self)
-        self.videoWidget = LinVideoWidget()
-        # self.videoWidget = VideoWidget()
-
-        self.videoWidget.setVideo(QUrl("D:/dcode/lin_trans/result/tt1/tt.mp4"))
-        # self.videoWidget.play()
-        # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/tt.srt')
-        # self.videoWidget.setSrtFile('D:/dcode/lin_trans/result/tt1/dd.srt')
-
-        self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.addWidget(self.videoWidget)
-        # self.resize(634, 412)
-        video_size_x, video_size_y = 1920 / 3, 1080 / 3
-        config.logger.debug(f"Video size: {video_size_x}x{video_size_y}")
-        self.resize(video_size_x, video_size_y + 40)
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        config.logger.debug(f"Window size: {self.size()}")
-
-
-if __name__ == "__main__":
-    app = QApplication([])
-    # demo1 = Demo1()
-    # demo1.show()
-    demo2 = Demo2()
-    demo2.show()
-    sys.exit(app.exec())
+    def update_label(self):
+        self.label.setText("按钮被点击了!")

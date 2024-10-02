@@ -91,16 +91,3 @@ class CudaCheckPage(QWidget):
                 parent=self,
             )
         )
-
-
-if __name__ == "__main__":
-    import sys
-    from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
-
-    app = QApplication(sys.argv)
-    settings = QSettings("Locoweed", "LinLInTrans")
-    ex = CudaCheckPage()
-    ex.resize(900, 600)
-    ex.show()
-    sys.exit(app.exec())

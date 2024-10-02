@@ -367,7 +367,3 @@ video_codec = None
 
 # 视频慢速时最小间隔毫秒，默认50ms，小于这个值的视频片段将舍弃，避免出错
 video_min_ms = 50
-
-if __name__ == "__main__":
-    a = init_model_code_key()
-    print(a[:4])

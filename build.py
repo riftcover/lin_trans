@@ -40,26 +40,28 @@ cmd = [
     "--standalone",
     "--remove-output",
     "--plugin-enable=pyside6",
-    "--include-package=scipy",
-    "--include-package=numpy",
-    "--include-package=better_ffmpeg_progress",
-    "--include-package=colorthief",
-    "--include-package=darkdetect",
-    "--include-package=httpx",
-    "--include-package=loguru",
-    "--include-package=modelscope",
-    "--include-package=openai",
-    "--include-package=packaging",
-    "--include-package=path",
-    "--include-package=pydantic",
-    "--include-package=sqlalchemy",
-    "--include-package=socksio",
-    "--noinclude-pytest-mode=nofollow",
-    "--nofollow-import-to=torch,torchaudio",  # 排除torch和torchaudio
-    "--python-flag=no_site",
-    "--output-dir=dist",
+    # "--include-package=scipy",
+    # "--include-package=numpy",
+    # "--include-package=better_ffmpeg_progress",
+    # "--include-package=colorthief",
+    # "--include-package=darkdetect",
+    # "--include-package=httpx",
+    # "--include-package=loguru",
+    # "--include-package=modelscope",
+    # "--include-package=openai",
+    # "--include-package=packaging",
+    # "--include-package=path",
+    # "--include-package=pydantic",
+    # "--include-package=sqlalchemy",
+    # "--include-package=socksio",
+    # "--noinclude-pytest-mode=nofollow",
+    # "--nofollow-import-to=torch,torchaudio",  # 排除torch和torchaudio
+    # "--python-flag=no_site",
+    "--output-dir=build",
     "--include-data-dir=models=models",  # 包含models文件夹
     "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
+    "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
+    "--include-data-dir=logs=logs",  # 包含logs文件夹
 ]
 
 # 在 cmd 列表中添加以下选项
@@ -90,7 +92,7 @@ elif platform.system() == "Darwin":  # macOS
         cmd.append("--macos-target-arch=x86_64")
 
 # 添加主文件路径
-cmd.append("run.py")
+cmd.append("nice_ui/ui/video2srt.py")
 
 # 执行打包命令
 subprocess.run(cmd, check=True)

@@ -13,10 +13,7 @@ from packaging import version
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.ui import MAIN_WINDOW_SIZE
-from nice_ui.ui.my_story import TableApp
-from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
-from nice_ui.ui.work_srt import WorkSrt
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
@@ -40,9 +37,9 @@ class Window(FluentWindow):
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT("音视频转字幕", self, self.settings)
-        self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
-        self.my_story = TableApp("我的创作", self, self.settings)
-        self.settingInterface = SettingInterface("设置", self, self.settings)
+        # self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
+        # self.my_story = TableApp("我的创作", self, self.settings)
+        # self.settingInterface = SettingInterface("设置", self, self.settings)
 
         self.initNavigation()
 
@@ -59,10 +56,10 @@ class Window(FluentWindow):
     def initNavigation(self):
         # self.addSubInterface(self.homeInterface, FIF.HOME, 'Home')
         self.addSubInterface(self.vide2srt, FIF.VIDEO, "音视频转字幕")
-        self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
-        self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
-
-        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置")
+        # self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
+        # self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
+        #
+        # self.addSubInterface(self.settingInterface, FIF.SETTING, "设置")
 
         # add badge to navigation item
         # self.navigationInterface.addSeparator()
@@ -151,10 +148,11 @@ class Window(FluentWindow):
             QDesktopServices.openUrl(
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
-
-
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     w = Window()
     w.show()
-    app.exec()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()

@@ -53,10 +53,3 @@ def translate_document(in_document: str, out_document: str, chunk_size: int = 99
             logger.info(translated_paragraph)
             output_content.writelines(translated_paragraph)
             time.sleep(32)
-
-
-#
-
-
-if __name__ == '__main__':
-    translate_document('../result/Ski Pole Use 101_base.srt', '../result/Ski Pole Use 101_cn.srt')
