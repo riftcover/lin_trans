@@ -57,9 +57,11 @@ cmd = [
     "--noinclude-pytest-mode=nofollow",
     "--nofollow-import-to=torch,torchaudio",  # 排除torch和torchaudio
     "--python-flag=no_site",
-    "--output-dir=dist",
+    "--output-dir=build",
     "--include-data-dir=models=models",  # 包含models文件夹
     "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
+    "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
+    "--include-data-dir=logs=logs",  # 包含logs文件夹
 ]
 
 # 在 cmd 列表中添加以下选项
