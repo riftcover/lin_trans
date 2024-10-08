@@ -4,6 +4,7 @@ import subprocess
 import sys
 import platform
 import argparse
+import site
 
 # 检查并安装必要的模块
 def install_required_modules():
@@ -25,13 +26,16 @@ def install_required_modules():
 # install_required_modules()
 
 # 清理旧的构建文件
-if os.path.exists("dist"):
-    shutil.rmtree("dist")
+if os.path.exists("build"):
+    shutil.rmtree("build")
 
 # 添加命令行参数解析
 parser = argparse.ArgumentParser(description='构建应用程序')
 parser.add_argument('--debug', action='store_true', help='启用调试模式')
 args = parser.parse_args()
+
+# 定义版本号
+your_version = "1.0.0"  # 替换为您的实际版本号
 
 # 基本的 Nuitka 打包命令
 cmd = [
@@ -39,47 +43,48 @@ cmd = [
     "-m", "nuitka",
     "--standalone",
     "--remove-output",
+    "--follow-imports",
     "--plugin-enable=pyside6",
-    # "--include-package=scipy",
+    # "--include-qt-plugins=translations",
+    "--include-package=scipy",
     # "--include-package=numpy",
-    # "--include-package=better_ffmpeg_progress",
-    # "--include-package=colorthief",
-    # "--include-package=darkdetect",
-    # "--include-package=httpx",
-    # "--include-package=loguru",
-    # "--include-package=modelscope",
-    # "--include-package=openai",
-    # "--include-package=packaging",
-    # "--include-package=path",
-    # "--include-package=pydantic",
-    # "--include-package=sqlalchemy",
-    # "--include-package=socksio",
-    # "--noinclude-pytest-mode=nofollow",
-    # "--nofollow-import-to=torch,torchaudio",  # 排除torch和torchaudio
-    # "--python-flag=no_site",
+    "--include-package=better_ffmpeg_progress",
+    "--include-package=colorthief",
+    "--include-package=darkdetect",
+    "--include-package=httpx",
+    "--include-package=loguru",
+    "--include-package=modelscope",
+    "--include-package=openai",
+    "--include-package=packaging",
+    "--include-package=path",
+    "--include-package=pydantic",
+    "--include-package=sqlalchemy",
+    "--include-package=socksio",
+    # "--nofollow-import-to=torch,torchaudio",
     "--output-dir=build",
+    f"--windows-product-version={your_version}",
+    f"--windows-file-version={your_version}",
     "--include-data-dir=models=models",  # 包含models文件夹
     "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
 ]
 
-# 在 cmd 列表中添加以下选项
-cmd.extend([
-    "--debug",
-    "--verbose",
-    "--show-memory",
-    "--show-progress",
-])
+if args.debug:
+    cmd.extend([
+        "--debug",
+        "--verbose",
+        "--show-memory",
+        "--show-progress",
+    ])
 
 # 如果是 macOS，移除 app bundle 创建（为了更容易调试）
 if platform.system() == "Darwin":
     cmd = [opt for opt in cmd if opt != "--macos-create-app-bundle"]
 
 # 根据操作系统添加特定选项
-if platform.system() == "Windows":
-    cmd.append("--windows-disable-console")
-elif platform.system() == "Darwin":  # macOS
+
+if platform.system() == "Darwin":  # macOS
     if not args.debug:
         cmd.extend([
             "--macos-create-app-bundle",
@@ -90,9 +95,11 @@ elif platform.system() == "Darwin":  # macOS
         cmd.append("--macos-target-arch=arm64")
     else:
         cmd.append("--macos-target-arch=x86_64")
+elif platform.system() == "Windows":
+    cmd.append("--windows-disable-console")
 
 # 添加主文件路径
-cmd.append("nice_ui/ui/video2srt.py")
+cmd.append("run.py")
 
 # 执行打包命令
 subprocess.run(cmd, check=True)
@@ -125,4 +132,32 @@ else:
     if os.path.exists(linlin_db_src):
         shutil.copy2(linlin_db_src, linlin_db_dst)
 
+# 在打包完成后，复制 modelscope 库
+def copy_modelscope():
+    # 获取 modelscope 库的路径
+    modelscope_path = None
+    for path in site.getsitepackages():
+        possible_path = os.path.join(path, 'modelscope')
+        if os.path.exists(possible_path):
+            modelscope_path = possible_path
+            break
+    
+    if not modelscope_path:
+        print("无法找到 modelscope 库路径")
+        return
+
+    # 确定目标路径
+    if platform.system() == "Darwin":  # macOS
+        app_name = "run.app"  # 替换为您的应用程序名称
+        dst_path = os.path.join("dist", app_name, "Contents", "Resources", "modelscope")
+    else:  # Windows 或其他系统
+        dst_path = os.path.join("dist", "modelscope")
+
+    # 复制 modelscope 库
+    print(f"正在复制 modelscope 库从 {modelscope_path} 到 {dst_path}")
+    shutil.copytree(modelscope_path, dst_path, dirs_exist_ok=True)
+
+# 在打包完成后调用复制函数
 print("打包完成!")
+copy_modelscope()
+print("modelscope 库复制完成!")
