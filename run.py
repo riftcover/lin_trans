@@ -1,11 +1,13 @@
 import sys
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QSettings
-from nice_ui.ui.video2srt import Video2SRT
+
+from nice_ui.ui.MainWindow import Window
+
 
 def main():
     app = QApplication(sys.argv)
-    window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    # window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window = Window()
     window.show()
     sys.exit(app.exec())
 
