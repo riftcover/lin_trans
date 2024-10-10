@@ -32,6 +32,7 @@ sys_platform = sys.platform
 # models_path = os.path.join(root_path,'models')
 models_path = root_path / "models"
 funasr_model_path = models_path/"funasr"/"iic"
+funasr_model_path.mkdir(parents=True, exist_ok=True)
 temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
