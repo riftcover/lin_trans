@@ -28,8 +28,9 @@ parser = argparse.ArgumentParser(description='构建应用程序')
 parser.add_argument('--debug', action='store_true', help='启用调试模式')
 args = parser.parse_args()
 
+
 # 定义版本号
-your_version = "1.0.0"  # 替换为您的实际版本号
+your_version = "0.1.0"  # 替换为您的实际版本号
 
 # 定义项目根目录和models目录
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -38,6 +39,7 @@ RESULT_DIR = os.path.join(PROJECT_ROOT, 'result')
 NICE_UI_DIR = os.path.join(PROJECT_ROOT, 'nice_ui')
 LOGS_DIR = os.path.join(PROJECT_ROOT, 'logs')
 ORM_DIR = os.path.join(PROJECT_ROOT, 'orm')
+
 
 # 确保必要的目录存在
 def ensure_dir(directory):
@@ -54,24 +56,24 @@ cmd = [
     "-m", "nuitka",
     "--standalone",
     "--remove-output",
-    "--follow-imports",
-    "--plugin-enable=pyside6",
+    "--nofollow-imports",
+    "--enable-plugin=pyside6",
+    "--plugin-enable=numpy,torch",
     # "--include-qt-plugins=translations",
-    "--include-package=scipy",
-    # "--include-package=numpy",
-    "--include-package=better_ffmpeg_progress",
-    "--include-package=colorthief",
-    "--include-package=darkdetect",
-    "--include-package=httpx",
-    "--include-package=loguru",
-    "--include-package=modelscope",
-    "--include-package=openai",
-    "--include-package=packaging",
-    "--include-package=path",
-    "--include-package=pydantic",
-    "--include-package=sqlalchemy",
-    "--include-package=socksio",
-    # "--nofollow-import-to=torch,torchaudio",
+    # "--include-package=scipy",
+    # # "--include-package=numpy",
+    # "--include-package=better_ffmpeg_progress",
+    # "--include-package=colorthief",
+    # "--include-package=darkdetect",
+    # "--include-package=httpx",
+    # "--include-package=loguru",
+    # "--include-package=modelscope",
+    # "--include-package=openai",
+    # "--include-package=packaging",
+    # "--include-package=path",
+    # "--include-package=pydantic",
+    # "--include-package=sqlalchemy",
+    # "--include-package=socksio",
     "--output-dir=build",
     f"--windows-product-version={your_version}",
     f"--windows-file-version={your_version}",
@@ -79,6 +81,7 @@ cmd = [
     "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
+    "--include-data-dir=result=result",  # 包含logs文件夹
 ]
 
 if args.debug:
@@ -117,12 +120,12 @@ cmd.append("run.py")
 # if platform.system() == "Darwin":  # macOS
 #     app_name = "run.app"  # 替换为您的应用程序名称
 #     models_src = "models"
-#     models_dst = os.path.join("dist", app_name, "Contents", "Resources", "models")
+#     models_dst = os.path.join("build", app_name, "Contents", "Resources", "models")
 #     if os.path.exists(models_src):
 #         shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
 #
 #     # 确保 orm 目录存在，并复制 linlin.db
-#     orm_dir = os.path.join("dist", app_name, "Contents", "Resources", "orm")
+#     orm_dir = os.path.join("build", app_name, "Contents", "Resources", "orm")
 #     os.makedirs(orm_dir, exist_ok=True)
 #     linlin_db_src = "orm/linlin.db"
 #     linlin_db_dst = os.path.join(orm_dir, "linlin.db")
@@ -130,12 +133,12 @@ cmd.append("run.py")
 #         shutil.copy2(linlin_db_src, linlin_db_dst)
 # else:
 #     models_src = "models"
-#     models_dst = os.path.join("dist", "models")
+#     models_dst = os.path.join("build", "models")
 #     if os.path.exists(models_src):
 #         shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
 #
 #     # 确保 orm 目录存在，并复制 linlin.db
-#     orm_dir = os.path.join("dist", "orm")
+#     orm_dir = os.path.join("build", "orm")
 #     os.makedirs(orm_dir, exist_ok=True)
 #     linlin_db_src = "orm/linlin.db"
 #     linlin_db_dst = os.path.join(orm_dir, "linlin.db")
@@ -160,9 +163,9 @@ def copy_modelscope():
     # 确定目标路径
     if platform.system() == "Darwin":  # macOS
         app_name = "run.app"  # 替换为您的应用程序名称
-        dst_path = os.path.join("dist", app_name, "Contents", "Resources", "modelscope")
+        dst_path = os.path.join("build", app_name, "Contents", "MacOS", "modelscope")
     else:  # Windows 或其他系统
-        dst_path = os.path.join("dist", "modelscope")
+        dst_path = os.path.join("build", "modelscope")
 
     # 复制 modelscope 库
     print(f"正在复制 modelscope 库从 {modelscope_path} 到 {dst_path}")
@@ -173,11 +176,11 @@ start_time = time.time()
 # 安装必要的模块
 # install_required_modules()
 
-# 清理旧的构建文件
-if os.path.exists("build"):
-    shutil.rmtree("build")
-# 执行打包命令
-subprocess.run(cmd, check=True)
+# # 清理旧的构建文件
+# if os.path.exists("build"):
+#     shutil.rmtree("build")
+# # 执行打包命令
+# subprocess.run(cmd, check=True)
 
 
 print("打包完成!")
