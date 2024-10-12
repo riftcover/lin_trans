@@ -324,17 +324,3 @@ class ExportSubtitleDialog(QDialog):
             # 写入第二行字幕（如果存在）
             if second_line_subtitles:
                 dest_file.write("\n".join(second_line_subtitles) + "\n")
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    settings = QSettings("Locoweed", "LinLInTrans")
-    # window = SubtitleEditPage(patt='D:/dcode/lin_trans/result/tt1/tt.srt', settings=settings)
-    window = SubtitleEditPage(
-        patt="D:/dcode/lin_trans/result/tt1/如何获取需求.srt",
-        med_path="D:/dcode/lin_trans/result/tt1/tt.mp4",
-        settings=settings,
-    )
-    window.resize(1300, 800)
-    window.show()
-    sys.exit(app.exec())

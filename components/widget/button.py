@@ -22,5 +22,3 @@ class DeleteButton(PrimaryPushButton):
         # 合并原有样式和新样式
         self.setStyleSheet(original_style + new_style)
 
-if __name__ == '__main__':
-    a = DeleteButton()

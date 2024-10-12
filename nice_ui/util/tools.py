@@ -50,7 +50,8 @@ class StartTools:
     @staticmethod
     def ask_model_folder(model_name: str) -> bool:
         # todo：当前是写死funasr，后续需要改成根据模型名称来获取模型路径
-        is_installed = os.path.exists(os.path.join(config.models_path, "funasr", model_name))
+        is_installed = os.path.exists(os.path.join(config.models_path, "funasr","iic", model_name))
+        logger.info(f"ask_model_folder-is_installed path :{config.models_path}")
         return is_installed
 
 

@@ -12,7 +12,7 @@ from utils import logger
 def download_model(model_name: str, progress_callback=None):
     logger.info(f"开始下载模型: {model_name}")
     download_path = os.path.join(config.funasr_model_path, model_name)
-    temp_path = os.path.join(config.models_path, 'funasr','._____temp','iic', model_name)
+    temp_path = os.path.join(config.models_path, 'funasr', '._____temp', 'iic', model_name)
     logger.info(f"下载路径: {download_path}")
     model_dir = os.path.join(config.root_path, 'models', 'funasr')
     os.makedirs(download_path, exist_ok=True)
@@ -23,11 +23,11 @@ def download_model(model_name: str, progress_callback=None):
     """
     vad_model_path = os.path.join(config.funasr_model_path, 'speech_fsmn_vad_zh-cn-16k-common-pytorch')
     if os.path.exists(vad_model_path):
-        logger.info(f"vad模型已下载，跳过")
+        logger.info("vad模型已下载，跳过")
     else:
-        logger.info(f"开始下载vad模型")
+        logger.info("开始下载vad模型")
         snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=download_path)
-        logger.info(f"vad模型下载完成")
+        logger.info("vad模型下载完成")
 
     start_time = time.time()
     #todo： 这里是多语言模型大小，其他两种没他大，并且相差不大就不改了
@@ -82,6 +82,3 @@ def download_model(model_name: str, progress_callback=None):
 
     logger.info(f"模型 {model_name} 下载完成，用时 {time.time() - start_time:.2f} 秒")
     return download_path
-
-if __name__ == '__main__':
-    download_model('SenseVoiceSmall')

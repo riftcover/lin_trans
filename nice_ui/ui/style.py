@@ -720,15 +720,3 @@ class SubtitleTable(QTableWidget):
         # 当单元格内容变化时发出信号
         self.process_subtitles()
         self.tableChanged.emit(self.subtitles)
-
-
-if __name__ == "__main__":
-    import sys
-
-    # patt = r'D:\dcode\lin_trans\result\tt1\dd1.srt'
-    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    patt = "D:/dcode/lin_trans/result/tt1/tt.srt"
-    app = QApplication(sys.argv)
-    card = SubtitleTable(patt)
-    card.show()
-    sys.exit(app.exec())

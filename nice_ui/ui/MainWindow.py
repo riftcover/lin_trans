@@ -151,10 +151,3 @@ class Window(FluentWindow):
             QDesktopServices.openUrl(
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    w = Window()
-    w.show()
-    app.exec()

@@ -686,27 +686,3 @@ class TableApp(CardWidget):
 
         # 显示对话框
         dialog.exec()
-
-    # def _update_subtitle_data(self, updated_srt_edit_dict):
-    #     # 更新表格中的数据
-    #     row = self._get_row()
-    #     item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
-    #     item.setData(VideoFormatInfoRole, updated_srt_edit_dict)
-    #
-    #     # 更新数据库
-    #     orm_table = self._choose_sql_orm(row)
-    #     unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-    #     orm_table.update_table_unid(unid_item.text(), obj=updated_srt_edit_dict.model_dump_json())
-    #
-    #     # 可以在这里添加一个成功提示
-    #     InfoBar.success(title='成功', content="字幕已更新", orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP_RIGHT, duration=2000,
-    #                     parent=self)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    settings = QSettings("Locoweed", "LinLInTrans")
-    ex = TableApp("我的创作列表", settings=settings)
-    ex.resize(900, 600)
-    ex.show()
-    sys.exit(app.exec())

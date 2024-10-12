@@ -39,13 +39,3 @@ class FFmpegJobs:
         # 执行 FFmpeg 命令并监控进度
         ffmpeg_process.run()
         logger.info("转码完成")
-
-
-if __name__ == '__main__':
-    # Example usage
-    home_path = '/Users/locodol/Movies/ski/别人的教学视频/big picture/基本姿势'
-    input_file = f'{home_path}/How To Use Your Ski Poles - Make Your Skiing Look And Feel Better.webm'
-    input_file = r'D:\dcode\lin_trans\result\tt2\ces.mp3'
-    output_file = r'D:\dcode\lin_trans\result\tt2\ces.wav'
-
-    FFmpegJobs.convert_mp4_to_wav(input_file, output_file)

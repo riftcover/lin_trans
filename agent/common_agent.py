@@ -85,11 +85,4 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
             data_bridge.emit_whisper_working(unid, progress_now)
             # time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
-
-
-if __name__ == '__main__':
-    in_file = r'D:\dcode\lin_trans\result\tt1\Mogul Lines Webinar.srt'
-    out_file = r'D:\dcode\lin_trans\result\tt1\finish-qwen2-57b-a14b-instruct.srt'
-    translate_document('57b-a14b-instruct', in_file, out_file, 'qwen', pp2)
-
     # print(extract_text_from_srt(in_file))

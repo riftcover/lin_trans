@@ -10,8 +10,3 @@ def convert_encoding(py_file):
     # 写回 .py 文件
     with open(py_file, "w", encoding="utf-8") as f:
         f.write(decoded_content)
-
-
-if __name__ == "__main__":
-    ui_file = "en_2.py"  # 替换为你的 .ui 文件名
-    convert_encoding(ui_file)
