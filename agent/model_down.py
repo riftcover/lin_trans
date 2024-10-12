@@ -26,7 +26,7 @@ def download_model(model_name: str, progress_callback=None):
         logger.info("vad模型已下载，跳过")
     else:
         logger.info("开始下载vad模型")
-        snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=download_path)
+        snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=model_dir)
         logger.info("vad模型下载完成")
 
     start_time = time.time()
