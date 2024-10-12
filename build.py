@@ -97,8 +97,12 @@ if platform.system() == "Darwin":
     cmd = [opt for opt in cmd if opt != "--macos-create-app-bundle"]
 
 # 根据操作系统添加特定选项
-
-if platform.system() == "Darwin":  # macOS
+if platform.system() == "Windows":
+    cmd.extend([
+        # "--windows-disable-console",
+        "--windows-icon-from-ico=components/assets/linlin.ico",  # 添加 Windows 图标
+    ])
+elif platform.system() == "Darwin":  # macOS
     if not args.debug:
         cmd.extend([
             "--macos-create-app-bundle",
@@ -109,8 +113,6 @@ if platform.system() == "Darwin":  # macOS
         cmd.append("--macos-target-arch=arm64")
     else:
         cmd.append("--macos-target-arch=x86_64")
-elif platform.system() == "Windows":
-    cmd.append("--windows-disable-console")
 
 # 添加主文件路径
 cmd.append("run.py")
@@ -176,11 +178,11 @@ start_time = time.time()
 # 安装必要的模块
 # install_required_modules()
 
-# # 清理旧的构建文件
-# if os.path.exists("build"):
-#     shutil.rmtree("build")
-# # 执行打包命令
-# subprocess.run(cmd, check=True)
+# 清理旧的构建文件
+if os.path.exists("build"):
+    shutil.rmtree("build")
+# 执行打包命令
+subprocess.run(cmd, check=True)
 
 
 print("打包完成!")
