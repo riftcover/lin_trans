@@ -1,5 +1,5 @@
-
 import os
+import sys
 
 import time
 from pathlib import Path
@@ -172,7 +172,7 @@ class SrtWriter:
     #
     #     self.data_bridge.emit_whisper_finished(self.unid)
 
-    def funasr_to_srt(self, model_name: str = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'):
+    def funasr_to_srt(self, model_name: str):
         from funasr import AutoModel
         logger.info("使用FunASR开始识别")
         model_dir = f'{config.funasr_model_path}/{model_name}'

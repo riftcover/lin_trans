@@ -56,9 +56,13 @@ cmd = [
     "-m", "nuitka",
     "--standalone",
     "--remove-output",
-    "--nofollow-imports",
+    # "--nofollow-import-to=*",
+    "--nofollow-import-to=funasr,modelscope,scipy,numpy,better_ffmpeg_progress,colorthief,darkdetect,httpx,loguru,openai,packaging,path,pydantic,socksio,Pillow,pydub,zhipuai,socksio,torch,torchaudio,PIL",
     "--enable-plugin=pyside6",
-    "--plugin-enable=numpy,torch",
+    # "--include-package=funasr",
+    # "--include-package=modelscope",
+    # "--include-package=pdb",
+    # "--include-package=bdb",
     # "--include-qt-plugins=translations",
     # "--include-package=scipy",
     # # "--include-package=numpy",
@@ -72,12 +76,12 @@ cmd = [
     # "--include-package=packaging",
     # "--include-package=path",
     # "--include-package=pydantic",
-    # "--include-package=sqlalchemy",
+    # "--follow-import-to=sqlalchemy",
     # "--include-package=socksio",
     "--output-dir=build",
     f"--windows-product-version={your_version}",
     f"--windows-file-version={your_version}",
-    "--include-data-dir=models=models",  # 包含models文件夹
+    f"--include-data-dir={MODELS_DIR}=models",  # 包含models文件夹
     "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
@@ -151,6 +155,7 @@ cmd.append("run.py")
 # 在打包完成后，复制 modelscope 库
 def copy_modelscope():
     # 获取 modelscope 库的路径
+    # todo funasr，torch,unittest,torchgen，pdb,bdb,plistlib，torchaudio，logging
     modelscope_path = None
     for path in site.getsitepackages():
         possible_path = os.path.join(path, 'modelscope')
@@ -167,11 +172,18 @@ def copy_modelscope():
         app_name = "run.app"  # 替换为您的应用程序名称
         dst_path = os.path.join("build", app_name, "Contents", "MacOS", "modelscope")
     else:  # Windows 或其他系统
-        dst_path = os.path.join("build", "modelscope")
+        dst_path = os.path.join("build",'run.dist', "modelscope")
 
     # 复制 modelscope 库
     print(f"正在复制 modelscope 库从 {modelscope_path} 到 {dst_path}")
     shutil.copytree(modelscope_path, dst_path, dirs_exist_ok=True)
+
+def copy_site_packages():
+    site_packages = site.getsitepackages()[0]
+    dst_path = os.path.join("build", "site-packages")
+    print(f"正在复制第三方库从 {site_packages} 到 {dst_path}")
+    shutil.copytree(site_packages, dst_path, dirs_exist_ok=True)
+
 
 start_time = time.time()
 # 在打包完成后调用复制函数
@@ -186,8 +198,10 @@ subprocess.run(cmd, check=True)
 
 
 print("打包完成!")
-copy_modelscope()
+# copy_site_packages()
 print("modelscope 库复制完成!")
 end_time = time.time()
 total_time = end_time - start_time
-print(f"总打包时间: {total_time:.2f} 秒")
+hours, rem = divmod(total_time, 3600)
+minutes, seconds = divmod(rem, 60)
+print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
