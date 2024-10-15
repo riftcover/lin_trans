@@ -228,7 +228,7 @@ class LocalModelPage(QWidget):
             else:
                 install_btn = QPushButton("安装")
                 install_btn.clicked.connect(
-                    lambda _, r=row, m=model_folder: self.install_model(r, m)
+                    lambda r=row, m=model_folder: self.install_model(r, m)
                 )
                 table.setCellWidget(row, 2, install_btn)
 
