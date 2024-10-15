@@ -310,7 +310,7 @@ class LinMediaPlayBar(MediaPlayBarBase):
     def _onPositionChanged(self, position: int):
         super()._onPositionChanged(position)
         self.currentTimeLabel.setText(self._formatTime(position))
-        self.remainTimeLabel.setText(self._formatTime(self.player.duration() - position))
+        self.remainTimeLabel.setText(self._formatTime(self.player.duration()))
 
     def _formatTime(self, time: int):
         time = int(time / 1000)
