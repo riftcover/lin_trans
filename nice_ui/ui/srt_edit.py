@@ -181,6 +181,16 @@ class SubtitleEditPage(QWidget):
         # todo：导入译文
         print("import subtitle")
 
+    def stop_video(self):
+        """停止视频播放"""
+        if hasattr(self, 'videoWidget'):
+            self.videoWidget.stop()
+
+    def closeEvent(self, event):
+        """在窗口关闭时停止视频播放"""
+        self.stop_video()
+        super().closeEvent(event)
+
 
 class ExportSubtitleDialog(QDialog):
     # 导出字幕弹窗

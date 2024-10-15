@@ -464,7 +464,7 @@ class TableApp(CardWidget):
                 content="文件:{job_path}不存在,无法重新开始",
                 orient=Qt.Horizontal,
                 isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
+                position=InfoBarPosition.TOP,
                 duration=3000,
                 parent=self,
             )
@@ -478,7 +478,7 @@ class TableApp(CardWidget):
             content="任务已重新开始",
             orient=Qt.Horizontal,
             isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
+            position=InfoBarPosition.TOP,
             duration=2000,
             parent=self,
         )
@@ -560,7 +560,7 @@ class TableApp(CardWidget):
                 content="任务已删除",
                 orient=Qt.Horizontal,
                 isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
+                position=InfoBarPosition.TOP,
                 duration=2000,
                 parent=self,
             )
@@ -570,7 +570,7 @@ class TableApp(CardWidget):
                 content="删除数据库记录失败",
                 orient=Qt.Horizontal,
                 isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
+                position=InfoBarPosition.TOP,
                 duration=3000,
                 parent=self,
             )
@@ -620,7 +620,7 @@ class TableApp(CardWidget):
                 content="文件不存在",
                 orient=Qt.Horizontal,
                 isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
+                position=InfoBarPosition.TOP,
                 duration=2000,
                 parent=self,
             )
@@ -635,7 +635,7 @@ class TableApp(CardWidget):
             content="文件已导出",
             orient=Qt.Horizontal,
             isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
+            position=InfoBarPosition.TOP,
             duration=2000,
             parent=self,
         )
@@ -661,7 +661,7 @@ class TableApp(CardWidget):
                 content="文件不存在",
                 orient=Qt.Horizontal,
                 isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
+                position=InfoBarPosition.TOP,
                 duration=2000,
                 parent=self,
             )
@@ -683,6 +683,8 @@ class TableApp(CardWidget):
 
         # 连接保存信号
         # subtitle_edit_page.save_signal.connect(self._update_subtitle_data)
+        # 连接对话框的完成信号到停止视频方法
+        dialog.finished.connect(subtitle_edit_page.stop_video)
 
         # 显示对话框
         dialog.exec()
