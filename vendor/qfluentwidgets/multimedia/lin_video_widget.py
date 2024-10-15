@@ -4,9 +4,9 @@ from datetime import timedelta
 from bisect import bisect_right
 
 from PySide6.QtCore import Qt, QUrl, QSizeF
-from PySide6.QtGui import QPainter, QFont
+from PySide6.QtGui import QPainter, QFont, QColor
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
-from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QGraphicsTextItem, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QGraphicsTextItem, QGraphicsDropShadowEffect, QGraphicsRectItem
 
 from components.widget import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
@@ -78,7 +78,7 @@ class LinVideoWidget(QWidget):
         # 添加字幕项
         self.subtitleItem = QGraphicsTextItem()
         self.subtitleItem.setDefaultTextColor(Qt.white)
-        self.subtitleItem.setFont(QFont("Arial", 14))
+        self.subtitleItem.setFont(QFont("Arial", 11))
         self.graphicsScene.addItem(self.subtitleItem)
 
         # 创建并设置阴影效果
@@ -217,12 +217,11 @@ class LinVideoWidget(QWidget):
 
     def position_subtitle(self):
         """ 调整字幕位置 """
-        # todo: 字幕位置应该根据视频大小自动调整，目前不准确
         video_rect = self.videoItem.boundingRect()
         subtitle_rect = self.subtitleItem.boundingRect()
 
         x = (video_rect.width() - subtitle_rect.width()) / 2
-        y = video_rect.height() - subtitle_rect.height() - 20  # 20是底部边距
+        y = video_rect.height() - subtitle_rect.height() - 10  # 增加底部边距到40像素
 
         self.subtitleItem.setPos(x, y)
 
