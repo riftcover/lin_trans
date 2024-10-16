@@ -225,8 +225,22 @@ class Video2SRT(QWidget):
         self.check_fanyi.stateChanged.connect(
             lambda: print(self.check_fanyi.isChecked())
         )
-        self.start_btn.clicked.connect(self.util.check_asr)
+        self.start_btn.clicked.connect(self.on_start_clicked)
         self.act_btn_get_video()
+    
+    def on_start_clicked(self):
+        # 显示成功提示
+        InfoBar.success(
+            title="成功",
+            content="任务已添加，在我的创作中查看结果",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self,
+        )
+
+        self.util.check_asr()
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径

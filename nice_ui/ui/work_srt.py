@@ -197,7 +197,21 @@ class WorkSrt(QWidget):
             self.media_table, event
         )
 
-        self.start_btn.clicked.connect(self.util.check_translate)
+        self.start_btn.clicked.connect(self.on_start_clicked)
+
+    def on_start_clicked(self):
+        # 显示成功提示
+        InfoBar.success(
+            title="成功",
+            content="任务已添加，在我的创作中查看结果",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self,
+        )
+
+        self.util.check_translate()
 
     def add_queue_srt(self):
         srt_list = [

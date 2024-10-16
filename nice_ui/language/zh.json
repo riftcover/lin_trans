@@ -402,15 +402,11 @@
     "vi": "越南语"
   },
   "model_code_list": {
-    "多语言模型": {
-      "status": 301,
-      "model_name": "SenseVoiceSmall"
-    },
     "中文模型": {
       "status": 302,
       "model_name": "speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
     },
-    "英语模型": {
+    "多语言模型": {
       "status": 303,
       "model_name": "speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020"
     }
