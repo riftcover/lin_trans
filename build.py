@@ -56,8 +56,8 @@ cmd = [
     "-m", "nuitka",
     "--standalone",
     "--remove-output",
-    # "--nofollow-import-to=*",
-    "--nofollow-import-to=funasr,modelscope,scipy,numpy,better_ffmpeg_progress,colorthief,darkdetect,httpx,loguru,openai,packaging,path,pydantic,socksio,Pillow,pydub,zhipuai,socksio,torch,torchaudio,PIL",
+    "--nofollow-import-to=*",
+    # "--nofollow-import-to=funasr,modelscope,scipy,numpy,better_ffmpeg_progress,colorthief,darkdetect,httpx,loguru,openai,packaging,path,pydantic,socksio,Pillow,pydub,zhipuai,socksio,torch,torchaudio,PIL",
     "--enable-plugin=pyside6",
     # "--include-package=funasr",
     # "--include-package=modelscope",
@@ -86,6 +86,7 @@ cmd = [
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
     "--include-data-dir=result=result",  # 包含logs文件夹
+    "--include-data-dir=lib/ffmpeg=lib/ffmpeg"
 ]
 
 if args.debug:
@@ -104,13 +105,13 @@ if platform.system() == "Darwin":
 if platform.system() == "Windows":
     cmd.extend([
         # "--windows-disable-console",
-        "--windows-icon-from-ico=components/assets/linlin.ico",  # 添加 Windows 图标
+        # "--windows-icon-from-ico=components/assets/linlin.ico",  # 添加 Windows 图标
     ])
 elif platform.system() == "Darwin":  # macOS
     if not args.debug:
         cmd.extend([
             "--macos-create-app-bundle",
-            "--macos-app-icon=components/assets/linlin.icns",
+            # "--macos-app-icon=components/assets/linlin.icns",
         ])
     # 检测 Mac 芯片类型并设置目标架构
     if platform.machine() == "arm64":
