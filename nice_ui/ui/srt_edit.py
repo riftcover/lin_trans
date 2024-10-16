@@ -33,7 +33,7 @@ class AspectRatioWidget(QWidget):
 class SubtitleEditPage(QWidget):
 
     def __init__(
-        self, patt: str, med_path: str, settings: QSettings = None, parent=None
+            self, patt: str, med_path: str, settings: QSettings = None, parent=None
     ):
         from components.widget import SubtitleTable
 
@@ -341,7 +341,8 @@ class ExportSubtitleDialog(QDialog):
             parent=self,
         )
 
-    def _export_txt(self, src_path, export_path: str):
+    @staticmethod
+    def _export_txt(src_path, export_path: str):
         # 实现语种文本提取
         with open(src_path, "r", encoding="utf-8") as src_file:
             lines = src_file.readlines()
@@ -374,7 +375,7 @@ class ExportSubtitleDialog(QDialog):
         # 保存提取的文本到 export_path
         export_name = os.path.splitext(os.path.basename(src_path))[0]
         with open(
-            f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
+                f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
         ) as dest_file:
             # 写入第一行字幕
             dest_file.write("\n".join(first_line_subtitles) + "\n")

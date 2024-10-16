@@ -13,6 +13,7 @@ from nice_ui.configure import config
 from utils.file_utils import get_segment_timestamps, funasr_write_srt_file
 from utils import logger
 from utils.lazy_loader import LazyLoader
+
 funasr = LazyLoader('funasr')
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -181,18 +182,23 @@ class SrtWriter:
                           vad_model=vad_model_dir, vad_model_revision="v2.0.4",
                           # punc_model="ct-punc-c",punc_model_revision="v2.0.4", # 标点符号
                           # spk_model="cam++", spk_model_revision="v2.0.2", # 说话人确认
+                          vad_kwargs={"max_single_segment_time": 30000},
                           disable_update=True)
         # 启动进度更新线程
         progress_thread = threading.Thread(target=self._update_progress)
         progress_thread.start()
         try:
-            res = model.generate(input=self.input_file, batch_size_s=300, hotword=None, language=self.ln)
+            res = model.generate(input=self.input_file, batch_size_s=300,
+                                 hotword=None, language=self.ln,
+                                 mode='offline',
+                                 use_vad=True,
+                                 use_punc=True)
         finally:
             self._stop_progress_thread = True
             progress_thread.join()  # 模型生成完成，更新进度值到 80
         self.data_bridge.emit_whisper_working(self.unid, 93)
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        segments = get_segment_timestamps(res)
+        segments = res[0]['sentence_info']
         # self.data_bridge.emit_whisper_working(self.unid, 90)
         funasr_write_srt_file(segments, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
@@ -203,3 +209,16 @@ class SrtWriter:
     #
     #     else:
     #         self.whisper_cpp_to_srt(model_name)
+
+
+if __name__ == '__main__':
+    # SrtWriter('tt1.wav').whisperPt_to_srt()
+    # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
+    output = r'D:\dcode\lin_trans\result\tt1'
+    tt1 = 'D:/dcode/lin_trans/result/tt1/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+    models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
+
+    # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
+    SrtWriter('xxx', output, tt1, 'zh').funasr_to_srt(models)
