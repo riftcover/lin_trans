@@ -86,7 +86,6 @@ cmd = [
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
     "--include-data-dir=result=result",  # 包含logs文件夹
-    "--include-data-dir=lib/ffmpeg=lib/ffmpeg"
 ]
 
 if args.debug:

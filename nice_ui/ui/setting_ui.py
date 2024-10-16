@@ -193,9 +193,9 @@ class LocalModelPage(QWidget):
 
     def show_funasr_table(self, table):
         faster_models = [
-            ("多语言模型", "940 MB"),
+            # ("多语言模型", "940 MB"),
             ("中文模型", "909.6 MB"),
-            ("英语模型", "880 MB"),
+            ("多语言模型", "880 MB"),
         ]
         model_list = config.model_list
 

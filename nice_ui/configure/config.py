@@ -30,7 +30,8 @@ root_path = Path(__file__).parent.parent.parent  # 项目目录
 sys_platform = sys.platform
 
 # models_path = os.path.join(root_path,'models')
-models_path = root_path / "models"
+root_same = Path(__file__).parent.parent.parent.parent
+models_path = root_same / "models"
 funasr_model_path = models_path/"funasr"/"iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
 temp_path = root_path / "tmp"
@@ -185,11 +186,11 @@ box_lang = obj["toolbox_lang"]
 # ffmpeg,whisper.cpp
 if sys.platform == "win32":
     PWD = rootdir.replace("/", "\\")
-    os.environ["PATH"] = f"{root_path}/lib/ffmpeg;" + os.environ["PATH"]
-    os.environ["PATH"] = f"{root_path}/whisper.cpp;" + os.environ["PATH"]
+    os.environ["PATH"] = f"{root_same}/plugin/ffmpeg;" + os.environ["PATH"]
+    # os.environ["PATH"] = f"{root_path}/whisper.cpp;" + os.environ["PATH"]
 
 else:
-    os.environ["PATH"] = f"{root_path}/lib/ffmpeg:" + os.environ["PATH"]
+    os.environ["PATH"] = f"{root_same}/plugin/ffmpeg:" + os.environ["PATH"]
     os.environ["PATH"] = f"{root_path}/whisper.cpp:" + os.environ["PATH"]
 
 os.environ["QT_API"] = "pyside6"

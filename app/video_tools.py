@@ -7,14 +7,7 @@ from utils.log import Logings
 
 logger = Logings().logger
 
-current_dir = Path(__file__).parent.parent
-# 构建 ffmpeg.exe 的完整路径
-        # 判断是否是 Windows 系统
-if platform.system() == "Windows":
-    ffmpeg_path = current_dir / 'plugin' / 'ffmpeg' / 'ffmpeg.exe'
-else:
-    # 对于非 Windows 系统，假设 ffmpeg 在系统 PATH 中
-    ffmpeg_path = 'ffmpeg'
+
 
 class FFmpegJobs:
 
@@ -27,7 +20,7 @@ class FFmpegJobs:
         #     .output(output_file)
         #     .run(overwrite_output=True)
         # )
-        command = [str(ffmpeg_path), '-i', input_path, '-loglevel', 'warning', output_path]
+        command = ['ffmpeg', '-i', input_path, '-loglevel', 'warning', output_path]
         ffmpeg_process = FfmpegProcess(command)
         # 执行 FFmpeg 命令并监控进度
         ffmpeg_process.run()
@@ -36,7 +29,7 @@ class FFmpegJobs:
     def convert_mp4_to_wav(input_path: Path|str, output_path: Path|str):
         logger.info(f'convert mp4 to wav: {input_path} -> {output_path}')
         command = [
-            str(ffmpeg_path),
+            'ffmpeg',
             '-i', input_path,
             '-loglevel', 'warning',
             '-ar', '16000', # 采样率

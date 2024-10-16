@@ -5,3 +5,7 @@
 
 
 ps -ef | grep linlin | awk '{print $2}' | xargs kill -9
+
+
+ffmpeg目录(plugin)为项目同级目录
+models目录为项目同级目录
