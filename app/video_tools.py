@@ -11,7 +11,7 @@ current_dir = Path(__file__).parent.parent
 # 构建 ffmpeg.exe 的完整路径
         # 判断是否是 Windows 系统
 if platform.system() == "Windows":
-    ffmpeg_path = current_dir / 'lib' / 'ffmpeg' / 'ffmpeg.exe'
+    ffmpeg_path = current_dir / 'plugin' / 'ffmpeg' / 'ffmpeg.exe'
 else:
     # 对于非 Windows 系统，假设 ffmpeg 在系统 PATH 中
     ffmpeg_path = 'ffmpeg'
