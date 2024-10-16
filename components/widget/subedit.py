@@ -1,7 +1,7 @@
 import os
 from typing import Tuple, Any, List
 
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QEvent
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QAbstractItemDelegate
 
@@ -39,6 +39,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         Returns:
 
         """
+        editor = super().createEditor(parent, option, index)
         if index.column() == 0:  # 勾选框
             self.signals.createEditor.emit(index.row(), index.column())
             return self.create_checkbox(parent)
@@ -50,11 +51,32 @@ class CustomItemDelegate(QStyledItemDelegate):
             return self.create_time_widget(parent)
         elif index.column() in [4, 5]:  # 原文和译文
             self.signals.createEditor.emit(index.row(), index.column())
-            return self.create_text_edit(parent)
+            editor = self.create_text_edit(parent)
+            if isinstance(editor, LinLineEdit):
+                # 为原文和译文列的编辑器添加鼠标点击事件处理
+                original_mouse_press_event = editor.mousePressEvent
+                editor.mousePressEvent = lambda event: self.editorClicked(event, index, editor, original_mouse_press_event)
+            return editor
         elif index.column() == 6:  # 编辑按钮
             return self.create_edit_widget(parent, index)
 
-        return super().createEditor(parent, option, index)
+        return editor
+
+    def editorClicked(self, event, index, editor, original_mouse_press_event):
+        """
+        处理原文和译文列编辑器的点击事件
+        
+        Args:
+            event: 鼠标事件
+            index: 被点击的单元格索引
+            editor: 被点击的编辑器
+            original_mouse_press_event: 原始的鼠标按下事件处理函数
+        """
+        # 发出单元格被点击的信号
+        self.parent().cellClicked.emit(index.row(), index.column())
+        # 调用原始的鼠标按下事件处理函数，保持原有功能
+        original_mouse_press_event(event)
+
 
     def destroyEditor(self, editor, index):
         # 用来通知哪个单元格需要销毁编辑器
@@ -108,7 +130,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         button_size = QSize(15, 15)
         play_button = TransparentToolButton(FluentIcon.PLAY)
-        play_button.clicked.connect(self._move_row_down_more)
+        play_button.clicked.connect(self._play_from_time)
         cut_button = TransparentToolButton(FluentIcon.CUT)
         play_button.setFixedSize(button_size)
         cut_button.setFixedSize(button_size)
@@ -497,6 +519,11 @@ class SubtitleTable(QTableView):
     """
     tableChanged = Signal(list)
 
+    # 信号，用于视频控制
+    play_from_time_signal = Signal(str)  # 点击播放按钮时发出，用于从特定时间开始播放视频
+    seek_to_time_signal = Signal(str)  # 点击原文或译文列时发出，用于将视频跳转到特定时间
+    cellClicked = Signal(int, int)  # 用于捕获单元格点击事件
+
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
@@ -530,6 +557,7 @@ class SubtitleTable(QTableView):
         self.delegate.signals.destroyEditor.connect(self.on_editor_destroyed)
         self.verticalScrollBar().valueChanged.connect(self.on_scroll)
         self.horizontalScrollBar().valueChanged.connect(self.on_scroll)
+        self.cellClicked.connect(self.handle_cell_click)
 
         self.init_ui()
         # 设置默认行高
@@ -542,7 +570,9 @@ class SubtitleTable(QTableView):
 
         # 连接信号
         self.model.dataChangedSignal.connect(self.process_subtitles)
-
+        self.delegate._play_from_time = self.play_from_time  # 设置播放按钮的回调函数
+        self.cellClicked.connect(self.handle_cell_click)  # 连接单元格点击信号到处理方法
+ 
     def init_ui(self) -> None:
         # 设置滚动模式
         self.setVerticalScrollMode(QTableView.ScrollPerPixel)
@@ -565,6 +595,30 @@ class SubtitleTable(QTableView):
         self.setShowGrid(False)
 
         StyleManager.apply_style(self, 'subedit_table')
+
+    def play_from_time(self):
+        """
+        当点击播放按钮时调用此方法
+        获取当前行的开始时间，并发出信号以开始播放视频
+        """
+        logger.trace('点击播放按钮')
+        row = self.get_editor_row()
+        start_time = self.model.data(self.model.index(row, 3), Qt.UserRole)[0]
+        self.play_from_time_signal.emit(start_time)
+
+    def handle_cell_click(self, row, column):
+        """
+        处理单元格点击事件
+        如果点击的是原文或译文列，发出信号以跳转视频进度
+
+        Args:
+            row: 被点击的行索引
+            column: 被点击的列索引
+        """
+        logger.trace('handle_cell_click')
+        if column in [4, 5]:  # 原文或译文列
+            start_time = self.model.data(self.model.index(row, 3), Qt.UserRole)[0]
+            self.seek_to_time_signal.emit(start_time)
 
     def setHorizontalHeaderLabels(self):
         # 设置表头样式

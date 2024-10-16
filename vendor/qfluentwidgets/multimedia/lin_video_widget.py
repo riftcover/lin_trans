@@ -249,3 +249,7 @@ class LinVideoWidget(QWidget):
     def player(self):
 
         return self.playBar.player
+
+    def setPosition(self, position):
+        """ Set the current position of the video """
+        self.player.setPosition(position)

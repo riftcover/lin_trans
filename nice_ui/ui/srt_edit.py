@@ -50,6 +50,8 @@ class SubtitleEditPage(QWidget):
         self.patt = patt
         self.media_path = med_path
         self.subtitle_table = SubtitleTable(self.patt)
+        self.subtitle_table.play_from_time_signal.connect(self.play_video_from_time)
+        self.subtitle_table.seek_to_time_signal.connect(self.seek_video_to_time)  # 新增连接
 
         self.initUI()
 
@@ -168,6 +170,51 @@ class SubtitleEditPage(QWidget):
     def move_row_up_more(self):
         self.clear_table_focus()
         self.subtitle_table.move_row_up_more()
+
+    def play_video_from_time(self, start_time: str):
+        """
+        从指定时间开始播放视频
+
+        这个方法在用户点击字幕表格中的播放按钮时被调用。
+        它将视频播放器的位置设置到指定的开始时间，然后开始播放。
+
+        Args:
+            start_time (str): 开始播放的时间，格式为 "HH:MM:SS,mmm"
+        """
+        if hasattr(self, 'videoWidget'):
+            time_ms = self.convert_time_to_ms(start_time)
+            self.videoWidget.player.setPosition(time_ms)
+            self.videoWidget.play()
+
+    def seek_video_to_time(self, start_time: str):
+        """
+        将视频跳转到指定时间
+
+        这个方法在用户点击字幕表格中的原文或译文列时被调用。
+        它只将视频播放器的位置设置到指定的时间，但不开始播放。
+
+        Args:
+            start_time (str): 跳转的目标时间，格式为 "HH:MM:SS,mmm"
+        """
+        if hasattr(self, 'videoWidget'):
+            time_ms = self.convert_time_to_ms(start_time)
+            self.videoWidget.player.setPosition(time_ms)
+            # 不调用 play() 方法，所以视频不会开始播放
+
+    @staticmethod
+    def convert_time_to_ms(time_str: str) -> int:
+        """
+        将时间字符串转换为毫秒
+
+        Args:
+            time_str (str): 时间字符串，格式为 "HH:MM:SS,mmm"
+
+        Returns:
+            int: 转换后的毫秒数
+        """
+        h, m, s = time_str.split(':')
+        s, ms = s.split(',')
+        return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
     def export_srt(self):
         dialog = ExportSubtitleDialog([self.patt], self)

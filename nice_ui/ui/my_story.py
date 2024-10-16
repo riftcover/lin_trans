@@ -688,3 +688,13 @@ class TableApp(CardWidget):
 
         # 显示对话框
         dialog.exec()
+
+def main():
+    app = QApplication(sys.argv)
+    window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+
+    window.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
