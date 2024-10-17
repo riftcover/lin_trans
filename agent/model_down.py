@@ -14,7 +14,7 @@ def download_model(model_name: str, progress_callback=None):
     download_path = os.path.join(config.funasr_model_path, model_name)
     temp_path = os.path.join(config.models_path, 'funasr', '._____temp', 'iic', model_name)
     logger.info(f"下载路径: {download_path}")
-    model_dir = os.path.join(config.root_path, 'models', 'funasr')
+    model_dir = os.path.join(config.root_same, 'models', 'funasr')
     os.makedirs(download_path, exist_ok=True)
     """
     下载到funasr_model_path的iic目录下，
