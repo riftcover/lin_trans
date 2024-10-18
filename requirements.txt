@@ -10,9 +10,9 @@ packaging==24.1
 path==17.0.0
 Pillow==10.4.0
 pydantic==2.9.2
-PySide6==6.6.3.1
-PySide6_Addons==6.6.3.1
-PySide6_Essentials==6.6.3.1
+PySide6==6.8.0
+PySide6_Addons==6.8.0
+PySide6_Essentials==6.8.0
 PySideSix_Frameless_Window==0.4.3
 scipy==1.14.1
 SQLAlchemy==2.0.32
