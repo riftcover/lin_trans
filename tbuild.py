@@ -1,22 +1,27 @@
-# import os
-# import shutil
+import os
+import subprocess
+import sys
 
-# def remove_docs_and_tests(directory):
-#     for root, dirs, files in os.walk(directory):
-#         for dir in dirs:
-#             if dir in ['doc', 'docs', 'test', 'tests']:
-#                 shutil.rmtree(os.path.join(root, dir))
+def convert_py_to_pyd(script_folder):
+    # 确保script文件夹存在
+    # if not os.path.exists(script_folder):
+    #     print(f"错误: 文件夹 '{script_folder}' 不存在。")
+    #     return
+    path_list = ['agent','app','components','nice_ui','orm','utils','vendor','videotrans']
+    # path_list = ['nice_ui']
+    # 构建Nuitka命令
+    for pp in path_list:
+        command = [
+            sys.executable, '-m', 'nuitka',
+            '--python-flag=no_warnings,-O,no_docstrings',
+            '--remove-output',
+            '--no-pyi-file',
+            '--module', pp,
+            f'--include-package={pp}',
+        ]
 
-# def remove_pyc_files(directory):
-#        for root, dirs, files in os.walk(directory):
-#            for file in files:
-#                if file.endswith('.pyc'):
-#                    os.remove(os.path.join(root, file))
-# dir_path = r'E:\tool\PyStand-py310-x64\site-packages'
-# remove_docs_and_tests(dir_path)
-# remove_pyc_files(dir_path)
+        subprocess.run(command, check=True)
 
-
-from modulegraph import modulegraph
-graph = modulegraph.ModuleGraph()
-graph.run_script("run.py")
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    convert_py_to_pyd(current_dir)
