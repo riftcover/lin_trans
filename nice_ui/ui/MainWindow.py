@@ -26,7 +26,7 @@ class Window(FluentWindow):
 
     def __init__(self):
         super().__init__()
-        self.settings = QSettings("Locoweed", "LinLInTrans")
+        self.settings = QSettings("Locoweed3", "LinLInTrans")
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))
         
@@ -84,7 +84,7 @@ class Window(FluentWindow):
         # 下面的是从spwin的initUI中复制过来的
         # 获取最后一次选择的目录
         config.last_opendir = self.settings.value("last_dir", config.last_opendir, str)
-        get_setting_cache(self.settings)
+        # get_setting_cache(self.settings)
         all_keys = (
             self.settings.allKeys()
         )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
