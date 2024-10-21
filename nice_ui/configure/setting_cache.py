@@ -7,7 +7,7 @@ from nice_ui.configure import config
 
 def get_setting_cache(settings: QSettings):
     for k in config.params.keys():
-        config.params[k] = settings.value(k, "")
+        config.params[k] = settings.value(k, config.params[k])
 
     # 从缓存获取默认配置
     config.params["voice_autorate"] = settings.value("voice_autorate", False, bool)
@@ -24,7 +24,7 @@ def get_setting_cache(settings: QSettings):
     os.environ['OPENAI_API_KEY'] = config.params["chatgpt_key"]
 
     config.params["ttsapi_url"] = settings.value("ttsapi_url", "")
-    config.params["ttsapi_extra"] = settings.value("ttsapi_extra", "pyvideotrans")
+    config.params["ttsapi_extra"] = settings.value("ttsapi_extra", "linlintrans")
     config.params["ttsapi_voice_role"] = settings.value("ttsapi_voice_role", "")
 
     config.params["gptsovits_extra"] = settings.value("gptsovits_extra", "pyvideotrans")
