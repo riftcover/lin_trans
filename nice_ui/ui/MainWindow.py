@@ -1,6 +1,6 @@
 # coding:utf-8
 import asyncio
-import sys
+import sys,os
 import platform
 
 import httpx
@@ -26,7 +26,9 @@ class Window(FluentWindow):
 
     def __init__(self):
         super().__init__()
-        self.settings = QSettings("Locoweed3", "LinLInTrans")
+        # 获取当前工作目录
+        current_directory = os.path.basename(os.getcwd())
+        self.settings = QSettings("Locoweed3",  f"LinLInTrans_{current_directory}")
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))
         
