@@ -378,7 +378,7 @@ class ExportSubtitleDialog(QDialog):
                 f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
         ) as dest_file:
             # 写入第一行字幕
-            dest_file.write("\n".join(first_line_subtitles) + "\n")
+            dest_file.write("".join(first_line_subtitles) + "\n")
             # 写入第二行字幕（如果存在）
             if second_line_subtitles:
-                dest_file.write("\n".join(second_line_subtitles) + "\n")
+                dest_file.write("\n\n".join(second_line_subtitles) + "\n")
