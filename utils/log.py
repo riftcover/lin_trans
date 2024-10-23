@@ -34,8 +34,7 @@ class Logings:
 
         # 配置日志
         log_file = log_path / f"{DATE}.log"
-        self.logger.configure(handlers=[
-            # {"sink": sys.stderr, "level": "TRACE"},
+        handlers = [
             {"sink": str(log_file),
              "level": "TRACE",
              "rotation": "1 day",
@@ -44,7 +43,13 @@ class Logings:
              "backtrace": True,
              "diagnose": True,
              "enqueue": True}
-        ])
+        ]
+
+        # 如果是开发环境，添加控制台日志处理器
+        if not getattr(sys, 'frozen', False):
+            handlers.append({"sink": sys.stderr, "level": "TRACE"})
+
+        self.logger.configure(handlers=handlers)
 
         # 添加一条日志，确认日志系统已经初始化
         self.logger.info("日志系统已初始化")

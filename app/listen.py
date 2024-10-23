@@ -15,7 +15,8 @@ from utils import logger
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
-
+from funasr import AutoModel
+from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -187,7 +188,7 @@ class SrtWriter:
 
     def funasr_zn_model(self, model_name: str):
         logger.info('使用中文模型')
-        from funasr import AutoModel
+
 
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
@@ -216,8 +217,7 @@ class SrtWriter:
 
     def funasr_sense_model(self, model_name: str):
         logger.info('使用SenseVoiceSmall')
-        from funasr import AutoModel
-        from funasr.utils.postprocess_utils import rich_transcription_postprocess
+
 
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
