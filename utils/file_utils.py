@@ -114,6 +114,24 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
     return segments_list
 
 
+def get_segmented_index(punc_array: List[int]) -> List[int]:
+    """
+    根据标点符号数组，获取非1的索引，即带标点的单词的索引
+    by the punc_array, get the index of the non-1, which is the index of the word with punctuation
+    Args:
+        punc_array: 标点符号数组,不为1的是带标点的单词
+    Returns:
+        标点符合所在单词的索引
+
+    Examples:
+        c = [{'key': "today's",
+      'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
+      'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+                     1, 1, 3]}]
+    """
+    return [i for i, value in enumerate(punc_array) if value != 1]
+
+
 def create_segmented_transcript(time_stamps: List[Tuple[int, int]], text: str, key_text: str, split_indices: List[int]) -> List[Dict[str, Union[int, str]]]:
     """
     使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
