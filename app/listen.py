@@ -10,11 +10,12 @@ import threading
 # from whisper.utils import get_writer, format_timestamp, make_safe
 
 from nice_ui.configure import config
-from utils.file_utils import get_segment_timestamps, funasr_write_srt_file
+from utils.file_utils import funasr_write_srt_file, funasr_write_txt_file, create_segmented_transcript, get_segmented_index
 from utils import logger
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
+
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -174,14 +175,26 @@ class SrtWriter:
     #     self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_to_srt(self, model_name: str):
-        from funasr import AutoModel
         logger.info("使用FunASR开始识别")
+        if model_name == 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch':
+            self.funasr_zn_model(model_name)
+
+        elif model_name == 'SenseVoiceSmall':
+            self.funasr_sense_model(model_name)
+
+        else:
+            logger.error(f'模型匹配失败：{model_name}')
+
+    def funasr_zn_model(self, model_name: str):
+        logger.info('使用中文模型')
+        from funasr import AutoModel
+
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         model = AutoModel(model=model_dir, model_revision="v2.0.4",
                           vad_model=vad_model_dir, vad_model_revision="v2.0.4",
-                          punc_model="ct-punc-c",punc_model_revision="v2.0.4", # 标点符号
-                          spk_model="cam++", spk_model_revision="v2.0.2", # 说话人确认
+                          punc_model="ct-punc-c", punc_model_revision="v2.0.4",  # 标点符号
+                          spk_model="cam++", spk_model_revision="v2.0.2",  # 说话人确认
                           vad_kwargs={"max_single_segment_time": 30000},
                           disable_update=True)
         # 启动进度更新线程
@@ -189,10 +202,8 @@ class SrtWriter:
         progress_thread.start()
         try:
             res = model.generate(input=self.input_file, batch_size_s=300,
-                                 hotword=None, language=self.ln,
-                                 mode='offline',
-                                 use_vad=True,
-                                 use_punc=True)
+                                 hotword=None, language=self.ln
+                                 )
         finally:
             self._stop_progress_thread = True
             progress_thread.join()  # 模型生成完成，更新进度值到 80
@@ -201,6 +212,55 @@ class SrtWriter:
         segments = res[0]['sentence_info']
         # self.data_bridge.emit_whisper_working(self.unid, 90)
         funasr_write_srt_file(segments, srt_file_path)
+        self.data_bridge.emit_whisper_finished(self.unid)
+
+    def funasr_sense_model(self, model_name: str):
+        logger.info('使用SenseVoiceSmall')
+        from funasr import AutoModel
+        from funasr.utils.postprocess_utils import rich_transcription_postprocess
+
+        model_dir = f'{config.funasr_model_path}/{model_name}'
+        vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
+        model = AutoModel(model=model_dir, model_revision="v2.0.4",
+                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
+                          vad_kwargs={"max_single_segment_time": 30000},
+                          disable_update=True
+                          )
+        # 启动进度更新线程
+        progress_thread = threading.Thread(target=self._update_progress)
+        progress_thread.start()
+        try:
+            res = model.generate(input=self.input_file, batch_size_s=300,
+                                 hotword=None, language=self.ln
+                                 )
+        finally:
+            self._stop_progress_thread = True
+            progress_thread.join()  # 模型生成完成，更新进度值到 80
+        self.data_bridge.emit_whisper_working(self.unid, 50)
+
+        txt_file_path = f"{os.path.splitext(self.input_file)[0]}.txt"
+        text = rich_transcription_postprocess(res[0]['text'])
+        funasr_write_txt_file(text, txt_file_path)
+        self.data_bridge.emit_whisper_working(self.unid, 70)
+        wav_file = f"{os.path.splitext(self.input_file)[0]}.wav"
+        time_model = AutoModel(
+            model="fa-zh", model_revision="v2.0.4",
+            disable_update=True
+        )
+        # 修改 generate 方法的调用，同时提供音频和文本文件
+        time_res = time_model.generate(input=(wav_file, txt_file_path), data_type=("sound", "text"))
+
+        punctuation_model = AutoModel(model="ct-punc", model_revision="v2.0.4")
+
+        punctuation_res = punctuation_model.generate(input=txt_file_path)
+        punctuation_info = punctuation_res[0]
+        self.data_bridge.emit_whisper_working(self.unid, 90)
+        d = get_segmented_index(punctuation_info['punc_array'])
+        # 合并结果
+        split_result = create_segmented_transcript(time_res[0]['timestamp'], punctuation_info['text'], punctuation_info['key'], d)
+
+        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+        funasr_write_srt_file(split_result, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
 
     # def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
@@ -215,10 +275,12 @@ if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
     output = r'D:\dcode\lin_trans\result\tt1'
-    tt1 = 'D:/dcode/lin_trans/result/tt1/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
-    # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
-    # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-    models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
-
-    # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
-    SrtWriter('xxx', output, tt1, 'zh').funasr_to_srt(models)
+    print(1)
+    logger.info(output)
+    # tt1 = 'D:/dcode/lin_trans/result/tt1/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    # # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    # # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+    # models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
+    #
+    # # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
+    # SrtWriter('xxx', output, tt1, 'zh').funasr_to_srt(models)

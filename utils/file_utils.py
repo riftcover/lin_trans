@@ -37,6 +37,10 @@ def funasr_write_srt_file(segments, srt_file_path):
             srt_file.write(f"{start_time} --> {end_time}\n")
             srt_file.write(f"{text}\n\n")
 
+def funasr_write_txt_file(segments, txt_file_path):
+    with open(txt_file_path, "w", encoding="utf-8") as txt_file:
+        txt_file.write(segments)
+
 
 def funasr_format_time(seconds):
     """将秒数转换为SRT格式的时间字符串"""
