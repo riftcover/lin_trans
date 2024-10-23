@@ -115,6 +115,28 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
 
 
 def create_segmented_transcript(time_stamps: List[Tuple[int, int]], text: str, key_text: str, split_indices: List[int]) -> List[Dict[str, Union[int, str]]]:
+    """
+    使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
+    将字级时间戳，拼接成句子时间戳
+    Args:
+        time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段
+        text: 标点预测模型输出的文本text字段
+        key_text: 标点预测模型输出的文本key字段
+        split_indices: 标点预测模型输出的punc_array大于1的列表
+    Examples:
+        a = "today's podcast is about modifying ski bootss and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years"
+        b = [{'key': "today's",
+              'text': "podcast is about modifying ski BOOTSS and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years",
+              'timestamp': [[270, 830], [830, 910], [910, 990], [990, 2310], [2310, 2690], [2710, 3370], [3870, 3890], [3890, 4090], [4090, 4250], [4250, 4390],
+                            [4390, 4610], [4610, 4710], [4710, 4950], [5010, 5090], [5090, 5410], [5410, 5790], [5790, 5970], [5970, 6810], [6810, 6970], [6970, 7470],
+                            [7470, 7630], [7630, 7930], [7930, 8029], [8029, 8330], [8330, 8450], [8450, 8690], [8730, 9075]]}]
+        c = [{'key': "today's",
+              'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
+              'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+                             1, 1, 3]}]
+    Returns:[ {'start': 270, 'end': 3370, 'text': "today's Podcast is about modifying ski bootss,"}]
+
+    """
     sentence_info = []
     begin = 0
     words = split_sentence(text)
@@ -125,6 +147,7 @@ def create_segmented_transcript(time_stamps: List[Tuple[int, int]], text: str, k
             "text": ""
         }
         if i == 0:
+            # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
             current_segment["text"] = key_text + " "
 
         for word in words[begin:end + 1]:
