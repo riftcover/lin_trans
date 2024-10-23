@@ -81,7 +81,7 @@ cmd = [
     "--output-dir=build",
     f"--windows-product-version={your_version}",
     f"--windows-file-version={your_version}",
-`    "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
+    "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
     "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
     "--include-data-dir=result=result",  # 包含logs文件夹

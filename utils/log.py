@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+from pathlib import Path
 
 from loguru import logger
 
@@ -18,14 +19,35 @@ class Logings:
         # 文件名称，按天创建
         DATE = datetime.datetime.now().strftime('%Y-%m-%d')
         self.logger = logger
-        # 项目路径下创建log目录保存日志文件
-        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        log_path = os.path.join(app_root, "logs")  # 拼接指定路径
-        # 判断目录是否存在，不存在则创建新的目录
-        if not os.path.isdir(log_path):
-            os.makedirs(log_path)
-        self.logger.configure(handlers=[{"sink": sys.stderr, "level": "TRACE"},
-                                        {"sink": f'{log_path}/{DATE}.log', "level": "TRACE", "rotation": "1 day",
-                                         "retention": 1, "encoding": 'utf-8', "backtrace": True, "diagnose": True,
-                                         "enqueue": True}])
 
+        # 获取应用程序根目录
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的可执行文件
+            app_root = Path(sys.executable).parent
+        else:
+            # 如果是开发环境
+            app_root = Path(__file__).parent.parent
+
+        # 创建日志目录
+        log_path = app_root / "logs"
+        log_path.mkdir(parents=True, exist_ok=True)
+
+        # 配置日志
+        log_file = log_path / f"{DATE}.log"
+        self.logger.configure(handlers=[
+            # {"sink": sys.stderr, "level": "TRACE"},
+            {"sink": str(log_file),
+             "level": "TRACE",
+             "rotation": "1 day",
+             "retention": "1 week",
+             "encoding": 'utf-8',
+             "backtrace": True,
+             "diagnose": True,
+             "enqueue": True}
+        ])
+
+        # 添加一条日志，确认日志系统已经初始化
+        self.logger.info("日志系统已初始化")
+
+    def get_logger(self):
+        return self.logger
