@@ -1,5 +1,4 @@
-import os
-import re
+from typing import List, Dict, Tuple, Union
 
 import unicodedata
 from datetime import timedelta
@@ -18,6 +17,7 @@ def write_srt_file(segment, srt_file_path):
         srt_file.write(f"{format_time(start_time)} --> {format_time(end_time)}\n")
         srt_file.write(f"{text.strip()}\n\n")
 
+
 def format_time(seconds):
     milliseconds = int((seconds % 1) * 1000)
     seconds = int(seconds)
@@ -25,16 +25,18 @@ def format_time(seconds):
     hours, minutes = divmod(minutes, 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
 
+
 def funasr_write_srt_file(segments, srt_file_path):
     with open(srt_file_path, "w", encoding="utf-8") as srt_file:
         for i, segment in enumerate(segments, 1):
             start_time = format_time(segment['start'] / 1000)  # Convert milliseconds to seconds
             end_time = format_time(segment['end'] / 1000)  # Convert milliseconds to seconds
             text = segment['text'].strip()
-            
+
             srt_file.write(f"{i}\n")
             srt_file.write(f"{start_time} --> {end_time}\n")
             srt_file.write(f"{text}\n\n")
+
 
 def funasr_format_time(seconds):
     """将秒数转换为SRT格式的时间字符串"""
@@ -44,9 +46,11 @@ def funasr_format_time(seconds):
     milliseconds = td.microseconds // 1000
     return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
 
+
 def is_cjk(char):
     """检查字符是否是中日韩文字"""
     return 'CJK' in unicodedata.name(char, '')
+
 
 def split_sentence(sentence):
     words = sentence.split()
@@ -60,7 +64,8 @@ def split_sentence(sentence):
             result.append(word)
     return result
 
-def get_segment_timestamps(result:list,time_threshold:float=0.2):
+
+def get_segment_timestamps(result: list, time_threshold: float = 0.2):
     """
 
     Args:
@@ -89,7 +94,7 @@ def get_segment_timestamps(result:list,time_threshold:float=0.2):
 
             else:
                 # 否则添加空格
-                current_segment["text"] += char+' '
+                current_segment["text"] += char + ' '
             ll += 1
             # 检查是否到达句子末尾
             if i < len(timestamps) - 1:
@@ -107,3 +112,28 @@ def get_segment_timestamps(result:list,time_threshold:float=0.2):
         segments_list.append(current_segment)
 
     return segments_list
+
+
+def create_segmented_transcript(time_stamps: List[Tuple[int, int]], text: str, key_text: str, split_indices: List[int]) -> List[Dict[str, Union[int, str]]]:
+    sentence_info = []
+    begin = 0
+    words = split_sentence(text)
+    for i, end in enumerate(split_indices):
+        current_segment = {
+            "start": time_stamps[begin][0],
+            "end": time_stamps[end][1],
+            "text": ""
+        }
+        if i == 0:
+            current_segment["text"] = key_text + " "
+
+        for word in words[begin:end + 1]:
+            if is_cjk(word[0]):
+                current_segment["text"] += word
+            else:
+                current_segment["text"] += word + ' '
+        current_segment["text"] = current_segment["text"].strip()
+
+        sentence_info.append(current_segment)
+        begin = end + 1
+    return sentence_info
