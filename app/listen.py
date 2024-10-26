@@ -89,9 +89,9 @@ class SrtWriter:
         """
         self.srt_name = raw_noextname
         logger.info(f'wav_dirname : {wav_dirname}')
-        # if not Path(wav_dirname).is_file():
-        #     logger.error(f"The file {wav_dirname} does not exist.")
-        #     raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
+        if not Path(wav_dirname).is_file():
+            logger.error(f"The file {wav_dirname} does not exist.")
+            raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
         self.input_file = wav_dirname  #ffz转换后的wav文件路径
         self.ln = ln
         self.data_bridge = config.data_bridge
@@ -268,8 +268,8 @@ class SrtWriter:
             res = model.generate(
                 input=temp_audio_file,
                 cache={},
-                language=self.ln,  # 自动检测语言
-                # use_itn=True,
+                language=self.ln,
+                # use_itn=True,  # 标点符号
                 batch_size_s=60,
                 merge_vad=True,  # 启用 VAD 断句
                 merge_length_s=10000,  # 合并长度，单位为毫秒
