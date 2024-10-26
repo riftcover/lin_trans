@@ -215,13 +215,20 @@ class SrtWriter:
         self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_sense_model(self, model_name: str):
+        """
+        由于直接用model加载音频，显存占用会随着音频长度增加，几何倍增长。
+        因此，这里使用VAD模型，将音频分割为多个片段，然后逐个处理。
+
+        Args:
+            model_name:
+
+        Returns:
+
+        """
         logger.info('使用SenseVoiceSmall')
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 
-        # 音频文件路径
-        # audio_file_path = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\Modifications To Make Ski Boots More Comfortable.wav'
-        # audio_file_path = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\tt2.wav'
 
         # 加载VAD模型
         vad_model = AutoModel(
