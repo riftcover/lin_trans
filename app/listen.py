@@ -255,7 +255,7 @@ class SrtWriter:
         punctuation_model = AutoModel(model="ct-punc", model_revision="v2.0.4", disable_update=True)
         results = []
         self.data_bridge.emit_whisper_working(self.unid, 16)
-        task_rate = 100 // len(segments)
+        task_rate = 100 / len(segments)
         for i,segment in enumerate(segments):
             start_time, end_time = segment  # 获取开始和结束时间
             cropped_audio = self.crop_audio(audio_data, start_time, end_time, sample_rate)
@@ -275,7 +275,7 @@ class SrtWriter:
                 merge_length_s=10000,  # 合并长度，单位为毫秒
             )
 
-            self.data_bridge.emit_whisper_working(self.unid, i * task_rate)
+            self.data_bridge.emit_whisper_working(self.unid, round(i*task_rate))
             text = rich_transcription_postprocess(res[0]["text"])
             logger.info(text)
             # 添加时间戳
