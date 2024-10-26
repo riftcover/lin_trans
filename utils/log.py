@@ -51,8 +51,5 @@ class Logings:
 
         self.logger.configure(handlers=handlers)
 
-        # 添加一条日志，确认日志系统已经初始化
-        self.logger.info("日志系统已初始化")
-
     def get_logger(self):
         return self.logger

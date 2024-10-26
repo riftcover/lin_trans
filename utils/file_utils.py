@@ -118,67 +118,129 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
     return segments_list
 
 
-def get_segmented_index(punc_array: List[int]) -> List[int]:
+
+
+
+class Segment:
     """
-    根据标点符号数组，获取非1的索引，即带标点的单词的索引
-    by the punc_array, get the index of the non-1, which is the index of the word with punctuation
-    Args:
-        punc_array: 标点符号数组,不为1的是带标点的单词
-    Returns:
-        标点符合所在单词的索引
-
-    Examples:
-        c = [{'key': "today's",
-      'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
-      'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
-                     1, 1, 3]}]
+    用于SenseVoiceSmall模型处理时间戳
     """
-    return [i for i, value in enumerate(punc_array) if value != 1]
 
+    def __init__(self, punctuation_res:list, time_res:list):
+        """
 
-def create_segmented_transcript(time_stamps: List[Tuple[int, int]], text: str, key_text: str, split_indices: List[int]) -> List[Dict[str, Union[int, str]]]:
-    """
-    使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
-    将字级时间戳，拼接成句子时间戳
-    Args:
-        time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段
-        text: 标点预测模型输出的文本text字段
-        key_text: 标点预测模型输出的文本key字段
-        split_indices: 标点预测模型输出的punc_array大于1的列表
-    Examples:
-        a = "today's podcast is about modifying ski bootss and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years"
-        b = [{'key': "today's",
-              'text': "podcast is about modifying ski BOOTSS and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years",
-              'timestamp': [[270, 830], [830, 910], [910, 990], [990, 2310], [2310, 2690], [2710, 3370], [3870, 3890], [3890, 4090], [4090, 4250], [4250, 4390],
-                            [4390, 4610], [4610, 4710], [4710, 4950], [5010, 5090], [5090, 5410], [5410, 5790], [5790, 5970], [5970, 6810], [6810, 6970], [6970, 7470],
-                            [7470, 7630], [7630, 7930], [7930, 8029], [8029, 8330], [8330, 8450], [8450, 8690], [8730, 9075]]}]
-        c = [{'key': "today's",
-              'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
-              'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
-                             1, 1, 3]}]
-    Returns:[ {'start': 270, 'end': 3370, 'text': "today's Podcast is about modifying ski bootss,"}]
+        Args:
+            punctuation_res: 标点模型预测结果
+            time_res: 时间模型预测结果
+            time_res:
+        """
+        self.punctuation_info = punctuation_res[0]
+        self.time_info = time_res[0]
 
-    """
-    sentence_info = []
-    begin = 0
-    words = split_sentence(text)
-    for i, end in enumerate(split_indices):
-        current_segment = {
-            "start": time_stamps[begin][0],
-            "end": time_stamps[end][1],
-            "text": ""
-        }
-        if i == 0:
-            # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
-            current_segment["text"] = key_text + " "
+        self.punc_array = self.punctuation_info['punc_array']
+        self.punc_text = split_sentence(self.punctuation_info['text'])
+        self.time_text = split_sentence(self.time_info['text'])
+        self.time_timestamp = self.time_info['timestamp']
 
-        for word in words[begin:end + 1]:
-            if is_cjk(word[0]):
-                current_segment["text"] += word
-            else:
-                current_segment["text"] += word + ' '
-        current_segment["text"] = current_segment["text"].strip()
+    def get_segmented_index(self) -> List[int]:
+        """
+        根据标点符号数组，获取非1的索引，即带标点的单词的索引
+        by the punc_array, get the index of the non-1, which is the index of the word with punctuation
+        Args:
+            punc_array: 标点符号数组,不为1的是带标点的单词
+        Returns:
+            标点符合所在单词的索引
 
-        sentence_info.append(current_segment)
-        begin = end + 1
-    return sentence_info
+        Examples:
+            c = [{'key': "today's",
+          'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
+          'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 1, 3]}]
+        """
+        return [i for i, value in enumerate(self.punc_array) if value != 1]
+
+    def ask_res_len(self) -> bool:
+        """
+        判断标点预测结果和时间预测结果长度是否一致
+        有些情况下，标点预测结果和时间预测结果长度不一致，时间预测结果会将几个单词合并在一起
+
+        """
+        if len(self.punc_array) == len(self.time_timestamp):
+            return True
+        else:
+            logger.error("punc_array length is not equal to time_timestamp length")
+            return False
+
+    def fix_wrong_index(self):
+        """
+        修正标点预测结果和时间预测结果长度不一致的情况
+        有些情况下，标点预测结果和时间预测结果长度不一致，时间预测结果会将几个单词合并在一起，导致标点预测结果的索引和时间预测结果的索引不一致。
+        该函数通过将标点预测结果的索引和时间预测结果的索引不一致的位置，复制一份合并点的数据，使得标点预测结果和时间预测结果长度一致。
+        长度相差多次，就处理几次
+        Returns:
+
+        """
+        ll = len(self.punc_text)
+        turns = len(self.punc_array)-len(self.time_timestamp)
+        i = 0
+        logger.info(f"fix turns: {turns}")
+        for _ in range(turns):
+            while i < ll:
+                if self.punc_text[i].lower() != self.time_text[i].lower() and self.punc_text[i].lower()[:-1] != self.time_text[i].lower():
+                    self.time_text.insert(i, '')  # 添加一组空数据
+                    self.time_timestamp.insert(i, self.time_timestamp[i])  # 添加一组时间
+                    logger.error(f"wrong text: {self.punc_text[i-5:i]}:{self.time_text[i-5:i]}")
+                    i += 1  # 移动到下一个位置
+                    break
+                i += 1
+            if i >= ll:
+                break  # 如果已经检查完所有元素，就退出外层循环
+            logger.info(f"fix wrong finish")
+
+    def create_segmented_transcript(self, segment_start_time: int, split_index: List[int]) -> List[Dict[str, Union[int, str]]]:
+        """
+        使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
+        将字级时间戳，拼接成句子时间戳
+        Args:
+            segment_start_time: vad切割音频后，每段的开始时间
+            time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段
+            text: 标点预测模型输出的文本text字段
+            key_text: 标点预测模型输出的文本key字段
+            split_index: 标点预测模型输出的punc_array大于1的列表
+        Examples:
+            a = "today's podcast is about modifying ski bootss and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years"
+            b = [{'key': "today's",
+                  'text': "podcast is about modifying ski BOOTSS and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years",
+                  'timestamp': [[270, 830], [830, 910], [910, 990], [990, 2310], [2310, 2690], [2710, 3370], [3870, 3890], [3890, 4090], [4090, 4250], [4250, 4390],
+                                [4390, 4610], [4610, 4710], [4710, 4950], [5010, 5090], [5090, 5410], [5410, 5790], [5790, 5970], [5970, 6810], [6810, 6970], [6970, 7470],
+                                [7470, 7630], [7630, 7930], [7930, 8029], [8029, 8330], [8330, 8450], [8450, 8690], [8730, 9075]]}]
+            c = [{'key': "today's",
+                  'text': " Podcast is about modifying ski bootss, and you're going to hear from my guest lou rosenfeld, who owned a successful ski shop in calgary for many years.",
+                  'punc_array': [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+                                 1, 1, 3]}]
+        Returns:[ {'start': 270, 'end': 3370, 'text': "today's Podcast is about modifying ski bootss,"}]
+
+        """
+        sentence_info = []
+        begin = 0
+        words = self.punc_text
+        for i, end in enumerate(split_index):
+            current_segment = {
+                "start": self.time_timestamp[begin][0] + segment_start_time,
+                "end": self.time_timestamp[end][1] + segment_start_time,
+                "text": ""
+            }
+            # if i == 0:
+            #     # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
+            #     current_segment["text"] = key_text + " "
+
+            for word in words[begin:end+1]:
+                if is_cjk(word[0]):
+                    current_segment["text"] += word
+                else:
+                    current_segment["text"] += word + ' '
+            current_segment["text"] = current_segment["text"].strip()
+
+            sentence_info.append(current_segment)
+            begin = end + 1
+        return sentence_info

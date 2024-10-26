@@ -347,7 +347,7 @@ class TableApp(CardWidget):
     def table_row_working(self, unid: str, progress: float):
         ask = self.row_cache
         if unid in ask:
-            logger.debug(f"缓存中找到:{unid}的索引")
+            # logger.debug(f"缓存中找到:{unid}的索引")
             row = self.row_cache[unid]
         else:
             logger.debug(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")

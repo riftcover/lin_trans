@@ -4,13 +4,13 @@ import sys
 import time
 from pathlib import Path
 import threading
-
+import soundfile as sf  # 用于读取和裁剪音频文件
 # import whisper
 # from faster_whisper import WhisperModel
 # from whisper.utils import get_writer, format_timestamp, make_safe
 
 from nice_ui.configure import config
-from utils.file_utils import funasr_write_srt_file, funasr_write_txt_file, create_segmented_transcript, get_segmented_index
+from utils.file_utils import funasr_write_srt_file, funasr_write_txt_file, Segment
 from utils import logger
 from utils.lazy_loader import LazyLoader
 
@@ -89,9 +89,9 @@ class SrtWriter:
         """
         self.srt_name = raw_noextname
         logger.info(f'wav_dirname : {wav_dirname}')
-        if not Path(wav_dirname).is_file():
-            logger.error(f"The file {wav_dirname} does not exist.")
-            raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
+        # if not Path(wav_dirname).is_file():
+        #     logger.error(f"The file {wav_dirname} does not exist.")
+        #     raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
         self.input_file = wav_dirname  #ffz转换后的wav文件路径
         self.ln = ln
         self.data_bridge = config.data_bridge
@@ -189,7 +189,6 @@ class SrtWriter:
     def funasr_zn_model(self, model_name: str):
         logger.info('使用中文模型')
 
-
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         model = AutoModel(model=model_dir, model_revision="v2.0.4",
@@ -217,52 +216,86 @@ class SrtWriter:
 
     def funasr_sense_model(self, model_name: str):
         logger.info('使用SenseVoiceSmall')
-
-
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
-        model = AutoModel(model=model_dir, model_revision="v2.0.4",
-                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
-                          vad_kwargs={"max_single_segment_time": 30000},
-                          disable_update=True
-                          )
-        # 启动进度更新线程
-        progress_thread = threading.Thread(target=self._update_progress)
-        progress_thread.start()
-        try:
-            res = model.generate(input=self.input_file, batch_size_s=300,
-                                 hotword=None, language=self.ln
-                                 )
-        finally:
-            self._stop_progress_thread = True
-            progress_thread.join()  # 模型生成完成，更新进度值到 80
-        self.data_bridge.emit_whisper_working(self.unid, 50)
 
-        txt_file_path = f"{os.path.splitext(self.input_file)[0]}.txt"
-        text = rich_transcription_postprocess(res[0]['text'])
-        funasr_write_txt_file(text, txt_file_path)
-        self.data_bridge.emit_whisper_working(self.unid, 70)
-        wav_file = f"{os.path.splitext(self.input_file)[0]}.wav"
-        time_model = AutoModel(
-            model="fa-zh", model_revision="v2.0.4",
+        # 音频文件路径
+        # audio_file_path = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\Modifications To Make Ski Boots More Comfortable.wav'
+        # audio_file_path = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\tt2.wav'
+
+        # 加载VAD模型
+        vad_model = AutoModel(
+            model=vad_model_dir,
             disable_update=True
         )
-        # 修改 generate 方法的调用，同时提供音频和文本文件
-        time_res = time_model.generate(input=(wav_file, txt_file_path), data_type=("sound", "text"))
 
-        punctuation_model = AutoModel(model="ct-punc", model_revision="v2.0.4")
+        # 使用VAD模型处理音频文件
+        vad_res = vad_model.generate(
+            input=self.input_file,
+            cache={},
+            max_single_segment_time=30000,  # 最大单个片段时长
+        )
 
-        punctuation_res = punctuation_model.generate(input=txt_file_path)
-        punctuation_info = punctuation_res[0]
-        self.data_bridge.emit_whisper_working(self.unid, 90)
-        d = get_segmented_index(punctuation_info['punc_array'])
-        # 合并结果
-        split_result = create_segmented_transcript(time_res[0]['timestamp'], punctuation_info['text'], punctuation_info['key'], d)
+        # 从VAD模型的输出中提取每个语音片段的开始和结束时间
+        segments = vad_res[0]['value']  # 假设只有一段音频，且其片段信息存储在第一个元素中
+        logger.info(f"segments: {segments}")
+        # 加载原始音频数据
+        audio_data, sample_rate = sf.read(self.input_file)
+
+        model = AutoModel(model=model_dir, model_revision="v2.0.4",disable_update=True)
+
+        time_model = AutoModel(model="fa-zh", model_revision="v2.0.4", disable_update=True)
+        punctuation_model = AutoModel(model="ct-punc", model_revision="v2.0.4", disable_update=True)
+        results = []
+        self.data_bridge.emit_whisper_working(self.unid, 16)
+        task_rate = 100 // len(segments)
+        for i,segment in enumerate(segments):
+            start_time, end_time = segment  # 获取开始和结束时间
+            cropped_audio = self.crop_audio(audio_data, start_time, end_time, sample_rate)
+
+            # 将裁剪后的音频保存为临时文件
+            temp_audio_file = "temp_cropped.wav"
+            sf.write(temp_audio_file, cropped_audio, sample_rate)
+
+            # 语音转文字处理
+            res = model.generate(
+                input=temp_audio_file,
+                cache={},
+                language=self.ln,  # 自动检测语言
+                # use_itn=True,
+                batch_size_s=60,
+                merge_vad=True,  # 启用 VAD 断句
+                merge_length_s=10000,  # 合并长度，单位为毫秒
+            )
+
+            self.data_bridge.emit_whisper_working(self.unid, i * task_rate)
+            text = rich_transcription_postprocess(res[0]["text"])
+            logger.info(text)
+            # 添加时间戳
+            time_res = time_model.generate(input=(temp_audio_file, text), data_type=("sound", "text"))
+            logger.info(time_res)
+            # 预测标点符号
+            punctuation_res = punctuation_model.generate(input=text)
+            logger.info(punctuation_res)
+
+            msg = Segment(punctuation_res, time_res)
+            work_list = msg.get_segmented_index()
+            ff = msg.ask_res_len()
+            if ff is False:
+                msg.fix_wrong_index()
+            rrl = msg.create_segmented_transcript(start_time, work_list)
+            results.extend(rrl)
 
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        funasr_write_srt_file(split_result, srt_file_path)
+        funasr_write_srt_file(results, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
 
+
+    @staticmethod
+    def crop_audio(audio_data, start_time, end_time, sample_rate):
+        start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
+        end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
+        return audio_data[start_sample:end_sample]
     # def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
     #     if system_type != 'darwin':
     #         self.whisper_faster_to_srt(model_name, cuda_status)
@@ -274,13 +307,13 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    output = r'D:\dcode\lin_trans\result\tt1'
-    print(1)
+    output = 'D:\\dcode\lin_trans\\result\\tt1'
     logger.info(output)
-    # tt1 = 'D:/dcode/lin_trans/result/tt1/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
+    tt1 = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\Modifications To Make Ski Boots More Comfortable.wav'
     # # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     # models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
+    models = 'SenseVoiceSmall'
     #
     # # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
-    # SrtWriter('xxx', output, tt1, 'zh').funasr_to_srt(models)
+    SrtWriter('xxx', tt1, output, 'en').funasr_to_srt(models)
