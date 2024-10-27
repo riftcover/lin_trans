@@ -16,8 +16,7 @@ from utils import logger
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
-from funasr import AutoModel
-from funasr.utils.postprocess_utils import rich_transcription_postprocess
+AutoModel = LazyLoader('funasr.AutoModel')
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -81,6 +80,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 @lru_cache(maxsize=None)
 def load_model(model_path, model_revision="v2.0.4"):
     return AutoModel(model=model_path, model_revision=model_revision, disable_update=True)
+
 
 class SrtWriter:
 
@@ -191,6 +191,7 @@ class SrtWriter:
             logger.error(f'模型匹配失败：{model_name}')
 
     def funasr_zn_model(self, model_name: str):
+        from funasr import AutoModel
         logger.info('使用中文模型')
 
         model_dir = f'{config.funasr_model_path}/{model_name}'
@@ -229,6 +230,8 @@ class SrtWriter:
         Returns:
 
         """
+        from funasr import AutoModel
+        from funasr.utils.postprocess_utils import rich_transcription_postprocess
         logger.info('使用SenseVoiceSmall')
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
@@ -261,7 +264,7 @@ class SrtWriter:
 
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 sf.write(temp_file.name, cropped_audio, sample_rate)
-                
+
                 res = model.generate(
                     input=temp_file.name,
                     cache={},
