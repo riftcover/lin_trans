@@ -1,5 +1,6 @@
 import os
-import sys
+import tempfile
+from functools import lru_cache
 
 import time
 from pathlib import Path
@@ -77,6 +78,9 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 #     from whisper.transcribe import transcribe
 #     return transcribe(model, audio, *args, **kwargs)
 
+# @lru_cache(maxsize=None)
+def load_model(model_path, model_revision="v2.0.4"):
+    return AutoModel(model=model_path, model_revision=model_revision, disable_update=True)
 
 class SrtWriter:
 
@@ -229,12 +233,11 @@ class SrtWriter:
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 
-
-        # 加载VAD模型
-        vad_model = AutoModel(
-            model=vad_model_dir,
-            disable_update=True
-        )
+        # 加载模型
+        vad_model = load_model(vad_model_dir)
+        model = load_model(model_dir)
+        time_model = load_model("fa-zh")
+        punctuation_model = load_model("ct-punc")
 
         # 使用VAD模型处理音频文件
         vad_res = vad_model.generate(
@@ -245,50 +248,39 @@ class SrtWriter:
 
         # 从VAD模型的输出中提取每个语音片段的开始和结束时间
         segments = vad_res[0]['value']  # 假设只有一段音频，且其片段信息存储在第一个元素中
-        logger.info(f"segments: {segments}")
         # 加载原始音频数据
         audio_data, sample_rate = sf.read(self.input_file)
 
-        model = AutoModel(model=model_dir, model_revision="v2.0.4",disable_update=True)
-
-        time_model = AutoModel(model="fa-zh", model_revision="v2.0.4", disable_update=True)
-        punctuation_model = AutoModel(model="ct-punc", model_revision="v2.0.4", disable_update=True)
         results = []
         self.data_bridge.emit_whisper_working(self.unid, 16)
-        task_rate = 100 / len(segments)
-        for i,segment in enumerate(segments):
+        total_segments = len(segments)
+
+        for i, segment in enumerate(segments):
             start_time, end_time = segment  # 获取开始和结束时间
             cropped_audio = self.crop_audio(audio_data, start_time, end_time, sample_rate)
 
-            # 将裁剪后的音频保存为临时文件
-            temp_audio_file = "temp_cropped.wav"
-            sf.write(temp_audio_file, cropped_audio, sample_rate)
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+                sf.write(temp_file.name, cropped_audio, sample_rate)
+                
+                res = model.generate(
+                    input=temp_file.name,
+                    cache={},
+                    language=self.ln,
+                    batch_size_s=60,
+                    merge_vad=True,
+                    merge_length_s=10000,
+                )
 
-            # 语音转文字处理
-            res = model.generate(
-                input=temp_audio_file,
-                cache={},
-                language=self.ln,
-                # use_itn=True,  # 标点符号
-                batch_size_s=60,
-                merge_vad=True,  # 启用 VAD 断句
-                merge_length_s=10000,  # 合并长度，单位为毫秒
-            )
+            progress = min(round((i + 1) * 100 / total_segments), 100)
+            self.data_bridge.emit_whisper_working(self.unid, progress)
 
-            self.data_bridge.emit_whisper_working(self.unid, round(i*task_rate))
             text = rich_transcription_postprocess(res[0]["text"])
-            logger.info(text)
-            # 添加时间戳
-            time_res = time_model.generate(input=(temp_audio_file, text), data_type=("sound", "text"))
-            logger.info(time_res)
-            # 预测标点符号
+            time_res = time_model.generate(input=(temp_file.name, text), data_type=("sound", "text"))
             punctuation_res = punctuation_model.generate(input=text)
-            logger.info(punctuation_res)
 
             msg = Segment(punctuation_res, time_res)
             work_list = msg.get_segmented_index()
-            ff = msg.ask_res_len()
-            if ff is False:
+            if not msg.ask_res_len():
                 msg.fix_wrong_index()
             rrl = msg.create_segmented_transcript(start_time, work_list)
             results.extend(rrl)
@@ -297,12 +289,12 @@ class SrtWriter:
         funasr_write_srt_file(results, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
 
-
     @staticmethod
     def crop_audio(audio_data, start_time, end_time, sample_rate):
         start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
         end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
         return audio_data[start_sample:end_sample]
+
     # def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
     #     if system_type != 'darwin':
     #         self.whisper_faster_to_srt(model_name, cuda_status)
