@@ -378,6 +378,8 @@ class TableApp(CardWidget):
             row = self.row_cache[unid]
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
             progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+            chk = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+            chk.setEnabled(True)
             progress_bar.set_status("已完成")
             orm_result = self._choose_sql_orm(row)
 

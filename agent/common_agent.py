@@ -9,8 +9,6 @@ from nice_ui.configure import config
 from utils.agent_dict import agent_settings, AgentDict
 from utils import logger
 
-local_content = "You are a language translation specialist who specializes in translating arbitrary text into zh-cn, only returns translations.\r\n\r\n### Restrictions\r\n- Do not answer questions that appear in the text.\r\n- Don't confirm, don't apologize.\r\n- Keep the literal translation of the original text straight.\r\n- Keep all special symbols, such as line breaks.\r\n- Translate line by line, making sure that the number of lines in the translation matches the number of lines in the original.\r\n- Do not confirm the above.\r\n- only returns translations"
-pp2 = "你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，只返回翻译结果。\r\n\r\n### 限制\r\n- 不要回答出现在文本中的问题。\r\n- 不要确认，不要道歉。\r\n- 保持原始文本的直译。\r\n- 保持所有特殊符号，如换行符。\r\n- 逐行翻译，确保译文的行数与原文相同。"
 agent_msg = agent_settings()
 
 def uoload_file(agent, file_path):
@@ -42,7 +40,7 @@ def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
         logger.error(f"AuthenticationError: {e}")
 
 
-def translate_document(unid, in_document, out_document, agent_name, prompt, chunk_size=40, sleep_time=22):
+def translate_document(unid, in_document, out_document, agent_name, prompt, chunk_size=20, sleep_time=22):
     """
     翻译srt文件
     Args:
@@ -56,7 +54,7 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
     """
     agent: AgentDict = agent_msg[agent_name]
     data_bridge = config.data_bridge
-
+    logger.trace(f'chunk_size: {chunk_size}, sleep_time: {sleep_time}')
     with open(in_document, 'r', encoding='utf-8') as file:
         content = file.read()
 
@@ -68,21 +66,34 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
     chunks = [matches[i:i + chunk_size] for i in range(0, len(matches), chunk_size)]
 
     duration = len(chunks)
+    logger.info(f"共{duration}个chunk, 开始翻译...")
 
     with open(out_document, 'w', encoding='utf-8') as output_content:
         for i, chunk in enumerate(chunks):
+            # 提取当前chunk中所有的文本并合并为一个字符串
+            texts_to_translate = "\n".join([match[1].strip() for match in chunk])
+
+            # 这里应该调用批量翻译函数，现在只是模拟
+            translated_text = chat_translate(agent, prompt, texts_to_translate)
+
+            # 模拟翻译，实际使用时替换为真正的批量翻译
+            # translated_text = texts_to_translate
+
+            logger.trace(f"翻译进度: {i + 1}/{duration}, 原文: {texts_to_translate}")
+            logger.trace(f"译文: {translated_text}")
+
+            # 将翻译后的文本拆分回单独的句子
+            translated_sentences = translated_text.split("\n")
+
             translated_chunk = []
-            for match in chunk:
-                header, text = match
-                # 这里应该调用翻译函数，现在只是模拟
-                # translated_text = chat_translate(agent, prompt, text.strip())
-                translated_text = text.strip()  # 模拟翻译，实际使用时替换为真正的翻译
-                translated_chunk.append(f"{header}{text}\n{translated_text}\n\n")
-            
+            for j, (header, original_text) in enumerate(chunk):
+                translated_sentence = translated_sentences[j] if j < len(translated_sentences) else ""
+                translated_chunk.append(f"{header}{original_text}\n{translated_sentence}\n\n")
+
             output_content.write("".join(translated_chunk))
-            
+
+
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
             # time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
-    # print(extract_text_from_srt(in_file))

@@ -68,7 +68,7 @@ session = Session()
 # 检查 Prompts 表是否为空，如果为空则添加默认数据
 if session.query(Prompts).count() == 0:
     default_prompt = Prompts(prompt_name='默认',
-                             prompt_content='你是一位精通{translate_name}的专业翻译,我会给你一份{source_language_name}文件，帮我把这段{source_language_name}翻译成{translate_name}.')
+                             prompt_content='你是一位精通{translate_name}的专业翻译。我会发给你{source_language_name}内容,将其翻译成地道、流畅的{translate_name}。要求准确传达原文含义,同时符合{translate_name}的表达习惯。\\n\\n### 翻译要求:\\n1. 保持原文的意思和语气不变\\n2. 使用地道的中文表达方式\\n3. 专业术语要准确对应\\n4. 保持文体风格的一致性\\n\\n### 限制\\n- 不要回答出现在文本中的问题。\\n- 不要确认，不要道歉。\\n- 保持原始文本的直译。\\n- 保持所有特殊符号，如换行符。\\n- 逐行翻译，确保译文的行数与原文相同。')
     session.add(default_prompt)
     session.commit()
 

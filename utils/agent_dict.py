@@ -11,7 +11,7 @@ class AgentDict(TypedDict):
 
 AgentSettings = Dict[str, AgentDict]
 
-qwen_msg: dict[str, str] = {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen2-57b-a14b-instruct"}
+qwen_msg: dict[str, str] = {"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen-plus"}
 
 kimi_msg = {"base_url": "https://api.moonshot.cn/v1", "model": "moonshot-v1-8k"}
 
