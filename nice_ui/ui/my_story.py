@@ -337,6 +337,7 @@ class TableApp(CardWidget):
             row_position, filename, unid, job_status, obj_format
         )
         if job_status == 1:
+            chk.setEnabled(False)
             file_status.set_status("排队中")
         elif job_status == 0:
             logger.debug(f"文件:{filename} 状态更新为未开始")
