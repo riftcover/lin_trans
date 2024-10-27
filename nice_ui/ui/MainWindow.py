@@ -36,7 +36,7 @@ class Window(FluentWindow):
         self.set_font()
 
         self.initWindow()
-        self.load_proxy_settings()  # 加载代理设置
+        # self.load_proxy_settings()  # 加载代理设置
         # todo 更新检查更改地址
         # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
@@ -154,12 +154,13 @@ class Window(FluentWindow):
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
 
-def main():
-    app = QApplication(sys.argv)
-    # window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-    window = Window()
-    window.show()
-    sys.exit(app.exec())
+
 
 if __name__ == "__main__":
+    def main():
+        app = QApplication(sys.argv)
+        # window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+        window = Window()
+        window.show()
+        sys.exit(app.exec())
     main()

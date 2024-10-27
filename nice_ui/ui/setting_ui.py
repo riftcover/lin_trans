@@ -8,7 +8,6 @@ from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkReq
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
 
-from agent.model_down import download_model
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
 from nice_ui.util.tools import StartTools
@@ -28,6 +27,7 @@ class DownloadThread(QThread):
 
     def run(self):
         try:
+            from agent.model_down import download_model
             download_model(self.model_name, progress_callback=self.update_progress)
             self.finished_signal.emit(True)
         except Exception as e:

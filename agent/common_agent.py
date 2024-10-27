@@ -40,7 +40,7 @@ def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
         logger.error(f"AuthenticationError: {e}")
 
 
-def translate_document(unid, in_document, out_document, agent_name, prompt, chunk_size=20, sleep_time=22):
+def translate_document(unid, in_document, out_document, agent_name, prompt, chunk_size=20, sleep_time=10):
     """
     翻译srt文件
     Args:
@@ -95,5 +95,5 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
 
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
-            # time.sleep(sleep_time)
+            time.sleep(sleep_time)
     data_bridge.emit_whisper_finished(unid)
