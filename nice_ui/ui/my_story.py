@@ -610,6 +610,13 @@ class TableApp(CardWidget):
         dialog = ExportSubtitleDialog(job_paths, self)
         dialog.exec()
 
+           # 清除所有复选框状态
+        self.selectAllBtn.setChecked(False)  # 清除"全选"按钮状态
+        for row in range(self.table.rowCount()):
+            checkbox = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+            if checkbox.isChecked():
+                checkbox.setChecked(False)
+
     def _export_row(self):
         row = self._get_row()
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)

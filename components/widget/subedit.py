@@ -77,7 +77,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 调用原始的鼠标按下事件处理函数，保持原有功能
         original_mouse_press_event(event)
 
-
     def destroyEditor(self, editor, index):
         # 用来通知哪个单元格需要销毁编辑器
         if index.column() == 0:  # 只处理第一列的编辑器
@@ -90,16 +89,16 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         # 调用原有的绘制逻辑
         if index.column() == 2:  # 行号列
-                        # 使用自定义绘制方法来居中显示行号
+            # 使用自定义绘制方法来居中显示行号
             painter.setPen(QColor("#000000"))  # 设置文字颜色
             painter.setFont(option.font)  # 使用默认字体
-            
+
             # 计算文本
             text = str(index.row() + 1)
-            
+
             # 计算文本矩形
             text_rect = painter.boundingRect(option.rect, Qt.AlignCenter, text)
-            
+
             # 绘制居中的文本
             painter.drawText(option.rect, Qt.AlignCenter, text)
         else:
@@ -276,6 +275,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
 class SubtitleModel(QAbstractTableModel):
     dataChangedSignal = Signal()
+
     # 定义数据模型
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
@@ -337,8 +337,8 @@ class SubtitleModel(QAbstractTableModel):
         return subtitles
 
     def get_subtitles(self):
-            # 返回已加载的字幕数据
-            return self.sub_data
+        # 返回已加载的字幕数据
+        return self.sub_data
 
     def rowCount(self, parent=QModelIndex()) -> int:
         return len(self.sub_data)
@@ -401,7 +401,7 @@ class SubtitleModel(QAbstractTableModel):
                 self.sub_data[row] = set_data
             elif col == 5:  # 译文列
                 self.sub_data[row] = (self.sub_data[row][0], self.sub_data[row][1], self.sub_data[row][2], value)
-            
+
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
         elif role == Qt.UserRole and col == 3:  # 时间列
@@ -409,7 +409,7 @@ class SubtitleModel(QAbstractTableModel):
 
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
- 
+
         # logger.debug(f"setData 触发信号 dataChanged: {index}")
         self.dataChanged.emit(index, index, [role])
         return True
@@ -486,6 +486,10 @@ class SubtitleModel(QAbstractTableModel):
                 else:
                     f.write(f"{j[1]}\n\n")
 
+    def checkbox_clear(self, row) -> None:
+        # 清除勾选框状态
+        self.setData(self.index(row, 0), Qt.Unchecked, Qt.CheckStateRole)
+
 
 class VirtualScrollSignals(QObject):
     # 使用 VirtualScrollDelegate 来管理编辑器的创建和销毁。
@@ -550,8 +554,6 @@ class SubtitleTable(QTableView):
         self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.delayed_update)
 
-
-
         # 连接信号
         self.delegate.signals.createEditor.connect(self.on_editor_created)
         self.delegate.signals.destroyEditor.connect(self.on_editor_destroyed)
@@ -579,10 +581,10 @@ class SubtitleTable(QTableView):
         self.batch_timer = QTimer(self)
         self.batch_timer.timeout.connect(self.create_next_batch)
         self.batch_timer.setInterval(100)  # 100ms 间隔创建下一批
- 
+
         # 添加标志来追踪是否所有编辑器都已创建
         self.all_editors_created = False
- 
+
     def init_ui(self) -> None:
         # 设置滚动模式
         self.setVerticalScrollMode(QTableView.ScrollPerPixel)
@@ -671,7 +673,7 @@ class SubtitleTable(QTableView):
         # 如果已经创建完所有编辑器，直接返回
         if self.all_editors_created:
             return
-            
+
         # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
         top_left = self.indexAt(visible_rect.topLeft())
@@ -680,10 +682,10 @@ class SubtitleTable(QTableView):
         # 确保可见区域的编辑器优先创建
         visible_start = max(0, top_left.row())
         visible_end = bottom_right.row() if bottom_right.isValid() else (visible_start + visible_rect.height() // self.default_row_height)
-        
+
         # 创建可见区域的编辑器
         self.create_editors_for_range(visible_start, visible_end)
-        
+
         # 开始批量创建其余编辑器
         if not self.is_creating_batch:
             self.is_creating_batch = True
@@ -694,7 +696,7 @@ class SubtitleTable(QTableView):
         """创建指定范围内的编辑器"""
         start_row = max(0, start_row)
         end_row = min(end_row, self.model.rowCount() - 1)
-        
+
         for row in range(start_row, end_row + 1):
             for col in range(self.model.columnCount()):
                 if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列
@@ -709,10 +711,10 @@ class SubtitleTable(QTableView):
 
         batch_end = min(self.current_batch_start + self.batch_size, self.model.rowCount())
         self.create_editors_for_range(self.current_batch_start, batch_end - 1)
-        
+
         # 更新进度
         self.current_batch_start = batch_end
-        
+
         # 检查是否完成所有行的创建
         if self.current_batch_start >= self.model.rowCount():
             self.batch_timer.stop()
@@ -853,6 +855,7 @@ class SubtitleTable(QTableView):
         # Iterate over checked rows in reverse order
         for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_down(row)
+            self.model.checkbox_clear(row)
 
     def move_row_up(self):
         # 移动原文到上一行
@@ -863,6 +866,7 @@ class SubtitleTable(QTableView):
         logger.debug(f"move_row_up_more {self.model.checked_rows}")
         for row in sorted(self.model.checked_rows, reverse=True):
             self.model.move_edit_up(row)
+            self.model.checkbox_clear(row)
 
     def save_subtitle(self):
         self.model.save_subtitle()
@@ -873,7 +877,7 @@ class SubtitleTable(QTableView):
         # 从 SubtitleModel 中读取字幕数据
         for row in range(self.model.rowCount()):
             start_time, end_time, first_text, second_text = self.model.sub_data[row]
-            
+
             # 将时间转换为毫秒
             start_time_ms = self.time_to_milliseconds(start_time)
             end_time_ms = self.time_to_milliseconds(end_time)
@@ -890,6 +894,7 @@ class SubtitleTable(QTableView):
         s, ms = s.split(',')
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
+
 if __name__ == "__main__":
     import sys
 
@@ -902,4 +907,3 @@ if __name__ == "__main__":
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
-
