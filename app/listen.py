@@ -16,8 +16,6 @@ from utils import logger
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
-AutoModel = LazyLoader('funasr.AutoModel')
-
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -77,8 +75,9 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 #     from whisper.transcribe import transcribe
 #     return transcribe(model, audio, *args, **kwargs)
 
-@lru_cache(maxsize=None)
+# @lru_cache(maxsize=None)
 def load_model(model_path, model_revision="v2.0.4"):
+    from funasr import AutoModel
     return AutoModel(model=model_path, model_revision=model_revision, disable_update=True)
 
 
