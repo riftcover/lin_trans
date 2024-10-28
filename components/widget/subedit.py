@@ -106,7 +106,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 对于其他列，保持原有的逻辑
             pass  # 这里应该是你原有的绘制逻辑
 
-        # 在原有绘制逻辑之后，为所有列添加红色底部边框
+        # 在原有绘制逻辑之后，为所有列添加底部边框
         painter.setPen(QColor("#d0d0d0"))
         # if index.column() == 3:  # 第二列
         #     # 为第二列特别处理，确保边框被绘制
@@ -572,6 +572,16 @@ class SubtitleTable(QTableView):
         self.model.dataChangedSignal.connect(self.process_subtitles)
         self.delegate._play_from_time = self.play_from_time  # 设置播放按钮的回调函数
         self.cellClicked.connect(self.handle_cell_click)  # 连接单元格点击信号到处理方法
+
+        self.batch_size = 20  # 每批创建的行数
+        self.current_batch_start = 0  # 当前批次的起始行
+        self.is_creating_batch = False  # 是否正在创建批次
+        self.batch_timer = QTimer(self)
+        self.batch_timer.timeout.connect(self.create_next_batch)
+        self.batch_timer.setInterval(100)  # 100ms 间隔创建下一批
+ 
+        # 添加标志来追踪是否所有编辑器都已创建
+        self.all_editors_created = False
  
     def init_ui(self) -> None:
         # 设置滚动模式
@@ -658,39 +668,58 @@ class SubtitleTable(QTableView):
         self.update_timer.start(30)
 
     def create_visible_editors(self) -> None:
-        # 只为可见区域创建编辑器。
+        # 如果已经创建完所有编辑器，直接返回
+        if self.all_editors_created:
+            return
+            
         # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
-        # visible_rect.topLeft()返回视口矩形的左上角点的坐标。
-        # 调用将屏幕坐标转换为表格的行和列索引
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
-        # logger.debug(f"Visible rect: {visible_rect}")
-        # logger.debug(f"Top left index: {top_left.row()}")
-        # logger.debug(f"Bottom right index: {bottom_right.row()}")
 
-        # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
-        start_row = max(0, top_left.row())
-        end_row = self.model.rowCount() - 1  # 默认到最后一行
-        if bottom_right.isValid():
-            end_row = min(bottom_right.row(), end_row)
-        else:
-            # 如果 bottom_right 无效，我们估算可见的行数
-            visible_height = visible_rect.height()
-            row_height = self.default_row_height  # 使用默认行高
-            if row_height > 0:
-                visible_rows = visible_height // row_height
-                end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
+        # 确保可见区域的编辑器优先创建
+        visible_start = max(0, top_left.row())
+        visible_end = bottom_right.row() if bottom_right.isValid() else (visible_start + visible_rect.height() // self.default_row_height)
+        
+        # 创建可见区域的编辑器
+        self.create_editors_for_range(visible_start, visible_end)
+        
+        # 开始批量创建其余编辑器
+        if not self.is_creating_batch:
+            self.is_creating_batch = True
+            self.current_batch_start = 0
+            self.batch_timer.start()
 
+    def create_editors_for_range(self, start_row: int, end_row: int) -> None:
+        """创建指定范围内的编辑器"""
+        start_row = max(0, start_row)
+        end_row = min(end_row, self.model.rowCount() - 1)
+        
         for row in range(start_row, end_row + 1):
             for col in range(self.model.columnCount()):
-                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
+                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-        self.read_visible_editors()
 
-        # self.verify_visible_editors()
+    def create_next_batch(self) -> None:
+        """创建下一批编辑器"""
+        if not self.is_creating_batch:
+            return
+
+        batch_end = min(self.current_batch_start + self.batch_size, self.model.rowCount())
+        self.create_editors_for_range(self.current_batch_start, batch_end - 1)
+        
+        # 更新进度
+        self.current_batch_start = batch_end
+        
+        # 检查是否完成所有行的创建
+        if self.current_batch_start >= self.model.rowCount():
+            self.batch_timer.stop()
+            self.is_creating_batch = False
+            if not self.all_editors_created:
+                self.all_editors_created = True
+                logger.debug("All editors created")
 
     def remove_invisible_editors(self) -> None:
         # remove_invisible_editors 方法移除不再可见的编辑器。
@@ -735,7 +764,7 @@ class SubtitleTable(QTableView):
     def showEvent(self, event) -> None:
         super().showEvent(event)
         # 延迟创建编辑器，防止编辑器还没创建完成就开始编辑
-        QTimer.singleShot(0, self.create_visible_editors)
+        QTimer.singleShot(100, self.create_visible_editors)
 
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
@@ -873,3 +902,4 @@ if __name__ == "__main__":
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
+
