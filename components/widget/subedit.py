@@ -718,9 +718,6 @@ class SubtitleTable(QTableView):
         # 调用将屏幕坐标转换为表格的行和列索引
         top_left = self.indexAt(visible_rect.topLeft())
         bottom_right = self.indexAt(visible_rect.bottomRight())
-        # logger.debug(f"Visible rect: {visible_rect}")
-        # logger.debug(f"Top left index: {top_left.row()}")
-        # logger.debug(f"Bottom right index: {bottom_right.row()}")
 
         # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
         start_row = max(0, top_left.row())
@@ -929,9 +926,7 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
-    # patt = r'D:\dcode\lin_trans\result\tt1\如何获取需求.srt'
-    # a = 'D:/dcode/lin_trans/result/tt1/如何获取需求.mp4'
-    # b = 'D:/dcode/lin_trans/result/tt1/dd.srt'
+
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
