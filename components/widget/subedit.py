@@ -1,14 +1,14 @@
 import os
 from typing import Tuple, Any, List
 
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject, QEvent
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QWidget, QVBoxLayout, QLabel, QHeaderView, QAbstractItemDelegate
 
 from components.resource_manager import StyleManager
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
 from utils import logger
-from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition, InfoBar, InfoBarPosition
+from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
 
 
 class CustomItemDelegate(QStyledItemDelegate):
@@ -65,7 +65,7 @@ class CustomItemDelegate(QStyledItemDelegate):
     def editorClicked(self, event, index, editor, original_mouse_press_event):
         """
         处理原文和译文列编辑器的点击事件
-        
+
         Args:
             event: 鼠标事件
             index: 被点击的单元格索引
@@ -105,7 +105,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             # 对于其他列，保持原有的逻辑
             pass  # 这里应该是你原有的绘制逻辑
 
-        # 在原有绘制逻辑之后，为所有列添加底部边框
+        # 在原有绘制逻辑之后，为所有列添加红色底部边框
         painter.setPen(QColor("#d0d0d0"))
         # if index.column() == 3:  # 第二列
         #     # 为第二列特别处理，确保边框被绘制
@@ -134,7 +134,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         play_button.setFixedSize(button_size)
         cut_button.setFixedSize(button_size)
 
-        layout.addWidget(play_button, alignment=Qt.AlignCenter)  #设置水平居中
+        layout.addWidget(play_button, alignment=Qt.AlignCenter)  # 设置水平居中
         layout.addWidget(cut_button, alignment=Qt.AlignCenter)
         return widget
 
@@ -430,13 +430,32 @@ class SubtitleModel(QAbstractTableModel):
         return False
 
     def insertRow(self, row, parent=QModelIndex()) -> bool:
-        self.beginInsertRows(parent, row, row)
-        # Insert a new empty subtitle entry
-        new_text = f"第{row + 2}行"
-        new_entry = ('00:00:00,000', '00:00:00,000', new_text, "")
-        self.sub_data.insert(row + 1, new_entry)
-        self.endInsertRows()
-        return True
+        """插入新行
+        Args:
+            row: 在此行后插入新行
+            parent: 父索引
+        Returns:
+            bool: 是否插入成功
+        """
+        try:
+            self.beginInsertRows(parent, row + 1, row + 1)
+            # 复制当前行的时间信息作为新行的默认值
+            if 0 <= row < len(self.sub_data):
+                prev_start, prev_end = self.sub_data[row][0:2]
+            else:
+                prev_start = prev_end = '00:00:00,000'
+            
+            # 插入新的空字幕条目
+            new_entry = (prev_start, prev_end, "", "")
+            self.sub_data.insert(row + 1, new_entry)
+            self.endInsertRows()
+            
+            # 发出数据变化信号
+            self.dataChangedSignal.emit()
+            return True
+        except Exception as e:
+            logger.error(f"Insert row failed: {e}")
+            return False
 
     def move_edit_down(self, row) -> bool:
         # 移动原文到下一行
@@ -570,20 +589,15 @@ class SubtitleTable(QTableView):
 
         self.process_subtitles()
 
+        self.batch_size = 20  # 每批创建的行数
+        self.current_batch = 0  # 当前批次
+        self.create_timer = QTimer(self)
+        self.create_timer.timeout.connect(self.create_next_batch)
+
         # 连接信号
         self.model.dataChangedSignal.connect(self.process_subtitles)
         self.delegate._play_from_time = self.play_from_time  # 设置播放按钮的回调函数
         self.cellClicked.connect(self.handle_cell_click)  # 连接单元格点击信号到处理方法
-
-        self.batch_size = 20  # 每批创建的行数
-        self.current_batch_start = 0  # 当前批次的起始行
-        self.is_creating_batch = False  # 是否正在创建批次
-        self.batch_timer = QTimer(self)
-        self.batch_timer.timeout.connect(self.create_next_batch)
-        self.batch_timer.setInterval(100)  # 100ms 间隔创建下一批
-
-        # 添加标志来追踪是否所有编辑器都已创建
-        self.all_editors_created = False
 
     def init_ui(self) -> None:
         # 设置滚动模式
@@ -659,69 +673,77 @@ class SubtitleTable(QTableView):
         # 取消之前的计时器（如果存在）
         self.update_timer.stop()
         # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
+        # self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         # logger.debug("Resize event")
         # 取消之前的计时器（如果存在）
-        self.update_timer.stop()
-        # 启动新的计时器，200毫秒后更新
-        self.update_timer.start(30)
+        # self.update_timer.stop()
+        # # 启动新的计时器，200毫秒后更新
+        # self.update_timer.start(30)
 
     def create_visible_editors(self) -> None:
-        # 如果已经创建完所有编辑器，直接返回
-        if self.all_editors_created:
-            return
-
-        # 获取当前视口（可见区域）的矩形
-        visible_rect = self.viewport().rect()
-        top_left = self.indexAt(visible_rect.topLeft())
-        bottom_right = self.indexAt(visible_rect.bottomRight())
-
-        # 确保可见区域的编辑器优先创建
-        visible_start = max(0, top_left.row())
-        visible_end = bottom_right.row() if bottom_right.isValid() else (visible_start + visible_rect.height() // self.default_row_height)
-
-        # 创建可见区域的编辑器
-        self.create_editors_for_range(visible_start, visible_end)
-
-        # 开始批量创建其余编辑器
-        if not self.is_creating_batch:
-            self.is_creating_batch = True
-            self.current_batch_start = 0
-            self.batch_timer.start()
-
-    def create_editors_for_range(self, start_row: int, end_row: int) -> None:
-        """创建指定范围内的编辑器"""
-        start_row = max(0, start_row)
-        end_row = min(end_row, self.model.rowCount() - 1)
-
-        for row in range(start_row, end_row + 1):
-            for col in range(self.model.columnCount()):
-                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列
-                    index = self.model.index(row, col)
-                    self.openPersistentEditor(index)
-                    self.visible_editors.add((row, col))
+        """初始化创建编辑器"""
+        self.current_batch = 0
+        self.create_next_batch()
 
     def create_next_batch(self) -> None:
         """创建下一批编辑器"""
-        if not self.is_creating_batch:
-            return
+        start_row = self.current_batch * self.batch_size
+        end_row = min(start_row + self.batch_size, self.model.rowCount())
+        
+        for row in range(start_row, end_row):
+            for col in range(self.model.columnCount()):
+                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
+                    index = self.model.index(row, col)
+                    self.openPersistentEditor(index)
+                    self.visible_editors.add((row, col))
+        
+        self.current_batch += 1
+        
+        # 检查是否需要继续创建
+        if end_row < self.model.rowCount():
+            # 使用计时器延迟创建下一批，避免界面卡顿
+            self.create_timer.start(10)  # 10ms后创建下一批
+        else:
+            self.create_timer.stop()
+            logger.debug("All editors created")
+    
+    # def create_visible_editors(self) -> None:
+        # 只为可见区域创建编辑器。
+        # 获取当前视口（可见区域）的矩形
+        visible_rect = self.viewport().rect()
+        # visible_rect.topLeft()返回视口矩形的左上角点的坐标。
+        # 调用将屏幕坐标转换为表格的行和列索引
+        top_left = self.indexAt(visible_rect.topLeft())
+        bottom_right = self.indexAt(visible_rect.bottomRight())
+        # logger.debug(f"Visible rect: {visible_rect}")
+        # logger.debug(f"Top left index: {top_left.row()}")
+        # logger.debug(f"Bottom right index: {bottom_right.row()}")
 
-        batch_end = min(self.current_batch_start + self.batch_size, self.model.rowCount())
-        self.create_editors_for_range(self.current_batch_start, batch_end - 1)
+        # # 确保我们至少创建一行编辑器，即使表格行数少于窗口高度
+        start_row = max(0, top_left.row())
+        end_row = self.model.rowCount() - 1  # 默认到最后一行
+        if bottom_right.isValid():
+            end_row = min(bottom_right.row(), end_row)
+        else:
+            # 如果 bottom_right 无效，我们估算可见的行数
+            visible_height = visible_rect.height()
+            row_height = self.default_row_height  # 使用默认行高
+            if row_height > 0:
+                visible_rows = visible_height // row_height
+                end_row = min(start_row + visible_rows, self.model.rowCount() - 1)
 
-        # 更新进度
-        self.current_batch_start = batch_end
+        for row in range(start_row, end_row + 1):
+            for col in range(self.model.columnCount()):
+                if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
+                    index = self.model.index(row, col)
+                    self.openPersistentEditor(index)
+                    self.visible_editors.add((row, col))
+        self.read_visible_editors()
 
-        # 检查是否完成所有行的创建
-        if self.current_batch_start >= self.model.rowCount():
-            self.batch_timer.stop()
-            self.is_creating_batch = False
-            if not self.all_editors_created:
-                self.all_editors_created = True
-                logger.debug("All editors created")
+        # self.verify_visible_editors()
 
     def remove_invisible_editors(self) -> None:
         # remove_invisible_editors 方法移除不再可见的编辑器。
@@ -766,7 +788,7 @@ class SubtitleTable(QTableView):
     def showEvent(self, event) -> None:
         super().showEvent(event)
         # 延迟创建编辑器，防止编辑器还没创建完成就开始编辑
-        QTimer.singleShot(100, self.create_visible_editors)
+        QTimer.singleShot(0, self.create_visible_editors)
 
     def tablet_action(self) -> None:
         self.delegate._delete_clicked = self.delete_row
@@ -811,21 +833,30 @@ class SubtitleTable(QTableView):
         self.create_visible_editors()
 
     def insert_row(self) -> None:
-        row = self.get_editor_row()
-
-        # 添加下面self.visible_editors重新赋值就会重复创建相同的编辑器，所以注释掉。使用在新增后uodate_editors更新可见的编辑器。
-
-        # new_visible_editors = set()
-        # for r, c in self.visible_editors:
-        #     # 从visible_editors中移除被删除行的编辑器
-        #     # 对被删除行以下的编辑器的行号进行调整
-        #     if r < row:
-        #         new_visible_editors.add((r, c))
-        #     elif r > row:
-        #         new_visible_editors.add((r + 1, c))
-        # self.visible_editors = new_visible_editors
-        self.model.insertRow(row)
-        self.update_editors()
+        """插入新行"""
+        try:
+            row = self.get_editor_row()
+            success = self.model.insertRow(row)
+            if success:
+                # 只为新行创建编辑器
+                new_row = row + 1
+                for col in range(self.model.columnCount()):
+                    if col != 2:  # 跳过行号列
+                        index = self.model.index(new_row, col)
+                        self.openPersistentEditor(index)
+                        self.visible_editors.add((new_row, col))
+                
+                # 更新后续行的编辑器索引
+                updated_editors = set()
+                for (r, c) in self.visible_editors:
+                    if r > new_row:
+                        updated_editors.add((r + 1, c))
+                    else:
+                        updated_editors.add((r, c))
+                self.visible_editors = updated_editors
+                
+        except Exception as e:
+            logger.error(f"Error inserting row: {e}")
 
     def update_editors(self) -> None:
         """
