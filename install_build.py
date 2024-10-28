@@ -49,9 +49,9 @@ cmd = [
     "--add-data=nice_ui/language:nice_ui/language",
     "--add-data=logs:logs",
     "--add-data=result:result",
-    "--hidden-import=modelscope",
+    "--hidden-import=modelscope"
 ]
-
+# todo： funasr手动复制，打包时不带上
 # 添加 modelscope 的所有子模块
 modelscope_path = pkgutil.get_loader("modelscope").path
 for _, name, _ in pkgutil.walk_packages([modelscope_path]):

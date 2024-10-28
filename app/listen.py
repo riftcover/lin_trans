@@ -195,10 +195,12 @@ class SrtWriter:
 
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
+        spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
+        punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
         model = AutoModel(model=model_dir, model_revision="v2.0.4",
                           vad_model=vad_model_dir, vad_model_revision="v2.0.4",
-                          punc_model="ct-punc-c", punc_model_revision="v2.0.4",  # 标点符号
-                          spk_model="cam++", spk_model_revision="v2.0.2",  # 说话人确认
+                          punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号
+                          spk_model=spk_model_dir, spk_model_revision="v2.0.2",  # 说话人确认
                           vad_kwargs={"max_single_segment_time": 30000},
                           disable_update=True)
         # 启动进度更新线程
