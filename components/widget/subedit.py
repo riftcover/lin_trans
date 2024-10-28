@@ -17,6 +17,7 @@ class CustomItemDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         # 构造函数，初始化父类，创建一个持久化编辑器字典
         super().__init__(parent)
+        self._play_from_time = None
         self._persistent_editors = {}
         self.signals = VirtualScrollSignals()
         self._delete_clicked = None
@@ -25,6 +26,8 @@ class CustomItemDelegate(QStyledItemDelegate):
         self._move_row_down = None
         self._move_row_up_more = None
         self._move_row_down_more = None
+        self._play_from_time = None
+        self._auto_move = None
 
     def createEditor(self, parent, option, index):
         """
@@ -130,12 +133,13 @@ class CustomItemDelegate(QStyledItemDelegate):
         button_size = QSize(15, 15)
         play_button = TransparentToolButton(FluentIcon.PLAY)
         play_button.clicked.connect(self._play_from_time)
-        cut_button = TransparentToolButton(FluentIcon.CUT)
+        auto_move_button = TransparentToolButton(FluentIcon.CHEVRON_DOWN_MED)
         play_button.setFixedSize(button_size)
-        cut_button.setFixedSize(button_size)
+        auto_move_button.setFixedSize(button_size)
+        auto_move_button.clicked.connect(self._auto_move)
 
         layout.addWidget(play_button, alignment=Qt.AlignCenter)  # 设置水平居中
-        layout.addWidget(cut_button, alignment=Qt.AlignCenter)
+        layout.addWidget(auto_move_button, alignment=Qt.AlignCenter)
         return widget
 
     def create_row_number_label(self, parent, row) -> QLabel:
@@ -509,6 +513,36 @@ class SubtitleModel(QAbstractTableModel):
         # 清除勾选框状态
         self.setData(self.index(row, 0), Qt.Unchecked, Qt.CheckStateRole)
 
+    def auto_move_down(self, row) -> None:
+        """
+        从当前行开始，将译文向下移动直到遇到空行
+        Args:
+            row: 起始行号
+        """
+        if row >= self.rowCount() - 1:  # 如果是最后一行，直接返回
+            return
+
+        current_text = self.data(self.index(row, 5), Qt.EditRole)
+        if not current_text:  # 如果当前行为空，无需移动
+            return
+
+        self.setData(self.index(row, 5), "", Qt.EditRole)  
+
+        for i in range(row, self.rowCount()):
+            next_text = self.data(self.index(i + 1, 5), Qt.EditRole)
+            if next_text == "":
+                self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
+                break
+            # 否则，交换当前行和下一行的内容
+            self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
+            current_text = next_text
+            logger.trace(f'{row}:{current_text}')
+
+        # 发出数据变化信号
+        self.dataChanged.emit(self.index(row, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
+
+
+
 
 class VirtualScrollSignals(QObject):
     # 使用 VirtualScrollDelegate 来管理编辑器的创建和销毁。
@@ -641,7 +675,6 @@ class SubtitleTable(QTableView):
             row: 被点击的行索引
             column: 被点击的列索引
         """
-        logger.trace('handle_cell_click')
         if column in [4, 5]:  # 原文或译文列
             start_time = self.model.data(self.model.index(row, 3), Qt.UserRole)[0]
             self.seek_to_time_signal.emit(start_time)
@@ -794,6 +827,7 @@ class SubtitleTable(QTableView):
         self.delegate._move_row_up = self.move_row_up
         self.delegate._move_row_down_more = self.move_row_down_more
         self.delegate._move_row_up_more = self.move_row_up_more
+        self.delegate._auto_move = self.auto_move
 
     def get_editor_row(self):
         button = self.sender()
@@ -878,6 +912,10 @@ class SubtitleTable(QTableView):
         row = self.get_editor_row()
         self.model.move_edit_down(row)
 
+    def auto_move(self):
+        row = self.get_editor_row()
+        self.model.auto_move_down(row)
+
     def move_row_down_more(self):
         logger.debug(f"move_row_down_more {self.model.checked_rows}")
         # Iterate over checked rows in reverse order
@@ -933,3 +971,4 @@ if __name__ == "__main__":
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
+
