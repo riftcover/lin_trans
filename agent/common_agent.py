@@ -34,7 +34,7 @@ def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
         completion = client.chat.completions.create(model=agent['model'],
                                                     messages=[{"role": "system", "content": prompt_content}, {"role": "user", "content": text}],
                                                     temperature=0.3)
-        logger.info(completion.usage)
+        # logger.info(completion.usage)
         return completion.choices[0].message.content
     except AuthenticationError as e:
         logger.error(f"AuthenticationError: {e}")
@@ -95,5 +95,7 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
 
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)
-            time.sleep(sleep_time)
+            if i == duration - 1:
+                time.sleep(sleep_time)
+
     data_bridge.emit_whisper_finished(unid)

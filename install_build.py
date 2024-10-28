@@ -7,6 +7,7 @@ import argparse
 import site
 import time
 import pkgutil
+import logging
 # ... (保留现有的 import 语句和函数定义) ...
 
 # 添加命令行参数解析
@@ -41,7 +42,7 @@ cmd = [
     "-m", "PyInstaller",
     "--name=LinLin",
     "--onedir",
-    "--windowed",
+    "--console",  # 将 --windowed 改为 --console
     "--add-data=orm/linlin.db:orm",
     "--add-data=models:models",
     "--add-data=plugin:plugin",
@@ -49,8 +50,6 @@ cmd = [
     "--add-data=logs:logs",
     "--add-data=result:result",
     "--hidden-import=modelscope",
-    # "--hidden-import=modelscope.hub",
-    # "--hidden-import=modelscope.hub.snapshot_download",
 ]
 
 # 添加 modelscope 的所有子模块
@@ -107,3 +106,35 @@ print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
 
 result 输出目录不对
 """
+
+# # 在主程序 run.py 中添加以下代码来处理控制台输出
+# if not os.path.exists('logs'):
+#     os.makedirs('logs')
+
+# class StreamToLogger:
+#     def __init__(self, logger, log_level=logging.INFO):
+#         self.logger = logger
+#         self.log_level = log_level
+#         self.linebuf = ''
+
+#     def write(self, buf):
+#         for line in buf.rstrip().splitlines():
+#             self.logger.log(self.log_level, line.rstrip())
+
+#     def flush(self):
+#         pass
+
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     format='%(asctime)s:%(levelname)s:%(message)s',
+#     filename='logs/output.log',
+#     filemode='a'
+# )
+
+# stdout_logger = logging.getLogger('STDOUT')
+# sl = StreamToLogger(stdout_logger, logging.INFO)
+# sys.stdout = sl
+
+# stderr_logger = logging.getLogger('STDERR')
+# sl = StreamToLogger(stderr_logger, logging.ERROR)
+# sys.stderr = sl

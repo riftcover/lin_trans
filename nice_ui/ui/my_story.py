@@ -359,7 +359,8 @@ class TableApp(CardWidget):
                 return
 
         progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
-        # logger.info(f"更新文件:{unid}的进度条:{progress}")
+        logger.info(f"更新文件:{unid}的进度条:{progress}")
+        # todo: 处理中，删除别的任务，报错AttributeError: 'NoneType' object has no attribute 'setText'
         progress_bar.setText(f"处理中 {progress}%")
 
     def find_row_by_identifier(self, unid: str) -> Optional[int]:
