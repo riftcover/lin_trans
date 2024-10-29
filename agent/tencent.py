@@ -1,12 +1,14 @@
 import json
 import os
 import time
+
 from tencentcloud.common import credential
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
 from tencentcloud.tmt.v20180321 import tmt_client, models
 from videotrans.configure import config
 from videotrans.util import tools
+
 
 def trans(text_list, target_language="en", *, set_p=True,inst=None,stop=0,source_code=""):
     """

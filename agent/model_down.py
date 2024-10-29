@@ -1,10 +1,11 @@
 #模型下载
-from modelscope import snapshot_download
-from nice_ui.configure import config
 import os
-import time
 import threading
+import time
 
+from modelscope import snapshot_download
+
+from nice_ui.configure import config
 from utils import logger
 
 

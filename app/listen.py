@@ -1,19 +1,20 @@
 import os
 import tempfile
-from functools import lru_cache
-
-import time
-from pathlib import Path
 import threading
+import time
+from functools import lru_cache
+from pathlib import Path
+
 import soundfile as sf  # 用于读取和裁剪音频文件
+
+from nice_ui.configure import config
+from utils import logger
+from utils.file_utils import funasr_write_srt_file, Segment
+from utils.lazy_loader import LazyLoader
+
 # import whisper
 # from faster_whisper import WhisperModel
 # from whisper.utils import get_writer, format_timestamp, make_safe
-
-from nice_ui.configure import config
-from utils.file_utils import funasr_write_srt_file, funasr_write_txt_file, Segment
-from utils import logger
-from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -75,7 +76,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 #     from whisper.transcribe import transcribe
 #     return transcribe(model, audio, *args, **kwargs)
 
-# @lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 def load_model(model_path, model_revision="v2.0.4"):
     from funasr import AutoModel
     return AutoModel(model=model_path, model_revision=model_revision, disable_update=True)
@@ -231,7 +232,6 @@ class SrtWriter:
         Returns:
 
         """
-        from funasr import AutoModel
         from funasr.utils.postprocess_utils import rich_transcription_postprocess
         logger.info('使用SenseVoiceSmall')
         model_dir = f'{config.funasr_model_path}/{model_name}'

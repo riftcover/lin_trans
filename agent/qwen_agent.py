@@ -1,9 +1,9 @@
 import random
 import time
 from http import HTTPStatus
-from dashscope import Generation  # 建议dashscope SDK 的版本 >= 1.14.0
+
 import dashscope
-from openai import OpenAI
+from dashscope import Generation  # 建议dashscope SDK 的版本 >= 1.14.0
 
 from nice_ui.util.proxy_client import create_openai_client
 from utils.log import Logings

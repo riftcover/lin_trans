@@ -1,7 +1,6 @@
 import time
 
 from PySide6.QtCore import QSettings
-from openai import OpenAI
 
 from nice_ui.util.proxy_client import create_openai_client
 

@@ -4,10 +4,10 @@ from pathlib import Path
 
 from openai import OpenAI, AuthenticationError
 
-from nice_ui.util.proxy_client import create_openai_client
 from nice_ui.configure import config
-from utils.agent_dict import agent_settings, AgentDict
+from nice_ui.util.proxy_client import create_openai_client
 from utils import logger
+from utils.agent_dict import agent_settings, AgentDict
 
 agent_msg = agent_settings()
 
