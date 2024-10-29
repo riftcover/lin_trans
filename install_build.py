@@ -51,11 +51,9 @@ cmd = [
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
     f"--add-data=logs{os.pathsep}logs",
     f"--add-data=result{os.pathsep}result",
-    # "--exclude-module=modelscope",
-    # "--exclude-module=funasr",
 ]
-# todo： funasr手动复制，打包命令中不带上
-# todo: 打包前删除orm/linlin.db文件，logs中的文件
+
+# todo: 打包前重新生成orm/linlin.db文件，删除logs中的文件
 # 添加 modelscope 的所有子模块
 modelscope_path = pkgutil.get_loader("modelscope").path
 for _, name, _ in pkgutil.walk_packages([modelscope_path]):
@@ -84,6 +82,31 @@ elif platform.system() == "Darwin":  # macOS
 # 添加主文件路径
 cmd.append("run.py")
 
+def clean_logs_directory():
+    """清空 logs 文件夹中的所有文件，但保留文件夹"""
+    try:
+        # 确保 logs 目录存在
+        if not os.path.exists(LOGS_DIR):
+            print(f"创建 logs 目录: {LOGS_DIR}")
+            os.makedirs(LOGS_DIR)
+            return
+
+        # 删除 logs 目录中的所有文件和子目录
+        for item in os.listdir(LOGS_DIR):
+            item_path = os.path.join(LOGS_DIR, item)
+            try:
+                if os.path.isfile(item_path):
+                    os.unlink(item_path)
+                elif os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                print(f"已删除: {item_path}")
+            except Exception as e:
+                print(f"删除 {item_path} 时出错: {e}")
+
+        print("logs 目录已清空")
+    except Exception as e:
+        print(f"清理 logs 目录时出错: {e}")
+
 # 执行打包命令
 start_time = time.time()
 
@@ -92,7 +115,9 @@ if os.path.exists("dist"):
     shutil.rmtree("dist")
 if os.path.exists("build"):
     shutil.rmtree("build")
+clean_logs_directory()
 
+print("开始打包...")
 # 执行 PyInstaller 命令
 subprocess.run(cmd, check=True)
 
