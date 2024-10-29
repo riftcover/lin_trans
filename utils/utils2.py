@@ -1,12 +1,12 @@
-import math
-import os
-import re
-import subprocess
-import time
-
-import pandas as pd
-from faster_whisper import WhisperModel
-from openai import OpenAI
+# import math
+# import os
+# import re
+# import subprocess
+# import time
+#
+# import pandas as pd
+# from faster_whisper import WhisperModel
+# from openai import OpenAI
 
 
 def cache(cache):  # 缓存检测

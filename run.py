@@ -1,6 +1,7 @@
 import sys
 
 from PySide6.QtWidgets import QApplication
+
 from nice_ui.ui.MainWindow import Window
 
 

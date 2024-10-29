@@ -1,7 +1,7 @@
-from typing import List, Dict, Tuple, Union
+from datetime import timedelta
+from typing import List, Dict, Union
 
 import unicodedata
-from datetime import timedelta
 
 from utils.log import Logings
 
