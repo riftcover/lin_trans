@@ -27,6 +27,7 @@ torchaudio = "^2.4.1"
 funasr = "^1.1.12"
 pydantic = "^2.9.2"
 pyside6 = "6.6.3.1" # 必须这个版本，使用6.8.0 do_work() 线程工作完成后会卡住，无法进行下一步
+pyinstaller = "^6.11.0"
 
 
 [build-system]

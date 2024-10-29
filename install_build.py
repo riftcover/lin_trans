@@ -42,14 +42,15 @@ cmd = [
     "-m", "PyInstaller",
     "--name=LinLin",
     "--onedir",
-    "--console",  # 将 --windowed 改为 --console
-    "--add-data=orm/linlin.db:orm",
-    "--add-data=models:models",
-    "--add-data=plugin:plugin",
-    "--add-data=nice_ui/language:nice_ui/language",
-    "--add-data=logs:logs",
-    "--add-data=result:result",
-    "--hidden-import=modelscope"
+    "--console",
+    f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
+    f"--add-data=models{os.pathsep}models",
+    # f"--add-data=plugin{os.pathsep}plugin",
+    f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
+    f"--add-data=logs{os.pathsep}logs",
+    f"--add-data=result{os.pathsep}result",
+    "--exclude-module=modelscope",
+    "--exclude-module=funasr",
 ]
 # todo： funasr手动复制，打包时不带上
 # 添加 modelscope 的所有子模块
@@ -66,12 +67,16 @@ if args.debug:
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
     cmd.extend([
-        "--icon=components/assets/linlin.ico",  # 添加 Windows 图标
+        "--icon={}".format(os.path.join("components", "assets", "linlin.ico")),
     ])
 elif platform.system() == "Darwin":  # macOS
     cmd.extend([
-        "--icon=components/assets/linlin.icns",  # 添加 macOS 图标
+        "--icon={}".format(os.path.join("components", "assets", "linlin.icns"))
     ])
+    if platform.machine() == "arm64":
+        cmd.append("--target-architecture=arm64")
+    else:
+        cmd.append("--target-architecture=x86_64")
 
 # 添加主文件路径
 cmd.append("run.py")
