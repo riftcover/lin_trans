@@ -685,17 +685,18 @@ class TableApp(CardWidget):
 
         # 创建SubtitleEditPage实例
         subtitle_edit_page = SubtitleEditPage(
-            work_obj.srt_dirname, work_obj.media_dirname, self.settings, parent=self
+            work_obj.srt_dirname, work_obj.media_dirname, self.settings, parent=dialog
         )
 
         # 创建垂直布局并添加SubtitleEditPage
         layout = QVBoxLayout(dialog)
         layout.addWidget(subtitle_edit_page)
 
-        # 连接保存信号
-        # subtitle_edit_page.save_signal.connect(self._update_subtitle_data)
-        # 连接对话框的完成信号到停止视频方法
-        dialog.finished.connect(subtitle_edit_page.stop_video)
+        # 连接对话框的关闭信号
+        def on_dialog_finished():
+            subtitle_edit_page.deleteLater()  # 确保页面被正确删除
+
+        dialog.finished.connect(on_dialog_finished)
 
         # 显示对话框
         dialog.exec()
