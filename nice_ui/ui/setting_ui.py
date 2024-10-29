@@ -2,10 +2,9 @@ import os
 import sys
 from typing import Optional
 
-from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QTimer
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal,Qt, QUrl, QSize, QTimer
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
-from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
+from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
 
 from nice_ui.configure import config

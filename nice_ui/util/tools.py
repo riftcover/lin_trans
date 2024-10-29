@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import platform
-import random
 import re
 import shutil
 import subprocess
@@ -14,7 +13,6 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict, Union, Optional
-
 
 from pydantic import BaseModel, Field
 

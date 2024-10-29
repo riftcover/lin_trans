@@ -1,7 +1,8 @@
 # coding:utf-8
 import asyncio
-import sys,os
+import os
 import platform
+import sys
 
 import httpx
 from PySide6.QtCore import QUrl, QSettings
