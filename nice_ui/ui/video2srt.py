@@ -1,6 +1,6 @@
 import os
-import subprocess
 
+import av
 from PySide6.QtCore import Qt, Slot, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
@@ -346,12 +346,15 @@ class TableWindow:
 
     def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
-        cmd = f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"'
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        duration_seconds = float(result.stdout.strip())
-        hours, remainder = divmod(duration_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+            try:
+                with av.open(file) as container:
+                    duration_seconds = float(container.duration) / av.time_base  # 转换为秒
+                    hours, remainder = divmod(duration_seconds, 3600)
+                    minutes, seconds = divmod(remainder, 60)
+                    return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+            except Exception as e:
+                logger.error(f"获取视频时长失败: {str(e)}")
+                return None
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入

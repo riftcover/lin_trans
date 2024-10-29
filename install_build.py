@@ -45,14 +45,14 @@ cmd = [
     "--console",
     f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     f"--add-data=models{os.pathsep}models",
-    # f"--add-data=plugin{os.pathsep}plugin",
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
     f"--add-data=logs{os.pathsep}logs",
     f"--add-data=result{os.pathsep}result",
     "--exclude-module=modelscope",
     "--exclude-module=funasr",
 ]
-# todo： funasr手动复制，打包时不带上
+# todo： funasr手动复制，打包命令中不带上
+# todo: 打包前删除orm/linlin.db文件，logs中的文件
 # 添加 modelscope 的所有子模块
 modelscope_path = pkgutil.get_loader("modelscope").path
 for _, name, _ in pkgutil.walk_packages([modelscope_path]):

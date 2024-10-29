@@ -1761,6 +1761,41 @@ files = [
 ]
 
 [[package]]
+name = "pyav"
+version = "13.1.0"
+description = "Pythonic bindings for FFmpeg's libraries."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "pyav-13.1.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:64a81022e60dfba7dee9767a6fd150f42293855ea127979b2f38a3fd86f908fd"},
+    {file = "pyav-13.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:3971089334cc91e331c5014c8ea5fcbca0ccc82eb14952c128ce50570010a3cf"},
+    {file = "pyav-13.1.0-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:154394ba47b4b55d4abda3e66e2b0a79e7b046c983191cb6113ea14769eea53a"},
+    {file = "pyav-13.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b48efcde03b9952ece3c8a8d9d74c685ff84ab91b60ea0ae6960638e30f3f31"},
+    {file = "pyav-13.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:8404d5a5eef975862a35f2338ab8e7ae5d7a7f9af1ac748edef2aca4543f44cd"},
+    {file = "pyav-13.1.0-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:a75d67dc80ea87f3987fafa5699410047af818b20691046c76d12e18faf3da68"},
+    {file = "pyav-13.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:4571175c8511d36128e94955b8cc64b0452e16da42c81ceae745946f88abf477"},
+    {file = "pyav-13.1.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d7e1bd1157b21ca116c71696be62cd12bcaefc32179fd99efad90e0a76d300d3"},
+    {file = "pyav-13.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:126386f2f8a0c57487a3ad947ac573385d41326b5ff111783135cc56a8869261"},
+    {file = "pyav-13.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:57d94282ffd445ab055c36e150fee1a4a066e0aee259260c82792dbd349ec08d"},
+    {file = "pyav-13.1.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:b2daf24cbc01ee666c4893e69aac8fc65bab598ea0029382857930f652a5e5ff"},
+    {file = "pyav-13.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:83e3a67e2038b8cfd1d5dd2d1a1756ac1143a4c223b1723e64ac8bdb2045fb6a"},
+    {file = "pyav-13.1.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:24de515886366b2c952e3827e7fb6466ad06f40b5cb34595a3f922899727be2b"},
+    {file = "pyav-13.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66befb4172facfaaf7f3be94b1659051378b0741f087d5b46d2a25b6bce34b4f"},
+    {file = "pyav-13.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:a65d060fceee59e5a1dd70e64bf6ffca55fff2b596af906b206d8ba0057bbdc5"},
+    {file = "pyav-13.1.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:8450899845220a2a4f3ecc3eba0d5f864c169d98a9892be75447e59480162a09"},
+    {file = "pyav-13.1.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:6b21df5daadbb019c4612cc89923202ad7a4dd259be905eba56887a14a344861"},
+    {file = "pyav-13.1.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:21668b5ea9c4f046f61193a555d3deb2ca633b2ffb27a22a3b0eb03e8da64992"},
+    {file = "pyav-13.1.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5ae2413955b7d76826d214d3a5b719714f352de7de318e45275811fa07b9efe3"},
+    {file = "pyav-13.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:a3ba8764bbf958e6c94b0dc7b07f670b4a759a157547a69cddc58eabba8aea1d"},
+    {file = "pyav-13.1.0-pp310-pypy310_pp73-macosx_10_15_x86_64.whl", hash = "sha256:c92ef209e12660c6a75f81c9d228adc1e07294b875bf91d9b2a58c44a728b2d3"},
+    {file = "pyav-13.1.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:2e1855824313c17367c5ba658cf99d8b3169e0c3e0bdef5aa87a4c472c46d72b"},
+    {file = "pyav-13.1.0-pp310-pypy310_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7c7a2eb79af1d3414509e31631a1b837b011eba4a21e311ae1308eca95a9f4db"},
+    {file = "pyav-13.1.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:69566d6b5438259e2e4adc2975591d513b7f1280fbf4ed3e0901be10a4567470"},
+    {file = "pyav-13.1.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:2960397dd97d7462effe8e6696557a91f24c2841edf391b0355734db8e4b02cd"},
+    {file = "pyav-13.1.0.tar.gz", hash = "sha256:7049f4df6f94b4b727c1339a094f29c4178f3e0c290a01b9fcf0190a9890704c"},
+]
+
+[[package]]
 name = "pycocoa"
 version = "23.12.28"
 description = "Basic Python binding to macOS' Objective-C Cocoa"
@@ -5806,4 +5841,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "bfe695f249a7c0dfdd9603effb92970bb801949f36f41a0335736430f07b3fa6"
+content-hash = "10b8983cf97eb66fda1fc01ac25f5c4361303411596696c6c9f36bcd6740f3c7"
