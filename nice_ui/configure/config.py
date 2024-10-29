@@ -163,7 +163,6 @@ langnamelist = list(langlist.values())
 
 # 模型列表
 model_list: ModelDict = obj["model_code_list"]
-model_type: int = 2
 
 
 def init_model_code_key() -> list:
@@ -225,7 +224,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "output_dir": "",  # 导出文件夹
     "source_language_code": "en",  # 原语言
     "source_language": "英文",
-    "source_module_status": 4,  # 语音转文本模型
+    "source_module_status": 302,  # 语音转文本模型
     "source_module_name": "small",
     "detect_language": "en",
     "translate_status": False,

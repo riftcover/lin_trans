@@ -1,7 +1,7 @@
 # coding:utf-8
 from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QPoint, QRect
 from PySide6.QtGui import QPixmap, QPainter, QColor
-from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout, QLabel, QSlider
 
 from ..common.icon import FluentIcon
 from ..common.style_sheet import isDarkTheme, FluentStyleSheet
@@ -51,6 +51,7 @@ class VolumeView(FlyoutViewBase):
 
         self.volumeSlider.setRange(0, 100)
         self.volumeSlider.setFixedHeight(100)  # 调整滑块高度
+        self.volumeSlider.setInvertedAppearance(True)  # 设置反转
         self.setFixedSize(60, 180)  # 调整整体大小
 
         # 设置窗口透明
@@ -63,6 +64,7 @@ class VolumeView(FlyoutViewBase):
         layout.addWidget(self.muteButton, alignment=Qt.AlignCenter)
         layout.addWidget(self.volumeSlider, alignment=Qt.AlignCenter)
         layout.addWidget(self.volumeLabel, alignment=Qt.AlignCenter)
+
 
     def setMuted(self, isMute: bool):
         if isMute:

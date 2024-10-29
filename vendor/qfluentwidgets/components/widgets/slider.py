@@ -91,11 +91,18 @@ class Slider(QSlider):
     def _postInit(self):
         self.handle = SliderHandle(self)
         self._pressedPos = QPoint()
+        self._inverted = False
         self.setOrientation(self.orientation())
 
         self.handle.pressed.connect(self.sliderPressed)
         self.handle.released.connect(self.sliderReleased)
         self.valueChanged.connect(self._adjustHandlePos)
+
+    def setInvertedAppearance(self, inverted: bool):
+        """ Set whether the slider is inverted """
+        self._inverted = inverted
+        self._adjustHandlePos()
+        self.update()
 
     def setOrientation(self, orientation: Qt.Orientation) -> None:
         super().setOrientation(orientation)
@@ -124,6 +131,8 @@ class Slider(QSlider):
         delta = int((self.value() - self.minimum()) / total * self.grooveLength)
 
         if self.orientation() == Qt.Orientation.Vertical:
+            if self._inverted:
+                delta = self.grooveLength - delta
             self.handle.move(0, delta)
         else:
             self.handle.move(delta, 0)
@@ -132,7 +141,12 @@ class Slider(QSlider):
         pd = self.handle.width() / 2
         gs = max(self.grooveLength, 1)
         v = pos.x() if self.orientation() == Qt.Orientation.Horizontal else pos.y()
-        return int((v - pd) / gs * (self.maximum() - self.minimum()) + self.minimum())
+        
+        if self._inverted and self.orientation() == Qt.Orientation.Vertical:
+            v = self.height() - v
+            
+        value = int((v - pd) / gs * (self.maximum() - self.minimum()) + self.minimum())
+        return value
 
     def paintEvent(self, e):
         painter = QPainter(self)
@@ -165,7 +179,12 @@ class Slider(QSlider):
 
         painter.setBrush(themeColor())
         ah = (self.value() - self.minimum()) / (self.maximum() - self.minimum()) * (h - r*2)
-        painter.drawRoundedRect(QRectF(r-2, r, 4, ah), 2, 2)
+        
+        if self._inverted:
+            y = h - r - ah
+            painter.drawRoundedRect(QRectF(r-2, y, 4, ah), 2, 2)
+        else:
+            painter.drawRoundedRect(QRectF(r-2, r, 4, ah), 2, 2)
 
     def resizeEvent(self, e):
         self._adjustHandlePos()

@@ -91,13 +91,14 @@ class Video2SRT(QWidget):
 
         self.source_model = TransComboBox()
         self.source_model.setFixedWidth(131)
-        model_type = self.settings.value("model_type", type=int)
+        model_type = self.settings.value("source_module_status", type=int)
         logger.info(f"获取model_type: {model_type}")
         model_list = config.model_code_list[:4]
         if model_type == 1:
             model_list.extend(config.model_code_list[4:9])
         elif model_type == 2:
             model_list.extend(config.model_code_list[9:14])
+        logger.info(f"model_list: {model_list}")
         self.source_model.addItems(model_list)
 
         recognition_layout.addWidget(recognition_label)
