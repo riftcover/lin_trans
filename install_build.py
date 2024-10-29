@@ -8,6 +8,7 @@ import site
 import time
 import pkgutil
 import logging
+
 # ... (保留现有的 import 语句和函数定义) ...
 
 # 添加命令行参数解析
@@ -31,6 +32,8 @@ def ensure_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         print(f"创建目录: {directory}")
+
+
 # 确保必要的目录存在
 ensure_dir(RESULT_DIR)
 ensure_dir(LOGS_DIR)
@@ -48,8 +51,8 @@ cmd = [
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
     f"--add-data=logs{os.pathsep}logs",
     f"--add-data=result{os.pathsep}result",
-    "--exclude-module=modelscope",
-    "--exclude-module=funasr",
+    # "--exclude-module=modelscope",
+    # "--exclude-module=funasr",
 ]
 # todo： funasr手动复制，打包命令中不带上
 # todo: 打包前删除orm/linlin.db文件，logs中的文件
@@ -95,16 +98,45 @@ subprocess.run(cmd, check=True)
 
 print("打包完成!")
 
-# 复制额外的依赖项（如果需要）
-# 例如，复制 modelscope 库（如果需要的话）
-# copy_modelscope()
+
+# 复制 funasr 库到 _internal 目录
+def copy_models():
+
+    model_lists = ['modelscope','funasr']
+    for model in model_lists:
+        # 获取 funasr 库的路径
+        funasr_path = pkgutil.get_loader(model).path
+        if not funasr_path:
+            print("无法找到 funasr 库路径")
+            return
+        try:
+            # 获取 funasr 包的根目录
+            funasr_root = os.path.dirname(funasr_path)
+            print(funasr_root)
+
+            # 目标路径 (_internal 目录)
+            target_path = os.path.join("dist", "LinLin", "_internal", model)
+
+            # 确保目标目录存在
+            os.makedirs(target_path, exist_ok=True)
+
+            # 复制整个 funasr 目录
+            shutil.copytree(funasr_root, target_path, dirs_exist_ok=True)
+
+            print(f"{model} 库已复制到: {target_path}")
+
+        except Exception as e:
+            print(f"复制 funasr 库时出错: {e}")
+
+
+# 复制 funasr 库
+copy_models()
 
 end_time = time.time()
 total_time = end_time - start_time
 hours, rem = divmod(total_time, 3600)
 minutes, seconds = divmod(rem, 60)
 print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
-
 
 """
 2024-10-22 14:43:45.981 | DEBUG    | nice_ui.task.queue_worker:consume_queue:28 - 获取到任务:raw_name='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' raw_dirname='F:/ski/国外教学翻译' raw_basename='Top 10 Affordable Ski Resorts in Europe.mp4' raw_noextname='Top 10 Affordable Ski Resorts in Europe' raw_ext='mp4' codec_type='video' output='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48' wav_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.wav' media_dirname='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' srt_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.srt' unid='2db4247eee62b0a4a56ca1e8acda7d48' source_mp4='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' work_type=<WORK_TYPE.ASR: 1>
