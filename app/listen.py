@@ -195,8 +195,8 @@ class SrtWriter:
 
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
-        spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
+        spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
         model = AutoModel(model=model_dir, model_revision="v2.0.4",
                           vad_model=vad_model_dir, vad_model_revision="v2.0.4",
                           punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号

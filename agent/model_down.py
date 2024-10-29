@@ -22,12 +22,28 @@ def download_model(model_name: str, progress_callback=None):
     在使用模型目录时，直接使用config.funasr_model_path即可。
     """
     vad_model_path = os.path.join(config.funasr_model_path, 'speech_fsmn_vad_zh-cn-16k-common-pytorch')
+    punc_model_path = os.path.join(config.funasr_model_path, 'punc_ct-transformer_cn-en-common-vocab471067-large')
+    spk_model_path = os.path.join(config.funasr_model_path, 'speech_campplus_sv_zh-cn_16k-common')
     if os.path.exists(vad_model_path):
         logger.info("vad模型已下载，跳过")
     else:
         logger.info("开始下载vad模型")
         snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=model_dir)
         logger.info("vad模型下载完成")
+
+    if os.path.exists(punc_model_path):
+        logger.info("标点模型已下载，跳过")
+    else:
+        logger.info("开始下载标点模型")
+        snapshot_download('iic/punc_ct-transformer_cn-en-common-vocab471067-large', cache_dir=model_dir)
+        logger.info("标点模型下载完成")
+
+    if os.path.exists(spk_model_path):
+        logger.info("说话人模型已下载，跳过")
+    else:
+        logger.info("开始下载说话人模型")
+        snapshot_download('iic/speech_campplus_sv_zh-cn_16k-common', cache_dir=model_dir)
+        logger.info("说话人模型下载完成")
 
     start_time = time.time()
     #todo： 这里是多语言模型大小，其他两种没他大，并且相差不大就不改了
