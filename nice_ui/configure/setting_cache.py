@@ -14,6 +14,9 @@ def get_setting_cache(settings: QSettings):
     config.params["video_autorate"] = settings.value("video_autorate", False, bool)
     config.params["append_video"] = settings.value("append_video", False, bool)
     config.params["auto_ajust"] = settings.value("auto_ajust", True, bool)
+    config.models_path = settings.value("models_path", config.models_path)
+        # 更新 funasr_model_path
+    config.funasr_model_path = config.update_funasr_path()
 
     if settings.value("clone_voicelist", ""):
         config.clone_voicelist = settings.value("clone_voicelist", "").split(',')
