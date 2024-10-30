@@ -146,7 +146,11 @@ class LocalModelPage(QWidget):
             config.models_path = new_path
             self.settings.setValue(
                 "models_path", config.models_path
-            )  # self.settings.sync()
+            )
+
+            # 重新检查模型安装状态
+            self.show_funasr_table(self.funasr_model_table)
+            # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -209,9 +213,11 @@ class LocalModelPage(QWidget):
             所有下载完成的判断根据是最后一个文件是否存在来判断，
             最后下载的是文件是tokens.json
             """
+            rr_dir = os.path.join(config.funasr_model_path, model_folder,"tokens.json")
+            logger.info(f"检查模型是否已安装: {rr_dir}")
 
             is_installed = os.path.exists(
-                os.path.join(config.funasr_model_path, model_folder,"tokens.json")
+                rr_dir
             )
 
             for col, value in enumerate([model_name, model_size]):

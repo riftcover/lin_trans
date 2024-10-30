@@ -201,7 +201,7 @@ class SecWindow:
         source_model_info = start_tools.match_source_model(
             self.main.source_model.currentText()
         )
-
+        logger.debug(f"==========source_model_info:{source_model_info}")
         model_name = source_model_info["model_name"]
 
         if start_tools.ask_model_folder(model_name):

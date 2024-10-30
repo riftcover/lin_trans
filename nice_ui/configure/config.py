@@ -34,6 +34,17 @@ root_same = Path(__file__).parent.parent.parent.parent
 models_path = root_same / "models"
 funasr_model_path = models_path/"funasr"/"iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
+
+# 修改为函数，方便动态更新
+def update_funasr_path():
+    global funasr_model_path
+    funasr_model_path = Path(models_path)/"funasr"/"iic"
+    funasr_model_path.mkdir(parents=True, exist_ok=True)
+    return funasr_model_path
+
+# 初始化 funasr_model_path
+funasr_model_path = update_funasr_path()
+
 temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
