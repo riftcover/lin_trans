@@ -343,7 +343,9 @@ class TableApp(CardWidget):
             logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)
             file_status.set_status("处理失败")
-            self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
+            # self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
+            # todo 所有位置屏蔽开始任务按钮，当前trans，ast_trans任务不能开始。
+            self._set_row_buttons(row_position, [ButtonType.DELETE])
 
     def table_row_working(self, unid: str, progress: float):
         ask = self.row_cache
@@ -398,7 +400,7 @@ class TableApp(CardWidget):
                     [
                         ButtonType.EDIT,
                         ButtonType.EXPORT,
-                        ButtonType.START,
+                        # ButtonType.START,
                         ButtonType.DELETE,
                     ],
                 )
@@ -423,7 +425,8 @@ class TableApp(CardWidget):
 
         self._set_row_buttons(
             row_position,
-            [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE],
+            # [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.START, ButtonType.DELETE],
+            [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.DELETE],
         )
 
     def _start_row(self):
