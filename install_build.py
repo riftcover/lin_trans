@@ -53,11 +53,12 @@ cmd = [
     f"--add-data=result{os.pathsep}result",
 ]
 
-# todo: 打包前重新生成orm/linlin.db文件，删除logs中的文件
-# 添加 modelscope 的所有子模块
-modelscope_path = pkgutil.get_loader("modelscope").path
-for _, name, _ in pkgutil.walk_packages([modelscope_path]):
-    cmd.append(f"--hidden-import=modelscope.{name}")
+# todo: 打包前重新生成orm/linlin.db文件
+#todo: console不输出内容
+
+# modelscope_path = pkgutil.get_loader("modelscope").path
+# for _, name, _ in pkgutil.walk_packages([modelscope_path]):
+#     cmd.append(f"--hidden-import=modelscope.{name}")
 
 if args.debug:
     cmd.extend([
