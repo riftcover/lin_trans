@@ -73,8 +73,16 @@ class LinQueue:
             logger.trace(f'准备翻译任务:{final_name}')
             
             trans_orm = ToTranslationOrm()
-            trans_orm.add_data_to_table(new_task.unid, new_task.raw_name, config.params['source_language'], config.params['target_language'],
-                                        config.params['translate_channel'], 1, 1, new_task.model_dump_json())
+            trans_orm.add_data_to_table(
+                new_task.unid,
+                new_task.raw_name,
+                config.params['source_language'],
+                config.params["source_language_code"],
+                config.params['target_language'],
+                config.params['translate_channel'],
+                1,
+                1,
+                new_task.model_dump_json())
             logger.trace(f'任务参数:{new_task.unid}, {new_task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
             
             translate_document(new_task.unid, new_task.raw_name, final_name, agent_type, config.params['prompt_text'], config.settings['trans_row'],
