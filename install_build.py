@@ -110,7 +110,7 @@ def clean_logs_directory():
 # 执行打包命令
 start_time = time.time()
 
-# 清理旧的构建文件
+# 清理旧的构建文件和日志
 if os.path.exists("dist"):
     shutil.rmtree("dist")
 if os.path.exists("build"):

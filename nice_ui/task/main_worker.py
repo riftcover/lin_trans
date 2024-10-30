@@ -112,6 +112,7 @@ class Worker(QObject):
                 obj_format.unid,
                 obj_format.raw_name,
                 config.params["source_language"],
+                config.params["source_language_code"],
                 config.params["source_module_status"],
                 config.params["source_module_name"],
                 config.params["translate_status"],
