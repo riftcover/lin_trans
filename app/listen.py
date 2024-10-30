@@ -79,7 +79,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 @lru_cache(maxsize=None)
 def load_model(model_path, model_revision="v2.0.4"):
     from funasr import AutoModel
-    return AutoModel(model=model_path, model_revision=model_revision, disable_update=True)
+    return AutoModel(model=model_path, model_revision=model_revision, disable_update=True,disable_pbar=True,disable_log=True)
 
 
 class SrtWriter:
@@ -203,7 +203,9 @@ class SrtWriter:
                           punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号
                           spk_model=spk_model_dir, spk_model_revision="v2.0.2",  # 说话人确认
                           vad_kwargs={"max_single_segment_time": 30000},
-                          disable_update=True)
+                          disable_update=True,
+                          disable_pbar=True,disable_log=True
+                          )
         # 启动进度更新线程
         progress_thread = threading.Thread(target=self._update_progress)
         progress_thread.start()
