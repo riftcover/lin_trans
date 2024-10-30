@@ -72,7 +72,7 @@ class LocalModelPage(QWidget):
         path_layout.addWidget(self.path_open_btn)
         layout.addLayout(path_layout)
 
-        tips1 = CaptionLabel("提示: 请确保模型存储路径存在且有足够的磁盘空间。")
+        tips1 = CaptionLabel("提示: 请确保模型存储路径存在且有足够的磁盘空间。更换存储目录后，请重新启动程序。")
         layout.addWidget(tips1)
 
         # Whisper.Cpp 模型列表

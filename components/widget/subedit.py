@@ -132,10 +132,12 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         button_size = QSize(15, 15)
         play_button = TransparentToolButton(FluentIcon.PLAY)
+        play_button.setToolTip("从当前开始播放")
         play_button.clicked.connect(self._play_from_time)
         auto_move_button = TransparentToolButton(FluentIcon.CHEVRON_DOWN_MED)
         play_button.setFixedSize(button_size)
         auto_move_button.setFixedSize(button_size)
+        auto_move_button.setToolTip("当前行到空行间译文下移")
         auto_move_button.clicked.connect(self._auto_move)
 
         layout.addWidget(play_button, alignment=Qt.AlignCenter)  # 设置水平居中
