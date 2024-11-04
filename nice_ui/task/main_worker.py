@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Qt
 
 from nice_ui.configure import config
 from nice_ui.task import WORK_TYPE
@@ -10,6 +10,7 @@ from nice_ui.util import tools
 from nice_ui.util.tools import set_process, VideoFormatInfo
 from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
+from vendor.qfluentwidgets import InfoBar, InfoBarPosition
 
 work_queue = LinQueue()
 
@@ -136,13 +137,30 @@ class Worker(QObject):
         target_path = f"{obj_format.output}/{obj_format.raw_noextname}.mp4"
 
         if len(target_path) >= 250:
-            set_process(config.transobj["chaochu255"] + "\n\n" + it, "alert")
-            self.stop()
-            return
+            InfoBar.error(
+                title="错误",
+                content=config.transobj["chaochu255"],
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self.parent(),
+            )
+
+            raise ValueError(f"文件路径过长: {target_path}")
         if re.search(r"[\&\+\:\?\|]+", it[2:]):
-            set_process(config.transobj["teshufuhao"] + "\n\n" + it, "alert")
+            InfoBar.error(
+                title="错误",
+                content=config.transobj["teshufuhao"],
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self.parent(),
+            )
+            
             self.stop()
-            return
+            raise ValueError(f"文件名包含特殊字符: {it}")
         return obj_format
 
     def stop(self):
