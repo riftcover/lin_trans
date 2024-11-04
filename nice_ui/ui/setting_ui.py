@@ -233,7 +233,7 @@ class LocalModelPage(QWidget):
             else:
                 install_btn = QPushButton("安装")
                 install_btn.clicked.connect(
-                    lambda r=row, m=model_folder: self.install_model(r, m)
+                    lambda _, r=row, m=model_folder: self.install_model(r, m)
                 )
                 table.setCellWidget(row, 2, install_btn)
 
@@ -242,7 +242,9 @@ class LocalModelPage(QWidget):
 
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
+        logger.info(f'row: {row}, model: {model_cn_name}')
         model_name = StartTools().match_model_name(model_cn_name)
+        logger.info(f'model_name: {model_name}')
 
         if not model_name:
             InfoBar.error(
