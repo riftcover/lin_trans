@@ -1,12 +1,11 @@
 import json
 import os
 import shutil
-import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QSettings, QThread
-from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
+from PySide6.QtCore import Qt, QThread
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
 from pydantic import ValidationError
 
 from components import LinIcon, GuiSize
