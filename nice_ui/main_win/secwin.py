@@ -203,7 +203,7 @@ class SecWindow:
         )
         logger.debug(f"==========source_model_info:{source_model_info}")
         model_name = source_model_info["model_name"]
-
+        config.params["source_module_key"] = self.main.source_model.currentText()
         if start_tools.ask_model_folder(model_name):
             config.params["source_module_name"] = model_name
             config.params["source_module_status"] = source_model_info["status"]
@@ -222,7 +222,11 @@ class SecWindow:
 
         if translate_status:
             self.get_trans_setting(language_name)
-
+        all_keys = self.main.settings.allKeys()
+        logger.info("当前保存设置项：")
+        for key in all_keys:
+            value = self.main.settings.value(key)
+            logger.info(f"Key: {key}, Value: {value}")
         save_setting(self.main.settings)
 
         logger.info(f"update later config.queue_mp4:{config.queue_asr}")

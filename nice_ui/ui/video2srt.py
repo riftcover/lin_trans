@@ -65,13 +65,9 @@ class Video2SRT(QWidget):
         # 设置self.source_language宽度
         self.source_language.setFixedWidth(98)
         self.source_language.addItems(config.langnamelist)
-        if (
-            config.params["source_language"]
-            and config.params["source_language"] in self.language_name
-        ):
-            self.source_language.setCurrentText(config.params["source_language"])
-        else:
-            self.source_language.setCurrentIndex(2)
+        logger.error(config.params["source_language"])
+        self.source_language.setCurrentText(config.params["source_language"])
+
 
         source_layout.addWidget(source_language_label)
         source_layout.addWidget(self.source_language)
@@ -100,7 +96,7 @@ class Video2SRT(QWidget):
             model_list.extend(config.model_code_list[9:14])
         logger.info(f"model_list: {model_list}")
         self.source_model.addItems(model_list)
-
+        self.source_model.setCurrentText(config.params["source_module_key"])
         recognition_layout.addWidget(recognition_label)
         recognition_layout.addWidget(self.source_model)
         combo_layout.addLayout(recognition_layout)

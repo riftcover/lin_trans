@@ -79,8 +79,9 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
             # 模拟翻译，实际使用时替换为真正的批量翻译
             # translated_text = texts_to_translate
 
-            logger.trace(f"翻译进度: {i + 1}/{duration}, 原文: {texts_to_translate}")
-            logger.trace(f"译文: {translated_text}")
+            logger.trace(f"翻译进度: {i + 1}/{duration}")
+            # logger.trace(f'原文: {texts_to_translate}')
+            # logger.trace(f"译文: {translated_text}")
 
             # 将翻译后的文本拆分回单独的句子
             translated_sentences = translated_text.split("\n")

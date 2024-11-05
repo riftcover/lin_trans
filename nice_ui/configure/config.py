@@ -237,6 +237,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "source_language": "英文",
     "source_module_status": 302,  # 语音转文本模型
     "source_module_name": "small",
+    "source_module_key":"中文模型",
     "detect_language": "en",
     "translate_status": False,
     "target_language": "zh-cn",
