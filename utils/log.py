@@ -33,6 +33,8 @@ class Logings:
 
         # 配置日志
         log_file = log_path / f"{DATE}.log"
+        error_file = log_path / f"error_{DATE}.log"
+        
         handlers = [
             {"sink": str(log_file),
              "level": "TRACE",
@@ -41,7 +43,16 @@ class Logings:
              "encoding": 'utf-8',
              "backtrace": True,
              "diagnose": True,
-             "enqueue": True}
+             "enqueue": True},
+            {"sink": str(error_file),
+             "level": "ERROR",
+             "rotation": "1 day",
+             "retention": "1 month",
+             "encoding": 'utf-8',
+             "backtrace": True,
+             "diagnose": True,
+             "enqueue": True
+             }
         ]
 
         # 如果是开发环境，添加控制台日志处理器
