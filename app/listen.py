@@ -284,7 +284,19 @@ class SrtWriter:
 
             text = rich_transcription_postprocess(res[0]["text"])
             time_res = time_model.generate(input=(temp_file.name, text), data_type=("sound", "text"))
-            punctuation_res = punctuation_model.generate(input=text)
+
+            # 添加输入验证
+            if not text or len(text.strip()) == 0:
+                logger.warning("输入文本为空，跳过标点符号处理")
+                continue
+
+            # 确保文本转换为正确的类型
+            text = text.strip()
+            try:
+                punctuation_res = punctuation_model.generate(input=text)
+            except RuntimeError as e:
+                logger.error(f"标点符号处理失败: {e}")
+                continue
 
             msg = Segment(punctuation_res, time_res)
             work_list = msg.get_segmented_index()
