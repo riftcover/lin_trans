@@ -1,11 +1,12 @@
 import json
 import os
 import shutil
+import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
+from PySide6.QtCore import Qt, QThread, QSettings
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
 from pydantic import ValidationError
 
 from components import LinIcon, GuiSize
@@ -169,7 +170,7 @@ class TableApp(CardWidget):
 
     def _init_table(self):
         # 初始化列表数据：srt文件任务和翻译字幕任务
-        srt_data = self.srt_orm.query_data_format_unid_path()
+        # srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
         processed_unids = set()
@@ -177,9 +178,9 @@ class TableApp(CardWidget):
         for item in trans_data:
             self._process_item(item, processed_unids)
 
-        for item in srt_data:
-            if item.unid not in processed_unids:
-                self._process_item(item, processed_unids)
+        # for item in srt_data:
+        #     if item.unid not in processed_unids:
+        #         self._process_item(item, processed_unids)
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
@@ -703,12 +704,28 @@ class TableApp(CardWidget):
         # 显示对话框
         dialog.exec()
 
-def main():
-    app = QApplication(sys.argv)
-    window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-
-    window.show()
-    sys.exit(app.exec())
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     app = QApplication(sys.argv)
+#
+#     # 为 Mac 系统设置全局字体
+#     if sys.platform == 'darwin':
+#         font = app.font()
+#         font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
+#         app.setFont(font)
+#
+#         # 设置全局样式表
+#         app.setStyleSheet("""
+#             * {
+#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+#             }
+#             QWidget {
+#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+#             }
+#         """)
+#
+#     window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+#     window.show()
+#     sys.exit(app.exec())
+#
+# if __name__ == "__main__":
+#     main()
