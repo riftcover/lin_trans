@@ -369,8 +369,8 @@ class ExportSubtitleDialog(QDialog):
             while i < len(lines) and not lines[i].strip():
                 i += 1
 
-        logger.info(first_line_subtitles)
-        logger.info(second_line_subtitles)
+        # logger.info(first_line_subtitles)
+        # logger.info(second_line_subtitles)
         # 保存提取的文本到 export_path
         export_name = os.path.splitext(os.path.basename(src_path))[0]
         with open(
