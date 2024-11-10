@@ -41,7 +41,17 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
         
-    - name: Create necessary directories
+    - name: Create necessary directories (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path models
+        New-Item -ItemType Directory -Force -Path result
+        New-Item -ItemType Directory -Force -Path logs
+        New-Item -ItemType Directory -Force -Path orm
+
+    - name: Create necessary directories (macOS)
+      if: runner.os == 'macOS'
       run: |
         mkdir -p models
         mkdir -p result
