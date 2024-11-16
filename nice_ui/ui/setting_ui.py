@@ -4,9 +4,10 @@ from typing import Optional
 
 from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QTimer
 from PySide6.QtCore import QThread, Signal
+from PySide6.QtGui import QFont
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
-                               QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
+                               QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, QStackedWidget, QFrame, )
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
@@ -1053,6 +1054,33 @@ class ProxyPage(QWidget):
         reply.deleteLater()
 
 
+class NavButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setCheckable(True)
+        self.setFixedHeight(40)
+        self.setFont(QFont('', 13))
+
+        # 更新样式以适应更大的字体
+        self.setStyleSheet("""
+            QPushButton {
+                border: none;
+                text-align: left;
+                padding: 8px 20px;  /* 增加内边距 */
+                background: transparent;
+                color: #333333;     /* 深色文字 */
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+            QPushButton:checked {
+                background-color: #e0e0e0;
+                border-left: 4px solid #2484fc;
+                color: #2484fc;     /* 选中时文字变色 */
+            }
+        """)
+
+
 class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
@@ -1061,18 +1089,87 @@ class SettingInterface(QWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
-        self.tabs = QTabWidget()
+        # 主布局
+        layout = QHBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
+
+        # 左侧导航区域
+        nav_frame = QFrame()
+        nav_frame.setFixedWidth(200)
+        nav_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-right: 1px solid #e0e0e0;
+            }
+        """)
+        nav_layout = QVBoxLayout(nav_frame)
+        nav_layout.setSpacing(2)
+        nav_layout.setContentsMargins(0, 10, 0, 10)
+
+        # 创建导航按钮
+        self.nav_buttons = []
+        nav_items = [
+            ("本地模型", self.showLocalModelPage),
+            ("LLM配置", self.showLLMConfigPage),
+            # ("翻译配置", self.showTranslationPage),
+            ("代理设置", self.showProxyPage)]
+
+        for text, slot in nav_items:
+            btn = NavButton(text)
+            btn.clicked.connect(slot)
+            self.nav_buttons.append(btn)
+            nav_layout.addWidget(btn)
+
+        # 在底部添加弹性空间
+        nav_layout.addStretch()
+
+        # 右侧内容区域
+        self.content_stack = QStackedWidget()
+        self.content_stack.setStyleSheet("""
+            QStackedWidget {
+                background-color: white;
+            }
+        """)
+
+        # 添加页面到堆栈
         self.localModelPage = LocalModelPage(settings=self.settings)
         self.llmConfigPage = LLMConfigPage(settings=self.settings)
-        # self.translationPage = TranslationPage(settings=self.settings)
+        self.translationPage = TranslationPage(settings=self.settings)
         self.proxyPage = ProxyPage(setting=self.settings)
 
-        self.tabs.addTab(self.localModelPage, "本地模型")
-        self.tabs.addTab(self.llmConfigPage, "LLM配置")
-        # self.tabs.addTab(self.translationPage, "翻译配置")
-        self.tabs.addTab(self.proxyPage, "代理设置")
+        self.content_stack.addWidget(self.localModelPage)
+        self.content_stack.addWidget(self.llmConfigPage)
+        self.content_stack.addWidget(self.translationPage)
+        self.content_stack.addWidget(self.proxyPage)
 
-        layout.addWidget(self.tabs)
-        self.setLayout(layout)
+        # 添加到主布局
+        layout.addWidget(nav_frame)
+        layout.addWidget(self.content_stack)
+
+        # 默认选中第一个选项
+        if self.nav_buttons:
+            self.nav_buttons[0].setChecked(True)
+
+    def _uncheck_other_buttons(self, active_button):
+        """取消其他按钮的选中状态"""
+        for btn in self.nav_buttons:
+            if btn != active_button:
+                btn.setChecked(False)
+
+    def showLocalModelPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[0])
+        self.content_stack.setCurrentIndex(0)
+
+    def showLLMConfigPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[1])
+        self.content_stack.setCurrentIndex(1)
+
+    # def showTranslationPage(self):
+    #     self._uncheck_other_buttons(self.nav_buttons[2])
+    #     self.content_stack.setCurrentIndex(2)
+
+    def showProxyPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[2])
+        self.content_stack.setCurrentIndex(2)
