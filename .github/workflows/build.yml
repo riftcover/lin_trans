@@ -1,0 +1,90 @@
+name: Build LinLin Application
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        python-version: ['3.11']
+        
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --timeout 100 --retries 3 -r requirements.txt || pip install --timeout 100 --retries 3 -r requirements.txt || pip install --timeout 100 --retries 3 -r requirements.txt
+      
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/Library/Caches/pip
+          ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+        
+    - name: Create necessary directories (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path models
+        New-Item -ItemType Directory -Force -Path result
+        New-Item -ItemType Directory -Force -Path logs
+        New-Item -ItemType Directory -Force -Path orm
+
+    - name: Create necessary directories (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p models
+        mkdir -p result
+        mkdir -p logs
+        mkdir -p orm
+        
+    - name: Build with PyInstaller
+      run: |
+        python install_build.py
+        
+    - name: Package Windows artifacts
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd dist
+        7z a -tzip LinLin-windows.zip LinLin/
+        
+    - name: Package macOS artifacts
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd dist
+        zip -r LinLin-macos.zip LinLin/
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: LinLin-${{ matrix.os }}
+        path: dist/LinLin-${{ runner.os }}.zip
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/LinLin-${{ runner.os }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

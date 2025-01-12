@@ -254,7 +254,8 @@ class CustomItemDelegate(QStyledItemDelegate):
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            editor.setText(index.data(Qt.EditRole))  # logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            editor.setText(index.data(Qt.EditRole))
+            # logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -468,12 +469,12 @@ class SubtitleModel(QAbstractTableModel):
                 prev_start, prev_end = self.sub_data[row][0:2]
             else:
                 prev_start = prev_end = '00:00:00,000'
-
+            
             # 插入新的空字幕条目
             new_entry = (prev_start, prev_end, "", "")
             self.sub_data.insert(row + 1, new_entry)
             self.endInsertRows()
-
+            
             # 发出数据变化信号
             self.dataChangedSignal.emit()
             return True
@@ -557,7 +558,7 @@ class SubtitleModel(QAbstractTableModel):
         if not current_text:  # 如果当前行为空，无需移动
             return
 
-        self.setData(self.index(row, 5), "", Qt.EditRole)
+        self.setData(self.index(row, 5), "", Qt.EditRole)  
 
         for i in range(row, self.rowCount()):
             next_text = self.data(self.index(i + 1, 5), Qt.EditRole)
@@ -566,7 +567,8 @@ class SubtitleModel(QAbstractTableModel):
                 break
             # 否则，交换当前行和下一行的内容
             self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
-            current_text = next_text  # logger.trace(f'{row}:{current_text}')
+            current_text = next_text
+            logger.trace(f'{row}:{current_text}')
 
         # 发出数据变化信号
         self.dataChanged.emit(self.index(row, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
@@ -793,11 +795,17 @@ class SubtitleTable(QTableView):
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
         # logger.debug("Scroll event")
         # 取消之前的计时器（如果存在）
-        self.update_timer.stop()  # 启动新的计时器，200毫秒后更新  # self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
+        self.update_timer.stop()
+        # 启动新的计时器，200毫秒后更新
+        # self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
 
     def resizeEvent(self, event) -> None:
-        super().resizeEvent(
-            event)  # logger.debug("Resize event")  # 取消之前的计时器（如果存在）  # self.update_timer.stop()  # # 启动新的计时器，200毫秒后更新  # self.update_timer.start(30)
+        super().resizeEvent(event)
+        # logger.debug("Resize event")
+        # 取消之前的计时器（如果存在）
+        # self.update_timer.stop()
+        # # 启动新的计时器，200毫秒后更新
+        # self.update_timer.start(30)
 
     def create_visible_editors(self) -> None:
         """初始化创建编辑器"""
@@ -808,16 +816,16 @@ class SubtitleTable(QTableView):
         """创建下一批编辑器"""
         start_row = self.current_batch * self.batch_size
         end_row = min(start_row + self.batch_size, self.model.rowCount())
-
+        
         for row in range(start_row, end_row):
             for col in range(self.model.columnCount()):
                 if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-
+        
         self.current_batch += 1
-
+        
         # 检查是否需要继续创建
         if end_row < self.model.rowCount():
             # 使用计时器延迟创建下一批，避免界面卡顿
@@ -825,8 +833,8 @@ class SubtitleTable(QTableView):
         else:
             self.create_timer.stop()
             logger.debug("All editors created")
-
-        # def create_visible_editors(self) -> None:
+    
+    # def create_visible_editors(self) -> None:
         # 只为可见区域创建编辑器。
         # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
@@ -959,7 +967,7 @@ class SubtitleTable(QTableView):
                         index = self.model.index(new_row, col)
                         self.openPersistentEditor(index)
                         self.visible_editors.add((new_row, col))
-
+                
                 # 更新后续行的编辑器索引
                 updated_editors = set()
                 for (r, c) in self.visible_editors:
@@ -968,7 +976,7 @@ class SubtitleTable(QTableView):
                     else:
                         updated_editors.add((r, c))
                 self.visible_editors = updated_editors
-
+                
         except Exception as e:
             logger.error(f"Error inserting row: {e}")
 
@@ -1070,9 +1078,11 @@ class SubtitleTable(QTableView):
 if __name__ == "__main__":
     import sys
 
+
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
+
