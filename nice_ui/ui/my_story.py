@@ -595,7 +595,7 @@ class TableApp(CardWidget):
     def searchFiles(self, text: str):
         for row in range(self.table.rowCount()):
             item = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
-            logger.info(f"item:{item.text()}")
+            # logger.info(f"item:{item.text()}")
             if text.lower() in item.text().lower():
                 self.table.setRowHidden(row, False)
             else:

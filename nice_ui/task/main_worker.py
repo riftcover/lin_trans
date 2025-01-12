@@ -148,19 +148,19 @@ class Worker(QObject):
             )
 
             raise ValueError(f"文件路径过长: {target_path}")
-        if re.search(r"[\&\+\:\?\|]+", it[2:]):
-            InfoBar.error(
-                title="错误",
-                content=config.transobj["teshufuhao"],
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self.parent(),
-            )
-            
-            self.stop()
-            raise ValueError(f"文件名包含特殊字符: {it}")
+        # if re.search(r"[\&\+\:\?\|]+", it[2:]):
+        #     InfoBar.error(
+        #         title="错误",
+        #         content=config.transobj["teshufuhao"],
+        #         orient=Qt.Horizontal,
+        #         isClosable=True,
+        #         position=InfoBarPosition.TOP,
+        #         duration=2000,
+        #         parent=self.parent(),
+        #     )
+        #
+        #     self.stop()
+        #     raise ValueError(f"文件名包含特殊字符: {it}")
         return obj_format
 
     def stop(self):
