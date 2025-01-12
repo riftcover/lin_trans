@@ -1,5 +1,7 @@
 import os
-from typing import Tuple, Any, List
+from typing import Tuple, Any, List, Optional
+from dataclasses import dataclass
+from enum import Enum
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QObject
 from PySide6.QtGui import QColor
@@ -9,6 +11,21 @@ from components.resource_manager import StyleManager
 from nice_ui.ui.style import LinLineEdit, LTimeEdit
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon, CheckBox, TransparentToolButton, ToolTipFilter, ToolTipPosition
+
+
+class OperationType(Enum):
+    MOVE_UP = "move_up"
+    MOVE_DOWN = "move_down"
+    AUTO_MOVE = "auto_move"
+
+
+@dataclass
+class Operation:
+    type: OperationType
+    source_row: int
+    target_row: int
+    old_text: str
+    new_text: str
 
 
 class CustomItemDelegate(QStyledItemDelegate):
@@ -237,8 +254,7 @@ class CustomItemDelegate(QStyledItemDelegate):
             editor.findChild(LTimeEdit, "end_time").initTime(times[1])
         elif index.column() in [4, 5]:
             # 原文和译文
-            editor.setText(index.data(Qt.EditRole))
-            # logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
+            editor.setText(index.data(Qt.EditRole))  # logger.debug(f"setEditorData: {index.data(Qt.EditRole)}")
         elif index.column() == 6:
             # 编辑按钮
             pass
@@ -288,6 +304,8 @@ class SubtitleModel(QAbstractTableModel):
         self.file_path = file_path
         self.sub_data = self.load_subtitle()
         self.checked_rows = set()  # 新增：用于存储被选中的行
+        self.operation_history: List[Operation] = []
+        self.current_operation_index = -1
 
     def load_subtitle(self) -> List[Tuple[str, str, str, str]]:
         """
@@ -450,12 +468,12 @@ class SubtitleModel(QAbstractTableModel):
                 prev_start, prev_end = self.sub_data[row][0:2]
             else:
                 prev_start = prev_end = '00:00:00,000'
-            
+
             # 插入新的空字幕条目
             new_entry = (prev_start, prev_end, "", "")
             self.sub_data.insert(row + 1, new_entry)
             self.endInsertRows()
-            
+
             # 发出数据变化信号
             self.dataChangedSignal.emit()
             return True
@@ -467,6 +485,14 @@ class SubtitleModel(QAbstractTableModel):
         # 移动原文到下一行
         if row < self.rowCount() - 1:
             current_text = self.data(self.index(row, 5), Qt.EditRole)
+            if not current_text:
+                return False
+            target_text = self.data(self.index(row+1, 5), Qt.EditRole)
+
+
+            # 记录操作
+            operation = Operation(type=OperationType.MOVE_DOWN, source_row=row, target_row=row + 1, old_text=current_text,new_text=target_text)
+            self.add_operation(operation)
 
             # Move current row's text to next row
             self.setData(self.index(row + 1, 5), current_text, Qt.EditRole)
@@ -482,13 +508,16 @@ class SubtitleModel(QAbstractTableModel):
         # 移动原文到上一行
         if row > 0:
             current_text = self.data(self.index(row, 5), Qt.EditRole)
+            if not current_text:
+                return False
+            target_text = self.data(self.index(row - 1, 5), Qt.EditRole)
+            # 记录操作
+            operation = Operation(type=OperationType.MOVE_UP, source_row=row, target_row=row - 1, old_text=current_text,new_text=target_text)
+            self.add_operation(operation)
 
-            # Move current row's text to next row
+            # 执行移动
             self.setData(self.index(row - 1, 5), current_text, Qt.EditRole)
-
-            # Clear current row's text
             self.setData(self.index(row, 5), "", Qt.EditRole)
-
             self.dataChanged.emit(self.index(row - 1, 5), self.index(row, 5), [Qt.EditRole])
             return True
         return False
@@ -528,7 +557,7 @@ class SubtitleModel(QAbstractTableModel):
         if not current_text:  # 如果当前行为空，无需移动
             return
 
-        self.setData(self.index(row, 5), "", Qt.EditRole)  
+        self.setData(self.index(row, 5), "", Qt.EditRole)
 
         for i in range(row, self.rowCount()):
             next_text = self.data(self.index(i + 1, 5), Qt.EditRole)
@@ -537,13 +566,71 @@ class SubtitleModel(QAbstractTableModel):
                 break
             # 否则，交换当前行和下一行的内容
             self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
-            current_text = next_text
-            logger.trace(f'{row}:{current_text}')
+            current_text = next_text  # logger.trace(f'{row}:{current_text}')
 
         # 发出数据变化信号
         self.dataChanged.emit(self.index(row, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
 
+    def add_operation(self, operation: Operation) -> None:
+        # 执行行移动操作时，将旧数据写入operation_history
+        # 添加新操作时，清除当前位置之后的所有操作
+        if self.current_operation_index < len(self.operation_history) - 1:
+            self.operation_history = self.operation_history[:self.current_operation_index + 1]
 
+        self.operation_history.append(operation)
+        self.current_operation_index += 1
+
+    def can_undo(self) -> bool:
+        return self.current_operation_index >= 0
+
+    def can_redo(self) -> bool:
+        return self.current_operation_index < len(self.operation_history) - 1
+
+    def undo(self) -> bool:
+        if not self.can_undo():
+            return False
+
+        operation = self.operation_history[self.current_operation_index]
+
+        if operation.type == OperationType.MOVE_DOWN:
+            # 将文本从目标行移回源行
+            self.setData(self.index(operation.source_row, 5), operation.old_text, Qt.EditRole)
+            self.setData(self.index(operation.target_row, 5), operation.new_text, Qt.EditRole)
+        elif operation.type == OperationType.MOVE_UP:
+            # 将文本从目标行移回源行
+            self.setData(self.index(operation.source_row, 5), operation.old_text, Qt.EditRole)
+            self.setData(self.index(operation.target_row, 5), operation.new_text, Qt.EditRole)
+        elif operation.type == OperationType.AUTO_MOVE:
+            # 将文本从目标行移回源行
+            self.setData(self.index(operation.source_row, 5), operation.old_text, Qt.EditRole)
+            self.setData(self.index(operation.target_row, 5), operation.new_text, Qt.EditRole)
+
+        self.current_operation_index -= 1
+        self.dataChanged.emit(self.index(0, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
+        return True
+
+    def redo(self) -> bool:
+        if not self.can_redo():
+            return False
+
+        self.current_operation_index += 1
+        operation = self.operation_history[self.current_operation_index]
+
+        if operation.type == OperationType.MOVE_DOWN:
+            # 重新执行向下移动
+            self.setData(self.index(operation.target_row, 5), operation.text, Qt.EditRole)
+            self.setData(self.index(operation.source_row, 5), "", Qt.EditRole)
+        elif operation.type == OperationType.MOVE_UP:
+            # 重新执行向上移动
+            self.setData(self.index(operation.target_row, 5), operation.text, Qt.EditRole)
+            self.setData(self.index(operation.source_row, 5), "", Qt.EditRole)
+        elif operation.type == OperationType.AUTO_MOVE:
+            # 重新执行自动移动
+            self.setData(self.index(operation.target_row, 5), operation.text, Qt.EditRole)
+            self.setData(self.index(operation.source_row, 5), "", Qt.EditRole)
+
+        self.dataChanged.emit(self.index(0, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
+        return True
 
 
 class VirtualScrollSignals(QObject):
@@ -706,17 +793,11 @@ class SubtitleTable(QTableView):
         # on_scroll 方法在滚动时被调用，更新可见的编辑器。
         # logger.debug("Scroll event")
         # 取消之前的计时器（如果存在）
-        self.update_timer.stop()
-        # 启动新的计时器，200毫秒后更新
-        # self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
+        self.update_timer.stop()  # 启动新的计时器，200毫秒后更新  # self.update_timer.start(10)  # self.create_visible_editors()    # self.remove_invisible_editors()
 
     def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        # logger.debug("Resize event")
-        # 取消之前的计时器（如果存在）
-        # self.update_timer.stop()
-        # # 启动新的计时器，200毫秒后更新
-        # self.update_timer.start(30)
+        super().resizeEvent(
+            event)  # logger.debug("Resize event")  # 取消之前的计时器（如果存在）  # self.update_timer.stop()  # # 启动新的计时器，200毫秒后更新  # self.update_timer.start(30)
 
     def create_visible_editors(self) -> None:
         """初始化创建编辑器"""
@@ -727,16 +808,16 @@ class SubtitleTable(QTableView):
         """创建下一批编辑器"""
         start_row = self.current_batch * self.batch_size
         end_row = min(start_row + self.batch_size, self.model.rowCount())
-        
+
         for row in range(start_row, end_row):
             for col in range(self.model.columnCount()):
                 if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-        
+
         self.current_batch += 1
-        
+
         # 检查是否需要继续创建
         if end_row < self.model.rowCount():
             # 使用计时器延迟创建下一批，避免界面卡顿
@@ -744,8 +825,8 @@ class SubtitleTable(QTableView):
         else:
             self.create_timer.stop()
             logger.debug("All editors created")
-    
-    # def create_visible_editors(self) -> None:
+
+        # def create_visible_editors(self) -> None:
         # 只为可见区域创建编辑器。
         # 获取当前视口（可见区域）的矩形
         visible_rect = self.viewport().rect()
@@ -878,7 +959,7 @@ class SubtitleTable(QTableView):
                         index = self.model.index(new_row, col)
                         self.openPersistentEditor(index)
                         self.visible_editors.add((new_row, col))
-                
+
                 # 更新后续行的编辑器索引
                 updated_editors = set()
                 for (r, c) in self.visible_editors:
@@ -887,7 +968,7 @@ class SubtitleTable(QTableView):
                     else:
                         updated_editors.add((r, c))
                 self.visible_editors = updated_editors
-                
+
         except Exception as e:
             logger.error(f"Error inserting row: {e}")
 
@@ -962,10 +1043,32 @@ class SubtitleTable(QTableView):
         s, ms = s.split(',')
         return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)
 
+    def undo(self) -> None:
+        """撤销上一次移动操作"""
+        if self.model.undo():
+            self.create_visible_editors()
+
+    def redo(self) -> None:
+        """重做上一次移动操作"""
+        if self.model.redo():
+            self.create_visible_editors()
+
+    def keyPressEvent(self, event) -> None:
+        """处理键盘快捷键"""
+        if event.modifiers() == Qt.ControlModifier:
+            if event.key() == Qt.Key_Z:
+                self.undo()
+                event.accept()
+                return
+            elif event.key() == Qt.Key_Y:
+                self.redo()
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
 
 if __name__ == "__main__":
     import sys
-
 
     patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
     app = QApplication(sys.argv)
@@ -973,4 +1076,3 @@ if __name__ == "__main__":
     table.resize(800, 600)  # 设置表格大小
     table.show()
     sys.exit(app.exec())
-
