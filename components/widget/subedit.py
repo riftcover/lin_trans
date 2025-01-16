@@ -298,6 +298,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
 class SubtitleModel(QAbstractTableModel):
     dataChangedSignal = Signal()
+    subtitleUpdated = Signal()  # 添加新的信号
 
     # 定义数据模型
     def __init__(self, file_path, parent=None):
@@ -429,6 +430,7 @@ class SubtitleModel(QAbstractTableModel):
 
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
+            self.subtitleUpdated.emit()  # 发出字幕更新信号
         elif role == Qt.UserRole and col == 3:  # 时间列
             self.sub_data[row] = (value[0], value[1], self.sub_data[row][2], self.sub_data[row][3])
 

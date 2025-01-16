@@ -52,6 +52,8 @@ class SubtitleEditPage(QWidget):
         self.subtitle_table.play_from_time_signal.connect(self.play_video_from_time)
         self.subtitle_table.seek_to_time_signal.connect(self.seek_video_to_time)  # 新增连接
 
+        self.subtitle_table.model.subtitleUpdated.connect(self.update_video_subtitle) #字幕更新信号
+
         self.initUI()
 
     def initUI(self):
@@ -161,6 +163,14 @@ class SubtitleEditPage(QWidget):
         """
         self.subtitle_table.clearFocus()
         self.subtitle_table.setFocus(Qt.OtherFocusReason)
+
+    def update_video_subtitle(self):
+        """
+        当字幕内容更新时，更新视频播放器中的字幕显示
+        """
+        if hasattr(self, 'videoWidget'):
+            current_position = self.videoWidget.player.position()
+            self.videoWidget.update_subtitle_at_position(current_position)
 
     def move_row_down_more(self):
         self.clear_table_focus()

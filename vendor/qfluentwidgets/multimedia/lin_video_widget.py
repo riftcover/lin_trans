@@ -87,9 +87,11 @@ class LinVideoWidget(QWidget):
         
         # 创建并设置阴影效果
         shadow_effect = QGraphicsDropShadowEffect()
-        shadow_effect.setBlurRadius(1)  # 设置模糊半径
+        shadow_effect.setBlurRadius(4)  # 增加模糊半径
         shadow_effect.setColor(QColor(0, 0, 0))  # 设置阴影颜色为黑色
-        shadow_effect.setOffset(1, 1)  # 设置偏移量为0，使阴影均匀分布在文字周围
+        shadow_effect.setOffset(2, 2)  # 添加一些偏移，使阴影更明显
+        shadow_effect.setXOffset(1)  # 水平偏移
+        shadow_effect.setYOffset(1)  # 垂直偏移
         self.subtitleItem.setGraphicsEffect(shadow_effect)
 
         # 添加到场景
@@ -265,3 +267,23 @@ class LinVideoWidget(QWidget):
     def setPosition(self, position):
         """ Set the current position of the video """
         self.player.setPosition(position)
+
+    
+        
+    def update_subtitle_at_position(self, position_ms):
+        """
+        手动更新指定时间点的字幕
+        Args:
+            position_ms: 时间点（毫秒）
+        """
+        # 使用二分查找找到当前时间对应的字幕
+        index = bisect_right(self.subtitles, (position_ms,)) - 1
+        if 0 <= index < len(self.subtitles):
+            start_ms, end_ms, subtitle_text = self.subtitles[index]
+            if start_ms <= position_ms <= end_ms:
+                self.subtitleItem.setPlainText(subtitle_text)
+                self.position_subtitle()
+            else:
+                self.subtitleItem.setPlainText("")  # 如果不在任何字幕时间范围内，清空字幕
+        else:
+            self.subtitleItem.setPlainText("")  # 如果找不到对应字幕，清空字幕
