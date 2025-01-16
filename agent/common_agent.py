@@ -11,6 +11,7 @@ from utils.agent_dict import agent_settings, AgentDict
 
 agent_msg = agent_settings()
 
+
 def uoload_file(agent, file_path):
     client = OpenAI(api_key=agent['key'], base_url=agent['base_url'], )
     file_object = client.files.create(file=Path(file_path), purpose="file-extract")
@@ -92,7 +93,6 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
                 translated_chunk.append(f"{header}{original_text}\n{translated_sentence}\n\n")
 
             output_content.write("".join(translated_chunk))
-
 
             progress_now = int((i + 1) / duration * 100)
             data_bridge.emit_whisper_working(unid, progress_now)

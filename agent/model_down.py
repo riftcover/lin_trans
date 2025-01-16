@@ -53,7 +53,8 @@ def download_model(model_name: str, progress_callback=None):
 
     def check_download_progress():
         nonlocal total_size, last_downloaded_size
-        current_size = 0
+        progress,current_size = 0,0
+
         # 因为.PT模型文件会先放在temp目录缓存，所以需要遍历两个目录
         for path in [download_path, temp_path]:
             for root, dirs, files in os.walk(path):
