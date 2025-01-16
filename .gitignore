@@ -164,3 +164,4 @@ dmypy.json
 ffmpeg_output/
 orm/linlin.db
 /nuitka-crash-report.xml
+/xf2.py
