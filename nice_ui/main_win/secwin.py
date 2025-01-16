@@ -223,10 +223,10 @@ class SecWindow:
         if translate_status:
             self.get_trans_setting(language_name)
         all_keys = self.main.settings.allKeys()
-        logger.info("当前保存设置项：")
+        logger.trace("当前保存设置项：")
         for key in all_keys:
             value = self.main.settings.value(key)
-            logger.info(f"Key: {key}, Value: {value}")
+            logger.trace(f"Key: {key}, Value: {value}")
         save_setting(self.main.settings)
 
         logger.info(f"update later config.queue_mp4:{config.queue_asr}")
