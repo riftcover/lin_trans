@@ -197,7 +197,7 @@ class SubtitleEditPage(QWidget):
         """
         if hasattr(self, 'videoWidget'):
             time_ms = self.convert_time_to_ms(start_time)
-            self.videoWidget.player.setPosition(time_ms)
+            self.videoWidget.player.setPosition(time_ms+1)
             # 不调用 play() 方法，所以视频不会开始播放
 
     @staticmethod
