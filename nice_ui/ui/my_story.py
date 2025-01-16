@@ -643,16 +643,16 @@ class TableApp(CardWidget):
         logger.info(f"导出字幕:{srt_path}")
 
         dialog = ExportSubtitleDialog([srt_path], self)
-        dialog.exec()
-        InfoBar.success(
-            title="成功",
-            content="文件已导出",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self,
-        )
+        if dialog.exec() == QDialog.Accepted:  # 如果导出成功
+            InfoBar.success(
+                title="成功",
+                content="文件已导出",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
 
     def _update_buttons_visibility(self):
         # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
