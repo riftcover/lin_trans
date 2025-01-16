@@ -170,7 +170,7 @@ class TableApp(CardWidget):
 
     def _init_table(self):
         # 初始化列表数据：srt文件任务和翻译字幕任务
-        # srt_data = self.srt_orm.query_data_format_unid_path()
+        srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
         processed_unids = set()
@@ -178,9 +178,9 @@ class TableApp(CardWidget):
         for item in trans_data:
             self._process_item(item, processed_unids)
 
-        # for item in srt_data:
-        #     if item.unid not in processed_unids:
-        #         self._process_item(item, processed_unids)
+        for item in srt_data:
+            if item not in processed_unids:
+                self._process_item(item, processed_unids)
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
