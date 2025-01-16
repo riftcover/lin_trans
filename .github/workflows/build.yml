@@ -2,11 +2,11 @@ name: Build LinLin Application
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main.xx ]
     tags:
       - 'v*'
   pull_request:
-    branches: [ main ]
+    branches: [ main.xx ]
 
 jobs:
   build:
