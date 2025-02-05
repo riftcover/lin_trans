@@ -2,10 +2,12 @@ import os
 import sys
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal,Qt, QUrl, QSize, QTimer
+from PySide6.QtCore import QSettings, Qt, QUrl, QSize, QTimer
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtGui import QFont
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
-from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
-                               QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
+from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QApplication, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
+                               QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, QStackedWidget, QFrame, )
 
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
@@ -72,7 +74,7 @@ class LocalModelPage(QWidget):
         path_layout.addWidget(self.path_open_btn)
         layout.addLayout(path_layout)
 
-        tips1 = CaptionLabel("提示: 请确保模型存储路径存在且有足够的磁盘空间。更换存储目录后，请重新启动程序。")
+        tips1 = CaptionLabel("提示: 请确保模型存储路径存在且有足够的磁盘空间。")
         layout.addWidget(tips1)
 
         # Whisper.Cpp 模型列表
@@ -146,11 +148,7 @@ class LocalModelPage(QWidget):
             config.models_path = new_path
             self.settings.setValue(
                 "models_path", config.models_path
-            )
-
-            # 重新检查模型安装状态
-            self.show_funasr_table(self.funasr_model_table)
-            # self.settings.sync()
+            )  # self.settings.sync()
 
     def populate_model_table(self, table, models):
         table.setRowCount(len(models))
@@ -213,11 +211,9 @@ class LocalModelPage(QWidget):
             所有下载完成的判断根据是最后一个文件是否存在来判断，
             最后下载的是文件是tokens.json
             """
-            rr_dir = os.path.join(config.funasr_model_path, model_folder,"tokens.json")
-            logger.info(f"检查模型是否已安装: {rr_dir}")
 
             is_installed = os.path.exists(
-                rr_dir
+                os.path.join(config.funasr_model_path, model_folder,"tokens.json")
             )
 
             for col, value in enumerate([model_name, model_size]):
@@ -233,7 +229,7 @@ class LocalModelPage(QWidget):
             else:
                 install_btn = QPushButton("安装")
                 install_btn.clicked.connect(
-                    lambda _, r=row, m=model_folder: self.install_model(r, m)
+                    lambda r=row, m=model_folder: self.install_model(r, m)
                 )
                 table.setCellWidget(row, 2, install_btn)
 
@@ -242,9 +238,7 @@ class LocalModelPage(QWidget):
 
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
-        logger.info(f'row: {row}, model: {model_cn_name}')
         model_name = StartTools().match_model_name(model_cn_name)
-        logger.info(f'model_name: {model_name}')
 
         if not model_name:
             InfoBar.error(
@@ -1060,6 +1054,33 @@ class ProxyPage(QWidget):
         reply.deleteLater()
 
 
+class NavButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setCheckable(True)
+        self.setFixedHeight(40)
+        self.setFont(QFont('', 13))
+
+        # 更新样式以适应更大的字体
+        self.setStyleSheet("""
+            QPushButton {
+                border: none;
+                text-align: left;
+                padding: 8px 20px;  /* 增加内边距 */
+                background: transparent;
+                color: #333333;     /* 深色文字 */
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+            QPushButton:checked {
+                background-color: #e0e0e0;
+                border-left: 4px solid #2484fc;
+                color: #2484fc;     /* 选中时文字变色 */
+            }
+        """)
+
+
 class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
@@ -1068,18 +1089,87 @@ class SettingInterface(QWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
-        self.tabs = QTabWidget()
+        # 主布局
+        layout = QHBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
+
+        # 左侧导航区域
+        nav_frame = QFrame()
+        nav_frame.setFixedWidth(200)
+        nav_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-right: 1px solid #e0e0e0;
+            }
+        """)
+        nav_layout = QVBoxLayout(nav_frame)
+        nav_layout.setSpacing(2)
+        nav_layout.setContentsMargins(0, 10, 0, 10)
+
+        # 创建导航按钮
+        self.nav_buttons = []
+        nav_items = [
+            ("本地模型", self.showLocalModelPage),
+            ("LLM配置", self.showLLMConfigPage),
+            # ("翻译配置", self.showTranslationPage),
+            ("代理设置", self.showProxyPage)]
+
+        for text, slot in nav_items:
+            btn = NavButton(text)
+            btn.clicked.connect(slot)
+            self.nav_buttons.append(btn)
+            nav_layout.addWidget(btn)
+
+        # 在底部添加弹性空间
+        nav_layout.addStretch()
+
+        # 右侧内容区域
+        self.content_stack = QStackedWidget()
+        self.content_stack.setStyleSheet("""
+            QStackedWidget {
+                background-color: white;
+            }
+        """)
+
+        # 添加页面到堆栈
         self.localModelPage = LocalModelPage(settings=self.settings)
         self.llmConfigPage = LLMConfigPage(settings=self.settings)
-        # self.translationPage = TranslationPage(settings=self.settings)
+        self.translationPage = TranslationPage(settings=self.settings)
         self.proxyPage = ProxyPage(setting=self.settings)
 
-        self.tabs.addTab(self.localModelPage, "本地模型")
-        self.tabs.addTab(self.llmConfigPage, "LLM配置")
-        # self.tabs.addTab(self.translationPage, "翻译配置")
-        self.tabs.addTab(self.proxyPage, "代理设置")
+        self.content_stack.addWidget(self.localModelPage)
+        self.content_stack.addWidget(self.llmConfigPage)
+        self.content_stack.addWidget(self.translationPage)
+        self.content_stack.addWidget(self.proxyPage)
 
-        layout.addWidget(self.tabs)
-        self.setLayout(layout)
+        # 添加到主布局
+        layout.addWidget(nav_frame)
+        layout.addWidget(self.content_stack)
+
+        # 默认选中第一个选项
+        if self.nav_buttons:
+            self.nav_buttons[0].setChecked(True)
+
+    def _uncheck_other_buttons(self, active_button):
+        """取消其他按钮的选中状态"""
+        for btn in self.nav_buttons:
+            if btn != active_button:
+                btn.setChecked(False)
+
+    def showLocalModelPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[0])
+        self.content_stack.setCurrentIndex(0)
+
+    def showLLMConfigPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[1])
+        self.content_stack.setCurrentIndex(1)
+
+    # def showTranslationPage(self):
+    #     self._uncheck_other_buttons(self.nav_buttons[2])
+    #     self.content_stack.setCurrentIndex(2)
+
+    def showProxyPage(self):
+        self._uncheck_other_buttons(self.nav_buttons[2])
+        self.content_stack.setCurrentIndex(2)
