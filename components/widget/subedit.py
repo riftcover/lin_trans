@@ -570,7 +570,7 @@ class SubtitleModel(QAbstractTableModel):
             # 否则，交换当前行和下一行的内容
             self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
             current_text = next_text
-            logger.trace(f'{row}:{current_text}')
+            # logger.trace(f'{row}:{current_text}')
 
         # 发出数据变化信号
         self.dataChanged.emit(self.index(row, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
