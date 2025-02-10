@@ -19,8 +19,10 @@ from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from utils import logger
-from vendor.qfluentwidgets import FluentIcon as FIF
+from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
+from nice_ui.ui.profile import ProfileInterface
+from vendor.qfluentwidgets import NavigationAvatarWidget
 
 
 class Window(FluentWindow):
@@ -46,6 +48,7 @@ class Window(FluentWindow):
         self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
         self.my_story = TableApp("我的创作", self, self.settings)
         self.settingInterface = SettingInterface("设置", self, self.settings)
+        self.loginInterface = ProfileInterface("登录", self, self.settings)
 
         self.initNavigation()
 
@@ -65,13 +68,27 @@ class Window(FluentWindow):
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
         self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置")
+        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置",NavigationItemPosition.BOTTOM)
 
-        # add badge to navigation item
-        # self.navigationInterface.addSeparator()
-        # self.navigationInterface.addWidget(routeKey='avatar', widget=NavigationAvatarWidget('zhiyiYo', 'resource/shoko.png'), onClick=self.showMessageBox,
-        #                                    position=NavigationItemPosition.BOTTOM, )
-        # self.navigationInterface.widget(self.vide2srt.objectName())
+        # 添加登录界面到导航（确保传入有效的名称）
+        self.addSubInterface(
+            self.loginInterface,
+            FIF.UP,
+            '账户登录',
+            NavigationItemPosition.BOTTOM
+        )
+
+        # 在底部添加头像和登录按钮
+        self.avatarWidget = NavigationAvatarWidget(
+            '未登录',
+            ':icon/assets/default_avatar.png'
+        )
+        self.navigationInterface.addWidget(
+            routeKey='avatar',
+            widget=self.avatarWidget,
+            onClick=self.showLoginInterface,
+            position=NavigationItemPosition.BOTTOM
+        )
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
@@ -155,6 +172,9 @@ class Window(FluentWindow):
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
 
+    def showLoginInterface(self):
+        # 切换到登录界面
+        self.switchTo(self.loginInterface)
 
 
 if __name__ == "__main__":
