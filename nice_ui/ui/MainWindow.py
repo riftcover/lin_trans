@@ -73,22 +73,11 @@ class Window(FluentWindow):
         # 添加登录界面到导航（确保传入有效的名称）
         self.addSubInterface(
             self.loginInterface,
-            FIF.UP,
+            FIF.FEEDBACK,
             '账户登录',
             NavigationItemPosition.BOTTOM
         )
 
-        # 在底部添加头像和登录按钮
-        self.avatarWidget = NavigationAvatarWidget(
-            '未登录',
-            ':icon/assets/default_avatar.png'
-        )
-        self.navigationInterface.addWidget(
-            routeKey='avatar',
-            widget=self.avatarWidget,
-            onClick=self.showLoginInterface,
-            position=NavigationItemPosition.BOTTOM
-        )
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)

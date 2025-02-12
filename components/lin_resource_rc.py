@@ -1,6 +1,6 @@
 # Resource object code (Python 3)
 # Created by: object code
-# Created by: The Resource Compiler for Qt version 6.7.0
+# Created by: The Resource Compiler for Qt version 6.6.3
 # WARNING! All changes made in this file will be lost!
 
 from PySide6 import QtCore
@@ -3288,242 +3288,289 @@ c-3.8-5.3 0-12.7\
 .9-13.2H690c6.5 \
 0 10.3 7.4 6.5 1\
 2.7\x22/></svg>\
-\x00\x00\x03E\
+\x00\x00\x02B\
+<\
+svg xmlns=\x22http:\
+//www.w3.org/200\
+0/svg\x22 width=\x2214\
+0\x22 height=\x22140\x22 \
+viewBox=\x220 0 256\
+ 256\x22><path fill\
+=\x22#000000\x22 d=\x22M1\
+52 98h-48a6 6 0 \
+0 0-6 6v48a6 6 0\
+ 0 0 6 6h48a6 6 \
+0 0 0 6-6v-48a6 \
+6 0 0 0-6-6m-6 4\
+8h-36v-36h36Zm86\
+ 0h-18v-36h18a6 \
+6 0 0 0 0-12h-18\
+V56a14 14 0 0 0-\
+14-14h-42V24a6 6\
+ 0 0 0-12 0v18h-\
+36V24a6 6 0 0 0-\
+12 0v18H56a14 14\
+ 0 0 0-14 14v42H\
+24a6 6 0 0 0 0 1\
+2h18v36H24a6 6 0\
+ 0 0 0 12h18v42a\
+14 14 0 0 0 14 1\
+4h42v18a6 6 0 0 \
+0 12 0v-18h36v18\
+a6 6 0 0 0 12 0v\
+-18h42a14 14 0 0\
+ 0 14-14v-42h18a\
+6 6 0 0 0 0-12m-\
+30 54a2 2 0 0 1-\
+2 2H56a2 2 0 0 1\
+-2-2V56a2 2 0 0 \
+1 2-2h144a2 2 0 \
+0 1 2 2Z\x22/></svg\
+>\
+\x00\x00\x03l\
 Q\
-TableView {\x0a    \
-background-color\
-: white;\x0a    bor\
-der: none;\x0a}\x0aQHe\
-aderView::sectio\
-n {\x0a    backgrou\
-nd-color: #f0f0f\
-0;\x0a    padding: \
-6px;\x0a    border:\
- none;\x0a    borde\
-r-bottom: 2px so\
-lid #d0d0d0;\x0a   \
- font-weight: bo\
-ld;\x0a    color: #\
-333333;\x0a}\x0aQScrol\
-lBar:vertical {\x0a\
-    border: none\
-;\x0a    background\
-: #f0f0f0;\x0a    w\
-idth: 10px;\x0a    \
+TableView {\x0d\x0a   \
+ background-colo\
+r: white;\x0d\x0a    b\
+order: none;\x0d\x0a}\x0d\
+\x0aQHeaderView::se\
+ction {\x0d\x0a    bac\
+kground-color: #\
+f0f0f0;\x0d\x0a    pad\
+ding: 6px;\x0d\x0a    \
+border: none;\x0d\x0a \
+   border-bottom\
+: 2px solid #d0d\
+0d0;\x0d\x0a    font-w\
+eight: bold;\x0d\x0a  \
+  color: #333333\
+;\x0d\x0a}\x0d\x0aQScrollBar\
+:vertical {\x0d\x0a   \
+ border: none;\x0d\x0a\
+    background: \
+#f0f0f0;\x0d\x0a    wi\
+dth: 10px;\x0d\x0a    \
 margin: 0px 0px \
-0px 0px;\x0a}\x0aQScro\
-llBar::handle:ve\
-rtical {\x0a    bac\
-kground: #c0c0c0\
-;\x0a    min-height\
-: 20px;\x0a    bord\
-er-radius: 5px;\x0a\
-}\x0aQScrollBar::ad\
-d-line:vertical,\
- QScrollBar::sub\
--line:vertical {\
-\x0a    height: 0px\
-;\x0a}\x0aQScrollBar:h\
-orizontal {\x0a    \
-border: none;\x0a  \
-  background: #f\
-0f0f0;\x0a    heigh\
-t: 10px;\x0a    mar\
-gin: 0px 0px 0px\
- 0px;\x0a}\x0aQScrollB\
+0px 0px;\x0d\x0a}\x0d\x0aQSc\
+rollBar::handle:\
+vertical {\x0d\x0a    \
+background: #c0c\
+0c0;\x0d\x0a    min-he\
+ight: 20px;\x0d\x0a   \
+ border-radius: \
+5px;\x0d\x0a}\x0d\x0aQScroll\
+Bar::add-line:ve\
+rtical, QScrollB\
+ar::sub-line:ver\
+tical {\x0d\x0a    hei\
+ght: 0px;\x0d\x0a}\x0d\x0aQS\
+crollBar:horizon\
+tal {\x0d\x0a    borde\
+r: none;\x0d\x0a    ba\
+ckground: #f0f0f\
+0;\x0d\x0a    height: \
+10px;\x0d\x0a    margi\
+n: 0px 0px 0px 0\
+px;\x0d\x0a}\x0d\x0aQScrollB\
 ar::handle:horiz\
-ontal {\x0a    back\
-ground: #c0c0c0;\
-\x0a    min-width: \
-20px;\x0a    border\
--radius: 5px;\x0a}\x0a\
-QScrollBar::add-\
-line:horizontal,\
- QScrollBar::sub\
--line:horizontal\
- {\x0a    width: 0p\
-x;\x0a}\
-\x00\x00\x02c\
+ontal {\x0d\x0a    bac\
+kground: #c0c0c0\
+;\x0d\x0a    min-width\
+: 20px;\x0d\x0a    bor\
+der-radius: 5px;\
+\x0d\x0a}\x0d\x0aQScrollBar:\
+:add-line:horizo\
+ntal, QScrollBar\
+::sub-line:horiz\
+ontal {\x0d\x0a    wid\
+th: 0px;\x0d\x0a}\
+\x00\x00\x02w\
 C\
-omboBox {\x0a    bo\
-rder: 1px solid \
-rgba(0, 0, 0, 0.\
-073);\x0a    border\
--radius: 5px;\x0a  \
-  border-bottom:\
- 1px solid rgba(\
-0, 0, 0, 0.183);\
-\x0a    padding: 0 \
-30px 0 10px;  /*\
- \xe8\xb0\x83\xe6\x95\xb4\xe5\x86\x85\xe8\xbe\xb9\xe8\xb7\x9d\
- */\x0a    color: b\
-lack;\x0a    backgr\
-ound-color: rgba\
-(255, 255, 255, \
-0.7);\x0a    text-a\
-lign: left;\x0a    \
-outline: none;\x0a \
-   min-height: 2\
-7px;  /* \xe8\xae\xbe\xe7\xbd\xae\xe6\
-\x9c\x80\xe5\xb0\x8f\xe9\xab\x98\xe5\xba\xa6\xe4\xb8\xba27\
-px */\x0a    max-he\
-ight: 27px;  /* \
-\xe8\xae\xbe\xe7\xbd\xae\xe6\x9c\x80\xe5\xa4\xa7\xe9\xab\x98\xe5\
-\xba\xa6\xe4\xb8\xba27px */\x0a}\x0a\x0a\
-ComboBox::drop-d\
-own {\x0a    subcon\
-trol-origin: pad\
-ding;\x0a    subcon\
-trol-position: c\
-enter right;\x0a   \
- width: 25px;\x0a  \
-  border-left-wi\
-dth: 0px;\x0a    bo\
-rder-top-right-r\
-adius: 4px;\x0a    \
-border-bottom-ri\
-ght-radius: 4px;\
-\x0a}\
-\x00\x00\x02\x86\
+omboBox {\x0d\x0a    b\
+order: 1px solid\
+ rgba(0, 0, 0, 0\
+.073);\x0d\x0a    bord\
+er-radius: 5px;\x0d\
+\x0a    border-bott\
+om: 1px solid rg\
+ba(0, 0, 0, 0.18\
+3);\x0d\x0a    padding\
+: 0 30px 0 10px;\
+  /* \xe8\xb0\x83\xe6\x95\xb4\xe5\x86\x85\xe8\xbe\
+\xb9\xe8\xb7\x9d */\x0d\x0a    col\
+or: black;\x0d\x0a    \
+background-color\
+: rgba(255, 255,\
+ 255, 0.7);\x0d\x0a   \
+ text-align: lef\
+t;\x0d\x0a    outline:\
+ none;\x0d\x0a    min-\
+height: 27px;  /\
+* \xe8\xae\xbe\xe7\xbd\xae\xe6\x9c\x80\xe5\xb0\x8f\xe9\xab\
+\x98\xe5\xba\xa6\xe4\xb8\xba27px */\x0d\x0a\
+    max-height: \
+27px;  /* \xe8\xae\xbe\xe7\xbd\xae\
+\xe6\x9c\x80\xe5\xa4\xa7\xe9\xab\x98\xe5\xba\xa6\xe4\xb8\xba2\
+7px */\x0d\x0a}\x0d\x0a\x0d\x0aCom\
+boBox::drop-down\
+ {\x0d\x0a    subcontr\
+ol-origin: paddi\
+ng;\x0d\x0a    subcont\
+rol-position: ce\
+nter right;\x0d\x0a   \
+ width: 25px;\x0d\x0a \
+   border-left-w\
+idth: 0px;\x0d\x0a    \
+border-top-right\
+-radius: 4px;\x0d\x0a \
+   border-bottom\
+-right-radius: 4\
+px;\x0d\x0a}\
+\x00\x00\x02\xa4\
 Q\
 Label#StatusLabe\
-l {\x0a    border-r\
-adius: 3px;\x0a    \
-font-size: 11px;\
-\x0a    background-\
-color: #E3F2FD;\x0a\
-    border: 1px \
-solid #2196F3;\x0a \
-   color: #1565C\
-0;\x0a}\x0a\x0aQLabel#Sta\
-tusLabel[status=\
-\x22completed\x22] {\x0a \
-   background-co\
-lor: #E3F2FD;\x0a  \
-  border: 1px so\
-lid #2196F3;\x0a   \
- color: #1565C0;\
-\x0a}\x0a\x0aQLabel#Statu\
-sLabel[status=\x22w\
-aiting\x22] {\x0a    b\
-ackground-color:\
- #cff4fc;\x0a    bo\
+l {\x0d\x0a    border-\
+radius: 3px;\x0d\x0a  \
+  font-size: 11p\
+x;\x0d\x0a    backgrou\
+nd-color: #E3F2F\
+D;\x0d\x0a    border: \
+1px solid #2196F\
+3;\x0d\x0a    color: #\
+1565C0;\x0d\x0a}\x0d\x0a\x0d\x0aQL\
+abel#StatusLabel\
+[status=\x22complet\
+ed\x22] {\x0d\x0a    back\
+ground-color: #E\
+3F2FD;\x0d\x0a    bord\
+er: 1px solid #2\
+196F3;\x0d\x0a    colo\
+r: #1565C0;\x0d\x0a}\x0d\x0a\
+\x0d\x0aQLabel#StatusL\
+abel[status=\x22wai\
+ting\x22] {\x0d\x0a    ba\
+ckground-color: \
+#cff4fc;\x0d\x0a    bo\
 rder: 1px solid \
-#0dcaf0;\x0a    col\
-or: #055160;\x0a}\x0a\x0a\
-QLabel#StatusLab\
-el[status=\x22faile\
-d\x22] {\x0a    backgr\
-ound-color: #FFE\
-BEE;\x0a    border:\
- 1px solid #FF52\
-52;\x0a    color: #\
-055160;\x0a}\x0a\x0aQLabe\
-l#StatusLabel[st\
-atus=\x22default\x22] \
-{\x0a    background\
--color: #E0E0E0;\
-\x0a    border: 1px\
- solid #9E9E9E;\x0a\
-    color: #6161\
-61;\x0a}\
-\x00\x00\x00\xb0\
+#0dcaf0;\x0d\x0a    co\
+lor: #055160;\x0d\x0a}\
+\x0d\x0a\x0d\x0aQLabel#Statu\
+sLabel[status=\x22f\
+ailed\x22] {\x0d\x0a    b\
+ackground-color:\
+ #FFEBEE;\x0d\x0a    b\
+order: 1px solid\
+ #FF5252;\x0d\x0a    c\
+olor: #055160;\x0d\x0a\
+}\x0d\x0a\x0d\x0aQLabel#Stat\
+usLabel[status=\x22\
+default\x22] {\x0d\x0a   \
+ background-colo\
+r: #E0E0E0;\x0d\x0a   \
+ border: 1px sol\
+id #9E9E9E;\x0d\x0a   \
+ color: #616161;\
+\x0d\x0a}\
+\x00\x00\x00\xb7\
 Q\
 HeaderView::sect\
-ion {\x0a    backgr\
-ound-color: #f0f\
-0f0;\x0a    padding\
-: 4px;\x0a    borde\
-r: none;\x0a    bor\
-der-bottom: 1px \
-solid #d0d0d0;\x0a \
-   border-right:\
- none;\x0a    font-\
-weight: bold;\x0a}\
-\x00\x00\x01\x13\
+ion {\x0d\x0a    backg\
+round-color: #f0\
+f0f0;\x0d\x0a    paddi\
+ng: 4px;\x0d\x0a    bo\
+rder: none;\x0d\x0a   \
+ border-bottom: \
+1px solid #d0d0d\
+0;\x0d\x0a    border-r\
+ight: none;\x0d\x0a   \
+ font-weight: bo\
+ld;\x0d\x0a}\
+\x00\x00\x01\x1d\
 D\
-eleteButton {\x0a  \
-  background-col\
-or: #e74c3c !imp\
-ortant;\x0a    bord\
-er: 1px solid #e\
-74c3c !important\
-;\x0a }\x0aDeleteButto\
-n:hover {\x0a    ba\
-ckground-color: \
+eleteButton {\x0d\x0a \
+   background-co\
+lor: #e74c3c !im\
+portant;\x0d\x0a    bo\
+rder: 1px solid \
+#e74c3c !importa\
+nt;\x0d\x0a }\x0d\x0aDeleteB\
+utton:hover {\x0d\x0a \
+   background-co\
+lor: #f17a6f !im\
+portant;\x0d\x0a    bo\
+rder: 1px solid \
 #f17a6f !importa\
-nt;\x0a    border: \
-1px solid #f17a6\
-f !important;\x0a}\x0a\
-DeleteButton:pre\
-ssed {\x0a    backg\
-round-color: #c0\
-392b !important;\
-\x0a}\
-\x00\x00\x02\x85\
-Q\
-TimeEdit {\x0a    b\
-order: 1px solid\
- #d0d0d0;\x0a    bo\
-rder-radius: 4px\
-;\x0a    padding: 2\
-px 4px;\x0a    colo\
-r: #333333;\x0a}\x0a\x0aQ\
-TimeEdit:focus {\
-\x0a    background-\
-color: #ffffff;\x0a\
-    border-color\
-: #3d7eff;\x0a    o\
-utline: none;\x0a}\x0a\
-\x0aQTimeEdit::up-b\
-utton, QTimeEdit\
-::down-button {\x0a\
+nt;\x0d\x0a}\x0d\x0aDeleteBu\
+tton:pressed {\x0d\x0a\
     background-c\
-olor: transparen\
-t;\x0a}\x0a\x0aQTimeEdit:\
-:up-button:hover\
-, QTimeEdit::dow\
-n-button:hover {\
-\x0a    background-\
-color: rgba(208,\
- 208, 208, 0.5);\
-\x0a}\x0a\x0aQTimeEdit::u\
-p-arrow, QTimeEd\
-it::down-arrow {\
-\x0a    width: 10px\
-;\x0a    height: 8p\
-x;\x0a}\x0a\x0aQTimeEdit:\
-:up-arrow {\x0a    \
-image: url(:/ico\
-n/assets/Teenyic\
-onsUpSolid.svg);\
-\x0a}\x0a\x0aQTimeEdit::d\
-own-arrow {\x0a    \
-image: url(:/ico\
-n/assets/Teenyic\
-onsDownSolid.svg\
-);\x0a}\
-\x00\x00\x01$\
+olor: #c0392b !i\
+mportant;\x0d\x0a}\
+\x00\x00\x02\xa5\
+Q\
+TimeEdit {\x0d\x0a    \
+border: 1px soli\
+d #d0d0d0;\x0d\x0a    \
+border-radius: 4\
+px;\x0d\x0a    padding\
+: 2px 4px;\x0d\x0a    \
+color: #333333;\x0d\
+\x0a}\x0d\x0a\x0d\x0aQTimeEdit:\
+focus {\x0d\x0a    bac\
+kground-color: #\
+ffffff;\x0d\x0a    bor\
+der-color: #3d7e\
+ff;\x0d\x0a    outline\
+: none;\x0d\x0a}\x0d\x0a\x0d\x0aQT\
+imeEdit::up-butt\
+on, QTimeEdit::d\
+own-button {\x0d\x0a  \
+  background-col\
+or: transparent;\
+\x0d\x0a}\x0d\x0a\x0d\x0aQTimeEdit\
+::up-button:hove\
+r, QTimeEdit::do\
+wn-button:hover \
+{\x0d\x0a    backgroun\
+d-color: rgba(20\
+8, 208, 208, 0.5\
+);\x0d\x0a}\x0d\x0a\x0d\x0aQTimeEd\
+it::up-arrow, QT\
+imeEdit::down-ar\
+row {\x0d\x0a    width\
+: 10px;\x0d\x0a    hei\
+ght: 8px;\x0d\x0a}\x0d\x0a\x0d\x0a\
+QTimeEdit::up-ar\
+row {\x0d\x0a    image\
+: url(:/icon/ass\
+ets/TeenyiconsUp\
+Solid.svg);\x0d\x0a}\x0d\x0a\
+\x0d\x0aQTimeEdit::dow\
+n-arrow {\x0d\x0a    i\
+mage: url(:/icon\
+/assets/Teenyico\
+nsDownSolid.svg)\
+;\x0d\x0a}\
+\x00\x00\x01*\
 L\
-inLineEdit {\x0a   \
- border-left: 1p\
-x solid #d0d0d0;\
-  /* \xe5\xb7\xa6\xe8\xbe\xb9\xe6\xa1\x86\xe4\xb8\
-\xba\xe7\x81\xb0\xe8\x89\xb2 */\x0a    b\
-order-right: 1px\
- solid #d0d0d0; \
- /* \xe5\x8f\xb3\xe8\xbe\xb9\xe6\xa1\x86\xe4\xb8\xba\
-\xe7\x81\xb0 \xe8\x89\xb2 */\x0a    b\
-order-top: 2px s\
-olid transparent\
-;  /* \xe4\xb8\x8a\xe8\xbe\xb9\xe6\xa1\x86\xe4\
-\xb8\xba\xe9\x80\x8f\xe6\x98\x8e */\x0a    \
-border-bottom: 2\
-px solid transpa\
-rent;  /* \xe4\xb8\x8b\xe8\xbe\xb9\
-\xe6\xa1\x86\xe4\xb8\xba\xe9\x80\x8f\xe6\x98\x8e */\x0a\
-    padding: 2px\
-;\x0a}\
+inLineEdit {\x0d\x0a  \
+  border-left: 1\
+px solid #d0d0d0\
+;  /* \xe5\xb7\xa6\xe8\xbe\xb9\xe6\xa1\x86\xe4\
+\xb8\xba\xe7\x81\xb0\xe8\x89\xb2 */\x0d\x0a   \
+ border-right: 1\
+px solid #d0d0d0\
+;  /* \xe5\x8f\xb3\xe8\xbe\xb9\xe6\xa1\x86\xe4\
+\xb8\xba\xe7\x81\xb0 \xe8\x89\xb2 */\x0d\x0a  \
+  border-top: 2p\
+x solid transpar\
+ent;  /* \xe4\xb8\x8a\xe8\xbe\xb9\xe6\
+\xa1\x86\xe4\xb8\xba\xe9\x80\x8f\xe6\x98\x8e */\x0d\x0a\
+    border-botto\
+m: 2px solid tra\
+nsparent;  /* \xe4\xb8\
+\x8b\xe8\xbe\xb9\xe6\xa1\x86\xe4\xb8\xba\xe9\x80\x8f\xe6\x98\x8e\
+ */\x0d\x0a    padding\
+: 2px;\x0d\x0a}\
 "
 
 qt_resource_name = b"\
@@ -3572,6 +3619,10 @@ qt_resource_name = b"\
 \x00A\
 \x00n\x00t\x00D\x00e\x00s\x00i\x00g\x00n\x00D\x00o\x00w\x00n\x00S\x00q\x00u\x00a\
 \x00r\x00e\x00F\x00i\x00l\x00l\x00e\x00d\x00.\x00s\x00v\x00g\
+\x00\x07\
+\x0axZ\x07\
+\x00c\
+\x00p\x00u\x00.\x00s\x00v\x00g\
 \x00\x06\
 \x07\xae\xc3\xc3\
 \x00t\
@@ -3613,42 +3664,44 @@ qt_resource_name = b"\
 qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x0b\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x0c\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x0c\x00\x02\x00\x00\x00\x01\x00\x00\x00\x03\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x00\x1a\x00\x02\x00\x00\x00\x07\x00\x00\x00\x04\
+\x00\x00\x00\x1a\x00\x02\x00\x00\x00\x08\x00\x00\x00\x04\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00~\x00\x00\x00\x00\x00\x01\x00\x00\x02\x1a\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x92\x17\xc4\x15G\
 \x00\x00\x01\x04\x00\x00\x00\x00\x00\x01\x00\x00\xc8\x9c\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x91\xf9C/\x99\
 \x00\x00\x014\x00\x00\x00\x00\x00\x01\x00\x00\xca\x85\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x91\xf61\xe1]\
 \x00\x00\x00\x98\x00\x00\x00\x00\x00\x01\x00\x00\xc6v\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x91\xf61\xdf\xe3\
 \x00\x00\x00J\x00\x00\x00\x00\x00\x01\x00\x00\x01\x93\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x91\xf61\xdet\
 \x00\x00\x00\xc8\x00\x00\x00\x00\x00\x01\x00\x00\xc6\xfd\
-\x00\x00\x01\x92\x1d\x87\x8d]\
+\x00\x00\x01\x91\xf61\xdd\x03\
+\x00\x00\x01t\x00\x00\x00\x00\x00\x01\x00\x00\xcc&\
+\x00\x00\x01\x94\xfa\x05F\xb4\
 \x00\x00\x00,\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x92\x1d\x87\x8d]\
-\x00\x00\x01t\x00\x02\x00\x00\x00\x07\x00\x00\x00\x0c\
+\x00\x00\x01\x91\xf9;\x85\x19\
+\x00\x00\x01\x88\x00\x02\x00\x00\x00\x07\x00\x00\x00\x0d\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x02r\x00\x00\x00\x00\x00\x01\x00\x00\xd8\xb4\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x01\xfc\x00\x00\x00\x00\x00\x01\x00\x00\xd4`\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x01\xae\x00\x00\x00\x00\x00\x01\x00\x00\xcfo\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x01\xce\x00\x00\x00\x00\x00\x01\x00\x00\xd1\xd6\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x01\x86\x00\x00\x00\x00\x00\x01\x00\x00\xcc&\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x02J\x00\x00\x00\x00\x00\x01\x00\x00\xd6+\
-\x00\x00\x01\x92\x1d\x87\x8d^\
-\x00\x00\x02\x22\x00\x00\x00\x00\x00\x01\x00\x00\xd5\x14\
-\x00\x00\x01\x92\x1d\x87\x8d^\
+\x00\x00\x02\x86\x00\x00\x00\x00\x00\x01\x00\x00\xdb\x84\
+\x00\x00\x01\x92\x0egVp\
+\x00\x00\x02\x10\x00\x00\x00\x00\x00\x01\x00\x00\xd6\xff\
+\x00\x00\x01\x92\x0e\xa9v\x09\
+\x00\x00\x01\xc2\x00\x00\x00\x00\x00\x01\x00\x00\xd1\xdc\
+\x00\x00\x01\x91\xff\xec)G\
+\x00\x00\x01\xe2\x00\x00\x00\x00\x00\x01\x00\x00\xd4W\
+\x00\x00\x01\x91\xf61\x19M\
+\x00\x00\x01\x9a\x00\x00\x00\x00\x00\x01\x00\x00\xcel\
+\x00\x00\x01\x92\x0egV|\
+\x00\x00\x02^\x00\x00\x00\x00\x00\x01\x00\x00\xd8\xdb\
+\x00\x00\x01\x91\xf61\x19N\
+\x00\x00\x026\x00\x00\x00\x00\x00\x01\x00\x00\xd7\xba\
+\x00\x00\x01\x91\xff\xa9\xd0\xc4\
 "
 
 def qInitResources():

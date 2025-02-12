@@ -17,5 +17,6 @@
         <file>assets/PhExport.svg</file>
         <file>assets/ClarityExportLine.svg</file>
         <file>assets/linlin.png</file>
+        <file>assets/cpu.svg</file>
     </qresource>
 </RCC>

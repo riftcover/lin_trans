@@ -7,6 +7,7 @@ class LinIcon(Enum):
     """ Fluent icon """
 
     EXPORT = 'PhExport'
+    CPU = 'cpu'
 
     def path(self):
         return f':/icon/assets/{self.value}.svg'

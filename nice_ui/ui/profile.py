@@ -1,5 +1,8 @@
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLineEdit, QHBoxLayout, QLabel
+
+from components import LinIcon
 from vendor.qfluentwidgets import (
     SimpleCardWidget,
     PushButton,
@@ -62,15 +65,14 @@ class ProfileInterface(QFrame):
 
         self.emailLabel = BodyLabel('邮箱地址', self)
         self.emailValue = BodyLabel('user@example.com', self)
-        self.emailLabel.setStyleSheet('color: #666666;')
         self.emailValue.setStyleSheet("""
-            QLabel {
                 font-size: 14px;
-                background: transparent;
-                border-bottom: 2px solid #dd3187;
-                margin: 1px;
+                color: #666666;
+                border-bottom: 1px solid #DDDDDD;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+                background-color: transparent;
                 min-height: 20px;
-            }
         """)
 
         # 将图标和垂直布局添加到水平布局中
@@ -84,14 +86,15 @@ class ProfileInterface(QFrame):
         self.emailContentLayout.setSpacing(4)
 
         # 算力额度
+
         # 创建垂直布局来包含算力所有内容
         self.quotaContentLayout = QVBoxLayout()
         self.quotaContentLayout.setContentsMargins(20, 10, 10, 0)
 
         # 创建水平布局来包含标题和icon
         self.quotaTitleLayout = QHBoxLayout()
-        self.quotaIcon = IconWidget(FIF.SPEED_HIGH, self)
-        self.quotaIcon.setFixedSize(13, 13)
+        self.quotaIcon = IconWidget(LinIcon.CPU(), self)
+        self.quotaIcon.setFixedSize(15, 15)
         self.quotaLabel = BodyLabel('算力额度', self)
         self.quotaLabel.setStyleSheet('color: #666666;')
 
@@ -100,27 +103,39 @@ class ProfileInterface(QFrame):
         self.quotaTitleLayout.addStretch()
 
         # 创建水平布局来包含值和单位
-        self.quotaValue = SubtitleLabel('1000', self)
+        self.quotaValue = TitleLabel('1000', self)
         self.quotaUnit = BodyLabel('点数', self)
+        self.quotaUnit.setStyleSheet("""color: #666666""")
 
         self.quotaValueLayout = QHBoxLayout()
+        self.quotaValueLayout.setAlignment(Qt.AlignBottom)
+        self.quotaValue.setAlignment(Qt.AlignBottom)
+        self.quotaUnit.setAlignment(Qt.AlignBottom)
         self.quotaValueLayout.addWidget(self.quotaValue)
         self.quotaValueLayout.addWidget(self.quotaUnit)
         self.quotaValueLayout.addStretch()
 
         # 当前剩余可用算力提示
         self.quotaHint = BodyLabel('当前剩余可用算力额度', self)
-        # self.quotaHint.setStyleSheet('color: #666666;')
         self.quotaHint.setStyleSheet("""
-            QLabel {
-                color: #666666;
                 font-size: 14px;
-                background: transparent;
-                border-bottom: 2px solid #dd3187;
-                margin: 1px;
+                color: #666666;
+                border-bottom: 1px solid #DDDDDD;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+                background-color: transparent;
                 min-height: 20px;
-            }
         """)
+
+        # self.accountInfoContainer.setStyleSheet("""
+        #     #accountInfoContainer {
+        #         border-bottom: 1px solid #DDDDDD;
+        #         padding-bottom: 15px;
+        #         margin-bottom: 15px;
+        #         background-color: transparent;
+        #         min-height: 30px;
+        #     }
+        # """)
 
         # 将标签和值布局添加到垂直布局中
         self.quotaContentLayout.addLayout(self.quotaTitleLayout)
