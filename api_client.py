@@ -122,11 +122,12 @@ class APIClient:
             logger.error(f'Get balance failed: {e}')
             raise Exception(f"获取余额失败: {str(e)}")
 
-    def get_balance_sync(self) -> Dict:
+    @to_sync
+    async def get_balance_sync(self) -> Dict:
         """
         获取用户余额（同步版本）
         """
-        return _run_async(self.get_balance())
+        return await self.get_balance()
 
     async def reset_password(self, email: str) -> Dict:
         """
@@ -145,20 +146,22 @@ class APIClient:
         except httpx.HTTPError as e:
             raise Exception(f"重置密码请求失败: {str(e)}")
 
-    def reset_password_sync(self, email: str) -> Dict:
+    @to_sync
+    async def reset_password_sync(self, email: str) -> Dict:
         """
         请求重置密码（同步版本）
         """
-        return _run_async(self.reset_password(email))
+        return await self.reset_password(email)
 
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
         self._executor.shutdown(wait=True)
 
-    def close_sync(self):
+    @to_sync
+    async def close_sync(self):
         """关闭HTTP客户端（同步版本）"""
-        _run_async(self.close())
+        await self.close()
 
 
 # 创建全局API客户端实例
