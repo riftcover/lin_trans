@@ -6,6 +6,23 @@ from concurrent.futures import ThreadPoolExecutor
 
 from utils import logger
 
+
+def _get_event_loop():
+    """获取或创建事件循环"""
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop
+
+
+def _run_async(coro):
+    """在线程池中运行异步代码"""
+    loop = _get_event_loop()
+    return loop.run_until_complete(coro)
+
+
 class APIClient:
     def __init__(self, base_url: str = "http://localhost:8000/api"):
         self.base_url = base_url
@@ -13,20 +30,6 @@ class APIClient:
         self._token: Optional[str] = None
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._loop = None
-
-    def _get_event_loop(self):
-        """获取或创建事件循环"""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop
-
-    def _run_async(self, coro):
-        """在线程池中运行异步代码"""
-        loop = self._get_event_loop()
-        return loop.run_until_complete(coro)
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -105,4 +108,4 @@ class APIClient:
         self._run_async(self.close())
 
 # 创建全局API客户端实例
-api_client = APIClient() 
+api_client = APIClient()
