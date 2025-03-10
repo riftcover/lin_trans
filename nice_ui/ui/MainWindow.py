@@ -178,7 +178,7 @@ class Window(FluentWindow):
             # 如果未登录，显示登录窗口
             if not self.login_window:
                 from nice_ui.ui.login import LoginWindow
-                self.login_window = LoginWindow(self)
+                self.login_window = LoginWindow(self, self.settings)
                 self.login_window.loginSuccessful.connect(self.handleLoginSuccess)
             
             # 计算登录窗口在主窗口中的居中位置

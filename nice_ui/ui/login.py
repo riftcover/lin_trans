@@ -1,19 +1,27 @@
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
+import asyncio
+from functools import partial
 
-from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton)
+from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton, CheckBox)
+from api_client import api_client
 
 
 class LoginWindow(QFrame):
     # 添加登录成功信号
     loginSuccessful = Signal(dict)
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None,settings=None):
         super().__init__(parent=parent)
         self.setObjectName("loginWindow")
+        self.settings = settings
         self.setup_ui()
         self.setup_animation()
+        self.load_saved_email()
+        
+        # 创建事件循环
+        self.loop = asyncio.get_event_loop()
 
     def setup_ui(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window) # 独立窗口
@@ -92,6 +100,10 @@ class LoginWindow(QFrame):
         self.passwordInput.setEchoMode(QLineEdit.Password)
         self.passwordInput.setClearButtonEnabled(True)
 
+        # 记住账号复选框
+        self.rememberCheckBox = CheckBox('记住账号', self)
+        self.rememberCheckBox.setChecked(bool(self.settings.value('remember_email', False)))
+
         # 登录按钮
         self.loginButton = PrimaryPushButton('登录', self)
         self.loginButton.setFixedHeight(40)
@@ -126,6 +138,7 @@ class LoginWindow(QFrame):
 
         self.loginLayout.addWidget(self.emailInput)
         self.loginLayout.addWidget(self.passwordInput)
+        self.loginLayout.addWidget(self.rememberCheckBox)
         self.loginLayout.addWidget(self.loginButton)
         self.loginLayout.addWidget(self.forgotPasswordButton, 0, Qt.AlignCenter)
 
@@ -134,6 +147,7 @@ class LoginWindow(QFrame):
 
         # 连接信号
         self.loginButton.clicked.connect(self.handle_login)
+        self.forgotPasswordButton.clicked.connect(self.handle_forgot_password)
 
     def setup_animation(self):
         # 窗口打开时的动画效果
@@ -144,6 +158,23 @@ class LoginWindow(QFrame):
         self.animation.setEndValue(1)
         self.animation.setEasingCurve(QEasingCurve.InOutCubic)
         self.animation.start()
+
+    def load_saved_email(self):
+        """加载保存的邮箱账号"""
+        if bool(self.settings.value('remember_email', False)):
+            saved_email = self.settings.value('email', '')
+            if saved_email:
+                self.emailInput.setText(saved_email)
+
+    def save_email(self, email):
+        """保存邮箱账号"""
+        if self.rememberCheckBox.isChecked():
+            self.settings.setValue('remember_email', True)
+            self.settings.setValue('email', email)
+        else:
+            self.settings.setValue('remember_email', False)
+            self.settings.remove('email')
+        self.settings.sync()
 
     def handle_login(self):
         email = self.emailInput.text()
@@ -161,27 +192,70 @@ class LoginWindow(QFrame):
             )
             return
 
-        # TODO: 在这里添加实际的登录逻辑
-        # 这里模拟登录成功
-        user_info = {
-            'email': email,
-            'username': email.split('@')[0],
-            'quota': 1000  # 模拟用户额度
-        }
-        
-        # 发送登录成功信号
-        self.loginSuccessful.emit(user_info)
-        
-        # 显示登录成功提示
-        InfoBar.success(
-            title='成功',
-            content='登录成功',
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self
-        )
+        try:
+            user_info = api_client.login_sync(email, password)
+            # 保存邮箱账号
+            self.save_email(email)
+            
+            # 发送登录成功信号
+            self.loginSuccessful.emit(user_info)
+            
+            # 显示登录成功提示
+            InfoBar.success(
+                title='成功',
+                content='登录成功',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        except Exception as e:
+            InfoBar.error(
+                title='错误',
+                content=str(e),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+
+    def handle_forgot_password(self):
+        email = self.emailInput.text()
+        if not email:
+            InfoBar.error(
+                title='错误',
+                content='请输入邮箱地址',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        try:
+            api_client.reset_password_sync(email)
+            InfoBar.success(
+                title='成功',
+                content='重置密码链接已发送到您的邮箱',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            InfoBar.error(
+                title='错误',
+                content=str(e),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     def get_window_opacity(self):
         return self.opacity
