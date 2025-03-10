@@ -193,10 +193,14 @@ class LoginWindow(QFrame):
             return
 
         try:
-            user_info = api_client.login_sync(email, password)
+            user_login = api_client.login_sync(email, password)
             # 保存邮箱账号
-            self.save_email(email)
-            
+            if user_login:
+                self.save_email(email)
+            balance = api_client.get_balance_sync()['data']['balance']
+            user_info = {
+                'email': user_login['user']['email'],
+                'balance': balance}
             # 发送登录成功信号
             self.loginSuccessful.emit(user_info)
             

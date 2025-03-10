@@ -166,10 +166,16 @@ class ProfileInterface(QFrame):
 
     def updateUserInfo(self, user_info: dict):
         """更新用户信息"""
-        self.emailValue.setText(user_info.get('email', '未登录'))
-        self.quotaValue.setText(str(user_info.get('quota', 0)))
-        self.logoutButton.setVisible(True)  # 登录后显示退出按钮
+        # 更新邮箱地址
+        email = user_info.get('email', '未登录')
+        self.emailValue.setText(email)
         
+        # 更新算力额度
+        quota = user_info.get('balance', 0)
+        self.quotaValue.setText(str(quota))
+        
+        # 显示退出按钮
+        self.logoutButton.setVisible(True)
     def handleLogout(self):
         """处理退出登录"""
         # 重置用户信息显示
