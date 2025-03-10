@@ -178,28 +178,31 @@ class Window(FluentWindow):
         try:
             # 尝试从设置加载token
             if api_client.load_token_from_settings(self.settings):
-                # 获取用户信息
-                balance_data = api_client.get_balance_sync()
-                user_info = {
-                    'email': self.settings.value('email', '已登录'),
-                    'balance': balance_data['data']['balance']
-                }
-                
-                # 更新登录状态
-                self.is_logged_in = True
-                self.avatarWidget.setName(user_info['email'])
-                
-                # 更新个人中心页面
-                self.loginInterface.updateUserInfo(user_info)
-                logger.info("自动登录成功")
+                try:
+                    # 验证token是否有效
+                    balance_data = api_client.get_balance_sync()
+                    user_info = {
+                        'email': self.settings.value('email', '已登录'),
+                        'balance': balance_data['data']['balance']
+                    }
+                    
+                    # 更新登录状态
+                    self.is_logged_in = True
+                    self.avatarWidget.setName(user_info['email'])
+                    
+                    # 更新个人中心页面
+                    self.loginInterface.updateUserInfo(user_info)
+                    logger.info("自动登录成功")
+                except Exception as e:
+                    logger.warning(f"Token验证失败: {e}")
+                    # Token无效，清除状态
+                    self.settings.remove('token')
+                    self.settings.sync()
+                    api_client.clear_token()
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
-            logger.error(f"自动登录失败: {e}")
-            # 清除可能失效的token
-            self.settings.remove('token')
-            self.settings.sync()
-            api_client.clear_token()
+            logger.error(f"自动登录过程出错: {e}")
 
     def showLoginInterface(self):
         if not self.is_logged_in:
