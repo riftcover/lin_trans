@@ -37,6 +37,10 @@ class Window(FluentWindow):
         
         # 根据操作系统设置字体
         self.set_font()
+        
+        # 添加登录状态管理
+        self.is_logged_in = False
+        self.login_window = None
 
         self.initWindow()
         # self.load_proxy_settings()  # 加载代理设置
@@ -48,7 +52,7 @@ class Window(FluentWindow):
         self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
         self.my_story = TableApp("我的创作", self, self.settings)
         self.settingInterface = SettingInterface("设置", self, self.settings)
-        self.loginInterface = ProfileInterface("登录", self, self.settings)
+        self.loginInterface = ProfileInterface("个人中心", self, self.settings)
 
         self.initNavigation()
 
@@ -68,27 +72,24 @@ class Window(FluentWindow):
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
         self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置",NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置", NavigationItemPosition.BOTTOM)
 
-        # 添加登录界面到导航（确保传入有效的名称）
-        self.addSubInterface(
-            self.loginInterface,
-            FIF.UP,
-            '账户登录',
-            NavigationItemPosition.BOTTOM
-        )
-
-        # 在底部添加头像和登录按钮
+        # 创建头像按钮
         self.avatarWidget = NavigationAvatarWidget(
             '未登录',
-            ':icon/assets/default_avatar.png'
+            ':icon/assets/linlin.png'
         )
+        
+        # 添加个人中心到导航，使用头像作为按钮
         self.navigationInterface.addWidget(
-            routeKey='avatar',
+            routeKey=self.loginInterface.objectName(),
             widget=self.avatarWidget,
             onClick=self.showLoginInterface,
             position=NavigationItemPosition.BOTTOM
         )
+        
+        # 将个人中心页面添加到路由系统
+        self.stackedWidget.addWidget(self.loginInterface)
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
@@ -173,8 +174,33 @@ class Window(FluentWindow):
             )
 
     def showLoginInterface(self):
-        # 切换到登录界面
+        if not self.is_logged_in:
+            # 如果未登录，显示登录窗口
+            if not self.login_window:
+                from nice_ui.ui.login import LoginWindow
+                self.login_window = LoginWindow(self)
+                self.login_window.loginSuccessful.connect(self.handleLoginSuccess)
+            
+            # 计算登录窗口在主窗口中的居中位置
+            login_x = self.x() + (self.width() - self.login_window.width()) // 2
+            login_y = self.y() + (self.height() - self.login_window.height()) // 2
+            self.login_window.move(login_x, login_y)
+            
+            self.login_window.show()
+        else:
+            # 如果已登录，切换到个人中心页面
+            self.switchTo(self.loginInterface)
+            
+    def handleLoginSuccess(self, user_info):
+        """处理登录成功的回调"""
+        self.is_logged_in = True
+        self.avatarWidget.setName(user_info.get('email', '已登录'))
+        # 可以设置用户头像
+        # self.avatarWidget.setAvatar('path_to_avatar')
+        self.login_window.hide()
         self.switchTo(self.loginInterface)
+        # 更新个人中心页面的信息
+        self.loginInterface.updateUserInfo(user_info)
 
 
 if __name__ == "__main__":

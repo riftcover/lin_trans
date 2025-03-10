@@ -8,7 +8,9 @@ from vendor.qfluentwidgets import (
     SubtitleLabel,
     BodyLabel,
     PrimaryPushButton,
-    TitleLabel
+    TitleLabel,
+    InfoBar,
+    InfoBarPosition
 )
 
 
@@ -19,7 +21,7 @@ class ProfileInterface(QFrame):
         self.parent = parent
 
         # 设置对象名称
-        self.setObjectName(text)
+        self.setObjectName(text.replace(" ", "-"))
 
         # 创建主布局
         self.vBoxLayout = QVBoxLayout(self)
@@ -31,6 +33,7 @@ class ProfileInterface(QFrame):
         self.titleLabel = SubtitleLabel('个人中心', self)
         self.logoutButton = PrimaryPushButton('退出登录', self)
         self.logoutButton.setFixedWidth(100)
+        self.logoutButton.setVisible(False)  # 初始状态隐藏退出按钮
         self.titleBar.addWidget(self.titleLabel)
         self.titleBar.addStretch()
         self.titleBar.addWidget(self.logoutButton)
@@ -61,7 +64,7 @@ class ProfileInterface(QFrame):
         self.emailContentLayout.setContentsMargins(20, 10, 10, 0)
 
         self.emailLabel = BodyLabel('邮箱地址', self)
-        self.emailValue = BodyLabel('user@example.com', self)
+        self.emailValue = BodyLabel('未登录', self)
         self.emailLabel.setStyleSheet('color: #666666;')
         self.emailValue.setStyleSheet("""
             QLabel {
@@ -100,7 +103,7 @@ class ProfileInterface(QFrame):
         self.quotaTitleLayout.addStretch()
 
         # 创建水平布局来包含值和单位
-        self.quotaValue = SubtitleLabel('1000', self)
+        self.quotaValue = SubtitleLabel('0', self)
         self.quotaUnit = BodyLabel('点数', self)
 
         self.quotaValueLayout = QHBoxLayout()
@@ -110,7 +113,6 @@ class ProfileInterface(QFrame):
 
         # 当前剩余可用算力提示
         self.quotaHint = BodyLabel('当前剩余可用算力额度', self)
-        # self.quotaHint.setStyleSheet('color: #666666;')
         self.quotaHint.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -135,8 +137,6 @@ class ProfileInterface(QFrame):
         # 将账户信息容器添加到卡片布局中
         self.accountLayout.addWidget(self.accountInfoContainer)
 
-
-
         # 购买算力按钮
         self.buyButton = PushButton('购买算力', self)
         self.buyButton.setIcon(FIF.ADD)
@@ -160,3 +160,36 @@ class ProfileInterface(QFrame):
 
         self.vBoxLayout.addWidget(self.usageCard)
         self.vBoxLayout.addStretch()
+        
+        # 连接退出登录按钮的信号
+        self.logoutButton.clicked.connect(self.handleLogout)
+
+    def updateUserInfo(self, user_info: dict):
+        """更新用户信息"""
+        self.emailValue.setText(user_info.get('email', '未登录'))
+        self.quotaValue.setText(str(user_info.get('quota', 0)))
+        self.logoutButton.setVisible(True)  # 登录后显示退出按钮
+        
+    def handleLogout(self):
+        """处理退出登录"""
+        # 重置用户信息显示
+        self.emailValue.setText('未登录')
+        self.quotaValue.setText('0')
+        self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
+        
+        # 通知主窗口退出登录
+        if self.parent:
+            self.parent.is_logged_in = False
+            self.parent.avatarWidget.setName('未登录')
+            self.parent.avatarWidget.setAvatar(':icon/assets/default_avatar.png')
+            
+        # 显示退出成功提示
+        InfoBar.success(
+            title='成功',
+            content='已退出登录',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
