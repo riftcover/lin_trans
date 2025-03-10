@@ -180,10 +180,8 @@ class Window(FluentWindow):
             if api_client.load_token_from_settings(self.settings):
                 try:
                     # 验证token是否有效
-                    balance_data = api_client.get_balance_sync()
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
-                        'balance': balance_data['data']['balance']
                     }
                     
                     # 更新登录状态
@@ -192,6 +190,7 @@ class Window(FluentWindow):
                     
                     # 更新个人中心页面
                     self.loginInterface.updateUserInfo(user_info)
+                    self.get_history_sync.updateHistory()
                     logger.info("自动登录成功")
                 except Exception as e:
                     logger.warning(f"Token验证失败: {e}")

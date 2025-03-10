@@ -105,30 +105,6 @@ class APIClient:
         """用户登录（同步版本）"""
         return await self.login(email, password)
 
-    async def get_balance(self) -> Dict:
-        """
-        获取用户余额（异步版本）
-        
-        Returns:
-            Dict: 包含用户余额信息的响应数据
-        """
-        try:
-            response = await self.client.get("/transactions/get_balance", headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
-            logger.trace(f'Balance data: {data}')
-            return data
-        except httpx.HTTPError as e:
-            logger.error(f'Get balance failed: {e}')
-            raise Exception(f"获取余额失败: {str(e)}")
-
-    @to_sync
-    async def get_balance_sync(self) -> Dict:
-        """
-        获取用户余额（同步版本）
-        """
-        return await self.get_balance()
-
     async def reset_password(self, email: str) -> Dict:
         """
         请求重置密码（异步版本）
@@ -152,6 +128,44 @@ class APIClient:
         请求重置密码（同步版本）
         """
         return await self.reset_password(email)
+
+    async def get_balance(self) -> Dict:
+        """
+        获取用户余额（异步版本）
+
+        Returns:
+            Dict: 包含用户余额信息的响应数据
+        """
+        try:
+            response = await self.client.get("/transactions/get_balance", headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+            logger.trace(f'Balance data: {data}')
+            return data
+        except httpx.HTTPError as e:
+            logger.error(f'Get balance failed: {e}')
+            raise Exception(f"获取余额失败: {str(e)}")
+
+    @to_sync
+    async def get_balance_sync(self) -> Dict:
+        """
+        获取用户余额（同步版本）
+        """
+        return await self.get_balance()
+
+    async def get_history(self):
+        try:
+            response = await self.client.get("/transactions/history", headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+            logger.trace(f'History data: {data}')
+            return data
+        except httpx.HTTPError as e:
+            logger.error(f'Get history failed: {e}')
+
+    @to_sync
+    async def get_history_sync(self):
+        return await self.get_history()
 
     async def close(self):
         """关闭HTTP客户端"""

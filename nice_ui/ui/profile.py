@@ -1,17 +1,10 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLineEdit, QHBoxLayout, QLabel
-from vendor.qfluentwidgets import (
-    SimpleCardWidget,
-    PushButton,
-    FluentIcon as FIF,
-    IconWidget,
-    SubtitleLabel,
-    BodyLabel,
-    PrimaryPushButton,
-    TitleLabel,
-    InfoBar,
-    InfoBarPosition
-)
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout
+
+from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
+                                   InfoBarPosition)
+
+from api_client import api_client
 
 
 class ProfileInterface(QFrame):
@@ -160,51 +153,54 @@ class ProfileInterface(QFrame):
 
         self.vBoxLayout.addWidget(self.usageCard)
         self.vBoxLayout.addStretch()
-        
+
         # 连接退出登录按钮的信号
         self.logoutButton.clicked.connect(self.handleLogout)
 
     def updateUserInfo(self, user_info: dict):
-        """更新用户信息"""
+        """更新用户信息
+
+        当前：1.自动登陆调用
+        2.登陆窗口调用
+        """
         # 更新邮箱地址
         email = user_info.get('email', '未登录')
         self.emailValue.setText(email)
-        
-        # 更新算力额度
-        quota = user_info.get('balance', 0)
-        self.quotaValue.setText(str(quota))
-        
+        self._update_user_template()
+
         # 显示退出按钮
         self.logoutButton.setVisible(True)
+
+    def _update_user_template(self):
+        history_list = api_client.get_history_sync()
+        # 更新算力额度
+        balance = api_client.get_balance_sync()['data']['balance']
+        if balance:
+            self.quotaValue.setText(balance)
+        else:
+            self.quotaValue.setText('未知')
+
     def handleLogout(self):
         """处理退出登录"""
         # 重置用户信息显示
         self.emailValue.setText('未登录')
         self.quotaValue.setText('0')
         self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
-        
+
         # 清除保存的登录状态
         if self.settings:
             self.settings.remove('token')
             self.settings.sync()
-        
+
         # 清除API客户端的token
         from api_client import api_client
         api_client.clear_token()
-        
+
         # 通知主窗口退出登录
         if self.parent:
             self.parent.is_logged_in = False
             self.parent.avatarWidget.setName('未登录')
             self.parent.avatarWidget.setAvatar(':icon/assets/default_avatar.png')
-            
+
         # 显示退出成功提示
-        InfoBar.success(
-            title='成功',
-            content='已退出登录',
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self
-        )
+        InfoBar.success(title='成功', content='已退出登录', orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=2000, parent=self)

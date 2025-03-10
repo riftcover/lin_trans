@@ -2,7 +2,6 @@ from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signa
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
 import asyncio
-from functools import partial
 
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton, CheckBox)
 from api_client import api_client
@@ -204,10 +203,8 @@ class LoginWindow(QFrame):
                 self.save_email(email)
                 if 'session' in user_login and 'access_token' in user_login['session']:
                     self.save_login_state(user_login['session']['access_token'])
-                balance = api_client.get_balance_sync()['data']['balance']
                 user_info = {
-                    'email': user_login['user']['email'],
-                    'balance': balance}
+                    'email': user_login['user']['email']}
                 # 发送登录成功信号
                 self.loginSuccessful.emit(user_info)
                 
@@ -247,6 +244,7 @@ class LoginWindow(QFrame):
             return
 
         try:
+            # todo: 未测试
             api_client.reset_password_sync(email)
             InfoBar.success(
                 title='成功',
