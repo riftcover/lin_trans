@@ -183,6 +183,15 @@ class ProfileInterface(QFrame):
         self.quotaValue.setText('0')
         self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
         
+        # 清除保存的登录状态
+        if self.settings:
+            self.settings.remove('token')
+            self.settings.sync()
+        
+        # 清除API客户端的token
+        from api_client import api_client
+        api_client.clear_token()
+        
         # 通知主窗口退出登录
         if self.parent:
             self.parent.is_logged_in = False

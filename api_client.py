@@ -26,10 +26,31 @@ def _run_async(coro):
 class APIClient:
     def __init__(self, base_url: str = "http://localhost:8000/api"):
         self.base_url = base_url
-        self.client = httpx.AsyncClient(base_url=base_url, timeout=5.0)
+        self.client = httpx.AsyncClient(base_url=base_url, timeout=15.0)
         self._token: Optional[str] = None
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self._loop = None
+
+    def load_token_from_settings(self, settings) -> bool:
+        """
+        从配置中加载token
+        
+        Args:
+            settings: QSettings实例
+            
+        Returns:
+            bool: 是否成功加载token
+        """
+        token = settings.value('token')
+        if token:
+            self._token = token
+            logger.trace('Token loaded from settings')
+            return True
+        return False
+
+    def clear_token(self):
+        """清除token"""
+        self._token = None
+        logger.trace('Token cleared')
 
     @property
     def headers(self) -> Dict[str, str]:

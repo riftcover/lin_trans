@@ -23,6 +23,7 @@ from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
 from nice_ui.ui.profile import ProfileInterface
 from vendor.qfluentwidgets import NavigationAvatarWidget
+from api_client import api_client
 
 
 class Window(FluentWindow):
@@ -43,9 +44,6 @@ class Window(FluentWindow):
         self.login_window = None
 
         self.initWindow()
-        # self.load_proxy_settings()  # 加载代理设置
-        # todo 更新检查更改地址
-        # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT("音视频转字幕", self, self.settings)
@@ -55,6 +53,8 @@ class Window(FluentWindow):
         self.loginInterface = ProfileInterface("个人中心", self, self.settings)
 
         self.initNavigation()
+        # 尝试自动登录
+        self.tryAutoLogin()
 
     def set_font(self):
         system = platform.system()
@@ -173,6 +173,34 @@ class Window(FluentWindow):
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
 
+    def tryAutoLogin(self):
+        """尝试自动登录"""
+        try:
+            # 尝试从设置加载token
+            if api_client.load_token_from_settings(self.settings):
+                # 获取用户信息
+                balance_data = api_client.get_balance_sync()
+                user_info = {
+                    'email': self.settings.value('email', '已登录'),
+                    'balance': balance_data['data']['balance']
+                }
+                
+                # 更新登录状态
+                self.is_logged_in = True
+                self.avatarWidget.setName(user_info['email'])
+                
+                # 更新个人中心页面
+                self.loginInterface.updateUserInfo(user_info)
+                logger.info("自动登录成功")
+            else:
+                logger.info("无保存的登录状态")
+        except Exception as e:
+            logger.error(f"自动登录失败: {e}")
+            # 清除可能失效的token
+            self.settings.remove('token')
+            self.settings.sync()
+            api_client.clear_token()
+
     def showLoginInterface(self):
         if not self.is_logged_in:
             # 如果未登录，显示登录窗口
@@ -201,6 +229,19 @@ class Window(FluentWindow):
         self.switchTo(self.loginInterface)
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
+
+    def closeEvent(self, event):
+        """处理窗口关闭事件"""
+        try:
+            # 清理API客户端资源
+            if hasattr(self, 'is_logged_in') and self.is_logged_in:
+                api_client.close_sync()
+                logger.info("API client resources cleaned up")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+        
+        # 调用父类的closeEvent
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

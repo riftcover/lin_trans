@@ -176,6 +176,11 @@ class LoginWindow(QFrame):
             self.settings.remove('email')
         self.settings.sync()
 
+    def save_login_state(self, token):
+        """保存登录状态"""
+        self.settings.setValue('token', token)
+        self.settings.sync()
+
     def handle_login(self):
         email = self.emailInput.text()
         password = self.passwordInput.text()
@@ -194,26 +199,28 @@ class LoginWindow(QFrame):
 
         try:
             user_login = api_client.login_sync(email, password)
-            # 保存邮箱账号
+            # 保存邮箱账号和登录状态
             if user_login:
                 self.save_email(email)
-            balance = api_client.get_balance_sync()['data']['balance']
-            user_info = {
-                'email': user_login['user']['email'],
-                'balance': balance}
-            # 发送登录成功信号
-            self.loginSuccessful.emit(user_info)
-            
-            # 显示登录成功提示
-            InfoBar.success(
-                title='成功',
-                content='登录成功',
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self
-            )
+                if 'session' in user_login and 'access_token' in user_login['session']:
+                    self.save_login_state(user_login['session']['access_token'])
+                balance = api_client.get_balance_sync()['data']['balance']
+                user_info = {
+                    'email': user_login['user']['email'],
+                    'balance': balance}
+                # 发送登录成功信号
+                self.loginSuccessful.emit(user_info)
+                
+                # 显示登录成功提示
+                InfoBar.success(
+                    title='成功',
+                    content='登录成功',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self
+                )
         except Exception as e:
             InfoBar.error(
                 title='错误',
