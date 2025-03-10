@@ -1,10 +1,21 @@
 import httpx
-from typing import Optional, Dict
+from typing import Optional, Dict, Callable
+from functools import wraps
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from utils import logger
+
+
+def to_sync(func: Callable):
+    """将异步方法转换为同步方法的装饰器"""
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        return _run_async(func(self, *args, **kwargs))
+
+    return wrapper
 
 
 def _get_event_loop():
@@ -71,36 +82,28 @@ class APIClient:
             Dict: 包含用户信息和token的响应数据
         """
         try:
-            response = await self.client.post(
-                "/auth/login",
-                json={"email": email, "password": password},
-                headers=self.headers
-            )
+            response = await self.client.post("/auth/login", json={"email": email, "password": password}, headers=self.headers)
             response.raise_for_status()
             data = response.json()
-            # 从返回的数据中获取access_token并保存
-            if 'session' in data and 'access_token' in data['session']:
-                self._token = data['session']['access_token']
-                logger.trace(f'Token saved')
-            else:
-                logger.warning('No access token found in response')
-            logger.trace(f'Response data: {data}')
-            
-            # # 登录成功后立即获取余额
-            # if self._token:
-            #     balance_data = await self.get_balance()
-            #     data.update(balance_data)
-                
+            self._update_token(data)
             return data
         except httpx.HTTPError as e:
             logger.error(f'Login failed: {e}')
             raise Exception(f"登录失败: {str(e)}")
 
-    def login_sync(self, email: str, password: str) -> Dict:
-        """
-        用户登录（同步版本）
-        """
-        return _run_async(self.login(email, password))
+    def _update_token(self, response_data: Dict) -> None:
+        """更新token的辅助方法"""
+        if 'session' in response_data and 'access_token' in response_data['session']:
+            self._token = response_data['session']['access_token']
+            logger.trace('Token saved')
+        else:
+            logger.warning('No access token found in response')
+        logger.trace(f'Response data: {response_data}')
+
+    @to_sync
+    async def login_sync(self, email: str, password: str) -> Dict:
+        """用户登录（同步版本）"""
+        return await self.login(email, password)
 
     async def get_balance(self) -> Dict:
         """
