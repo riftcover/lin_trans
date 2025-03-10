@@ -1,17 +1,8 @@
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, QPoint, Signal
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal
 from PySide6.QtGui import QIcon
-from vendor.qfluentwidgets import (
-    LineEdit,
-    PrimaryPushButton,
-    TransparentToolButton,
-    BodyLabel,
-    TitleLabel,
-    FluentIcon as FIF,
-    InfoBar,
-    InfoBarPosition,
-    TransparentToolButton
-)
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
+
+from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton)
 
 
 class LoginWindow(QFrame):
@@ -25,20 +16,21 @@ class LoginWindow(QFrame):
         self.setup_animation()
 
     def setup_ui(self):
-        self.setAttribute(Qt.WA_StyledBackground)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window) # 独立窗口
         self.resize(400, 500)
         self.setWindowTitle("登录")
         self.setWindowIcon(QIcon(FIF.PEOPLE.path()))
         
         self.setStyleSheet("""
             #loginWindow {
-                background: white;
-                border-radius: 10px;
+                background-color: white;
                 border: 1px solid rgb(200, 200, 200);
+            }
+            QFrame {
+                background: transparent;
             }
             #loginCard {
                 border: none;
-                border-radius: 10px;
                 background-color: rgb(251, 251, 251);
             }
             #closeButton {
@@ -46,6 +38,7 @@ class LoginWindow(QFrame):
                 border-radius: 12px;
                 width: 24px;
                 height: 24px;
+                margin: 5px;
             }
             #closeButton:hover {
                 background: rgba(0, 0, 0, 0.1);
@@ -104,13 +97,24 @@ class LoginWindow(QFrame):
         self.loginButton.setFixedHeight(40)
 
         # 忘记密码按钮
-        self.forgotPasswordButton = TransparentToolButton('忘记密码？', self)
+        self.forgotPasswordButton = PrimaryPushButton('忘记密码？', self)
+        self.forgotPasswordButton.setFixedHeight(30)
         self.forgotPasswordButton.setStyleSheet("""
-            TransparentToolButton {
-                color: rgb(100, 100, 100);
+            PrimaryPushButton {
+                font-size: 13px;
+                color: rgb(96, 96, 96);
+                padding: 5px 10px;
+                border: none;
+                border-radius: 5px;
+                text-align: center;
             }
-            TransparentToolButton:hover {
-                color: rgb(0, 0, 0);
+            PrimaryPushButton:hover {
+                color: rgb(0, 120, 212);
+                background-color: rgba(0, 120, 212, 0.1);
+            }
+            PrimaryPushButton:pressed {
+                color: rgb(0, 90, 158);
+                background-color: rgba(0, 120, 212, 0.15);
             }
         """)
 
@@ -192,4 +196,4 @@ class LoginWindow(QFrame):
         # 如果用户直接关闭登录窗口，退出应用
         if not self.parent():
             QApplication.quit()
-        super().closeEvent(event) 
+        super().closeEvent(event)
