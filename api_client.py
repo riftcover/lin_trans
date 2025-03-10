@@ -57,19 +57,52 @@ class APIClient:
             )
             response.raise_for_status()
             data = response.json()
-            self._token = data.get("token")
-            logger.trace(f'data:{data}')
-            logger.trace(f'headers:{self.headers}')
+            # 从返回的数据中获取access_token并保存
+            if 'session' in data and 'access_token' in data['session']:
+                self._token = data['session']['access_token']
+                logger.trace(f'Token saved')
+            else:
+                logger.warning('No access token found in response')
+            logger.trace(f'Response data: {data}')
+            
+            # # 登录成功后立即获取余额
+            # if self._token:
+            #     balance_data = await self.get_balance()
+            #     data.update(balance_data)
+                
             return data
         except httpx.HTTPError as e:
-            logger.error(e)
+            logger.error(f'Login failed: {e}')
             raise Exception(f"登录失败: {str(e)}")
 
     def login_sync(self, email: str, password: str) -> Dict:
         """
         用户登录（同步版本）
         """
-        return self._run_async(self.login(email, password))
+        return _run_async(self.login(email, password))
+
+    async def get_balance(self) -> Dict:
+        """
+        获取用户余额（异步版本）
+        
+        Returns:
+            Dict: 包含用户余额信息的响应数据
+        """
+        try:
+            response = await self.client.get("/transactions/get_balance", headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+            logger.trace(f'Balance data: {data}')
+            return data
+        except httpx.HTTPError as e:
+            logger.error(f'Get balance failed: {e}')
+            raise Exception(f"获取余额失败: {str(e)}")
+
+    def get_balance_sync(self) -> Dict:
+        """
+        获取用户余额（同步版本）
+        """
+        return _run_async(self.get_balance())
 
     async def reset_password(self, email: str) -> Dict:
         """
@@ -82,11 +115,7 @@ class APIClient:
             Dict: API响应数据
         """
         try:
-            response = await self.client.post(
-                "/auth/reset-password",
-                json={"email": email},
-                headers=self.headers
-            )
+            response = await self.client.post("/auth/reset-password", json={"email": email}, headers=self.headers)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
@@ -96,7 +125,7 @@ class APIClient:
         """
         请求重置密码（同步版本）
         """
-        return self._run_async(self.reset_password(email))
+        return _run_async(self.reset_password(email))
 
     async def close(self):
         """关闭HTTP客户端"""
@@ -105,7 +134,8 @@ class APIClient:
 
     def close_sync(self):
         """关闭HTTP客户端（同步版本）"""
-        self._run_async(self.close())
+        _run_async(self.close())
+
 
 # 创建全局API客户端实例
 api_client = APIClient()
