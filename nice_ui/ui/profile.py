@@ -1,10 +1,11 @@
-from PySide6.QtCore import Qt, QDateTime
-from PySide6.QtWidgets import (QFrame, QVBoxLayout, QLineEdit, QHBoxLayout, QLabel, QTableWidget, QHeaderView, QTableWidgetItem)
-from datetime import datetime
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 from api_client import api_client
 from utils import logger
-from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, TitleLabel,
-                                   InfoBar, InfoBarPosition)
+from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar, InfoBarPosition)
+
+# 导入自定义组件
+from components.widget.transaction_table import TransactionTableWidget
 
 
 class ProfileInterface(QFrame):
@@ -12,6 +13,9 @@ class ProfileInterface(QFrame):
         super().__init__(parent=parent)
         self.settings = settings
         self.parent = parent
+
+        # 父窗口引用
+        self.parent_window = parent
 
         # 设置对象名称
         self.setObjectName(text.replace(" ", "-"))
@@ -145,44 +149,11 @@ class ProfileInterface(QFrame):
         self.usageTitle = SubtitleLabel('使用记录', self)
         self.usageLayout.addWidget(self.usageTitle)
 
-        # 创建表格
-        self.usageTable = QTableWidget(self)
-        self.usageTable.setColumnCount(3)
-        self.usageTable.setHorizontalHeaderLabels(['时间', '使用额度', '订单号'])
+        # 创建交易记录分页表格
+        self.transactionTable = TransactionTableWidget(self, page_size=10)
 
-        # 设置表格样式
-        self.usageTable.setStyleSheet("""
-            QTableWidget {
-                background-color: transparent;
-                border: none;
-            }
-            QHeaderView::section {
-                background-color: #f5f5f5;
-                padding: 4px;
-                border: none;
-                border-bottom: 1px solid #ddd;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #eee;
-            }
-        """)
-
-        # 设置表格列宽
-        header = self.usageTable.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)  # 时间列固定宽度
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)  # 使用额度列固定宽度
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 订单号列自适应
-
-        # 设置固定列宽
-        self.usageTable.setColumnWidth(0, 180)  # 时间列宽度
-        self.usageTable.setColumnWidth(1, 100)  # 使用额度列宽度
-
-        # 禁用编辑
-        self.usageTable.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-
-        # 添加表格到布局
-        self.usageLayout.addWidget(self.usageTable)
+        # 添加分页表格到布局
+        self.usageLayout.addWidget(self.transactionTable)
 
         self.vBoxLayout.addWidget(self.usageCard)
         self.vBoxLayout.addStretch()
@@ -219,7 +190,6 @@ class ProfileInterface(QFrame):
         Args:
             new_transactions: 可选，新的交易记录列表，如果提供则添加到现有记录中
         """
-        history_data, time_str = None, None
         try:
             # 如果没有提供新交易记录，则从API获取所有记录
             if new_transactions is None:
@@ -227,45 +197,17 @@ class ProfileInterface(QFrame):
                 if not history_data or 'data' not in history_data:
                     return
 
-            transactions = history_data['data'].get('transactions', [])
-            self.usageTable.setRowCount(len(transactions))
-
-            for row, transaction in enumerate(transactions):
-                # 时间
-                created_at = transaction.get('created_at', '')
-                if created_at:
-                    try:
-                        # 处理ISO 8601格式的时间字符串
-                        dt = datetime.fromisoformat(created_at)
-                        # 转换为QDateTime
-                        qdt = QDateTime.fromString(dt.strftime("%Y-%m-%d %H:%M:%S"), "yyyy-MM-dd HH:mm:ss")
-                        time_str = qdt.toString("yyyy-MM-dd HH:mm:ss")
-                    except Exception as e:
-                        logger.error(f"时间格式转换失败: {e}")
-                        # 简单的字符串处理方法作为最后的备选
-                else:
-                    time_str = '未知时间'
-                self.usageTable.setItem(row, 0, QTableWidgetItem(time_str))
-
-                # 使用额度
-                amount = str(transaction.get('amount', 0))
-                self.usageTable.setItem(row, 1, QTableWidgetItem(amount))
-
-
-                # 订单号
-                order_id = transaction.get('order_id', '未知')
-                self.usageTable.setItem(row, 2, QTableWidgetItem(str(order_id)))
-
-            # 如果没有记录，显示提示
-            if not transactions:
-                self.usageTable.setRowCount(1)
-                empty_item = QTableWidgetItem('暂无使用记录')
-                empty_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.usageTable.setSpan(0, 0, 1, 4)  # 合并单元格
-                self.usageTable.setItem(0, 0, empty_item)
+                # 获取交易记录并设置到分页表格中
+                transactions = history_data['data'].get('transactions', [])
+                self.transactionTable.set_data(transactions)
+            else:
+                # 如果提供了新交易记录，添加到列表中
+                self.transactionTable.set_data(new_transactions, reset_page=False)
 
         except Exception as e:
             logger.error(f"更新使用记录失败: {e}")
+
+
 
     def handleLogout(self):
         """处理退出登录"""
@@ -275,22 +217,22 @@ class ProfileInterface(QFrame):
         self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
 
         # 清空使用记录表格
-        self.usageTable.setRowCount(0)
+        self.transactionTable.set_data([])
 
         # 清除保存的登录状态
         if self.settings:
             self.settings.remove('token')
             self.settings.sync()
-        
+
         # 清除API客户端的token
         api_client.clear_token()
-        
+
         # 通知主窗口退出登录
         if self.parent:
             self.parent.is_logged_in = False
             self.parent.avatarWidget.setName('未登录')
             self.parent.avatarWidget.setAvatar(':icon/assets/default_avatar.png')
-            
+
         # 显示退出成功提示
         InfoBar.success(
             title='成功',
