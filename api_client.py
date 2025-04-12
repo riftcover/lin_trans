@@ -116,7 +116,6 @@ class APIClient:
             response = await self.client.get("/transactions/get_balance", headers=self.headers)
             response.raise_for_status()
             data = response.json()
-            logger.trace(f'Balance data: {data}')
             return data
         except httpx.HTTPError as e:
             logger.error(f'Get balance failed: {e}')
@@ -158,7 +157,6 @@ class APIClient:
             response = await self.client.get("/transactions/history", headers=self.headers)
             response.raise_for_status()
             data = response.json()
-            logger.trace(f'History data: {data}')
             return data
         except httpx.HTTPError as e:
             logger.error(f'Get history failed: {e}')

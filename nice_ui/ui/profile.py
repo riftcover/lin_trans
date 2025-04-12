@@ -240,7 +240,6 @@ class ProfileInterface(QFrame):
                         # 转换为QDateTime
                         qdt = QDateTime.fromString(dt.strftime("%Y-%m-%d %H:%M:%S"), "yyyy-MM-dd HH:mm:ss")
                         time_str = qdt.toString("yyyy-MM-dd HH:mm:ss")
-                        logger.trace(f"转换后的时间: {time_str}")
                     except Exception as e:
                         logger.error(f"时间格式转换失败: {e}")
                         # 简单的字符串处理方法作为最后的备选
