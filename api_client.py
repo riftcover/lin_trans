@@ -153,6 +153,20 @@ class APIClient:
         """
         return await self.reset_password(email)
 
+    async def get_history(self):
+        try:
+            response = await self.client.get("/transactions/history", headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+            logger.trace(f'History data: {data}')
+            return data
+        except httpx.HTTPError as e:
+            logger.error(f'Get history failed: {e}')
+
+    @to_sync
+    async def get_history_sync(self):
+        return await self.get_history()
+
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
