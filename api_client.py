@@ -125,8 +125,11 @@ class APIClient:
             response.raise_for_status()
             data = response.json()
             return data
-        except httpx.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             logger.error(f'Get balance failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401)')
+                raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取余额失败: {str(e)}")
 
     @to_sync
