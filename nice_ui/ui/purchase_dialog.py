@@ -1,3 +1,4 @@
+# 充值页面
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
