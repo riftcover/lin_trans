@@ -127,6 +127,14 @@ class QRCodeWidget(QFrame):
         self.qrCodeContainer = QFrame(self)
         self.qrCodeContainer.setObjectName("qrCodeContainer")
         self.qrCodeContainer.setFixedSize(180, 180)  # 设置为正方形
+        self.qrCodeContainer.setStyleSheet("""
+            #qrCodeContainer {
+                background: white;
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                margin-bottom: 15px;
+            }
+        """)
 
         # 二维码容器布局
         qrContainerLayout = QVBoxLayout(self.qrCodeContainer)
@@ -155,8 +163,28 @@ class QRCodeWidget(QFrame):
 
         # 添加到布局
         self.vBoxLayout.addWidget(self.titleLabel)
-        self.vBoxLayout.addWidget(self.qrCodeLabel, 0, Qt.AlignCenter)
+        self.vBoxLayout.addWidget(self.qrCodeContainer, 0, Qt.AlignCenter)
+
+        # 在二维码容器下方添加更多空间
+        self.vBoxLayout.addSpacing(25)  # 增加二维码容器与下方组件的间距
+
+        # 添加提示文本
+        self.hintLabel = BodyLabel("扫描二维码完成支付", self)
+        self.hintLabel.setAlignment(Qt.AlignCenter)
+        self.hintLabel.setWordWrap(True)  # 允许文本换行
+        self.hintLabel.setStyleSheet("font-size: 12px; margin: 0px; padding: 0px;")
+        self.vBoxLayout.addSpacing(10)
+        self.vBoxLayout.addWidget(self.hintLabel)
+
+        # 添加模拟支付按钮的容器
+        self.buttonContainer = QWidget(self)
+        self.buttonLayout = QHBoxLayout(self.buttonContainer)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonLayout.setSpacing(5)
+        self.buttonLayout.setAlignment(Qt.AlignCenter)
+        self.vBoxLayout.addSpacing(15)  # 增加提示文本与按钮之间的间距
         self.vBoxLayout.addWidget(self.buttonContainer)
+        self.vBoxLayout.addSpacing(10)  # 在按钮下方添加额外的空间
 
         # 设置默认二维码
         self.setQRCode("请先选择充值金额")
@@ -173,6 +201,10 @@ class QRCodeWidget(QFrame):
     def addButton(self, button):
         """添加按钮到容器中"""
         self.buttonLayout.addWidget(button)
+
+    def setHint(self, text):
+        """设置提示文本"""
+        self.hintLabel.setText(text)
 
     def setQRCode(self, text_or_image_path):
         """设置二维码图像或提示文本"""
@@ -389,6 +421,8 @@ class PurchaseDialog(MaskDialogBase):
         qr_code_text = f"请扫码支付 {amount} 点数"
         self.qrCodeWidget.setQRCode(qr_code_text)
 
+        # 显示支付提示
+        self.qrCodeWidget.setHint("请使用微信或支付宝扫码支付，支付完成后将自动关闭窗口")
 
         # 在实际应用中，这里应该启动一个轮询过程检查支付状态
         # 当支付成功后再调用process_purchase方法
@@ -424,6 +458,9 @@ class PurchaseDialog(MaskDialogBase):
                 "description": f"充值 {self.selected_amount} 点算力"
             }
 
+            # 更新提示文本
+            self.qrCodeWidget.setHint("支付成功！正在处理...")
+
             # 清除模拟按钮
             self.qrCodeWidget.clearButtons()
 
@@ -435,6 +472,8 @@ class PurchaseDialog(MaskDialogBase):
 
         except Exception as e:
             logger.error(f"购买失败: {e}")
+            # 在实际应用中，这里应该显示错误提示
+            self.qrCodeWidget.setHint(f"支付失败: {e}")
 
 
 # 如果直接运行该文件，则打开充值对话框进行测试
