@@ -8,6 +8,11 @@ from concurrent.futures import ThreadPoolExecutor
 from utils import logger
 
 
+class AuthenticationError(Exception):
+    """认证错误，用于处理401错误"""
+    pass
+
+
 def to_sync(func: Callable):
     """将异步方法转换为同步方法的装饰器"""
 
@@ -95,10 +100,10 @@ class APIClient:
         """更新token的辅助方法"""
         if 'session' in response_data and 'access_token' in response_data['session']:
             self._token = response_data['session']['access_token']
-            logger.trace('Token saved')
+            # logger.trace('Token saved')
         else:
             logger.warning('No access token found in response')
-        logger.trace(f'Response data: {response_data}')
+        # logger.trace(f'Response data: {response_data}')
 
     @to_sync
     async def login_sync(self, email: str, password: str) -> Dict:
@@ -111,6 +116,9 @@ class APIClient:
         
         Returns:
             Dict: 包含用户余额信息的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
         """
         try:
             response = await self.client.get("/transactions/get_balance", headers=self.headers)
@@ -153,6 +161,15 @@ class APIClient:
         return await self.reset_password(email)
 
     async def get_history(self):
+        """
+        获取交易历史记录（异步版本）
+
+        Returns:
+            Dict: 包含交易历史记录的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
         try:
             response = await self.client.get("/transactions/history", headers=self.headers)
             response.raise_for_status()

@@ -22,8 +22,8 @@ from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
 from nice_ui.ui.profile import ProfileInterface
-from vendor.qfluentwidgets import NavigationAvatarWidget
-from api_client import api_client
+from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
+from api_client import api_client, AuthenticationError
 
 
 class Window(FluentWindow):
@@ -180,10 +180,8 @@ class Window(FluentWindow):
             if api_client.load_token_from_settings(self.settings):
                 try:
                     # 验证token是否有效
-                    balance_data = api_client.get_balance_sync()
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
-                        'balance': balance_data['data']['balance']
                     }
                     
                     # 更新登录状态
@@ -232,6 +230,31 @@ class Window(FluentWindow):
         self.switchTo(self.loginInterface)
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
+
+    def handleAuthError(self):
+        """处理认证错误（401）"""
+        # 清除登录状态
+        self.is_logged_in = False
+        self.avatarWidget.setName('未登录')
+
+        # 清除保存的token
+        self.settings.remove('token')
+        self.settings.sync()
+        api_client.clear_token()
+
+        # 显示错误提示
+        InfoBar.error(
+            title='登录过期',
+            content='您的登录已过期，请重新登录',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self
+        )
+
+        # 显示登录窗口
+        self.showLoginInterface()
 
     def closeEvent(self, event):
         """处理窗口关闭事件"""
