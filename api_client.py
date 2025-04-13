@@ -49,10 +49,10 @@ class APIClient:
     def load_token_from_settings(self, settings) -> bool:
         """
         从配置中加载token
-        
+
         Args:
             settings: QSettings实例
-            
+
         Returns:
             bool: 是否成功加载token
         """
@@ -78,11 +78,11 @@ class APIClient:
     async def login(self, email: str, password: str) -> Dict:
         """
         用户登录（异步版本）
-        
+
         Args:
             email: 用户邮箱
             password: 用户密码
-            
+
         Returns:
             Dict: 包含用户信息和token的响应数据
         """
@@ -113,7 +113,7 @@ class APIClient:
     async def get_balance(self) -> Dict:
         """
         获取用户余额（异步版本）
-        
+
         Returns:
             Dict: 包含用户余额信息的响应数据
 
@@ -142,10 +142,10 @@ class APIClient:
     async def reset_password(self, email: str) -> Dict:
         """
         请求重置密码（异步版本）
-        
+
         Args:
             email: 用户邮箱
-            
+
         Returns:
             Dict: API响应数据
         """
@@ -184,6 +184,122 @@ class APIClient:
     @to_sync
     async def get_history_sync(self):
         return await self.get_history()
+
+    def get_id(self) -> str:
+        """
+        获取当前登录用户的ID（纯同步版本）
+
+        Returns:
+            str: 用户ID
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+            Exception: 当获取用户ID失败时抛出
+        """
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
+                # 发送请求
+                response = client.get("/users/profile", headers=self.headers)
+                response.raise_for_status()
+                data = response.json()
+
+                if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
+                    return data["data"]["user"]["id"]
+                else:
+                    logger.error(f"User ID not found in response: {data}")
+                    raise Exception("无法获取用户ID：响应数据格式不正确")
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Get user ID failed: {e}")
+            if e.response.status_code == 401:
+                logger.warning("Authentication failed (401)")
+                raise AuthenticationError("Token已过期，需要重新登录")
+            raise Exception(f"获取用户ID失败: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error in get_id_sync: {e}")
+            raise Exception(f"获取用户ID失败: {str(e)}")
+
+
+    async def recharge_tokens(self, user_id: str,amount: int) -> Dict:
+        """
+        充值代币（异步版本）
+
+        Args:
+            user_id: 用户ID
+            amount: 充值金额
+
+        Returns:
+            Dict: 包含充值结果的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            import time
+            from app.models.security import generate_signature
+
+
+            # 生成时间戳
+            timestamp = int(time.time())
+
+            # 生成订单ID
+            order_id = f"recharge_{timestamp}_{user_id}"
+
+            # 生成签名
+            sign = generate_signature(
+                user_id=user_id,
+                amount=amount,
+                timestamp=timestamp,
+                feature_key=f"recharge_1"  # 充值类型为1的特殊feature_key
+            )
+
+            # 构建URL参数
+            params = {
+                "timestamp": timestamp,
+                "sign": sign,
+                "order_id": order_id,
+            }
+
+            # 构建请求体
+            json_data = {
+                "racharge_type": 1,  # 充值类型，1表示普通充值
+                "token_add": amount,  # 充值金额
+                "feature_key": "recharge",
+                "token_cost": amount,
+                "feature_count": 1
+            }
+
+            response = await self.client.post(
+                "/transactions/recharge",
+                params=params,
+                json=json_data,
+                headers=self.headers
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Recharge tokens failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401)')
+                raise AuthenticationError("Token已过期，需要重新登录")
+            raise Exception(f"充值失败: {str(e)}")
+        except Exception as e:
+            logger.error(f'Unexpected error in recharge_tokens: {e}')
+            raise Exception(f"充值失败: {str(e)}")
+
+    @to_sync
+    async def recharge_tokens_sync(self,us_id:str, amount: int) -> Dict:
+        """
+        充值代币（同步版本）
+
+        Args:
+            us_id: 用户id
+            amount: 充值金额
+
+        Returns:
+            Dict: 包含充值结果的响应数据
+        """
+        return await self.recharge_tokens(us_id, amount)
 
     async def close(self):
         """关闭HTTP客户端"""

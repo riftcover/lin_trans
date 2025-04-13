@@ -430,50 +430,77 @@ class PurchaseDialog(MaskDialogBase):
         self._add_payment_simulation_button()
 
     def _add_payment_simulation_button(self):
-        """添加模拟支付成功的按钮（仅用于演示）"""
+        """添加模拟支付成功的按钮，并调用充值接口"""
+
         # 清除现有按钮
         self.qrCodeWidget.clearButtons()
 
         # 创建模拟支付成功按钮
         simulateButton = PrimaryPushButton("模拟支付成功", self.qrCodeWidget)
         simulateButton.setFixedHeight(30)  # 设置按钮高度更小
-        simulateButton.clicked.connect(self.process_purchase)
+
+        # 定义点击事件处理函数
+        def on_button_clicked():
+            # 更新提示文本
+            self.qrCodeWidget.setHint("正在处理充值请求...")
+
+            # 禁用按钮防止重复点击
+            simulateButton.setEnabled(False)
+
+            try:
+                # 调用充值接口
+                us_id = api_client.get_id()
+                logger.info(f'user_id:{us_id}')
+                result = api_client.recharge_tokens_sync(us_id,self.selected_amount)
+
+                # 处理成功响应
+                if result and 'data' in result:
+                    # 从响应中提取交易信息
+                    transaction_data = result['data']
+                    # transaction = {
+                    #     "id": transaction_data.get('transaction_id',),
+                    #     "amount": self.selected_amount,
+                    #     "type": "充值",
+                    #     "created_at": transaction_data.get('created_at'),
+                    #     "description": f"充值 {self.selected_amount} 点算力"
+                    # }
+
+                    # 更新提示文本
+                    self.qrCodeWidget.setHint("支付成功！正在处理...")
+
+                    # 清除模拟按钮
+                    self.qrCodeWidget.clearButtons()
+
+                    # 发送购买完成信号
+                    self.purchaseCompleted.emit(transaction_data)
+
+                    # 更新余额
+                    self._update_balance()
+
+                    # 关闭对话框
+                    self.accept()
+                else:
+                    # 处理响应中没有数据的情况
+                    raise Exception("充值响应数据不完整")
+
+            except AuthenticationError as e:
+                # 处理认证错误
+                logger.error(f"认证失败: {e}")
+                self.qrCodeWidget.setHint(f"认证失败，请重新登录")
+                # 重新启用按钮
+                simulateButton.setEnabled(True)
+            except Exception as e:
+                # 处理其他错误
+                logger.error(f"充值失败: {e}")
+                self.qrCodeWidget.setHint(f"支付失败: {e}")
+                # 重新启用按钮
+                simulateButton.setEnabled(True)
+
+        # 连接点击事件
+        simulateButton.clicked.connect(on_button_clicked)
 
         # 添加到二维码组件
         self.qrCodeWidget.addButton(simulateButton)
-
-    def process_purchase(self):
-        """处理购买流程"""
-        if self.selected_amount <= 0:
-            return
-
-        try:
-            # 这里应该调用实际的充值API
-            # 模拟充值成功的交易信息
-            transaction = {
-                "id": 12345,
-                "amount": self.selected_amount,
-                "type": "充值",
-                "created_at": "2023-01-01 12:00:00",
-                "description": f"充值 {self.selected_amount} 点算力"
-            }
-
-            # 更新提示文本
-            self.qrCodeWidget.setHint("支付成功！正在处理...")
-
-            # 清除模拟按钮
-            self.qrCodeWidget.clearButtons()
-
-            # 发送购买完成信号
-            self.purchaseCompleted.emit(transaction)
-
-            # 关闭对话框
-            self.accept()
-
-        except Exception as e:
-            logger.error(f"购买失败: {e}")
-            # 在实际应用中，这里应该显示错误提示
-            self.qrCodeWidget.setHint(f"支付失败: {e}")
 
 
 # 如果直接运行该文件，则打开充值对话框进行测试
