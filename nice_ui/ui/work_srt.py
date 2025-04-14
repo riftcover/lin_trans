@@ -170,7 +170,7 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
-        self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
+        # self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
         self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
