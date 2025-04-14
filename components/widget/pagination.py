@@ -137,9 +137,15 @@ class PaginatedTableWidget(QWidget):
         self.pagination_layout.setContentsMargins(0, 10, 0, 0)
         self.pagination_layout.setSpacing(15)
 
+        # 首页按钮
+        self.first_button = TransparentPushButton('', self, FIF.UP)
+        self.first_button.clicked.connect(self.first_page)
+        self.first_button.setToolTip('首页')
+
         # 上一页按钮
         self.prev_button = TransparentPushButton('', self, FIF.LEFT_ARROW)
         self.prev_button.clicked.connect(self.prev_page)
+        self.prev_button.setToolTip('上一页')
 
         # 页码指示器
         self.page_indicator = QLabel('1/1', self)
@@ -156,12 +162,20 @@ class PaginatedTableWidget(QWidget):
         # 下一页按钮
         self.next_button = TransparentPushButton('', self, FIF.RIGHT_ARROW)
         self.next_button.clicked.connect(self.next_page)
+        self.next_button.setToolTip('下一页')
+
+        # 末页按钮
+        self.last_button = TransparentPushButton('', self, FIF.DOWN)
+        self.last_button.clicked.connect(self.last_page)
+        self.last_button.setToolTip('末页')
 
         # 添加到分页布局
         self.pagination_layout.addStretch()
+        self.pagination_layout.addWidget(self.first_button)
         self.pagination_layout.addWidget(self.prev_button)
         self.pagination_layout.addWidget(self.page_indicator)
         self.pagination_layout.addWidget(self.next_button)
+        self.pagination_layout.addWidget(self.last_button)
         self.pagination_layout.addStretch()
 
         # 添加分页布局
@@ -170,23 +184,33 @@ class PaginatedTableWidget(QWidget):
         # 初始化分页控件状态
         self.update_page_indicator()
 
-    def set_data(self, items, reset_page=True):
+    def set_data(self, items, reset_page=True, total_pages=None, total_records=None):
         """设置表格数据
 
         Args:
             items: 数据项列表
             reset_page: 是否重置到第一页，默认为True
+            total_pages: 可选，直接设置总页数
+            total_records: 可选，总记录数（仅用于调试）
         """
         self.all_items = items
 
-        # 计算总页数
-        self.total_pages = max(1, (len(self.all_items) + self.page_size - 1) // self.page_size)
+        # 如果提供了总页数，直接使用；否则根据当前数据计算
+        if total_pages is not None:
+            self.total_pages = max(1, total_pages)
+        else:
+            # 计算总页数
+            self.total_pages = max(1, (len(self.all_items) + self.page_size - 1) // self.page_size)
 
         # 重置页码或确保当前页码有效
         if reset_page:
             self.current_page = 1
         elif self.current_page > self.total_pages:
             self.current_page = self.total_pages
+
+        # 输出调试信息
+        if total_records is not None:
+            print(f"PaginatedTableWidget: 设置数据 - 当前页={self.current_page}, 总页数={self.total_pages}, 总记录数={total_records}")
 
         # 更新页码指示器
         self.update_page_indicator()
@@ -234,23 +258,48 @@ class PaginatedTableWidget(QWidget):
         self.page_indicator.setText(f"{self.current_page}/{self.total_pages}")
 
         # 更新分页按钮状态
-        self.prev_button.setEnabled(self.current_page > 1)
-        self.next_button.setEnabled(self.current_page < self.total_pages)
+        has_prev = self.current_page > 1
+        has_next = self.current_page < self.total_pages
+
+        self.first_button.setEnabled(has_prev)
+        self.prev_button.setEnabled(has_prev)
+        self.next_button.setEnabled(has_next)
+        self.last_button.setEnabled(has_next)
 
     def prev_page(self):
         """切换到上一页"""
         if self.current_page > 1:
             self.current_page -= 1
+            # 只更新页码指示器，不显示数据，等待API获取新页数据
             self.update_page_indicator()
-            self.display_current_page()
+            # 发出页码改变信号，由外部处理获取新页数据
             self.pageChanged.emit(self.current_page)
 
     def next_page(self):
         """切换到下一页"""
         if self.current_page < self.total_pages:
             self.current_page += 1
+            # 只更新页码指示器，不显示数据，等待API获取新页数据
             self.update_page_indicator()
-            self.display_current_page()
+            # 发出页码改变信号，由外部处理获取新页数据
+            self.pageChanged.emit(self.current_page)
+
+    def first_page(self):
+        """切换到第一页"""
+        if self.current_page > 1:
+            self.current_page = 1
+            # 只更新页码指示器，不显示数据，等待API获取新页数据
+            self.update_page_indicator()
+            # 发出页码改变信号，由外部处理获取新页数据
+            self.pageChanged.emit(self.current_page)
+
+    def last_page(self):
+        """切换到最后一页"""
+        if self.current_page < self.total_pages:
+            self.current_page = self.total_pages
+            # 只更新页码指示器，不显示数据，等待API获取新页数据
+            self.update_page_indicator()
+            # 发出页码改变信号，由外部处理获取新页数据
             self.pageChanged.emit(self.current_page)
 
     def get_current_page(self):

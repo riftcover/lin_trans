@@ -163,9 +163,17 @@ class APIClient:
         """
         return await self.reset_password(email)
 
-    async def get_history(self):
+    async def get_history(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
+                      start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
         获取交易历史记录（异步版本）
+
+        Args:
+            page: 页码，默认为1
+            page_size: 每页记录数，默认为10
+            transaction_type: 交易类型，可选
+            start_date: 开始日期，可选
+            end_date: 结束日期，可选
 
         Returns:
             Dict: 包含交易历史记录的响应数据
@@ -174,16 +182,56 @@ class APIClient:
             AuthenticationError: 当认证失败（401错误）时抛出
         """
         try:
-            response = await self.client.get("/transactions/history", headers=self.headers)
+            # 构建查询参数
+            params = {
+                "page": page,
+                "page_size": page_size
+            }
+
+            # 只在参数有值时添加到请求中
+            if transaction_type is not None:
+                params["transaction_type"] = transaction_type
+            if start_date is not None:
+                params["start_date"] = start_date
+            if end_date is not None:
+                params["end_date"] = end_date
+
+            response = await self.client.get("/transactions/history", params=params, headers=self.headers)
             response.raise_for_status()
             data = response.json()
             return data
-        except httpx.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             logger.error(f'Get history failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401)')
+                raise AuthenticationError("Token已过期，需要重新登录")
+            raise Exception(f"获取交易历史失败: {str(e)}")
+        except Exception as e:
+            logger.error(f'Unexpected error in get_history: {e}')
+            raise Exception(f"获取交易历史失败: {str(e)}")
 
     @to_sync
-    async def get_history_sync(self):
-        return await self.get_history()
+    async def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
+                           start_date: Optional[str] = None, end_date: Optional[str] = None):
+        """
+        获取交易历史记录（同步版本）
+
+        Args:
+            page: 页码，默认为1
+            page_size: 每页记录数，默认为10
+            transaction_type: 交易类型，可选
+            start_date: 开始日期，可选
+            end_date: 结束日期，可选
+
+        Returns:
+            Dict: 包含交易历史记录的响应数据
+        """
+        try:
+            return await self.get_history(page, page_size, transaction_type, start_date, end_date)
+        except Exception as e:
+            logger.error(f'Error in get_history_sync: {e}')
+            # 返回空数据而不是抛出异常
+            return {'data': {'transactions': [], 'total': 0, 'page': page, 'page_size': page_size}}
 
     def get_id(self) -> str:
         """
