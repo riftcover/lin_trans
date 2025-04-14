@@ -31,7 +31,7 @@ class ProfileInterface(QFrame):
 
         # 当前页码和每页记录数
         self.current_page = 1
-        self.page_size = 15  # 每页显示15条记录
+        self.page_size = 10  # 每页显示10条记录
         self.total_pages = 1
         self.total_records = 0
 
