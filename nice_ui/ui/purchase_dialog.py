@@ -1,8 +1,8 @@
 # 充值页面
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
-                              QFrame, QPushButton, QWidget, QApplication)
+                              QFrame, QPushButton, QWidget)
 from api_client import api_client
 from utils import logger
 from vendor.qfluentwidgets import (SubtitleLabel, BodyLabel, PrimaryPushButton, FluentIcon as FIF, StrongBodyLabel)
@@ -457,13 +457,7 @@ class PurchaseDialog(MaskDialogBase):
                 if result and 'data' in result:
                     # 从响应中提取交易信息
                     transaction_data = result['data']
-                    # transaction = {
-                    #     "id": transaction_data.get('transaction_id',),
-                    #     "amount": self.selected_amount,
-                    #     "type": "充值",
-                    #     "created_at": transaction_data.get('created_at'),
-                    #     "description": f"充值 {self.selected_amount} 点算力"
-                    # }
+                    logger.info(f'transaction_data:{transaction_data}')
 
                     # 更新提示文本
                     self.qrCodeWidget.setHint("支付成功！正在处理...")
@@ -483,12 +477,6 @@ class PurchaseDialog(MaskDialogBase):
                     # 处理响应中没有数据的情况
                     raise Exception("充值响应数据不完整")
 
-            except AuthenticationError as e:
-                # 处理认证错误
-                logger.error(f"认证失败: {e}")
-                self.qrCodeWidget.setHint(f"认证失败，请重新登录")
-                # 重新启用按钮
-                simulateButton.setEnabled(True)
             except Exception as e:
                 # 处理其他错误
                 logger.error(f"充值失败: {e}")
@@ -503,44 +491,44 @@ class PurchaseDialog(MaskDialogBase):
         self.qrCodeWidget.addButton(simulateButton)
 
 
-# 如果直接运行该文件，则打开充值对话框进行测试
-if __name__ == "__main__":
-    import sys
-    import traceback
-
-    # 创建应用
-    app = QApplication(sys.argv)
-
-    try:
-        # 创建主窗口（作为充值对话框的父窗口）
-        mainWindow = QWidget()
-        mainWindow.setWindowTitle("充值对话框测试")
-        mainWindow.resize(800, 600)
-        mainWindow.show()
-
-        # 创建并显示充值对话框
-        dialog = PurchaseDialog(mainWindow)
-
-        # 覆盖API调用方法，避免实际调用API导致的错误
-        def mock_get_balance_sync():
-            print("模拟获取余额")
-            return {"data": {"balance": 1000}}
-
-        # 替换API调用
-        dialog._update_balance = lambda: dialog.balanceValue.setText("1000")
-
-        # 连接购买完成信号
-        def on_purchase_completed(transaction):
-            print(f"购买完成: {transaction}")
-
-        dialog.purchaseCompleted.connect(on_purchase_completed)
-
-        # 显示对话框
-        dialog.exec()
-
-    except Exception as e:
-        print(f"错误: {e}")
-        traceback.print_exc()
-
-    # 退出应用
-    sys.exit(app.exec())
+# # 如果直接运行该文件，则打开充值对话框进行测试
+# if __name__ == "__main__":
+#     import sys
+#     import traceback
+#
+#     # 创建应用
+#     app = QApplication(sys.argv)
+#
+#     try:
+#         # 创建主窗口（作为充值对话框的父窗口）
+#         mainWindow = QWidget()
+#         mainWindow.setWindowTitle("充值对话框测试")
+#         mainWindow.resize(800, 600)
+#         mainWindow.show()
+#
+#         # 创建并显示充值对话框
+#         dialog = PurchaseDialog(mainWindow)
+#
+#         # 覆盖API调用方法，避免实际调用API导致的错误
+#         def mock_get_balance_sync():
+#             print("模拟获取余额")
+#             return {"data": {"balance": 1000}}
+#
+#         # 替换API调用
+#         dialog._update_balance = lambda: dialog.balanceValue.setText("1000")
+#
+#         # 连接购买完成信号
+#         def on_purchase_completed(transaction):
+#             print(f"购买完成: {transaction}")
+#
+#         dialog.purchaseCompleted.connect(on_purchase_completed)
+#
+#         # 显示对话框
+#         dialog.exec()
+#
+#     except Exception as e:
+#         print(f"错误: {e}")
+#         traceback.print_exc()
+#
+#     # 退出应用
+#     sys.exit(app.exec())

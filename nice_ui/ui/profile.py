@@ -297,6 +297,8 @@ class ProfileInterface(QFrame):
             # 添加新交易记录到表格
             if transaction:
                 self._update_transaction_table(transaction)
+            else:
+                logger.error('没有交易记录')
 
             # 显示购买成功提示
             self._show_info_bar(type_="success", title="购买成功", content=f"已成功购买 {transaction.get('amount', 0)} 点算力", duration=3000)

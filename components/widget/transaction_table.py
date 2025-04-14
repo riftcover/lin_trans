@@ -1,3 +1,4 @@
+import pytz
 from PySide6.QtCore import QDateTime
 from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtCore import Qt
@@ -21,7 +22,6 @@ class TransactionTableWidget(PaginatedTableWidget):
         headers = ['时间', '算力', '订单号']
         column_widths = [280, 200, 300]  # -1表示自适应
 
-
         super().__init__(
             parent=parent,
             page_size=page_size,
@@ -41,26 +41,27 @@ class TransactionTableWidget(PaginatedTableWidget):
             transactions: 当前页的交易记录列表
         """
         for row, transaction in enumerate(transactions):
-            # 时间
-            created_at = transaction.get('created_at', '')
-            if created_at:
+            # 时间 - 处理毫秒级时间戳
+            timestamp_ms = transaction.get('created_at', 0)
+            if timestamp_ms:
                 try:
-                    # 处理ISO 8601格式的时间字符串
-                    dt = datetime.fromisoformat(created_at)
-                    # 转换为QDateTime
-                    qdt = QDateTime.fromString(dt.strftime("%Y-%m-%d %H:%M:%S"), "yyyy-MM-dd HH:mm:ss")
-                    time_str = qdt.toString("yyyy-MM-dd HH:mm:ss")
+                    # 将毫秒时间戳转换为秒
+                    timestamp_sec = timestamp_ms / 1000
+                    # 创建UTC时间
+                    utc_time = datetime.fromtimestamp(timestamp_sec, pytz.UTC)
+
+                    # 转换为中国时区
+                    china_tz = pytz.timezone('Asia/Shanghai')
+                    china_time = utc_time.astimezone(china_tz)
+
+                    # 格式化为指定格式
+                    formatted_time = china_time.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
-                    logger.error(f"时间格式转换失败: {e}")
-                    # 简单的字符串处理方法作为最后的备选
-                    try:
-                        simple_time = created_at.replace('T', ' ').split('.')[0]
-                        time_str = simple_time
-                    except:
-                        time_str = created_at
+                    logger.error(f"时间戳转换错误: {e}, timestamp_ms={timestamp_ms}")
+                    formatted_time = '时间格式错误'
             else:
-                time_str = '未知时间'
-            self.table.setItem(row, 0, QTableWidgetItem(time_str))
+                formatted_time = '未知时间'
+            self.table.setItem(row, 0, QTableWidgetItem(formatted_time))
 
             # 使用额度
             amount = str(transaction.get('amount', 0))
