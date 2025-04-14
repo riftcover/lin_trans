@@ -138,6 +138,7 @@ class PaginatedTableWidget(QWidget):
         self.pagination_layout.setSpacing(15)
 
         # 首页按钮
+        #todo ：4个图标替换
         self.first_button = TransparentPushButton('', self, FIF.UP)
         self.first_button.clicked.connect(self.first_page)
         self.first_button.setToolTip('首页')
