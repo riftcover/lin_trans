@@ -37,6 +37,7 @@ class PaginatedTableWidget(QWidget):
         self.current_page = 1    # 当前页码
         self.page_size = page_size  # 每页显示的记录数
         self.total_pages = 1     # 总页数
+        self.total_records = 0   # 总记录数
 
         # 创建主布局
         self.main_layout = QVBoxLayout(self)
@@ -321,3 +322,83 @@ class PaginatedTableWidget(QWidget):
             self.page_size = page_size
             # 重新计算总页数并更新显示
             self.set_data(self.all_items, reset_page=False)
+
+    def clear(self):
+        """清空表格并重置分页状态
+
+        这个方法会清空表格中的所有数据，并将分页状态重置为初始状态。
+        """
+        # 清空数据列表
+        self.all_items = []
+
+        # 清空表格内容
+        self.table.clearContents()
+        self.table.setRowCount(0)
+
+        # 重置分页状态
+        self.current_page = 1
+        self.total_pages = 1
+
+        # 更新页码指示器
+        self.update_page_indicator()
+
+        # 发出页码改变信号
+        self.pageChanged.emit(self.current_page)
+
+    def set_pagination_info(self, total_records, page_size=None):
+        """设置分页信息
+
+        Args:
+            total_records: 总记录数
+            page_size: 可选，每页记录数，如果不提供则使用当前值
+
+        Returns:
+            int: 计算出的总页数
+        """
+        # 更新总记录数
+        self.total_records = total_records
+
+        # 如果提供了page_size，则更新
+        if page_size is not None:
+            self.page_size = page_size
+
+        # 计算总页数，向上取整
+        self.total_pages = (self.total_records + self.page_size - 1) // self.page_size
+        self.total_pages = max(1, self.total_pages)  # 确保至少有一页
+
+        # 更新页码指示器
+        self.update_page_indicator()
+
+        return self.total_pages
+
+    def update_with_data(self, items, current_page, total_pages=None, total_records=None):
+        """使用新数据更新表格和分页状态
+
+        这个方法会清空表格并设置新数据，同时更新分页状态。
+
+        Args:
+            items: 当前页的数据项列表
+            current_page: 当前页码
+            total_pages: 可选，总页数，如果提供了total_records则忽略此参数
+            total_records: 可选，总记录数，如果提供则自动计算total_pages
+        """
+        # 清空表格并设置新数据
+        self.table.clearContents()
+        self.table.setRowCount(len(items))
+
+        # 设置当前页的数据
+        self.all_items = items
+
+        # 设置当前页码
+        self.current_page = current_page
+
+        # 如果提供了总记录数，则计算总页数
+        if total_records is not None:
+            self.set_pagination_info(total_records)
+        # 否则使用提供的总页数
+        elif total_pages is not None:
+            self.total_pages = max(1, total_pages)
+            self.update_page_indicator()
+
+        # 填充表格数据
+        self._populate_table(items)

@@ -31,9 +31,7 @@ class ProfileInterface(QFrame):
 
         # 当前页码和每页记录数
         self.current_page = 1
-        self.page_size = 10  # 每页显示10条记录
-        self.total_pages = 1
-        self.total_records = 0
+        self.page_size = 10  # 每页显示15条记录
 
         # 设置对象名称
         self.setObjectName(text.replace(" ", "-"))
@@ -203,7 +201,7 @@ class ProfileInterface(QFrame):
         self.usageLayout.addLayout(self.usageTitleLayout)
 
         # 创建交易记录分页表格 - 设置每页显示15条记录
-        self.transactionTable = TransactionTableWidget(self, page_size=15)
+        self.transactionTable = TransactionTableWidget(self, page_size=10)
         self.usageLayout.addWidget(self.transactionTable)
 
         self.vBoxLayout.addWidget(self.usageCard)
@@ -275,7 +273,16 @@ class ProfileInterface(QFrame):
                 self._fetch_all_transactions(page=1)
             else:
                 # 添加新交易记录到列表中
-                self.transactionTable.set_data(new_transactions, reset_page=False)
+                # 获取当前总记录数
+                total_records = self.transactionTable.total_records + len(new_transactions)
+                # 更新表格和分页状态
+                self.transactionTable.update_with_data(
+                    items=new_transactions,
+                    current_page=1,  # 重置到第一页
+                    total_records=total_records
+                )
+                # 更新记录数量标签
+                self.recordCountLabel.setText(f'共 {total_records} 条记录')
         except AuthenticationError as e:
             self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
@@ -302,35 +309,20 @@ class ProfileInterface(QFrame):
 
         # 获取交易记录
         transactions = history_data['data'].get('transactions', [])
+        total_records = history_data['data'].get('total', 0)
 
-        # 更新总记录数和总页数
-        self.total_records = history_data['data'].get('total', 0)
-        # 计算总页数，向上取整
-        self.total_pages = (self.total_records + self.page_size - 1) // self.page_size
-        self.total_pages = max(1, self.total_pages)  # 确保至少有一页.
         # 输出分页信息到日志
-        logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总页数={self.total_pages}, 总记录数={self.total_records}, 当前页数据数量={len(transactions)}")
+        logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
 
         # 更新记录数量标签
-        self.recordCountLabel.setText(f'共 {self.total_records} 条记录')
+        self.recordCountLabel.setText(f'共 {total_records} 条记录')
 
-        # 设置数据到表格，传递总页数和总记录数
-        # 清空表格并设置新数据
-        self.transactionTable.table.clearContents()
-        self.transactionTable.table.setRowCount(len(transactions))
-
-        # 设置总页数和当前页码
-        self.transactionTable.total_pages = self.total_pages
-        self.transactionTable.current_page = self.current_page
-
-        # 更新页码指示器
-        self.transactionTable.update_page_indicator()
-
-        # 填充表格数据
-        self.transactionTable._populate_table(transactions)
-
-        # 设置当前页的数据
-        self.transactionTable.all_items = transactions
+        # 使用新方法更新表格和分页状态
+        self.transactionTable.update_with_data(
+            items=transactions,
+            current_page=self.current_page,
+            total_records=total_records
+        )
 
     def showPurchaseDialog(self):
         """显示算力购买对话框"""
@@ -402,11 +394,11 @@ class ProfileInterface(QFrame):
         else:
             # 将新交易添加到现有记录中
             self.transactionTable.all_items.insert(0, transaction)
-            # 增加总记录数并重新计算总页数
-            self.total_records += 1
-            self.total_pages = (self.total_records + self.page_size - 1) // self.page_size
+            # 增加总记录数
+            self.transactionTable.total_records += 1
+            total_records = self.transactionTable.total_records
             # 更新记录数量标签
-            self.recordCountLabel.setText(f'共 {self.total_records} 条记录')
+            self.recordCountLabel.setText(f'共 {total_records} 条记录')
 
             # 重置到第一页
             self.current_page = 1
@@ -431,7 +423,12 @@ class ProfileInterface(QFrame):
         self.quotaValue.setText('0')
         self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
         self.recordCountLabel.setText('共 0 条记录')  # 重置记录数量标签
-        self.transactionTable.set_data([])  # 清空使用记录表格
+
+        # 清空使用记录表格
+        self.transactionTable.clear()
+
+        # 重置分页相关变量
+        self.current_page = 1
 
     def _clear_login_state(self):
         """清除登录状态"""
