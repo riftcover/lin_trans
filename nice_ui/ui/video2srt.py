@@ -273,7 +273,7 @@ class Video2SRT(QWidget):
                 logger.info(f"computing_power: {duration_seconds}")
 
                 # 重新计算算力消耗
-                ds_count = str(self.table._calc_asr_ds(duration_seconds))
+                ds_count = str(self.table._calc_ds(duration_seconds))
 
                 # 更新表格中的算力消耗
                 self.media_table.item(row, 2).setText(ds_count)
@@ -315,7 +315,7 @@ class TableWindow:
         logger.trace(config.params)
         row_position = ui_table.rowCount()
         self.file_duration = self.get_video_duration(file_path)  # 获取视频时长
-        ds_count = str(self._calc_asr_ds(self.duration_seconds))
+        ds_count = str(self._calc_ds(self.duration_seconds))
         if self.file_duration:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
@@ -392,22 +392,26 @@ class TableWindow:
         # 清空表格
         ui_table.setRowCount(0)
 
-    def _calc_asr_ds(self, video_long: float) -> int:
+    def _calc_ds(self, video_long: float) -> int:
         # 计算代币消耗
-        if not video_long:
-            return 0
-
         # 获取当前选择的识别引擎
         model_key = self.main.source_model.currentText()
         model_info = start_tools.match_source_model(model_key)
         model_status = model_info["status"]
         # 根据不同的识别引擎设置不同的算力消耗系数
-        if model_status > 100:
-            # 本地模型，不消耗算力
-            return 0
-        else:
+        # 算力总消耗
+        amount = 0
+        if model_status < 100:
             # 云模型，消耗算力
-            return int(video_long * config.asr_qps)
+            amount = start_tools.calc_asr_ds(video_long)
+
+        #todo: 此时还不知道字数，待调整
+        # # 判断是否勾选翻译
+        # if self.main.check_fanyi.isChecked():
+        #     amount += start_tools.calc_asr_ds(video_long)
+
+        return amount
+
 
 if __name__ == "__main__":
     import sys

@@ -52,6 +52,17 @@ class StartTools:
         logger.info(f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}")
         return is_installed
 
+    def calc_asr_ds(self,video_long: float) -> int:
+        # 计算代币消耗
+        if not video_long:
+            return 0
+        return int(video_long * config.asr_qps)
+
+    def calc_trans_ds(self,word_count: int) -> int:
+        # 计算代币消耗
+        return int(word_count * config.trans_qps)
+
+
 
 #  get role by edge tts
 
