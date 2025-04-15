@@ -14,6 +14,8 @@ from utils import logger
 #
 # logger = Logings().logger
 
+#asr模型算力消耗（算力/秒）
+asr_qps = 4
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
