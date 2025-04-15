@@ -1,12 +1,11 @@
 import json
 import os
 import shutil
-import sys
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread, QSettings
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
+from PySide6.QtCore import Qt, QThread
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
 from pydantic import ValidationError
 
 from components import LinIcon, GuiSize
@@ -414,7 +413,7 @@ class TableApp(CardWidget):
             logger.error(f"添加行失败, 缺少必要参数: {edit_dict}")
             return
         unid = edit_dict.unid
-        logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
+        # logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 

@@ -22,7 +22,8 @@ from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
 from nice_ui.ui.profile import ProfileInterface
-from vendor.qfluentwidgets import NavigationAvatarWidget
+from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
+from api_client import api_client, AuthenticationError
 
 
 class Window(FluentWindow):
@@ -38,19 +39,22 @@ class Window(FluentWindow):
         # 根据操作系统设置字体
         self.set_font()
 
+        # 添加登录状态管理
+        self.is_logged_in = False
+        self.login_window = None
+
         self.initWindow()
-        # self.load_proxy_settings()  # 加载代理设置
-        # todo 更新检查更改地址
-        # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
         self.vide2srt = Video2SRT("音视频转字幕", self, self.settings)
         self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
         self.my_story = TableApp("我的创作", self, self.settings)
         self.settingInterface = SettingInterface("设置", self, self.settings)
-        self.loginInterface = ProfileInterface("登录", self, self.settings)
+        self.loginInterface = ProfileInterface("个人中心", self, self.settings)
 
         self.initNavigation()
+        # 尝试自动登录
+        self.tryAutoLogin()
 
     def set_font(self):
         system = platform.system()
@@ -68,16 +72,24 @@ class Window(FluentWindow):
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
         self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置",NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, "设置", NavigationItemPosition.BOTTOM)
 
-        # 添加登录界面到导航（确保传入有效的名称）
-        self.addSubInterface(
-            self.loginInterface,
-            FIF.FEEDBACK,
-            '账户登录',
-            NavigationItemPosition.BOTTOM
+        # 创建头像按钮
+        self.avatarWidget = NavigationAvatarWidget(
+            '未登录',
+            ':icon/assets/linlin.png'
         )
 
+        # 添加个人中心到导航，使用头像作为按钮
+        self.navigationInterface.addWidget(
+            routeKey=self.loginInterface.objectName(),
+            widget=self.avatarWidget,
+            onClick=self.showLoginInterface,
+            position=NavigationItemPosition.BOTTOM
+        )
+
+        # 将个人中心页面添加到路由系统
+        self.stackedWidget.addWidget(self.loginInterface)
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
@@ -161,9 +173,101 @@ class Window(FluentWindow):
                 QUrl("https://github.com/your_username/your_repo/releases/latest")
             )
 
+    def tryAutoLogin(self):
+        """尝试自动登录"""
+        try:
+            # 尝试从设置加载token
+            if api_client.load_token_from_settings(self.settings):
+                try:
+                    # 验证token是否有效
+                    user_info = {
+                        'email': self.settings.value('email', '已登录'),
+                    }
+
+                    # 更新登录状态
+                    self.is_logged_in = True
+                    self.avatarWidget.setName(user_info['email'])
+
+                    # 更新个人中心页面
+                    self.loginInterface.updateUserInfo(user_info)
+                    logger.info("自动登录成功")
+                except Exception as e:
+                    logger.warning(f"Token验证失败: {e}")
+                    # Token无效，清除状态
+                    self.settings.remove('token')
+                    self.settings.sync()
+                    api_client.clear_token()
+            else:
+                logger.info("无保存的登录状态")
+        except Exception as e:
+            logger.error(f"自动登录过程出错: {e}")
+
     def showLoginInterface(self):
-        # 切换到登录界面
+        if not self.is_logged_in:
+            # 如果未登录，显示登录窗口
+            if not self.login_window:
+                from nice_ui.ui.login import LoginWindow
+                self.login_window = LoginWindow(self, self.settings)
+                self.login_window.loginSuccessful.connect(self.handleLoginSuccess)
+
+            # 计算登录窗口在主窗口中的居中位置
+            login_x = self.x() + (self.width() - self.login_window.width()) // 2
+            login_y = self.y() + (self.height() - self.login_window.height()) // 2
+            self.login_window.move(login_x, login_y)
+
+            self.login_window.show()
+        else:
+            # 如果已登录，切换到个人中心页面
+            self.switchTo(self.loginInterface)
+
+    def handleLoginSuccess(self, user_info):
+        """处理登录成功的回调"""
+        self.is_logged_in = True
+        self.avatarWidget.setName(user_info.get('email', '已登录'))
+        # 可以设置用户头像
+        # self.avatarWidget.setAvatar('path_to_avatar')
+        self.login_window.hide()
         self.switchTo(self.loginInterface)
+        # 更新个人中心页面的信息
+        self.loginInterface.updateUserInfo(user_info)
+
+    def handleAuthError(self):
+        """处理认证错误（401）"""
+        # 清除登录状态
+        self.is_logged_in = False
+        self.avatarWidget.setName('未登录')
+
+        # 清除保存的token
+        self.settings.remove('token')
+        self.settings.sync()
+        api_client.clear_token()
+
+        # 显示错误提示
+        InfoBar.error(
+            title='登录过期',
+            content='您的登录已过期，请重新登录',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self
+        )
+
+        # 显示登录窗口
+        self.showLoginInterface()
+
+    def closeEvent(self, event):
+        """处理窗口关闭事件"""
+        try:
+            # 清理API客户端资源
+            if hasattr(self, 'is_logged_in') and self.is_logged_in:
+                api_client.close_sync()
+                logger.info("API client resources cleaned up")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+
+        # 调用父类的closeEvent
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":
