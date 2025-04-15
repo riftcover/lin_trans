@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, Q
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
-from nice_ui.main_win.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow, start_tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget, )
@@ -199,6 +199,9 @@ class WorkSrt(QWidget):
 
         self.start_btn.clicked.connect(self.on_start_clicked)
 
+        # 添加翻译引擎切换事件，重新计算算力消耗
+        self.translate_model.currentTextChanged.connect(self.recalculate_computing_power)
+
     def on_start_clicked(self):
         # 显示成功提示
         InfoBar.success(
@@ -225,6 +228,22 @@ class WorkSrt(QWidget):
         # 获取AI提示列表
         prompt_names = self.prompts_orm.get_prompt_name()
         return [i.prompt_name for i in prompt_names]
+
+    def recalculate_computing_power(self):
+        """当切换翻译引擎时，重新计算所有文件的算力消耗"""
+        # 遍历表格中的所有行
+        for row in range(self.media_table.rowCount()):
+            # 获取当前行的字符数
+            character_count_str = self.media_table.item(row, 1).text()
+            if character_count_str:
+                # 将字符数转换为整数
+                character_count = int(character_count_str)
+
+                # 重新计算算力消耗
+                ds_count = str(self.table._calc_ds(character_count))
+
+                # 更新表格中的算力消耗
+                self.media_table.item(row, 2).setText(ds_count)
 
 
 class LTableWindow:
@@ -256,7 +275,9 @@ class LTableWindow:
         # 添加文件到表格
         logger.info(f"add_file_to_table: {file_path}")
         row_position = ui_table.rowCount()
-        if file_character_count := self.get_file_character_count(file_path):
+        file_character_count = self.get_file_character_count(file_path)
+        ts_count = str(self._calc_ds(file_character_count))
+        if file_character_count :
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
             logger.info(f"file_name type: {type(file_name)}")
@@ -270,7 +291,7 @@ class LTableWindow:
                 row_position, 1, QTableWidgetItem(str(file_character_count))
             )
             # 算力消耗
-            ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+            ui_table.setItem(row_position, 2, QTableWidgetItem(ts_count))
             # 操作
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
@@ -344,3 +365,38 @@ class LTableWindow:
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
+
+    def _calc_ds(self, file_character_count):
+        # 计算翻译代币消耗
+        if not file_character_count:
+            return 0
+
+        # 获取当前选择的翻译引擎
+        translate_engine = self.main.translate_model.currentText()
+
+        # 根据不同的翻译引擎设置不同的算力消耗系数
+        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
+            # AI大模型翻译，消耗更多算力
+            qps_count = 3
+        elif translate_engine in ["DeepL", "DeepLx"]:
+            # DeepL系列翻译，消耗中等算力
+            qps_count = 2.5
+        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
+            # 传统翻译API，消耗标准算力
+            qps_count = 2
+        else:
+            # 其他翻译引擎，默认算力消耗
+            qps_count = 1.5
+
+        # 计算结果取整后再返回
+        return int(file_character_count * qps_count)
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings
+
+    app = QApplication(sys.argv)
+    window = WorkSrt("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window.show()
+    sys.exit(app.exec())
