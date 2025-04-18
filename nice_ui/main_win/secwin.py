@@ -13,6 +13,7 @@ from nice_ui.task.main_worker import QueueConsumer, Worker
 from nice_ui.util import tools
 from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import StartTools
+from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from videotrans import translator
 
@@ -103,7 +104,7 @@ class SecWindow:
 
 8. 本软件采用GPL-v3开源协议。任何基于本软件的二次开发或分支版本，需遵循GPL-v3协议规定，遵守相应义务和约束。
 
-本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。                
+本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。
         """
 
 
@@ -336,3 +337,20 @@ class SecWindow:
         elif ty == WORK_TYPE.TRANS:
             self.main.table.clear_table(self.main.media_table)
             config.queue_trans = []
+
+    def check_cloud_asr(self) -> bool:
+        """
+         asr 云引擎检查
+        Returns:
+            bool: 检查结果，True表示可以继续，False表示需要停止
+        """
+        # 使用认证服务检查登录状态
+        auth_service = ServiceProvider().get_auth_service()
+        is_online = auth_service.check_login_status()
+
+        if not is_online:
+            logger.warning("用户未登录或登录已过期")
+            return False
+
+        logger.info("用户已登录，可以继续使用云引擎")
+        return True

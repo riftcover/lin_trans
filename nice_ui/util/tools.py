@@ -66,63 +66,6 @@ class StartTools:
         # 计算代币消耗
         return int(word_count * config.trans_qps)
 
-    def ask_online(self) -> bool:
-        """
-        检查账户是否在线/已登录状态，如果过期则弹出登录框
-
-        Returns:
-            bool: True表示在线，False表示离线
-        """
-        try:
-            # 检查必要的配置参数是否存在
-            if not config.params.get('user_token'):
-                self._show_login_dialog()
-                return False
-
-            # 检查token是否过期
-            token_expire_time = config.params.get('token_expire_time', 0)
-            if token_expire_time < time.time():
-                logger.info("Token已过期，需要重新登录")
-                self._show_login_dialog()
-                return False
-
-            # 检查用户ID是否存在
-            if not config.params.get('user_id'):
-                self._show_login_dialog()
-                return False
-
-            return True
-
-        except Exception as e:
-            logger.error(f"检查在线状态时发生错误: {str(e)}")
-            self._show_login_dialog()
-            return False
-
-    def _show_login_dialog(self):
-        """
-        显示登录对话框
-        """
-        try:
-            from PySide6.QtWidgets import QApplication
-            from nice_ui.ui.login import LoginWindow
-
-            # 获取主窗口实例
-            main_window = None
-            for widget in QApplication.topLevelWidgets():
-                if widget.objectName() == "MainWindow":
-                    main_window = widget
-                    break
-
-            if main_window:
-                # 如果找到主窗口，调用其显示登录界面的方法
-                # 传递switch_to_profile=False参数，表示登录成功后不切换到个人中心页面
-                main_window.showLoginInterface(switch_to_profile=False)
-            else:
-                logger.error("未找到主窗口实例")
-
-        except Exception as e:
-            logger.error(f"显示登录对话框时发生错误: {str(e)}")
-
     def ask_ds_count(self) -> bool:
         """
         检查代币是否充足

@@ -24,6 +24,7 @@ from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundThe
 from nice_ui.ui.profile import ProfileInterface
 from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
 from api_client import api_client, AuthenticationError
+from nice_ui.services.service_provider import ServiceProvider
 
 
 class Window(FluentWindow):
@@ -45,6 +46,11 @@ class Window(FluentWindow):
         # 添加登录状态管理
         self.is_logged_in = False
         self.login_window = None
+
+        # 初始化服务提供者
+        self.service_provider = ServiceProvider()
+        self.auth_service = self.service_provider.get_auth_service()
+        self.ui_manager = self.service_provider.get_ui_manager()
 
         self.initWindow()
         # create sub interface

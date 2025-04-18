@@ -4,6 +4,8 @@ from typing import Optional
 from PySide6.QtCore import QObject, Signal, Qt
 
 from nice_ui.configure import config
+from nice_ui.util.tools import StartTools
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
@@ -13,7 +15,7 @@ from utils import logger
 from vendor.qfluentwidgets import InfoBar, InfoBarPosition
 
 work_queue = LinQueue()
-
+start_tools = StartTools()
 
 class Worker(QObject):
     finished = Signal()
@@ -42,6 +44,8 @@ class Worker(QObject):
             self.trans_work()
         elif work_type == WORK_TYPE.ASR_TRANS:
             self.asr_trans_work()
+        elif work_type == WORK_TYPE.CLOUD_ASR:
+            self.cloud_asr_work()
         self.queue_ready.emit()
         self.finished.emit()
         logger.debug("do_work() 线程工作完成")
@@ -168,6 +172,28 @@ class Worker(QObject):
         # todo: 在翻译任务中,也要清空queue_srt
         config.queue_asr = []
         self.finished.emit()
+
+    def cloud_asr_work(self):
+        """
+        asr 云任务
+        Returns:
+
+        """
+        # 注意：由于视频列表是整个传进来的，当前是每一次都判断余额是否充足，所以要添加：第一次不充值，后面几次就不判断
+
+        # 检查登录状态
+        auth_service = ServiceProvider().get_auth_service()
+        logger.debug("检查登录状态")
+        logger.debug(f"登录状态:{auth_service.check_login_status()}")
+        if not auth_service.check_login_status():
+            return
+
+        # 检查代币是否充足
+        is_ds = start_tools.ask_ds_count()
+        if is_ds:
+            pass
+        else:
+            start_tools.prompt_recharge_dialog()
 
 
 class QueueConsumer(QObject):
