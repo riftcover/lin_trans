@@ -383,7 +383,7 @@ class SecWindow:
             logger.warning(f"代币余额不足，需要 {task_amount} 代币，当前余额 {user_balance}")
 
             # 弹出充值对话框
-            recharge_result = token_service.prompt_recharge_dialog()
+            recharge_result = token_service.prompt_recharge_dialog(task_amount)
 
             # 如果用户选择了充值或继续，返回True，否则返回False
             is_task = recharge_result

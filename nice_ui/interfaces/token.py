@@ -55,9 +55,11 @@ class TokenServiceInterface(ABC):
         pass
     
     @abstractmethod
-    def prompt_recharge_dialog(self) -> bool:
+    def prompt_recharge_dialog(self,required_tokens: int) -> bool:
         """
         弹出充值对话框并等待用户操作
+        Args:
+            required_tokens: 所需代币数量，默认为0
         
         Returns:
             bool: True表示充值成功或用户确认继续，False表示取消
