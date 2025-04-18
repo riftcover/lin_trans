@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (QMessageBox, )
+from debugpy.launcher.debuggee import job_handle
 
 from agent import translate_api_name
 from nice_ui.configure import config
@@ -21,7 +22,6 @@ start_tools = StartTools()
 # 提取常量
 DEFAULT_PROGRESS_RANGE = (0, 100)
 PROGRESS_BAR_HEIGHT = 35
-
 
 
 class SecWindow:
@@ -107,9 +107,6 @@ class SecWindow:
 本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。
         """
 
-
-
-
     def set_voice_role(self, t: str):
         role = self.main.voice_role.currentText()
         code = translator.get_code(show_text=t)
@@ -171,7 +168,6 @@ class SecWindow:
         except:
             self.main.voice_role.addItems(["No"])
 
-
     def check_asr(self) -> bool:
         # logger.debug(f"Initial target_dir: {config.params['target_dir']}")
         #
@@ -216,7 +212,6 @@ class SecWindow:
                 "模型未下载，请在设置界面下载模型。"
             )
             return False
-
 
         translate_status = self.main.check_fanyi.isChecked()
         config.params["translate_status"] = translate_status
@@ -344,13 +339,56 @@ class SecWindow:
         Returns:
             bool: 检查结果，True表示可以继续，False表示需要停止
         """
-        # 使用认证服务检查登录状态
-        auth_service = ServiceProvider().get_auth_service()
-        is_online = auth_service.check_login_status()
+        # 获取服务
+        service_provider = ServiceProvider()
+        auth_service = service_provider.get_auth_service()
+        token_service = service_provider.get_token_service()
 
+        # 任务标识
+        is_task = False
+        # 检查登录状态
+        is_online = auth_service.check_login_status()
         if not is_online:
             logger.warning("用户未登录或登录已过期")
-            return False
+            is_task = False
+        else:
+            is_task = True
 
         logger.info("用户已登录，可以继续使用云引擎")
-        return True
+
+        # 计算任务所需总代币
+        task_amount = 0
+
+        # 遍历表格中的所有行，累加每个任务的代币消耗
+        for row in range(self.main.media_table.rowCount()):
+            # 从第三列获取代币消耗
+            token_item = self.main.media_table.item(row, 2)
+            if token_item:
+                try:
+                    # 尝试将单个任务的代币消耗转换为整数并累加
+                    task_token = int(token_item.text())
+                    task_amount += task_token
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"解析代币消耗失败: {str(e)}")
+
+        logger.info(f"任务总代币消耗: {task_amount}")
+
+        # 检查代币是否足够
+        if token_service.is_balance_sufficient(task_amount):
+            logger.info("代币余额足够，可以继续任务")
+            is_task = True
+        else:
+            # 获取用户当前代币余额（仅用于日志记录）
+            user_balance = token_service.get_user_balance()
+            logger.warning(f"代币余额不足，需要 {task_amount} 代币，当前余额 {user_balance}")
+
+            # 弹出充值对话框
+            recharge_result = token_service.prompt_recharge_dialog()
+
+            # 如果用户选择了充值或继续，返回True，否则返回False
+            is_task = recharge_result
+
+        logger.trace(f"is_task: {is_task}")
+        if is_task:
+            queue_srt_copy = copy.deepcopy(config.queue_trans)
+            self.add_queue_thread(queue_srt_copy, WORK_TYPE.CLOUD_ASR)

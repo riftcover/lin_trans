@@ -9,6 +9,7 @@ from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
@@ -233,7 +234,16 @@ class Video2SRT(QWidget):
             parent=self,
         )
 
-        self.util.check_asr()
+        # 获取识别引擎代码
+        model_key = self.source_model.currentText()
+        model_info = start_tools.match_source_model(model_key)
+        model_status = model_info["status"]
+        if model_status > 100:
+            # 本地引擎
+            self.util.check_asr()
+        elif model_status < 100:
+            # 云引擎
+            self.util.check_cloud_asr()
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
@@ -403,7 +413,10 @@ class TableWindow:
         amount = 0
         if model_status < 100:
             # 云模型，消耗算力
-            amount = start_tools.calc_asr_ds(video_long)
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+            # 计算代币消耗
+            amount = token_service.calculate_asr_tokens(video_long)
 
         #todo: 此时还不知道字数，待调整
         # # 判断是否勾选翻译

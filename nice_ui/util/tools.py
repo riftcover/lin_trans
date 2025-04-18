@@ -56,36 +56,9 @@ class StartTools:
         )
         return is_installed
 
-    def calc_asr_ds(self, video_long: float) -> int:
-        # 计算代币消耗
-        if not video_long:
-            return 0
-        return int(video_long * config.asr_qps)
-
     def calc_trans_ds(self, word_count: int) -> int:
         # 计算代币消耗
         return int(word_count * config.trans_qps)
-
-    def ask_ds_count(self) -> bool:
-        """
-        检查代币是否充足
-        Returns: Bool
-
-        """
-        pass
-
-    def prompt_recharge_dialog(self) -> bool:
-        """
-        弹出充值对话框并等待用户操作
-
-        Returns:
-            bool: True表示充值成功，False表示取消或失败
-        """
-        raise NotImplementedError("充值对话框功能尚未实现")
-
-
-#  get role by edge tts
-
 
 # 执行 ffmpeg
 def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):

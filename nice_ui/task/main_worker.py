@@ -179,21 +179,8 @@ class Worker(QObject):
         Returns:
 
         """
-        # 注意：由于视频列表是整个传进来的，当前是每一次都判断余额是否充足，所以要添加：第一次不充值，后面几次就不判断
-
-        # 检查登录状态
-        auth_service = ServiceProvider().get_auth_service()
-        logger.debug("检查登录状态")
-        logger.debug(f"登录状态:{auth_service.check_login_status()}")
-        if not auth_service.check_login_status():
-            return
-
-        # 检查代币是否充足
-        is_ds = start_tools.ask_ds_count()
-        if is_ds:
-            pass
-        else:
-            start_tools.prompt_recharge_dialog()
+        # todo: 实现云端ASR
+        raise NotImplementedError("暂不支持云端ASR")
 
 
 class QueueConsumer(QObject):
