@@ -48,20 +48,97 @@ class StartTools:
     @staticmethod
     def ask_model_folder(model_name: str) -> bool:
         # todo：当前是写死funasr，后续需要改成根据模型名称来获取模型路径
-        is_installed = os.path.exists(os.path.join(config.funasr_model_path, model_name))
-        logger.info(f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}")
+        is_installed = os.path.exists(
+            os.path.join(config.funasr_model_path, model_name)
+        )
+        logger.info(
+            f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}"
+        )
         return is_installed
 
-    def calc_asr_ds(self,video_long: float) -> int:
+    def calc_asr_ds(self, video_long: float) -> int:
         # 计算代币消耗
         if not video_long:
             return 0
         return int(video_long * config.asr_qps)
 
-    def calc_trans_ds(self,word_count: int) -> int:
+    def calc_trans_ds(self, word_count: int) -> int:
         # 计算代币消耗
         return int(word_count * config.trans_qps)
 
+    def ask_online(self) -> bool:
+        """
+        检查账户是否在线/已登录状态，如果过期则弹出登录框
+
+        Returns:
+            bool: True表示在线，False表示离线
+        """
+        try:
+            # 检查必要的配置参数是否存在
+            if not config.params.get('user_token'):
+                self._show_login_dialog()
+                return False
+
+            # 检查token是否过期
+            token_expire_time = config.params.get('token_expire_time', 0)
+            if token_expire_time < time.time():
+                logger.info("Token已过期，需要重新登录")
+                self._show_login_dialog()
+                return False
+
+            # 检查用户ID是否存在
+            if not config.params.get('user_id'):
+                self._show_login_dialog()
+                return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"检查在线状态时发生错误: {str(e)}")
+            self._show_login_dialog()
+            return False
+
+    def _show_login_dialog(self):
+        """
+        显示登录对话框
+        """
+        try:
+            from PySide6.QtWidgets import QApplication
+            from nice_ui.ui.login import LoginWindow
+
+            # 获取主窗口实例
+            main_window = None
+            for widget in QApplication.topLevelWidgets():
+                if widget.objectName() == "MainWindow":
+                    main_window = widget
+                    break
+
+            if main_window:
+                # 如果找到主窗口，调用其显示登录界面的方法
+                # 传递switch_to_profile=False参数，表示登录成功后不切换到个人中心页面
+                main_window.showLoginInterface(switch_to_profile=False)
+            else:
+                logger.error("未找到主窗口实例")
+
+        except Exception as e:
+            logger.error(f"显示登录对话框时发生错误: {str(e)}")
+
+    def ask_ds_count(self) -> bool:
+        """
+        检查代币是否充足
+        Returns: Bool
+
+        """
+        pass
+
+    def prompt_recharge_dialog(self) -> bool:
+        """
+        弹出充值对话框并等待用户操作
+
+        Returns:
+            bool: True表示充值成功，False表示取消或失败
+        """
+        raise NotImplementedError("充值对话框功能尚未实现")
 
 
 #  get role by edge tts
@@ -497,8 +574,6 @@ def speed_up_mp3(*, filename=None, speed=1, out=None):
     )
 
 
-
-
 def show_popup(title, text, parent=None):
     from PySide6.QtGui import QIcon
     from PySide6.QtCore import Qt
@@ -543,7 +618,7 @@ def ms_to_time_string(*, ms=0, seconds=None):
 [
 {'line': 13, 'time': '00:01:56,423 --> 00:02:06,423', 'text': '因此，如果您准备好停止沉迷于不太理想的解决方案并开始构建下一个
 出色的语音产品，我们已准备好帮助您实现这一目标。深度图。没有妥协。唯一的机会..', 'startraw': '00:01:56,423', 'endraw': '00:02:06,423', 'start_time'
-: 116423, 'end_time': 126423}, 
+: 116423, 'end_time': 126423},
 {'line': 14, 'time': '00:02:06,423 --> 00:02:07,429', 'text': '机会..', 'startraw': '00:02:06,423', 'endraw': '00:02
 :07,429', 'start_time': 126423, 'end_time': 127429}
 ]
@@ -644,10 +719,7 @@ def get_subtitle_from_srt(srtfile, *, is_file=True):
             startraw, endraw = it["time"].strip().split("-->")
 
             startraw = format_time(
-                startraw.strip()
-                .replace(",", ".")
-                .replace("，", ".")
-                .replace("：", ":"),
+                startraw.strip().replace(",", ".").replace("，", ".").replace("：", ":"),
                 ".",
             )
             start = startraw.split(":")
@@ -807,9 +879,6 @@ def cut_from_audio(*, ss, to, audio_file, out_file):
     return runffmpeg(cmd)
 
 
-
-
-
 # 工具箱写入日志队列
 def set_process_box(text, type="logs", *, func_name=""):
     set_process(text, type, qname="box", func_name=func_name)
@@ -912,8 +981,8 @@ def kill_ffmpeg_processes():
                     pid = int(line.split(None, 1)[0])
                     os.kill(pid, signal.SIGKILL)
 
-# 从 google_url 中获取可用地址
 
+# 从 google_url 中获取可用地址
 
 
 def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
@@ -1218,14 +1287,14 @@ def set_ass_font(srtfile=None):
 
     for i, it in enumerate(ass_str):
         if it.find("Style: ") == 0:
-            ass_str[i] = (
-                "Style: Default,{fontname},{fontsize},{fontcolor},&HFFFFFF,{fontbordercolor},&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,{subtitle_bottom},1".format(
-                    fontname=config.settings["fontname"],
-                    fontsize=config.settings["fontsize"],
-                    fontcolor=config.settings["fontcolor"],
-                    fontbordercolor=config.settings["fontbordercolor"],
-                    subtitle_bottom=config.settings["subtitle_bottom"],
-                )
+            ass_str[
+                i
+            ] = "Style: Default,{fontname},{fontsize},{fontcolor},&HFFFFFF,{fontbordercolor},&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,{subtitle_bottom},1".format(
+                fontname=config.settings["fontname"],
+                fontsize=config.settings["fontsize"],
+                fontcolor=config.settings["fontcolor"],
+                fontbordercolor=config.settings["fontbordercolor"],
+                subtitle_bottom=config.settings["subtitle_bottom"],
             )
             break
 
@@ -1342,4 +1411,4 @@ def list_model_files(model_dir: str = None) -> list:
 
 
 if __name__ == "__main__":
-    print(StartTools().match_model_name('多语言模型'))
+    print(StartTools().match_model_name("多语言模型"))

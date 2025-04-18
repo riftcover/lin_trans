@@ -30,6 +30,9 @@ class Window(FluentWindow):
 
     def __init__(self):
         super().__init__()
+        # 设置对象名称，以便其他组件可以找到主窗口
+        self.setObjectName("MainWindow")
+
         # 获取当前工作目录
         current_directory = os.path.basename(os.getcwd())
         self.settings = QSettings("Locoweed3",  f"LinLInTrans_{current_directory}")
@@ -227,13 +230,24 @@ class Window(FluentWindow):
         except Exception as e:
             logger.error(f"自动登录过程出错: {e}")
 
-    def showLoginInterface(self):
+    def showLoginInterface(self, switch_to_profile=True):
+        """
+        显示登录界面
+
+        Args:
+            switch_to_profile: 是否在登录后切换到个人中心页面，默认为True
+                              当用户主动点击个人中心按钮时为True
+                              当系统自动调用登录界面时为False
+        """
         if not self.is_logged_in:
             # 如果未登录，显示登录窗口
             if not self.login_window:
                 from nice_ui.ui.login import LoginWindow
                 self.login_window = LoginWindow(self, self.settings)
-                self.login_window.loginSuccessful.connect(self.handleLoginSuccess)
+                # 将switch_to_profile参数传递给handleLoginSuccess方法
+                self.login_window.loginSuccessful.connect(
+                    lambda user_info: self.handleLoginSuccess(user_info, switch_to_profile)
+                )
 
             # 计算登录窗口在主窗口中的居中位置
             login_x = self.x() + (self.width() - self.login_window.width()) // 2
@@ -242,19 +256,30 @@ class Window(FluentWindow):
 
             self.login_window.show()
         else:
-            # 如果已登录，切换到个人中心页面
-            self.switchTo(self.loginInterface)
+            # 如果已登录且是用户主动点击，则切换到个人中心页面
+            if switch_to_profile:
+                self.switchTo(self.loginInterface)
 
-    def handleLoginSuccess(self, user_info):
-        """处理登录成功的回调"""
+    def handleLoginSuccess(self, user_info, switch_to_profile=False):
+        """
+        处理登录成功的回调
+
+        Args:
+            user_info: 用户信息
+            switch_to_profile: 是否切换到个人中心页面，默认为False
+        """
         self.is_logged_in = True
         self.avatarWidget.setName(user_info.get('email', '已登录'))
         # 可以设置用户头像
         # self.avatarWidget.setAvatar('path_to_avatar')
         self.login_window.hide()
-        self.switchTo(self.loginInterface)
+
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
+
+        # 如果需要切换到个人中心页面，则切换
+        if switch_to_profile:
+            self.switchTo(self.loginInterface)
 
     def handleAuthError(self):
         """处理认证错误（401）"""
