@@ -5,3 +5,4 @@ class WORK_TYPE(IntEnum):
     ASR = 1
     TRANS = 2
     ASR_TRANS = 3
+    CLOUD_ASR =4
