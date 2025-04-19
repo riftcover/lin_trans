@@ -226,7 +226,7 @@ class ProfileInterface(QFrame):
         bar_method(title=title, content=content, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=duration, parent=self)
 
     # 业务方法
-    def updateUserInfo(self, user_info: dict):
+    def updateUserInfo(self, user_info: dict) ->bool:
         """更新用户信息
 
         Args:
@@ -245,10 +245,13 @@ class ProfileInterface(QFrame):
 
             # 显示退出按钮
             self.logoutButton.setVisible(True)
+            return True
         except AuthenticationError as e:
             self._handle_auth_error(f"认证错误: {e}")
+            return False
         except Exception as e:
             logger.error(f"更新用户信息失败: {e}")
+            return False
 
     def _update_balance(self):
         """更新算力余额"""

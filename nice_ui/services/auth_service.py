@@ -77,14 +77,10 @@ class AuthService(AuthInterface):
                 # 获取用户余额信息来验证token
                 api_client.get_balance_sync()
                 return True
-            except AuthenticationError:
-                logger.info("Token验证失败，需要重新登录")
+            except Exception as e:
+                logger.info(f"Token验证失败，需要重新登录 {str(e)}")
                 self.show_login_dialog()
                 return False
-            except Exception as e:
-                # 其他API错误不影响登录状态，可能是网络问题等
-                logger.warning(f"API调用出错，但不影响登录状态: {str(e)}")
-                return True
 
         except Exception as e:
             logger.error(f"检查登录状态时发生错误: {str(e)}")

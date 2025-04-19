@@ -352,9 +352,8 @@ class SecWindow:
             logger.warning("用户未登录或登录已过期")
             is_task = False
         else:
+            logger.info("用户已登录，可以继续使用云引擎")
             is_task = True
-
-        logger.info("用户已登录，可以继续使用云引擎")
 
         # 计算任务所需总代币
         task_amount = 0
@@ -378,13 +377,9 @@ class SecWindow:
             logger.info("代币余额足够，可以继续任务")
             is_task = True
         else:
-            # 获取用户当前代币余额（仅用于日志记录）
-            user_balance = token_service.get_user_balance()
-            logger.warning(f"代币余额不足，需要 {task_amount} 代币，当前余额 {user_balance}")
-
-            # 弹出充值对话框
+            # 余额不足，弹出充值窗口
+            logger.warning("代币余额不足，需要充值")
             recharge_result = token_service.prompt_recharge_dialog(task_amount)
-
             # 如果用户选择了充值或继续，返回True，否则返回False
             is_task = recharge_result
 

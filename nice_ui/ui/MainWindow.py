@@ -5,7 +5,7 @@ import platform
 import sys
 
 import httpx
-from PySide6.QtCore import QUrl, QSettings
+from PySide6.QtCore import QUrl, QSettings, Qt
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
@@ -192,14 +192,14 @@ class Window(FluentWindow):
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
                     }
-
-                    # 更新登录状态
-                    self.is_logged_in = True
-                    self.avatarWidget.setName(user_info['email'])
-
                     # 更新个人中心页面
-                    self.loginInterface.updateUserInfo(user_info)
-                    logger.info("自动登录成功")
+                    a = self.loginInterface.updateUserInfo(user_info)
+                    if a:
+                        # 更新登录状态
+                        self.is_logged_in = True
+                        self.avatarWidget.setName(user_info['email'])
+                        # 更新个人中心页面
+                        logger.info("自动登录成功")
                 except AuthenticationError as e:
                     logger.warning(f"Token验证失败，尝试刷新: {e}")
                     # 尝试刷新token
@@ -225,12 +225,28 @@ class Window(FluentWindow):
                         self.settings.sync()
                         api_client.clear_token()
                 except Exception as e:
-                    logger.warning(f"Token验证失败: {e}")
-                    # Token无效，清除状态
-                    self.settings.remove('token')
-                    self.settings.remove('refresh_token')
-                    self.settings.sync()
-                    api_client.clear_token()
+                    # 检查是否是网络连接错误
+                    if "All connection attempts failed" in str(e):
+                        logger.warning(f"网络连接失败，无法验证登录状态: {e}")
+                        # 显示网络连接错误提示
+                        InfoBar.warning(
+                            title='网络连接错误',
+                            content='无法连接到服务器，请检查网络连接',
+                            orient=Qt.Horizontal,
+                            isClosable=True,
+                            position=InfoBarPosition.TOP,
+                            duration=3000,
+                            parent=self
+                        )
+                        # 不清除token，但也不标记为已登录
+                        self.is_logged_in = False
+                    else:
+                        logger.warning(f"Token验证失败: {e}")
+                        # Token无效，清除状态
+                        self.settings.remove('token')
+                        self.settings.remove('refresh_token')
+                        self.settings.sync()
+                        api_client.clear_token()
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
