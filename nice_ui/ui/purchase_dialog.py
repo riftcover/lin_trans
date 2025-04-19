@@ -4,6 +4,7 @@ from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                               QFrame, QPushButton, QWidget)
 from api_client import api_client
+from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from vendor.qfluentwidgets import (SubtitleLabel, BodyLabel, PrimaryPushButton, FluentIcon as FIF, StrongBodyLabel)
 from vendor.qfluentwidgets.components.dialog_box.mask_dialog_base import MaskDialogBase
@@ -359,20 +360,17 @@ class PurchaseDialog(MaskDialogBase):
         self.cardsLayout.setSpacing(8)  # 减小卡片间的间距
 
         # 定义充值选项 (点数, 价格)
-        recharge_options = [
-            (100, "¥10"),
-            (200, "¥20"),
-            (500, "¥50"),
-            (1000, "¥100"),
-            (2000, "¥200"),
-            (5000, "¥500")
-        ]
+        service_provider = ServiceProvider()
+        token_service = service_provider.get_token_service()
+        recharge_options = token_service.get_recharge_packages()
 
         # 创建充值卡片
         self.rechargeCards = []
-        for i, (amount, price) in enumerate(recharge_options):
+        for i, j in enumerate(recharge_options):
             row = i // 3
             col = i % 3
+            amount = j.get('token_amount')
+            price = f"￥{j.get('price')}"
             card = RechargeCard(amount, price, self.cardsFrame)
             card.clicked.connect(self._on_card_selected)
             self.cardsLayout.addWidget(card, row, col)

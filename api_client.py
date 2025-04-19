@@ -5,8 +5,8 @@ from functools import wraps
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from backend.app.core.security import generate_signature
 from utils import logger
+
 
 
 class AuthenticationError(Exception):
@@ -231,7 +231,7 @@ class APIClient:
         return await self.reset_password(email)
 
     async def get_history(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
-                      start_date: Optional[str] = None, end_date: Optional[str] = None):
+                          start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
         获取交易历史记录（异步版本）
 
@@ -294,7 +294,7 @@ class APIClient:
 
     @to_sync
     async def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
-                           start_date: Optional[str] = None, end_date: Optional[str] = None):
+                               start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
         获取交易历史记录（同步版本）
 
@@ -368,8 +368,7 @@ class APIClient:
             logger.error(f"Unexpected error in get_id_sync: {e}")
             raise ValueError(f"获取用户ID失败: {str(e)}")
 
-
-    async def recharge_tokens(self, user_id: str,amount: int) -> Dict:
+    async def recharge_tokens(self, user_id: str, amount: int) -> Dict:
         """
         充值代币（异步版本）
 
@@ -385,6 +384,7 @@ class APIClient:
         """
         try:
             import time
+            from app.core.security import generate_signature
 
 
             # 生成时间戳
@@ -455,7 +455,7 @@ class APIClient:
             raise ValueError(f"充值失败: {str(e)}") from e
 
     @to_sync
-    async def recharge_tokens_sync(self,us_id:str, amount: int) -> Dict:
+    async def recharge_tokens_sync(self, us_id: str, amount: int) -> Dict:
         """
         充值代币（同步版本）
 
@@ -467,6 +467,34 @@ class APIClient:
             Dict: 包含充值结果的响应数据
         """
         return await self.recharge_tokens(us_id, amount)
+
+    async def recharge_packages(self) -> Dict:
+        """
+        充值套餐（异步版本）
+        Returns:
+
+        """
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
+                # 发送请求
+                response = client.get("/features/recharge-packages", headers=self.headers)
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Recharge packages failed: {e}')
+            raise ValueError(f"充值套餐失败: {str(e)}") from e
+        except Exception as e:
+            logger.error(f'Unexpected error in recharge_packages: {e}')
+            raise ValueError(f"充值套餐失败: {str(e)}") from e
+
+    @to_sync
+    async def recharge_packages_sync(self) -> Dict:
+        """
+        充值套餐（同步版本）
+        Returns:
+
+        """
+        return await self.recharge_packages()
 
     async def close(self):
         """关闭HTTP客户端"""

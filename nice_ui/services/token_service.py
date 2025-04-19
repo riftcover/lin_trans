@@ -1,6 +1,6 @@
-from typing import Optional, Dict, Any
+from typing import List
 
-from nice_ui.interfaces.token import TokenServiceInterface
+from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from api_client import api_client, AuthenticationError
 from utils import logger
@@ -30,7 +30,7 @@ class TokenService(TokenServiceInterface):
         self.ui_manager = ui_manager
         self._initialized = True
 
-    def get_user_balance(self) -> int|bool:
+    def get_user_balance(self) -> int | bool:
         """
         获取用户当前代币余额
 
@@ -68,11 +68,7 @@ class TokenService(TokenServiceInterface):
             int: 所需代币数量
         """
         from nice_ui.configure import config
-        if not video_duration:
-            return 0
-        # 根据配置计算ASR任务所需代币
-        # 这里使用config.asr_qps作为计算因子，您可能需要根据实际情况调整
-        return int(video_duration * config.trans_qps)
+        return int(video_duration * config.trans_qps) if video_duration else 0
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """
@@ -85,11 +81,7 @@ class TokenService(TokenServiceInterface):
             int: 所需代币数量
         """
         from nice_ui.configure import config
-        if not word_count:
-            return 0
-        # 根据配置计算翻译任务所需代币
-        # 这里使用config.trans_qps作为计算因子，您可能需要根据实际情况调整
-        return int(word_count * getattr(config, 'trans_qps', 0.1))
+        return int(word_count * getattr(config, 'trans_qps', 0.1)) if word_count else 0
 
     def is_balance_sufficient(self, required_tokens: int) -> bool:
         """
@@ -104,9 +96,8 @@ class TokenService(TokenServiceInterface):
         self.current_balance = self.get_user_balance()
         if self.current_balance:
             return self.current_balance >= required_tokens
-        else:
-            logger.warning(f"代币余额不足，需要 {required_tokens} 代币，当前余额 {self.current_balance}")
-            return False
+        logger.warning(f"代币余额不足，需要 {required_tokens} 代币，当前余额 {self.current_balance}")
+        return False
 
     def prompt_recharge_dialog(self, required_tokens: int = 0) -> bool:
         """
@@ -133,7 +124,6 @@ class TokenService(TokenServiceInterface):
                     break
 
             # 获取当前余额
-
 
             # 创建现代化的对话框
             message = f"您的当前代币余额为: {self.current_balance}"
@@ -213,3 +203,22 @@ class TokenService(TokenServiceInterface):
             else:
                 # 用户选择了"否"
                 return False
+
+    def get_recharge_packages(self) -> List[RechargePackage]:
+        """
+        获取充值套餐列表
+
+            Returns:
+            dict: 充值套餐列表
+        """
+        try:
+            # 获取充值套餐列表
+            packages_data = api_client.recharge_packages_sync()
+
+            # 解析响应数据获取充值套餐列表
+            packages = packages_data.get('data', [])
+            logger.info(f"充值套餐列表: {packages}")
+            return packages
+        except Exception as e:
+            logger.error(f"获取充值套餐列表时发生错误: {str(e)}")
+            return []

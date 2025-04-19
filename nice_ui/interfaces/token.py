@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import List
+from pydantic import BaseModel, Field
 
 
+class RechargePackage(BaseModel):
+    """充值套餐数据结构"""
+    price: int = Field(..., description="套餐价格(元)")
+    token_amount: int = Field(..., description="代币数量")
 class TokenServiceInterface(ABC):
     """代币服务接口，定义代币相关操作"""
     
@@ -63,5 +68,12 @@ class TokenServiceInterface(ABC):
         
         Returns:
             bool: True表示充值成功或用户确认继续，False表示取消
+        """
+        pass
+
+    @abstractmethod
+    def get_recharge_packages(self) -> List[RechargePackage]:
+        """
+        获取充值套餐列表
         """
         pass
