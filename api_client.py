@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 from utils import logger
 
 
-
 class AuthenticationError(Exception):
     """认证错误，用于处理401错误"""
     pass
@@ -175,8 +174,7 @@ class APIClient:
         try:
             response = await self.client.get("/transactions/get_balance", headers=self.headers)
             response.raise_for_status()
-            data = response.json()
-            return data
+            return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f'Get balance failed: {e}')
             if e.response.status_code == 401:
@@ -188,11 +186,10 @@ class APIClient:
                     try:
                         response = await self.client.get("/transactions/get_balance", headers=self.headers)
                         response.raise_for_status()
-                        data = response.json()
-                        return data
+                        return response.json()
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
-                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
                 else:
                     # 刷新失败
                     logger.warning('Token refresh failed')
@@ -221,7 +218,7 @@ class APIClient:
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
-            raise Exception(f"重置密码请求失败: {str(e)}")
+            raise Exception(f"重置密码请求失败: {str(e)}") from e
 
     @to_sync
     async def reset_password_sync(self, email: str) -> Dict:
@@ -265,8 +262,7 @@ class APIClient:
 
             response = await self.client.get("/transactions/history", params=params, headers=self.headers)
             response.raise_for_status()
-            data = response.json()
-            return data
+            return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f'Get history failed: {e}')
             if e.response.status_code == 401:
@@ -278,8 +274,7 @@ class APIClient:
                     try:
                         response = await self.client.get("/transactions/history", params=params, headers=self.headers)
                         response.raise_for_status()
-                        data = response.json()
-                        return data
+                        return response.json()
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
                         raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
@@ -353,9 +348,8 @@ class APIClient:
 
                             if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
                                 return data["data"]["user"]["id"]
-                            else:
-                                logger.error(f"User ID not found in response: {data}")
-                                raise ValueError("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
+                            logger.error(f"User ID not found in response: {data}")
+                            raise ValueError("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
                         raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
@@ -385,7 +379,6 @@ class APIClient:
         try:
             import time
             from app.core.security import generate_signature
-
 
             # 生成时间戳
             timestamp = int(time.time())
