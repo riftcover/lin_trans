@@ -5,6 +5,7 @@ from functools import wraps
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
+from backend.app.core.security import generate_signature
 from utils import logger
 
 
@@ -286,10 +287,10 @@ class APIClient:
                     # 刷新失败
                     logger.warning('Token refresh failed')
                     raise AuthenticationError("Token已过期，需要重新登录")
-            raise Exception(f"获取交易历史失败: {str(e)}")
+            raise ValueError(f"获取交易历史失败: {str(e)}")
         except Exception as e:
             logger.error(f'Unexpected error in get_history: {e}')
-            raise Exception(f"获取交易历史失败: {str(e)}")
+            raise ValueError(f"获取交易历史失败: {str(e)}")
 
     @to_sync
     async def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
@@ -334,9 +335,8 @@ class APIClient:
 
                 if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
                     return data["data"]["user"]["id"]
-                else:
-                    logger.error(f"User ID not found in response: {data}")
-                    raise Exception("无法获取用户ID：响应数据格式不正确")
+                logger.error(f"User ID not found in response: {data}")
+                raise ValueError("无法获取用户ID：响应数据格式不正确")
         except httpx.HTTPStatusError as e:
             logger.error(f"Get user ID failed: {e}")
             if e.response.status_code == 401:
@@ -355,7 +355,7 @@ class APIClient:
                                 return data["data"]["user"]["id"]
                             else:
                                 logger.error(f"User ID not found in response: {data}")
-                                raise Exception("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
+                                raise ValueError("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
                         raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
@@ -363,10 +363,10 @@ class APIClient:
                     # 刷新失败
                     logger.warning('Token refresh failed')
                     raise AuthenticationError("Token已过期，需要重新登录")
-            raise Exception(f"获取用户ID失败: {str(e)}")
+            raise ValueError(f"获取用户ID失败: {str(e)}")
         except Exception as e:
             logger.error(f"Unexpected error in get_id_sync: {e}")
-            raise Exception(f"获取用户ID失败: {str(e)}")
+            raise ValueError(f"获取用户ID失败: {str(e)}")
 
 
     async def recharge_tokens(self, user_id: str,amount: int) -> Dict:
@@ -385,7 +385,6 @@ class APIClient:
         """
         try:
             import time
-            from app.models.security import generate_signature
 
 
             # 生成时间戳
@@ -399,7 +398,7 @@ class APIClient:
                 user_id=user_id,
                 amount=amount,
                 timestamp=timestamp,
-                feature_key=f"recharge_1"  # 充值类型为1的特殊feature_key
+                feature_key="recharge_1"  # 充值类型为1的特殊feature_key
             )
 
             # 构建URL参数
@@ -425,8 +424,7 @@ class APIClient:
                 headers=self.headers
             )
             response.raise_for_status()
-            data = response.json()
-            return data
+            return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f'Recharge tokens failed: {e}')
             if e.response.status_code == 401:
@@ -443,8 +441,7 @@ class APIClient:
                             headers=self.headers
                         )
                         response.raise_for_status()
-                        data = response.json()
-                        return data
+                        return response.json()
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
                         raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
@@ -452,10 +449,10 @@ class APIClient:
                     # 刷新失败
                     logger.warning('Token refresh failed')
                     raise AuthenticationError("Token已过期，需要重新登录")
-            raise Exception(f"充值失败: {str(e)}")
+            raise ValueError(f"充值失败: {str(e)}")
         except Exception as e:
             logger.error(f'Unexpected error in recharge_tokens: {e}')
-            raise Exception(f"充值失败: {str(e)}")
+            raise ValueError(f"充值失败: {str(e)}") from e
 
     @to_sync
     async def recharge_tokens_sync(self,us_id:str, amount: int) -> Dict:
