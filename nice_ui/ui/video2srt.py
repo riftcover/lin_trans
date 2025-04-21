@@ -10,6 +10,7 @@ from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow, start_tools
 from nice_ui.services.service_provider import ServiceProvider
+from nice_ui.util.code_tools import language_code
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
@@ -238,7 +239,16 @@ class Video2SRT(QWidget):
         model_key = self.source_model.currentText()
         model_info = start_tools.match_source_model(model_key)
         model_status = model_info["status"]
+        # 保存媒体列表
         self.add_queue_mp4()
+        # 是否需要翻译
+        translate_status = self.check_fanyi.isChecked()
+        config.params["translate_status"] = translate_status
+        logger.trace(f"translate_status type: {type(translate_status)}")
+        language_name = self.source_language.currentText()
+        logger.debug(f"==========language_name:{language_name}")
+        config.params["source_language"] = language_name
+        config.params["source_language_code"] = language_code(language_name)
         if model_status > 100:
             # 本地引擎
             self.util.check_asr()

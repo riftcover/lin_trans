@@ -188,10 +188,7 @@ class SecWindow:
 
         config.params["only_video"] = True
 
-        language_name = self.main.source_language.currentText()
-        logger.debug(f"==========language_name:{language_name}")
-        config.params["source_language"] = language_name
-        config.params["source_language_code"] = language_code(language_name)
+        language_name = config.params["source_language"]
 
         source_model_info = start_tools.match_source_model(
             self.main.source_model.currentText()
@@ -210,10 +207,7 @@ class SecWindow:
                 "模型未下载，请在设置界面下载模型。"
             )
             return False
-
-        translate_status = self.main.check_fanyi.isChecked()
-        config.params["translate_status"] = translate_status
-
+        translate_status = config.params["translate_status"]
         if translate_status:
             self.get_trans_setting(language_name)
         all_keys = self.main.settings.allKeys()
