@@ -1066,7 +1066,7 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     else:
         media_dirname = ""
         wav_finally_path = ""
-    video_info = VideoFormatInfo(
+    return VideoFormatInfo(
         raw_name=name,
         raw_dirname=raw_dirname,
         raw_basename=raw_basename,
@@ -1081,8 +1081,6 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
         source_mp4=name,
         work_type=work_type,
     )
-
-    return video_info
 
 
 def change_job_format(asr_task_finished: VideoFormatInfo) -> VideoFormatInfo:
