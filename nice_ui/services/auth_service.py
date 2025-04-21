@@ -49,12 +49,12 @@ class AuthService(AuthInterface):
             self._settings = QSettings("Locoweed3", f"LinLInTrans_{current_directory}")
         return self._settings
 
-    def check_login_status(self) -> bool:
+    def check_login_status(self) -> (bool,int):
         """
         检查用户是否已登录
 
         Returns:
-            bool: True表示已登录，False表示未登录
+            bool: True表示已登录，False表示未登录,int:用户余额
         """
         try:
             # 获取设置对象
@@ -75,12 +75,20 @@ class AuthService(AuthInterface):
             # 尝试进行一个简单的API调用来验证token是否有效
             try:
                 # 获取用户余额信息来验证token
-                api_client.get_balance_sync()
-                return True
+                balance_data = api_client.get_balance_sync()
+                if 'data' in balance_data and 'balance' in balance_data['data']:
+                    user_balance = int(balance_data['data']['balance'])
+                    logger.info(f"用户当前代币余额: {user_balance}")
+                    # 用户已登录，可以继续使用云引擎
+                    logger.info("用户已登录，可以继续使用云引擎")
+                    return True, user_balance
+                else:
+                    logger.warning(f"响应数据格式不正确: {balance_data}")
+                    return False,None
             except Exception as e:
                 logger.info(f"Token验证失败，需要重新登录 {str(e)}")
                 self.show_login_dialog()
-                return False
+                return False,None
 
         except Exception as e:
             logger.error(f"检查登录状态时发生错误: {str(e)}")

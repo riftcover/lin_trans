@@ -174,8 +174,6 @@ class SecWindow:
         # if not config.params['target_dir']:
         #     config.params['target_dir'] = config.root_path / "result"
         #     logger.warning(f"target_dir was empty, reset to: {config.params['target_dir']}")
-
-        self.main.add_queue_mp4()
         config.params["only_video"] = False
 
         # 判断是否有视频文件，如果没有，则提示错误信息
@@ -347,7 +345,7 @@ class SecWindow:
         # 任务标识
         is_task = False
         # 检查登录状态
-        is_online = auth_service.check_login_status()
+        is_online, user_balance = auth_service.check_login_status()
         if not is_online:
             logger.warning("用户未登录或登录已过期")
             is_task = False
@@ -360,9 +358,7 @@ class SecWindow:
 
         # 遍历表格中的所有行，累加每个任务的代币消耗
         for row in range(self.main.media_table.rowCount()):
-            # 从第三列获取代币消耗
-            token_item = self.main.media_table.item(row, 2)
-            if token_item:
+            if token_item := self.main.media_table.item(row, 2):
                 try:
                     # 尝试将单个任务的代币消耗转换为整数并累加
                     task_token = int(token_item.text())
@@ -373,17 +369,20 @@ class SecWindow:
         logger.info(f"任务总代币消耗: {task_amount}")
 
         # 检查代币是否足够
-        if token_service.is_balance_sufficient(task_amount):
-            logger.info("代币余额足够，可以继续任务")
-            is_task = True
-        else:
-            # 余额不足，弹出充值窗口
-            logger.warning("代币余额不足，需要充值")
-            recharge_result = token_service.prompt_recharge_dialog(task_amount)
-            # 如果用户选择了充值或继续，返回True，否则返回False
-            is_task = recharge_result
+        if user_balance is not None:
+            # 使用预先获取的余额值
+            if token_service.is_balance_sufficient_with_value(task_amount, user_balance):
+                logger.info("代币余额足够，可以继续任务")
+                is_task = True
+            else:
+                # 余额不足，弹出充值窗口
+                logger.warning("代币余额不足，需要充值")
+                recharge_result = token_service.prompt_recharge_dialog(task_amount)
+                # 如果用户选择了充值或继续，返回True，否则返回False
+                is_task = recharge_result
 
         logger.trace(f"is_task: {is_task}")
         if is_task:
-            queue_srt_copy = copy.deepcopy(config.queue_trans)
-            self.add_queue_thread(queue_srt_copy, WORK_TYPE.CLOUD_ASR)
+            queue_asr_copy = copy.deepcopy(config.queue_asr)
+            logger.debug(f"add_queue_thread: {queue_asr_copy}")
+            self.add_queue_thread(queue_asr_copy, WORK_TYPE.CLOUD_ASR)

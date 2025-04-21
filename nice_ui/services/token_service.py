@@ -83,17 +83,18 @@ class TokenService(TokenServiceInterface):
         from nice_ui.configure import config
         return int(word_count * getattr(config, 'trans_qps', 0.1)) if word_count else 0
 
-    def is_balance_sufficient(self, required_tokens: int) -> bool:
+    def is_balance_sufficient_with_value(self, required_tokens: int, balance: int) -> bool:
         """
-        检查余额是否足够
+        使用预先获取的余额值检查是否足够
 
         Args:
             required_tokens: 所需代币数量
+            balance: 预先获取的余额值
 
         Returns:
             bool: 余额是否足够
         """
-        self.current_balance = self.get_user_balance()
+        self.current_balance = balance
         if self.current_balance:
             return self.current_balance >= required_tokens
         logger.warning(f"代币余额不足，需要 {required_tokens} 代币，当前余额 {self.current_balance}")

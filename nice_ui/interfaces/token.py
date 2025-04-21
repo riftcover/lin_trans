@@ -47,7 +47,7 @@ class TokenServiceInterface(ABC):
         pass
     
     @abstractmethod
-    def is_balance_sufficient(self, required_tokens: int) -> bool:
+    def is_balance_sufficient_with_value(self, required_tokens: int,balance: int) -> bool:
         """
         检查余额是否足够
         
