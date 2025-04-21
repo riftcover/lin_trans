@@ -213,7 +213,7 @@ class WorkSrt(QWidget):
             duration=2000,
             parent=self,
         )
-
+        self.add_queue_srt()
         self.util.check_translate()
 
     def add_queue_srt(self):

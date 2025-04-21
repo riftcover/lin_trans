@@ -238,7 +238,6 @@ class SecWindow:
         return True
 
     def check_translate(self) -> bool:
-        self.main.add_queue_srt()
         language_name = self.main.source_language_combo.currentText()
         logger.debug(f"==========language_name:{language_name}")
         config.params["source_language"] = language_name
