@@ -238,6 +238,7 @@ class Video2SRT(QWidget):
         model_key = self.source_model.currentText()
         model_info = start_tools.match_source_model(model_key)
         model_status = model_info["status"]
+        self.add_queue_mp4()
         if model_status > 100:
             # 本地引擎
             self.util.check_asr()
