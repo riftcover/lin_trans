@@ -313,6 +313,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_extra": "linlin",
     # 阿里云ASR配置
     "aliyun_asr_api_key": "sk-b1d261afb71d40bea90b61ac11a202af",
+    "aliyun_asr_model":"paraformer-v2"
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"
