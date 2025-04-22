@@ -1060,12 +1060,14 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
-    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS):
+    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS,WORK_TYPE.CLOUD_ASR):
         media_dirname = name
         wav_finally_path = wav_path.as_posix()
-    else:
+    elif work_type == WORK_TYPE.TRANS:
         media_dirname = ""
         wav_finally_path = ""
+    else:
+        logger.error(f"unknown work_type: {work_type}")
     return VideoFormatInfo(
         raw_name=name,
         raw_dirname=raw_dirname,
