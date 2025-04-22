@@ -11,7 +11,7 @@ from api_client import api_client
 class LoginWindow(QFrame):
     # 添加登录成功信号
     loginSuccessful = Signal(dict)
-    
+
     def __init__(self, parent=None,settings=None):
         super().__init__(parent=parent)
         self.setObjectName("loginWindow")
@@ -19,7 +19,7 @@ class LoginWindow(QFrame):
         self.setup_ui()
         self.setup_animation()
         self.load_saved_email()
-        
+
         # 创建事件循环
         self.loop = asyncio.get_event_loop()
 
@@ -28,7 +28,7 @@ class LoginWindow(QFrame):
         self.resize(400, 500)
         self.setWindowTitle("登录")
         self.setWindowIcon(QIcon(FIF.PEOPLE.path()))
-        
+
         self.setStyleSheet("""
             #loginWindow {
                 background-color: white;
@@ -63,13 +63,13 @@ class LoginWindow(QFrame):
         self.closeButton.setObjectName('closeButton')
         self.closeButton.setFixedSize(24, 24)
         self.closeButton.clicked.connect(self.close)
-        
+
         # 关闭按钮容器
         closeButtonLayout = QHBoxLayout()
         closeButtonLayout.setContentsMargins(0, 0, 0, 0)
         closeButtonLayout.addStretch()
         closeButtonLayout.addWidget(self.closeButton)
-        
+
         # 将关闭按钮添加到主布局
         self.vBoxLayout.addLayout(closeButtonLayout)
 
@@ -176,9 +176,18 @@ class LoginWindow(QFrame):
             self.settings.remove('email')
         self.settings.sync()
 
-    def save_login_state(self, token):
-        """保存登录状态"""
+    def save_login_state(self, token, refresh_token=None):
+        """保存登录状态
+
+        Args:
+            token: 访问token
+            refresh_token: 刷新token（可选）
+        """
         self.settings.setValue('token', token)
+
+        if refresh_token:
+            self.settings.setValue('refresh_token', refresh_token)
+
         self.settings.sync()
 
     def handle_login(self):
@@ -202,12 +211,16 @@ class LoginWindow(QFrame):
             # 保存邮箱账号和登录状态
             if user_login:
                 self.save_email(email)
-                if 'session' in user_login and 'access_token' in user_login['session']:
-                    self.save_login_state(user_login['session']['access_token'])
+                if 'session' in user_login:
+                    access_token = user_login['session'].get('access_token')
+                    refresh_token = user_login['session'].get('refresh_token')
+
+                    if access_token:
+                        self.save_login_state(access_token, refresh_token)
                 user_info = {'email': user_login['user']['email']}
                 # 发送登录成功信号
                 self.loginSuccessful.emit(user_info)
-                
+
                 # 显示登录成功提示
                 InfoBar.success(
                     title='成功',

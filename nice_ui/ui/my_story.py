@@ -1,17 +1,18 @@
 import json
 import os
 import shutil
+
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
+from PySide6.QtCore import Qt, QThread, QSettings
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
 from pydantic import ValidationError
 
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
-from nice_ui.task import WORK_TYPE
+from nice_ui.task.orm_factory import OrmFactory
 from nice_ui.task.main_worker import work_queue, QueueConsumer
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
@@ -54,8 +55,10 @@ class TableApp(CardWidget):
         self.setupUi()
         self.data_bridge = config.data_bridge
         self._connect_signals()
-        self.srt_orm = ToSrtOrm()
-        self.trans_orm = ToTranslationOrm()
+        # 使用ORM工厂获取ORM实例
+        self.orm_factory = OrmFactory()
+        self.srt_orm = self.orm_factory.get_srt_orm()
+        self.trans_orm = self.orm_factory.get_trans_orm()
         self.row_cache = {}
         self._init_table()
 
@@ -187,12 +190,8 @@ class TableApp(CardWidget):
         work_obj = item.data(VideoFormatInfoRole)
 
         work_type = work_obj.work_type
-        if work_type == WORK_TYPE.ASR:
-            return self.srt_orm
-        elif work_type == WORK_TYPE.TRANS:
-            return self.trans_orm
-        elif work_type == WORK_TYPE.ASR_TRANS:
-            return self.srt_orm, self.trans_orm
+        # 使用ORM工厂获取对应的ORM
+        return self.orm_factory.get_orm_by_work_type(work_type)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
@@ -315,13 +314,8 @@ class TableApp(CardWidget):
 
     def _update_job_status(self, item, edit_dict):
         new_status = 0
-        orm_w = None
         work_type = edit_dict.work_type
-        if work_type in (1, 3):
-            orm_w = self.srt_orm
-        elif work_type in (2, 3):
-            orm_w = self.trans_orm
-
+        orm_w = self.orm_factory.set_orm_job_status(work_type)
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1):
@@ -703,28 +697,36 @@ class TableApp(CardWidget):
         # 显示对话框
         dialog.exec()
 
-# def main():
-#     app = QApplication(sys.argv)
-#
-#     # 为 Mac 系统设置全局字体
-#     if sys.platform == 'darwin':
-#         font = app.font()
-#         font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
-#         app.setFont(font)
-#
-#         # 设置全局样式表
-#         app.setStyleSheet("""
-#             * {
-#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-#             }
-#             QWidget {
-#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-#             }
-#         """)
-#
-#     window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-#     window.show()
-#     sys.exit(app.exec())
-#
-# if __name__ == "__main__":
-#     main()
+
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QApplication
+
+
+    def main():
+
+
+        app = QApplication(sys.argv)
+
+        # 为 Mac 系统设置全局字体
+        if sys.platform == 'darwin':
+            font = app.font()
+            font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
+            app.setFont(font)
+
+            # 设置全局样式表
+            app.setStyleSheet("""
+                * {
+                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+                }
+                QWidget {
+                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+                }
+            """)
+
+        window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+        window.show()
+        sys.exit(app.exec())
+    main()

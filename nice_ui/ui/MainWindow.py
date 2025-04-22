@@ -5,7 +5,7 @@ import platform
 import sys
 
 import httpx
-from PySide6.QtCore import QUrl, QSettings
+from PySide6.QtCore import QUrl, QSettings, Qt
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
@@ -24,24 +24,33 @@ from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundThe
 from nice_ui.ui.profile import ProfileInterface
 from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
 from api_client import api_client, AuthenticationError
+from nice_ui.services.service_provider import ServiceProvider
 
 
 class Window(FluentWindow):
 
     def __init__(self):
         super().__init__()
+        # 设置对象名称，以便其他组件可以找到主窗口
+        self.setObjectName("MainWindow")
+
         # 获取当前工作目录
         current_directory = os.path.basename(os.getcwd())
         self.settings = QSettings("Locoweed3",  f"LinLInTrans_{current_directory}")
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))
-        
+
         # 根据操作系统设置字体
         self.set_font()
 
         # 添加登录状态管理
         self.is_logged_in = False
         self.login_window = None
+
+        # 初始化服务提供者
+        self.service_provider = ServiceProvider()
+        self.auth_service = self.service_provider.get_auth_service()
+        self.ui_manager = self.service_provider.get_ui_manager()
 
         self.initWindow()
         # create sub interface
@@ -176,39 +185,91 @@ class Window(FluentWindow):
     def tryAutoLogin(self):
         """尝试自动登录"""
         try:
-            # 尝试从设置加载token
+            # 尝试从设置加载token和refresh_token
             if api_client.load_token_from_settings(self.settings):
                 try:
                     # 验证token是否有效
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
                     }
-
-                    # 更新登录状态
-                    self.is_logged_in = True
-                    self.avatarWidget.setName(user_info['email'])
-
                     # 更新个人中心页面
-                    self.loginInterface.updateUserInfo(user_info)
-                    logger.info("自动登录成功")
+                    a = self.loginInterface.updateUserInfo(user_info)
+                    if a:
+                        # 更新登录状态
+                        self.is_logged_in = True
+                        self.avatarWidget.setName(user_info['email'])
+                        # 更新个人中心页面
+                        logger.info("自动登录成功")
+                except AuthenticationError as e:
+                    logger.warning(f"Token验证失败，尝试刷新: {e}")
+                    # 尝试刷新token
+                    if api_client.refresh_session_sync():
+                        logger.info("Token刷新成功，重新尝试自动登录")
+                        # 刷新成功，更新设置中的token
+                        self.settings.setValue('token', api_client._token)
+                        if api_client._refresh_token:
+                            self.settings.setValue('refresh_token', api_client._refresh_token)
+                        self.settings.sync()
+
+                        # 更新登录状态
+                        self.is_logged_in = True
+                        self.avatarWidget.setName(user_info['email'])
+
+                        # 更新个人中心页面
+                        self.loginInterface.updateUserInfo(user_info)
+                    else:
+                        logger.warning("Token刷新失败，需要重新登录")
+                        # Token刷新失败，清除状态
+                        self.settings.remove('token')
+                        self.settings.remove('refresh_token')
+                        self.settings.sync()
+                        api_client.clear_token()
                 except Exception as e:
-                    logger.warning(f"Token验证失败: {e}")
-                    # Token无效，清除状态
-                    self.settings.remove('token')
-                    self.settings.sync()
-                    api_client.clear_token()
+                    # 检查是否是网络连接错误
+                    if "All connection attempts failed" in str(e):
+                        logger.warning(f"网络连接失败，无法验证登录状态: {e}")
+                        # 显示网络连接错误提示
+                        InfoBar.warning(
+                            title='网络连接错误',
+                            content='无法连接到服务器，请检查网络连接',
+                            orient=Qt.Horizontal,
+                            isClosable=True,
+                            position=InfoBarPosition.TOP,
+                            duration=3000,
+                            parent=self
+                        )
+                        # 不清除token，但也不标记为已登录
+                        self.is_logged_in = False
+                    else:
+                        logger.warning(f"Token验证失败: {e}")
+                        # Token无效，清除状态
+                        self.settings.remove('token')
+                        self.settings.remove('refresh_token')
+                        self.settings.sync()
+                        api_client.clear_token()
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
             logger.error(f"自动登录过程出错: {e}")
 
-    def showLoginInterface(self):
+    def showLoginInterface(self, switch_to_profile=True):
+        """
+        显示登录界面
+
+        Args:
+            switch_to_profile: 是否在登录后切换到个人中心页面，默认为True
+                              当用户主动点击个人中心按钮时为True
+                              当系统自动调用登录界面时为False
+        """
         if not self.is_logged_in:
             # 如果未登录，显示登录窗口
             if not self.login_window:
                 from nice_ui.ui.login import LoginWindow
                 self.login_window = LoginWindow(self, self.settings)
-                self.login_window.loginSuccessful.connect(self.handleLoginSuccess)
+                # 将switch_to_profile参数传递给handleLoginSuccess方法
+                self.login_window.loginSuccessful.connect(
+                    lambda user_info: self.handleLoginSuccess(user_info, switch_to_profile)
+                )
 
             # 计算登录窗口在主窗口中的居中位置
             login_x = self.x() + (self.width() - self.login_window.width()) // 2
@@ -217,28 +278,61 @@ class Window(FluentWindow):
 
             self.login_window.show()
         else:
-            # 如果已登录，切换到个人中心页面
-            self.switchTo(self.loginInterface)
+            # 如果已登录且是用户主动点击，则切换到个人中心页面
+            if switch_to_profile:
+                self.switchTo(self.loginInterface)
 
-    def handleLoginSuccess(self, user_info):
-        """处理登录成功的回调"""
+    def handleLoginSuccess(self, user_info, switch_to_profile=False):
+        """
+        处理登录成功的回调
+
+        Args:
+            user_info: 用户信息
+            switch_to_profile: 是否切换到个人中心页面，默认为False
+        """
         self.is_logged_in = True
         self.avatarWidget.setName(user_info.get('email', '已登录'))
         # 可以设置用户头像
         # self.avatarWidget.setAvatar('path_to_avatar')
         self.login_window.hide()
-        self.switchTo(self.loginInterface)
+
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
 
+        # 如果需要切换到个人中心页面，则切换
+        if switch_to_profile:
+            self.switchTo(self.loginInterface)
+
     def handleAuthError(self):
         """处理认证错误（401）"""
-        # 清除登录状态
+        # 尝试刷新token
+        if api_client.refresh_session_sync():
+            logger.info("Token刷新成功")
+            # 刷新成功，更新设置中的token
+            self.settings.setValue('token', api_client._token)
+            if api_client._refresh_token:
+                self.settings.setValue('refresh_token', api_client._refresh_token)
+            self.settings.sync()
+
+            # 显示成功提示
+            InfoBar.success(
+                title='会话已更新',
+                content='您的登录会话已自动更新',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        # 刷新失败，清除登录状态
         self.is_logged_in = False
         self.avatarWidget.setName('未登录')
 
-        # 清除保存的token
+        # 清除保存的token和refresh_token
         self.settings.remove('token')
+        self.settings.remove('refresh_token')
         self.settings.sync()
         api_client.clear_token()
 

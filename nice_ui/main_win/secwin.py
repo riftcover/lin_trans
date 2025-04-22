@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (QMessageBox, )
+from debugpy.launcher.debuggee import job_handle
 
 from agent import translate_api_name
 from nice_ui.configure import config
@@ -13,6 +14,7 @@ from nice_ui.task.main_worker import QueueConsumer, Worker
 from nice_ui.util import tools
 from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import StartTools
+from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from videotrans import translator
 
@@ -20,7 +22,6 @@ start_tools = StartTools()
 # 提取常量
 DEFAULT_PROGRESS_RANGE = (0, 100)
 PROGRESS_BAR_HEIGHT = 35
-
 
 
 class SecWindow:
@@ -103,11 +104,8 @@ class SecWindow:
 
 8. 本软件采用GPL-v3开源协议。任何基于本软件的二次开发或分支版本，需遵循GPL-v3协议规定，遵守相应义务和约束。
 
-本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。                
+本软件的所有解释权均属于开发者。谨请用户在理解、同意、遵守本免责声明的前提下使用本软件。
         """
-
-
-
 
     def set_voice_role(self, t: str):
         role = self.main.voice_role.currentText()
@@ -170,15 +168,12 @@ class SecWindow:
         except:
             self.main.voice_role.addItems(["No"])
 
-
     def check_asr(self) -> bool:
         # logger.debug(f"Initial target_dir: {config.params['target_dir']}")
         #
         # if not config.params['target_dir']:
         #     config.params['target_dir'] = config.root_path / "result"
         #     logger.warning(f"target_dir was empty, reset to: {config.params['target_dir']}")
-
-        self.main.add_queue_mp4()
         config.params["only_video"] = False
 
         # 判断是否有视频文件，如果没有，则提示错误信息
@@ -193,10 +188,7 @@ class SecWindow:
 
         config.params["only_video"] = True
 
-        language_name = self.main.source_language.currentText()
-        logger.debug(f"==========language_name:{language_name}")
-        config.params["source_language"] = language_name
-        config.params["source_language_code"] = language_code(language_name)
+        language_name = config.params["source_language"]
 
         source_model_info = start_tools.match_source_model(
             self.main.source_model.currentText()
@@ -215,11 +207,7 @@ class SecWindow:
                 "模型未下载，请在设置界面下载模型。"
             )
             return False
-
-
-        translate_status = self.main.check_fanyi.isChecked()
-        config.params["translate_status"] = translate_status
-
+        translate_status = config.params["translate_status"]
         if translate_status:
             self.get_trans_setting(language_name)
         all_keys = self.main.settings.allKeys()
@@ -244,7 +232,6 @@ class SecWindow:
         return True
 
     def check_translate(self) -> bool:
-        self.main.add_queue_srt()
         language_name = self.main.source_language_combo.currentText()
         logger.debug(f"==========language_name:{language_name}")
         config.params["source_language"] = language_name
@@ -336,3 +323,59 @@ class SecWindow:
         elif ty == WORK_TYPE.TRANS:
             self.main.table.clear_table(self.main.media_table)
             config.queue_trans = []
+
+    def check_cloud_asr(self) -> bool:
+        """
+         asr 云引擎检查
+        Returns:
+            bool: 检查结果，True表示可以继续，False表示需要停止
+        """
+        # 获取服务
+        service_provider = ServiceProvider()
+        auth_service = service_provider.get_auth_service()
+        token_service = service_provider.get_token_service()
+
+        # 任务标识
+        is_task = False
+        # 检查登录状态
+        is_online, user_balance = auth_service.check_login_status()
+        if not is_online:
+            logger.warning("用户未登录或登录已过期")
+            is_task = False
+        else:
+            logger.info("用户已登录，可以继续使用云引擎")
+            is_task = True
+
+        # 计算任务所需总代币
+        task_amount = 0
+
+        # 遍历表格中的所有行，累加每个任务的代币消耗
+        for row in range(self.main.media_table.rowCount()):
+            if token_item := self.main.media_table.item(row, 2):
+                try:
+                    # 尝试将单个任务的代币消耗转换为整数并累加
+                    task_token = int(token_item.text())
+                    task_amount += task_token
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"解析代币消耗失败: {str(e)}")
+
+        logger.info(f"任务总代币消耗: {task_amount}")
+
+        # 检查代币是否足够
+        if user_balance is not None:
+            # 使用预先获取的余额值
+            if token_service.is_balance_sufficient_with_value(task_amount, user_balance):
+                logger.info("代币余额足够，可以继续任务")
+                is_task = True
+            else:
+                # 余额不足，弹出充值窗口
+                logger.warning("代币余额不足，需要充值")
+                recharge_result = token_service.prompt_recharge_dialog(task_amount)
+                # 如果用户选择了充值或继续，返回True，否则返回False
+                is_task = recharge_result
+
+        logger.trace(f"is_task: {is_task}")
+        if is_task:
+            queue_asr_copy = copy.deepcopy(config.queue_asr)
+            logger.debug(f"add_queue_thread: {queue_asr_copy}")
+            self.add_queue_thread(queue_asr_copy, WORK_TYPE.CLOUD_ASR)

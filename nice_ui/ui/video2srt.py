@@ -8,7 +8,9 @@ from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayo
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
-from nice_ui.main_win.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.services.service_provider import ServiceProvider
+from nice_ui.util.code_tools import language_code
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
@@ -88,14 +90,7 @@ class Video2SRT(QWidget):
         self.source_model = TransComboBox()
         self.source_model.setFixedWidth(131)
         model_type = self.settings.value("source_module_status", type=int)
-        logger.info(f"获取model_type: {model_type}")
-        model_list = config.model_code_list[:4]
-        if model_type == 1:
-            model_list.extend(config.model_code_list[4:9])
-        elif model_type == 2:
-            model_list.extend(config.model_code_list[9:14])
-        logger.info(f"model_list: {model_list}")
-        self.source_model.addItems(model_list)
+        self.source_model.addItems(config.model_code_list)
         self.source_model.setCurrentText(config.params["source_module_key"])
         recognition_layout.addWidget(recognition_label)
         recognition_layout.addWidget(self.source_model)
@@ -203,7 +198,7 @@ class Video2SRT(QWidget):
         self.media_table.setColumnWidth(1, 100)  # 时长列
         self.media_table.setColumnWidth(2, 100)  # 算力消耗列
         self.media_table.setColumnWidth(3, 100)  # 操作列
-        self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
+        # self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
         self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
 
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
@@ -224,7 +219,10 @@ class Video2SRT(QWidget):
         )
         self.start_btn.clicked.connect(self.on_start_clicked)
         self.act_btn_get_video()
-    
+
+        # 添加识别引擎切换事件，重新计算算力消耗
+        self.source_model.currentTextChanged.connect(self.recalculate_computing_power)
+
     def on_start_clicked(self):
         # 显示成功提示
         InfoBar.success(
@@ -237,7 +235,26 @@ class Video2SRT(QWidget):
             parent=self,
         )
 
-        self.util.check_asr()
+        # 获取识别引擎代码
+        model_key = self.source_model.currentText()
+        model_info = start_tools.match_source_model(model_key)
+        model_status = model_info["status"]
+        # 保存媒体列表
+        self.add_queue_mp4()
+        # 是否需要翻译
+        translate_status = self.check_fanyi.isChecked()
+        config.params["translate_status"] = translate_status
+        logger.trace(f"translate_status type: {type(translate_status)}")
+        language_name = self.source_language.currentText()
+        logger.debug(f"==========language_name:{language_name}")
+        config.params["source_language"] = language_name
+        config.params["source_language_code"] = language_code(language_name)
+        if model_status > 100:
+            # 本地引擎
+            self.util.check_asr()
+        elif model_status < 100:
+            # 云引擎
+            self.util.check_cloud_asr()
 
     def act_btn_get_video(self):
         # 选择文件,并显示路径
@@ -264,11 +281,32 @@ class Video2SRT(QWidget):
         prompt_names = self.prompts_orm.get_prompt_name()
         return [i.prompt_name for i in prompt_names]
 
+    def recalculate_computing_power(self):
+        """当切换识别引擎时，重新计算所有文件的算力消耗"""
+        # 遍历表格中的所有行
+        for row in range(self.media_table.rowCount()):
+            # 获取当前行的时长字符串
+            duration_str = self.media_table.item(row, 1).text()
+            if duration_str:
+                # 将时长字符串转换为秒数
+                h, m, s = map(int, duration_str.split(':'))
+                duration_seconds = h * 3600 + m * 60 + s
+                logger.info(f"computing_power: {duration_seconds}")
+
+                # 重新计算算力消耗
+                ds_count = str(self.table._calc_ds(duration_seconds))
+
+                # 更新表格中的算力消耗
+                self.media_table.item(row, 2).setText(ds_count)
+
 
 class TableWindow:
     def __init__(self, main, settings):
+        self.duration_seconds = None #视频时长，秒
         self.main = main
         self.settings = settings
+        self.file_duration =None
+
 
     # 列表的操作
     @Slot()
@@ -297,16 +335,17 @@ class TableWindow:
         logger.trace("config.params:")
         logger.trace(config.params)
         row_position = ui_table.rowCount()
-        file_duration = self.get_video_duration(file_path)  # 获取视频时长
-        if file_duration:
+        self.file_duration = self.get_video_duration(file_path)  # 获取视频时长
+        ds_count = str(self._calc_ds(self.duration_seconds))
+        if self.file_duration:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 时长
-            ui_table.setItem(row_position, 1, QTableWidgetItem(file_duration))
+            ui_table.setItem(row_position, 1, QTableWidgetItem(self.file_duration))
             # 算力消耗
-            ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+            ui_table.setItem(row_position, 2, QTableWidgetItem(ds_count))
             # 操作
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
@@ -345,8 +384,8 @@ class TableWindow:
         # Use ffprobe to get video duration
             try:
                 with av.open(file) as container:
-                    duration_seconds = float(container.duration) / av.time_base  # 转换为秒
-                    hours, remainder = divmod(duration_seconds, 3600)
+                    self.duration_seconds = float(container.duration) / av.time_base  # 转换为秒
+                    hours, remainder = divmod(self.duration_seconds, 3600)
                     minutes, seconds = divmod(remainder, 60)
                     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
             except Exception as e:
@@ -373,6 +412,29 @@ class TableWindow:
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
+
+    def _calc_ds(self, video_long: float) -> int:
+        # 计算代币消耗
+        # 获取当前选择的识别引擎
+        model_key = self.main.source_model.currentText()
+        model_info = start_tools.match_source_model(model_key)
+        model_status = model_info["status"]
+        # 根据不同的识别引擎设置不同的算力消耗系数
+        # 算力总消耗
+        amount = 0
+        if model_status < 100:
+            # 云模型，消耗算力
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+            # 计算代币消耗
+            amount = token_service.calculate_asr_tokens(video_long)
+
+        #todo: 此时还不知道字数，待调整
+        # # 判断是否勾选翻译
+        # if self.main.check_fanyi.isChecked():
+        #     amount += start_tools.calc_asr_ds(video_long)
+
+        return amount
 
 
 if __name__ == "__main__":

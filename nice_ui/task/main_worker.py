@@ -4,6 +4,8 @@ from typing import Optional
 from PySide6.QtCore import QObject, Signal, Qt
 
 from nice_ui.configure import config
+from nice_ui.util.tools import StartTools
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue
 from nice_ui.util import tools
@@ -13,7 +15,7 @@ from utils import logger
 from vendor.qfluentwidgets import InfoBar, InfoBarPosition
 
 work_queue = LinQueue()
-
+start_tools = StartTools()
 
 class Worker(QObject):
     finished = Signal()
@@ -42,6 +44,8 @@ class Worker(QObject):
             self.trans_work()
         elif work_type == WORK_TYPE.ASR_TRANS:
             self.asr_trans_work()
+        elif work_type == WORK_TYPE.CLOUD_ASR:
+            self.cloud_asr_work()
         self.queue_ready.emit()
         self.finished.emit()
         logger.debug("do_work() 线程工作完成")
@@ -168,6 +172,15 @@ class Worker(QObject):
         # todo: 在翻译任务中,也要清空queue_srt
         config.queue_asr = []
         self.finished.emit()
+
+    def cloud_asr_work(self):
+        """
+        asr 云任务
+        Returns:
+
+        """
+        # todo: 实现云端ASR
+        raise NotImplementedError("暂不支持云端ASR")
 
 
 class QueueConsumer(QObject):
