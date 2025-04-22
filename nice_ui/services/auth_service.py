@@ -66,12 +66,6 @@ class AuthService(AuthInterface):
                 self.show_login_dialog()
                 return False
 
-            # 尝试从设置中加载token
-            if not api_client.load_token_from_settings(settings):
-                logger.info("加载token失败，需要登录")
-                self.show_login_dialog()
-                return False
-
             # 尝试进行一个简单的API调用来验证token是否有效
             try:
                 # 获取用户余额信息来验证token
