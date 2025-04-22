@@ -74,7 +74,7 @@ class AliyunASRClient:
             logger.info(f"提交ASR任务，文件: {audio_file}, 语言: {language_hint}")
 
             # 判断是否为URL
-            is_url = audio_file.startswith('http://') or audio_file.startswith('https://')
+            is_url = audio_file.startswith('http://') or audio_file.startswith('https://') or audio_file.startswith('oss://')
 
             # 如果不是URL，直接抛出异常并停止后续操作
             if not is_url:
@@ -82,11 +82,24 @@ class AliyunASRClient:
                 logger.error(error_msg)
                 raise ASRRequestError(error_msg)
 
+            """
+            自定义请求头
+            
+            如果使用临时存储空间中的文件，
+            则必须在请求的header中添加参数:
+                X-DashScope-OssResourceResolve: enable。
+            只有在满足此条件的情况下，才能从临时存储空间中获取相应的文件以完成调用。
+            """
+            custom_headers = {
+                "X-DashScope-OssResourceResolve": "enable"
+            }
+
             # 使用DashScope SDK提交异步转写任务
             transcribe_response = Transcription.async_call(
                 model='paraformer-v2',  # 使用最新的模型
                 file_urls=[audio_file],  # URL地址
-                language_hints=[language_hint]  # 语言提示
+                language_hints=[language_hint],  # 语言提示
+                headers=custom_headers  # 添加自定义请求头
             )
 
             if transcribe_response.status_code == HTTPStatus.OK:
@@ -117,8 +130,14 @@ class AliyunASRClient:
             else:
                 task_id = task_response.output.task_id
 
+            # 准备自定义请求头
+            custom_headers = {
+                "X-DashScope-Custom-Header": "custom-value",  # 自定义请求头示例
+                "X-DashScope-Client-Info": "lin_trans-app"  # 客户端信息
+            }
+
             # 使用DashScope SDK查询任务状态
-            transcribe_response = Transcription.fetch(task=task_id)
+            transcribe_response = Transcription.fetch(task=task_id, headers=custom_headers)
 
             logger.debug(f"查询ASR任务状态: {transcribe_response.output.task_status}")
             return transcribe_response
@@ -156,8 +175,8 @@ class AliyunASRClient:
 
         if transcribe_response.output.task_status == 'SUCCEEDED':
             return transcribe_response
-        logger.error(f"ASR任务失败: {transcribe_response.output.task_status}, {transcribe_response.message if hasattr(transcribe_response, 'message') else ''}")
-        raise ASRRequestError(f"ASR任务失败: {transcribe_response.output.task_status}")
+        logger.error(f"ASR任务失败: {transcribe_response.output.task_status}, {transcribe_response.output.message}")
+        raise ASRRequestError(f"ASR任务失败: {transcribe_response.output.task_status}, {transcribe_response.output.message}")
 
     def parse_result(self, response: Any) -> str:
         """
@@ -291,7 +310,7 @@ if __name__ == '__main__':
     client = create_aliyun_asr_client()
 
     # 示例：提交语音识别任务并等待完成
-    audio_file = "fffdashscope.oss-cn-beijing.aliyuncs.com/samples/audio/paraformer/hello_world_female2.wav"
+    audio_file = "oss://dashscope-instant/6ce1b910bd8d28d46d97822fa04e1721/2025-04-22/5f723bc3-1015-94a7-819b-d6a666ba4c2d/tt.war
     task = client.submit_task(audio_file)
     response = client.wait_for_completion(task)
 
