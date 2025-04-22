@@ -1,4 +1,5 @@
 from agent.common_agent import translate_document
+from app.cloud_asr import get_task_manager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
@@ -43,6 +44,26 @@ class LinQueue:
             # srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, True)
             srt_worker.funasr_to_srt(db_obj.source_module_name)  # elif task['codec_type'] == 'audio':  #     final_name = f'{task["output"]}/{task["raw_noextname"]}.wav'  #     FFmpegJobs.convert_mp4_to_war(task['raw_name'], final_name)  #     srt_worker = SrtWriter(task['unid'], task["output"], task["raw_basename"], config.params['source_language_code'], )  #     srt_worker.factory_whisper(config.params['source_module_name'], config.sys_platform, config.params['cuda'])
 
+        elif task.work_type == WORK_TYPE.CLOUD_ASR:
+            logger.debug('消费云ASR任务')
+            # 音视频转wav格式
+            final_name = task.wav_dirname
+            logger.debug(f'准备音视频转wav格式:{final_name}')
+            FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+            task_manager = get_task_manager()
+            # 创建ASR任务
+            task_id = task_manager.create_task(
+                audio_file=final_name,
+                language=config.params["source_language_code"],
+                unid=task.unid
+            )
+
+
+
+            # 提交任务到阿里云
+            task_manager.submit_task(task_id)
+            logger.debug('云ASR任务已在工作线程中处理')
+
         elif task.work_type == WORK_TYPE.TRANS:
             logger.debug('消费translate任务')
             agent_type = config.params['translate_channel']
@@ -53,7 +74,7 @@ class LinQueue:
                                config.settings['trans_sleep'])
         elif task.work_type == WORK_TYPE.ASR_TRANS:
             logger.debug('消费srt+trans任务')
-            
+
             # 第一步: ASR 任务
             final_name = task.wav_dirname
             logger.debug(f'准备音视频转wav格式:{final_name}')
@@ -62,7 +83,7 @@ class LinQueue:
             db_obj = srt_orm.query_data_by_unid(task.unid)
             srt_worker = SrtWriter(task.unid, task.wav_dirname, task.raw_noextname, db_obj.source_language_code)
             srt_worker.funasr_to_srt(db_obj.source_module_name)
-            
+
             logger.debug('ASR 任务完成，准备开始翻译任务')
 
             # 第二步: 翻译任务
@@ -71,7 +92,7 @@ class LinQueue:
             agent_type = config.params['translate_channel']
             final_name = new_task.srt_dirname
             logger.trace(f'准备翻译任务:{final_name}')
-            
+
             trans_orm = ToTranslationOrm()
             trans_orm.add_data_to_table(
                 new_task.unid,
@@ -84,7 +105,7 @@ class LinQueue:
                 1,
                 new_task.model_dump_json())
             logger.trace(f'任务参数:{new_task.unid}, {new_task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
-            
+
             translate_document(new_task.unid, new_task.raw_name, final_name, agent_type, config.params['prompt_text'], config.settings['trans_row'],
                                config.settings['trans_sleep'])
 
