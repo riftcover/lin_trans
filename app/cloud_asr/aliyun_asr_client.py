@@ -96,7 +96,7 @@ class AliyunASRClient:
 
             # 使用DashScope SDK提交异步转写任务
             transcribe_response = Transcription.async_call(
-                model='paraformer-v2',  # 使用最新的模型
+                model=config.params.get('aliyun_asr_model'),  # 使用最新的模型
                 file_urls=[audio_file],  # URL地址
                 language_hints=[language_hint],  # 语言提示
                 headers=custom_headers  # 添加自定义请求头
