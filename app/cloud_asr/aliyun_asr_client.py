@@ -310,7 +310,7 @@ if __name__ == '__main__':
     client = create_aliyun_asr_client()
 
     # 示例：提交语音识别任务并等待完成
-    audio_file = "oss://dashscope-instant/6ce1b910bd8d28d46d97822fa04e1721/2025-04-22/5f723bc3-1015-94a7-819b-d6a666ba4c2d/tt.war
+    audio_file = "oss://dashscope-instant/6ce1b910bd8d28d46d97822fa04e1721/2025-04-22/5f723bc3-1015-94a7-819b-d6a666ba4c2d/tt.war"
     task = client.submit_task(audio_file)
     response = client.wait_for_completion(task)
 
