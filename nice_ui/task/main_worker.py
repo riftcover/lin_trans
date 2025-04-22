@@ -26,7 +26,7 @@ class Worker(QObject):
         """
         初始化工作线程
         Args:
-            queue_copy: 待处理文件队列的副本
+            queue_copy: 待处理文件队列的副本，config.queue_trans
         """
         super().__init__()
         self.queue_copy = queue_copy
@@ -61,6 +61,9 @@ class Worker(QObject):
             work_queue.lin_queue_put(obj_format)
             # 添加文件到我的创作页表格中
             self.data_bridge.emit_update_table(obj_format)
+            logger.debug("添加视频消息完成")
+            logger.error(f'config.params["translate_status"],{config.params["translate_status"]}')
+            logger.trace(f"translate_status type: {type(config.params['translate_status'])}")
             # 添加消息到数据库
             srt_orm.add_data_to_table(
                 obj_format.unid,
@@ -175,13 +178,40 @@ class Worker(QObject):
 
     def cloud_asr_work(self):
         """
-        asr 云任务
-        Returns:
-
+        阿里云ASR任务处理
+        使用异步提交任务+异步查询任务执行结果的方式
         """
-        # todo: 实现云端ASR
-        raise NotImplementedError("暂不支持云端ASR")
+        from app.cloud_asr.task_manager import get_task_manager
+        from app.video_tools import FFmpegJobs
 
+        srt_orm = ToSrtOrm()
+
+
+        for it in self.queue_copy:
+            logger.debug(f"do_work线程工作中,处理cloud_asr_work任务:{it}")
+            # 格式化每个视频信息
+            obj_format = self._check_obj(it, WORK_TYPE.CLOUD_ASR)
+
+            # 添加到工作队列
+            work_queue.lin_queue_put(obj_format)
+
+            # 添加文件到我的创作页表格中
+            self.data_bridge.emit_update_table(obj_format)
+            # 添加消息到数据库
+            srt_orm.add_data_to_table(
+                obj_format.unid,
+                obj_format.raw_name,
+                config.params["source_language"],
+                config.params["source_language_code"],
+                config.params["source_module_status"],
+                config.params["source_module_name"],
+                config.params["translate_status"],
+                config.params["cuda"],
+                obj_format.raw_ext,
+                1,
+                obj_format.model_dump_json(),
+            )
+            logger.debug("添加云asr消息完成")
 
 class QueueConsumer(QObject):
     """
