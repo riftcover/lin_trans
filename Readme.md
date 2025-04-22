@@ -47,3 +47,7 @@ def rich_transcription_postprocess(s):
 for emoji in emo_set.union(event_set):
     new_s = new_s.replace(emoji, " ")
 是新添加的,为了取消输出文本中的emoji
+
+
+## 打包注意事项
+1.tmp/asr_tasks.json 是asr云任务持久化文件，需要在打包时包含进去一个空列表[]
