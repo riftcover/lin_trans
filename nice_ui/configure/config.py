@@ -6,9 +6,8 @@ from pathlib import Path
 from queue import Queue
 
 from nice_ui.configure import ModelDict
-from nice_ui.ui.SingalBridge import DataBridge
-from utils import logger
 
+from utils import logger
 
 # from utils.log import Logings
 #
@@ -36,15 +35,17 @@ sys_platform = sys.platform
 # models_path = os.path.join(root_path,'models')
 root_same = Path(__file__).parent.parent.parent.parent
 models_path = root_same / "models"
-funasr_model_path = models_path/"funasr"/"iic"
+funasr_model_path = models_path / "funasr" / "iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
+
 
 # 修改为函数，方便动态更新
 def update_funasr_path():
     global funasr_model_path
-    funasr_model_path = Path(models_path)/"funasr"/"iic"
+    funasr_model_path = Path(models_path) / "funasr" / "iic"
     funasr_model_path.mkdir(parents=True, exist_ok=True)
     return funasr_model_path
+
 
 # 初始化 funasr_model_path
 funasr_model_path = update_funasr_path()
@@ -145,8 +146,8 @@ def parse_init():
         except Exception as e:
             logger.error(f"set.ini 中有语法错误:{str(e)}")
         if (
-            isinstance(init_settings["fontsize"], str)
-            and init_settings["fontsize"].find("px") > 0
+                isinstance(init_settings["fontsize"], str)
+                and init_settings["fontsize"].find("px") > 0
         ):
             init_settings["fontsize"] = int(init_settings["fontsize"].replace("px", ""))
     return init_settings
@@ -231,7 +232,30 @@ zijiehuoshan_model_list = [
 edgeTTS_rolelist = None
 AzureTTS_rolelist = None
 proxy = None
+from pydantic import BaseModel
 
+class PplSdkConfig(BaseModel):
+    aki: str = ""
+    aks: str = ""
+    region: str = "cn-beijing"
+    bucket: str = "asr-file-tth"
+    asr_api_key: str = ""
+    asr_model: str = "paraformer-v2"
+
+class CloudConfig(BaseModel):
+    ppl_sdk: PplSdkConfig
+
+# 初始化配置
+aa_bb = CloudConfig(
+    ppl_sdk=PplSdkConfig(
+        aki="LTAI5t7eCsZFb4AnqJFX5e3v",
+        aks="OPwgvUFO30VgALAbvjylXKw7e5HbPl",
+        region="cn-beijing",
+        bucket="asr-file-tth",
+        asr_api_key="sk-b1d261afb71d40bea90b61ac11a202af",
+        asr_model="paraformer-v2"
+    )
+)
 # 配置
 params = {  # 操作系统类型:win32、linux、darwin
     "source_mp4": "",  # 需要进行处理的文件
@@ -241,7 +265,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "source_language": "英文",
     "source_module_status": 302,  # 语音转文本模型
     "source_module_name": "small",
-    "source_module_key":"中文模型",
+    "source_module_key": "中文模型",
     "detect_language": "en",
     "translate_status": False,
     "target_language": "zh-cn",
@@ -311,9 +335,15 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_url": "",
     "gptsovits_role": "",
     "gptsovits_extra": "linlin",
+
+    # 阿里云OSS配置
+    "aliyun_oss_access_key_id": "",
+    "aliyun_oss_access_key_secret": "",
+    "aliyun_oss_endpoint": "",
+    "aliyun_oss_bucket_name": "",
+
     # 阿里云ASR配置
-    "aliyun_asr_api_key": "sk-b1d261afb71d40bea90b61ac11a202af",
-    "aliyun_asr_model":"paraformer-v2"
+    "aliyun_asr_api_key": "",
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"
@@ -365,17 +395,8 @@ lin_queue = Queue()  # 任务队列
 is_consuming = False
 
 
-class SingletonDataBridge:
-    _instance = None
-
-    @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = DataBridge()
-        return cls._instance
 
 
-data_bridge = SingletonDataBridge.get_instance()
 
 # 全局错误
 errorlist = {}
