@@ -100,7 +100,7 @@ class AliyunASRClient:
 
             if transcribe_response.status_code == HTTPStatus.OK:
                 task_id = transcribe_response.output.task_id
-                logger.info(f"成功提交ASR任务: {task_id}")
+                logger.info(f"成功提交ASR任务 - 阿里云ID: {task_id}")
                 return transcribe_response
             else:
                 logger.error(f"提交ASR任务失败: {transcribe_response.code}, {transcribe_response.message}")
@@ -119,13 +119,14 @@ class AliyunASRClient:
         Returns:
             Any: 任务状态和结果
         """
-        logger.info(444)
         try:
             # 如果传入的是任务ID字符串
             if isinstance(task_response, str):
                 task_id = task_response
             else:
                 task_id = task_response.output.task_id
+
+            logger.info(f"开始查询ASR任务状态 - 阿里云ID: {task_id}")
 
             # 准备自定义请求头
             custom_headers = {
@@ -134,10 +135,13 @@ class AliyunASRClient:
             }
 
             # 使用DashScope SDK查询任务状态
-            transcribe_response = Transcription.fetch(task=task_id, headers=custom_headers)
-            logger.info(5555)
-            logger.debug(f"查询ASR任务状态: {transcribe_response.output.task_status}")
-            return transcribe_response
+            try:
+                transcribe_response = Transcription.fetch(task=task_id, headers=custom_headers)
+                logger.info(f"查询ASR任务状态成功 - 阿里云ID: {task_id}, 状态: {transcribe_response.output.task_status}")
+                return transcribe_response
+            except Exception as api_error:
+                logger.error(f"DashScope API调用失败: {str(api_error)}")
+                raise
 
         except Exception as e:
             logger.error(f"查询ASR任务时发生错误: {str(e)}")

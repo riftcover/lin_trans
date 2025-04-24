@@ -4,7 +4,10 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
+
+from pydantic import BaseModel, Field, validator, field_validator
+from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
@@ -21,6 +24,48 @@ class ASRTaskStatus:
     RUNNING = "RUNNING"  # 运行中
     COMPLETED = "COMPLETED"  # 已完成
     FAILED = "FAILED"  # 失败
+
+
+class ASRTaskModel(BaseModel):
+    """ASR任务数据模型"""
+    task_id: str = Field(..., description="任务ID")
+    audio_file: str = Field(..., description="音频文件路径")
+    audio_url: Optional[str] = Field(None, description="音频文件URL，上传到OSS后生成")
+    language: str = Field(..., description="语言代码")
+    unid: str = Field(..., description="应用内唯一标识符")
+    status: str = Field(ASRTaskStatus.PENDING, description="任务状态")
+    error: Optional[str] = Field(None, description="错误信息")
+    progress: int = Field(0, description="任务进度（0-100）")
+    created_at: float = Field(default_factory=time.time, description="创建时间")
+    updated_at: float = Field(default_factory=time.time, description="更新时间")
+
+    @field_validator('status')
+    def validate_status(cls, v):
+        """验证任务状态"""
+        valid_statuses = [
+            ASRTaskStatus.PENDING,
+            ASRTaskStatus.UPLOADING,
+            ASRTaskStatus.SUBMITTED,
+            ASRTaskStatus.RUNNING,
+            ASRTaskStatus.COMPLETED,
+            ASRTaskStatus.FAILED
+        ]
+        if v not in valid_statuses:
+            raise ValueError(f"无效的任务状态: {v}，有效状态: {valid_statuses}")
+        return v
+
+    @field_validator('progress')
+    def validate_progress(cls, v):
+        """验证任务进度"""
+        if not isinstance(v, int) or v < 0 or v > 100:
+            raise ValueError(f"无效的任务进度: {v}，进度必须是0-100之间的整数")
+        return v
+
+    class Config:
+        arbitrary_types_allowed = True  # 允许任意类型
+        json_encoders = {  # 自定义JSON编码器
+            Path: lambda p: str(p),  # 将Path对象转换为字符串
+        }
 
 
 class ASRTask:
@@ -43,7 +88,6 @@ class ASRTask:
         self.unid = unid
         self.response = None  # 保存DashScope响应对象
         self.status = ASRTaskStatus.PENDING
-        self.result = None
         self.error = None
         self.progress = 0
         self.created_at = time.time()
@@ -51,47 +95,61 @@ class ASRTask:
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        将任务转换为字典
+        将任务转换为字典，使用Pydantic模型进行验证和转换
 
         Returns:
             Dict: 任务字典
         """
-        return {
-            "task_id": self.task_id,
-            "audio_file": self.audio_file,
-            "audio_url": self.audio_url,
-            "language": self.language,
-            "unid": self.unid,
-            "status": self.status,
-            "progress": self.progress,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-            "error": self.error
-        }
+        # 创建Pydantic模型
+        model = ASRTaskModel(
+            task_id=self.task_id,
+            audio_file=self.audio_file,
+            audio_url=self.audio_url,
+            language=self.language,
+            unid=self.unid,
+            status=self.status,
+            error=self.error,
+            progress=self.progress,
+            created_at=self.created_at,
+            updated_at=self.updated_at
+        )
+
+        # 转换为字典
+        return model.model_dump(exclude_none=True)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ASRTask':
         """
-        从字典创建任务
+        从字典创建任务，使用Pydantic模型进行验证和转换
 
         Args:
             data: 任务字典
 
         Returns:
             ASRTask: 任务对象
+
+        Raises:
+            ValidationError: 如果数据验证失败
         """
+        # 使用Pydantic模型验证和转换数据
+        model = ASRTaskModel(**data)
+
+        # 创建ASRTask对象
         task = cls(
-            task_id=data["task_id"],
-            audio_file=data["audio_file"],
-            language=data["language"],
-            unid=data["unid"]
+            task_id=model.task_id,
+            audio_file=model.audio_file,
+            language=model.language,
+            unid=model.unid
         )
-        task.audio_url = data.get("audio_url")
-        task.status = data.get("status", ASRTaskStatus.PENDING)
-        task.progress = data.get("progress", 0)
-        task.created_at = data.get("created_at", time.time())
-        task.updated_at = data.get("updated_at", time.time())
-        task.error = data.get("error")
+
+        # 设置其他属性
+        task.audio_url = model.audio_url
+        task.status = model.status
+        task.progress = model.progress
+        task.created_at = model.created_at
+        task.updated_at = model.updated_at
+        task.error = model.error
+
         return task
 
 
@@ -108,32 +166,73 @@ class ASRTaskManager:
         self._load_tasks()
 
     def _load_tasks(self) -> None:
-        """从文件加载任务状态"""
-        if self.task_state_file.exists():
-            try:
-                with open(self.task_state_file, "r", encoding="utf-8") as f:
-                    tasks_data = json.load(f)
+        """从文件加载任务状态，使用Pydantic模型进行验证和转换"""
+        if not self.task_state_file.exists():
+            return
+        try:
+            with open(self.task_state_file, "r", encoding="utf-8") as f:
+                tasks_data = json.load(f)
 
-                with self.lock:
-                    for task_data in tasks_data:
-                        task = ASRTask.from_dict(task_data)
+            with self.lock:
+                loaded_count = 0
+                for task_data in tasks_data:
+                    try:
+                        # 使用Pydantic模型验证数据
+                        model = ASRTaskModel(**task_data)
+                        # 使用验证后的数据创建ASRTask对象
+                        task = ASRTask.from_dict(model.model_dump())
                         self.tasks[task.task_id] = task
+                        loaded_count += 1
+                    except Exception as task_e:
+                        logger.error(f"加载任务数据失败: {str(task_e)}")
+                        # 尝试使用旧方法
+                        try:
+                            task = ASRTask.from_dict(task_data)
+                            self.tasks[task.task_id] = task
+                            loaded_count += 1
+                        except Exception as fallback_e:
+                            logger.error(f"使用旧方法加载任务数据也失败: {str(fallback_e)}")
 
-                logger.info(f"从文件加载了 {len(tasks_data)} 个ASR任务")
-            except Exception as e:
-                logger.error(f"加载ASR任务状态失败: {str(e)}")
+            logger.info(f"从文件加载了 {loaded_count} 个ASR任务")
+        except Exception as e:
+            logger.error(f"加载ASR任务状态失败: {str(e)}")
 
     def _save_tasks(self) -> None:
-        """保存任务状态到文件"""
+        """保存任务状态到文件，使用Pydantic模型进行序列化"""
         try:
             with self.lock:
-                tasks_data = [task.to_dict() for task in self.tasks.values()]
+                # 使用Pydantic模型序列化任务数据
+                tasks_data = []
+                for task in self.tasks.values():
+                    try:
+                        # 创建Pydantic模型
+                        model = ASRTaskModel(
+                            task_id=task.task_id,
+                            audio_file=task.audio_file,
+                            audio_url=task.audio_url,
+                            language=task.language,
+                            unid=task.unid,
+                            status=task.status,
+                            error=task.error,
+                            progress=task.progress,
+                            created_at=task.created_at,
+                            updated_at=task.updated_at
+                        )
+                        # 转换为字典
+                        tasks_data.append(model.model_dump(exclude_none=True))
+                    except Exception as task_e:
+                        logger.error(f"序列化任务数据失败: {str(task_e)}")
+                        # 如果序列化失败，使用旧方法
+                        tasks_data.append(task.to_dict())
 
             # 确保目录存在
             self.task_state_file.parent.mkdir(parents=True, exist_ok=True)
 
+            # 使用自定义编码器序列化JSON
             with open(self.task_state_file, "w", encoding="utf-8") as f:
-                json.dump(tasks_data, f, ensure_ascii=False, indent=2)
+                json.dump(tasks_data, f, ensure_ascii=False, indent=2, default=pydantic_encoder)
+
+            logger.debug(f"成功保存 {len(tasks_data)} 个ASR任务到文件")
 
         except Exception as e:
             logger.error(f"保存ASR任务状态失败: {str(e)}")
@@ -196,8 +295,7 @@ class ASRTaskManager:
             **kwargs: 要更新的字段
         """
         with self.lock:
-            task = self.tasks.get(task_id)
-            if task:
+            if task := self.tasks.get(task_id):
                 for key, value in kwargs.items():
                     if hasattr(task, key):
                         setattr(task, key, value)
@@ -292,11 +390,12 @@ class ASRTaskManager:
             client = create_aliyun_asr_client()
 
             # 提交任务
-            logger.info(f"提交ASR任务: {task_id} -> {audio_file}")
+            logger.info(f"开始提交ASR任务 - 内部ID: {task_id}")
             response = client.submit_task(audio_file, task.language)
 
             # 保存响应对象
             task.response = response
+            aliyun_task_id = response.output.task_id
 
             # 更新任务状态
             self.update_task(
@@ -306,7 +405,7 @@ class ASRTaskManager:
                 progress=15
             )
 
-            logger.info(f"成功提交ASR任务: {task_id} -> {response.output.task_id}")
+            logger.info(f"成功提交ASR任务 - 内部ID: {task_id}, 阿里云ID: {aliyun_task_id}")
 
             # 确保轮询线程正在运行
             self._ensure_polling_thread()
@@ -332,7 +431,6 @@ class ASRTaskManager:
         logger.info("启动ASR任务状态轮询线程")
 
         while not self.stop_polling.is_set():
-            logger.trace(111)
             try:
                 # 获取所有需要轮询的任务
                 tasks_to_poll = []
@@ -345,19 +443,20 @@ class ASRTaskManager:
                         and task.response
                     )
                 if not tasks_to_poll:
-                    logger.trace(222)
                     # 如果没有需要轮询的任务，等待一段时间后再检查
                     time.sleep(5)
                     continue
 
                 # 创建阿里云ASR客户端
                 client = create_aliyun_asr_client()
-                logger.info(f'tasks_to_poll:{tasks_to_poll}')
+                logger.info(f'开始轮询 {len(tasks_to_poll)} 个ASR任务状态')
+
                 # 轮询每个任务
                 for task in tasks_to_poll:
                     try:
                         # 查询任务状态
-                        logger.trace(333)
+                        aliyun_task_id = task.response.output.task_id if hasattr(task.response, 'output') else 'unknown'
+                        logger.info(f'查询任务状态 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}')
                         response = client.query_task(task.response)
 
                         # 更新任务状态
@@ -378,36 +477,44 @@ class ASRTaskManager:
 
                             # 下载转写结果文件
                             json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
-                            result_data = client.download_file(transcription_url, json_file_path)
+                            saved_path = client.download_file(transcription_url, json_file_path)
 
-                            # 从结果中提取字幕信息并生成SRT文件
-                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-
-                            # 从结果中提取字幕信息
-                            parsed_results = []
-                            for sentence in result_data.get('sentences', []):
-                                parsed_results.append({
-                                    "text": sentence.get("text", ""),
-                                    "begin_time": int(float(sentence.get("begin_time", 0)) * 1000),  # 转换为毫秒
-                                    "end_time": int(float(sentence.get("end_time", 0)) * 1000),  # 转换为毫秒
-                                })
-
-                            # 生成SRT文件
-                            client.convert_to_srt(parsed_results, srt_file_path)
+                            # # 读取下载的JSON文件
+                            # try:
+                            #     with open(saved_path, 'r', encoding='utf-8') as f:
+                            #         result_data = json.load(f)
+                            # except Exception as e:
+                            #     logger.error(f"读取ASR结果文件失败: {str(e)}")
+                            #     raise
+                            #
+                            # # 从结果中提取字幕信息并生成SRT文件
+                            # srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            #
+                            # # 从结果中提取字幕信息
+                            # parsed_results = []
+                            # for sentence in result_data.get('sentences', []):
+                            #     parsed_results.append({
+                            #         "text": sentence.get("text", ""),
+                            #         "begin_time": int(float(sentence.get("begin_time", 0)) * 1000),  # 转换为毫秒
+                            #         "end_time": int(float(sentence.get("end_time", 0)) * 1000),  # 转换为毫秒
+                            #     })
+                            #
+                            # # 生成SRT文件
+                            # client.convert_to_srt(parsed_results, srt_file_path)
 
                             # 更新任务状态
                             self.update_task(
                                 task.task_id,
                                 response=response,
                                 status=ASRTaskStatus.COMPLETED,
-                                result=parsed_results,
                                 progress=100
                             )
 
                             # 通知UI任务完成
                             self._notify_task_completed(task.unid)
 
-                            logger.info(f"ASR任务完成: {task.task_id}")
+                            aliyun_task_id = response.output.task_id if hasattr(response, 'output') else 'unknown'
+                            logger.info(f"ASR任务完成 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}")
                         elif response.output.task_status == 'FAILED':
                             # 任务失败
                             error_msg = response.message if hasattr(response, 'message') else "未知错误"
@@ -418,9 +525,11 @@ class ASRTaskManager:
                                 error=error_msg,
                                 progress=0
                             )
-                            logger.error(f"ASR任务失败: {task.task_id}, 错误: {error_msg}")
+                            aliyun_task_id = response.output.task_id if hasattr(response, 'output') else 'unknown'
+                            logger.error(f"ASR任务失败 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}, 错误: {error_msg}")
                     except Exception as e:
-                        logger.error(f"轮询任务 {task.task_id} 时出错: {str(e)}")
+                        aliyun_task_id = task.response.output.task_id if hasattr(task.response, 'output') else 'unknown'
+                        logger.error(f"轮询任务时出错 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}, 错误: {str(e)}")
 
                 # 等待一段时间后再次轮询
                 time.sleep(5)
