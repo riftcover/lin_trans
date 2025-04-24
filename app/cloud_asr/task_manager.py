@@ -6,6 +6,8 @@ from typing import Dict, Any, Optional, List, Tuple, Callable
 import uuid
 from pathlib import Path
 
+from app.cloud_asr import aliyun_sdk
+from nice_ui.configure.signal import data_bridge
 from utils import logger
 from nice_ui.configure import config
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
@@ -374,7 +376,6 @@ class ASRTaskManager:
         """
         try:
             # 使用数据桥通知UI
-            data_bridge = config.data_bridge
             data_bridge.emit_whisper_finished(unid)
         except Exception as e:
             logger.error(f"通知任务完成失败: {str(e)}")

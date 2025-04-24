@@ -4,8 +4,8 @@ from typing import List, Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (QMessageBox, )
-from debugpy.launcher.debuggee import job_handle
 
+from nice_ui.configure.signal import data_bridge
 from agent import translate_api_name
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import save_setting
@@ -32,7 +32,7 @@ class SecWindow:
         self.worker_thread: Optional[QThread] = None
         self.main = main
         self.usetype: Optional[str] = None
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
 
     def check_cuda(self, state: bool):
         import torch

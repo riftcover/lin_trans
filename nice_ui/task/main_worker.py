@@ -3,6 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, Signal, Qt
 
+from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from nice_ui.util.tools import StartTools
 from nice_ui.services.service_provider import ServiceProvider
@@ -30,7 +31,7 @@ class Worker(QObject):
         """
         super().__init__()
         self.queue_copy = queue_copy
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
 
     def do_work(self, work_type: WORK_TYPE):
         """

@@ -5,10 +5,11 @@ import shutil
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread, QSettings
+from PySide6.QtCore import Qt, QThread
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
 from pydantic import ValidationError
 
+from nice_ui.configure.signal import data_bridge
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
@@ -53,7 +54,7 @@ class TableApp(CardWidget):
         self.settings = settings
         self.setObjectName(text.replace("", "-"))
         self.setupUi()
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
         self._connect_signals()
         # 使用ORM工厂获取ORM实例
         self.orm_factory = OrmFactory()

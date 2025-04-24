@@ -3,13 +3,13 @@ import time
 import json
 import requests
 from http import HTTPStatus
-from typing import Dict, Any, Optional, List, Tuple, Literal
-import uuid
+from typing import Dict, Any, List
 
 from pydantic import BaseModel, Field, field_validator
 
-from utils import logger
-from nice_ui.configure import config
+from app.cloud_asr import aliyun_sdk,logger
+
+
 
 
 class ASRRequestError(Exception):
@@ -96,7 +96,7 @@ class AliyunASRClient:
 
             # 使用DashScope SDK提交异步转写任务
             transcribe_response = Transcription.async_call(
-                model=config.params.get('aliyun_asr_model'),  # 使用最新的模型
+                model=aliyun_sdk.asr_model,  # 使用最新的模型
                 file_urls=[audio_file],  # URL地址
                 language_hints=[language_hint],  # 语言提示
                 headers=custom_headers  # 添加自定义请求头
@@ -203,7 +203,6 @@ class AliyunASRClient:
             logger.error(f"提取transcription_url时出错: {str(e)}")
             raise ASRRequestError(f"无法从响应中提取transcription_url: {str(e)}") from e
 
-
     def download_file(self, url: str, save_path: str) -> str:
         """
         下载ASR任务生成的文件
@@ -301,7 +300,7 @@ def create_aliyun_asr_client() -> AliyunASRClient:
     Returns:
         AliyunASRClient: 阿里云ASR客户端实例
     """
-    if api_key := config.params.get("aliyun_asr_api_key", ""):
+    if api_key := aliyun_sdk.aki:
         return AliyunASRClient(api_key)
     else:
         raise ValueError("阿里云ASR配置不完整，请检查配置中的阿里云DashScope API Key")
@@ -315,6 +314,3 @@ if __name__ == '__main__':
     response = client.wait_for_completion(task)
 
     parsed_results = client.parse_result(response)
-
-
-
