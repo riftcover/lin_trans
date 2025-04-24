@@ -163,26 +163,20 @@ class AliyunOSSClientV2:
         Returns: 签名文件路径
 
         """
-        logger.info(f"开始生成文件的访问链接: {oss_path}, 有效期: {expires}秒")
+        logger.info("开始生成文件的访问链接")
 
         pre_result = self.client.presign(
             oss.GetObjectRequest(
                 bucket=self.bucket_name,  # 指定存储空间名称
                 key=oss_path,  # 指定对象键名
-            ),
-            expires=expires  # 设置链接有效期
+                expires=expires  # 设置链接有效期
+            )
+
         )
 
         # 打印预签名请求的详细信息
         logger.info("生成预签名请求成功:")
-        logger.info(f"  - 方法: {pre_result.method}")
-        logger.info(f"  - 过期时间: {pre_result.expiration.strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info(f"  - URL: {pre_result.url}")
-
-        # 打印预签名请求的已签名头信息（调试用）
-        if logger.level <= logging.DEBUG:
-            for key, value in pre_result.signed_headers.items():
-                logger.debug(f"  - 签名头: {key} = {value}")
 
         return pre_result.url
 
@@ -312,9 +306,3 @@ if __name__ == "__main__":
     # 上传文件并生成URL
     print("开始上传文件:")
     success, url, error = upload_file_for_asr(file, progress_callback)
-    print()  # 换行
-
-    if success:
-        print(f"文件上传成功: {url}")
-    else:
-        print(f"文件上传失败: {error}")
