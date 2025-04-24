@@ -336,12 +336,6 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_role": "",
     "gptsovits_extra": "linlin",
 
-    # 阿里云OSS配置
-    "aliyun_oss_access_key_id": "",
-    "aliyun_oss_access_key_secret": "",
-    "aliyun_oss_endpoint": "",
-    "aliyun_oss_bucket_name": "",
-
     # 阿里云ASR配置
     "aliyun_asr_api_key": "",
 }
