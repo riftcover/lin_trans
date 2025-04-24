@@ -1,22 +1,22 @@
-import os
-import time
 import json
+import os
 import threading
-from typing import Dict, Any, Optional, List, Tuple, Callable
+import time
 import uuid
 from pathlib import Path
+from typing import Dict, Any, Optional, List
 
-from app.cloud_asr import aliyun_sdk
+from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
+from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
+from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from utils import logger
-from nice_ui.configure import config
-from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
-from utils.file_utils import Segment
 
 
 class ASRTaskStatus:
     """ASR任务状态常量"""
     PENDING = "PENDING"  # 等待提交
+    UPLOADING = "UPLOADING"  # 上传中
     SUBMITTED = "SUBMITTED"  # 已提交
     RUNNING = "RUNNING"  # 运行中
     COMPLETED = "COMPLETED"  # 已完成
@@ -38,6 +38,7 @@ class ASRTask:
         """
         self.task_id = task_id
         self.audio_file = audio_file
+        self.audio_url = None  # 音频文件URL，上传到OSS后生成
         self.language = language
         self.unid = unid
         self.response = None  # 保存DashScope响应对象
@@ -58,6 +59,7 @@ class ASRTask:
         return {
             "task_id": self.task_id,
             "audio_file": self.audio_file,
+            "audio_url": self.audio_url,
             "language": self.language,
             "unid": self.unid,
             "status": self.status,
@@ -84,6 +86,7 @@ class ASRTask:
             language=data["language"],
             unid=data["unid"]
         )
+        task.audio_url = data.get("audio_url")
         task.status = data.get("status", ASRTaskStatus.PENDING)
         task.progress = data.get("progress", 0)
         task.created_at = data.get("created_at", time.time())
@@ -215,25 +218,78 @@ class ASRTaskManager:
             return
 
         try:
-            # 创建阿里云ASR客户端
-            client = create_aliyun_asr_client()
-
             # 使用本地文件路径
             audio_file = task.audio_file
 
             # 检查是否为URL
             is_url = audio_file.startswith('http://') or audio_file.startswith('https://')
+
+            # 如果是本地文件，先上传到OSS
             if not is_url:
-                # 如果不是URL，将任务状态设置为失败
-                error_msg = "不支持本地文件，请提供有效的URL地址"
-                logger.error(error_msg)
+                # 检查文件是否存在
+                if not os.path.exists(audio_file):
+                    error_msg = f"文件不存在: {audio_file}"
+                    logger.error(error_msg)
+                    self.update_task(
+                        task_id,
+                        status=ASRTaskStatus.FAILED,
+                        error=error_msg,
+                        progress=0
+                    )
+                    return
+
+                # 更新任务状态为上传中
                 self.update_task(
                     task_id,
-                    status=ASRTaskStatus.FAILED,
-                    error=error_msg,
-                    progress=0
+                    status=ASRTaskStatus.UPLOADING,
+                    progress=5
                 )
-                return
+
+                # 定义进度回调函数
+                def progress_callback(progress):
+                    # 进度范围从5%到9%
+                    task_progress = 5 + int(progress * 0.04)
+                    self.update_task(task_id, progress=task_progress)
+
+                # 上传文件到OSS
+                logger.info(f"开始上传文件到OSS: {audio_file}")
+                success, url, error = upload_file_for_asr(
+                    local_file_path=audio_file,
+                    progress_callback=progress_callback,
+                    expires=24 * 3600  # URL有效期24小时
+                )
+
+                if not success:
+                    error_msg = f"上传文件失败: {error}"
+                    logger.error(error_msg)
+                    self.update_task(
+                        task_id,
+                        status=ASRTaskStatus.FAILED,
+                        error=error_msg,
+                        progress=0
+                    )
+                    return
+
+                # 上传成功，更新文件URL
+                logger.info(f"文件上传成功: {url}")
+                self.update_task(
+                    task_id,
+                    audio_url=url,
+                    progress=10
+                )
+
+                # 使用生成的URL作为音频文件路径
+                audio_file = url
+            else:
+                # 如果已经是URL，直接使用
+                self.update_task(
+                    task_id,
+                    audio_url=audio_file,
+                    progress=10
+                )
+
+            # 创建阿里云ASR客户端
+            client = create_aliyun_asr_client()
 
             # 提交任务
             logger.info(f"提交ASR任务: {task_id} -> {audio_file}")
@@ -247,7 +303,7 @@ class ASRTaskManager:
                 task_id,
                 response=response,
                 status=ASRTaskStatus.SUBMITTED,
-                progress=10
+                progress=15
             )
 
             logger.info(f"成功提交ASR任务: {task_id} -> {response.output.task_id}")
@@ -276,33 +332,39 @@ class ASRTaskManager:
         logger.info("启动ASR任务状态轮询线程")
 
         while not self.stop_polling.is_set():
+            logger.trace(111)
             try:
                 # 获取所有需要轮询的任务
                 tasks_to_poll = []
                 with self.lock:
-                    for task in self.tasks.values():
-                        if (task.status == ASRTaskStatus.SUBMITTED or
-                            task.status == ASRTaskStatus.RUNNING) and task.response:
-                            tasks_to_poll.append(task)
-
+                    tasks_to_poll.extend(
+                        task
+                        for task in self.tasks.values()
+                        if task.status
+                        in [ASRTaskStatus.SUBMITTED, ASRTaskStatus.RUNNING]
+                        and task.response
+                    )
                 if not tasks_to_poll:
+                    logger.trace(222)
                     # 如果没有需要轮询的任务，等待一段时间后再检查
                     time.sleep(5)
                     continue
 
                 # 创建阿里云ASR客户端
                 client = create_aliyun_asr_client()
-
+                logger.info(f'tasks_to_poll:{tasks_to_poll}')
                 # 轮询每个任务
                 for task in tasks_to_poll:
                     try:
                         # 查询任务状态
+                        logger.trace(333)
                         response = client.query_task(task.response)
 
                         # 更新任务状态
                         if response.output.task_status == 'RUNNING':
                             # 任务正在运行
-                            progress = min(50 + int(task.progress * 0.4), 90)
+                            # 进度从15%到90%
+                            progress = min(15 + int((task.progress - 15) * 0.8), 90)
                             self.update_task(
                                 task.task_id,
                                 response=response,
@@ -316,7 +378,7 @@ class ASRTaskManager:
 
                             # 下载转写结果文件
                             json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
-                            result_data =client.download_file(transcription_url, json_file_path)
+                            result_data = client.download_file(transcription_url, json_file_path)
 
                             # 从结果中提取字幕信息并生成SRT文件
                             srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"

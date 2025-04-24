@@ -5,19 +5,16 @@
 使用阿里云OSS SDK V2实现，参考文档：
 https://help.aliyun.com/zh/oss/developer-reference/get-started-with-oss-sdk-for-python-v2
 """
+import mimetypes
 import os
 import time
 import uuid
-import logging
-from pathlib import Path
-from typing import Tuple, Optional, Callable, Dict, Any
+from typing import Tuple, Optional, Callable
 
 import alibabacloud_oss_v2 as oss
-import mimetypes
 
 from app.cloud_asr import aliyun_sdk
 from utils import logger
-from nice_ui.configure import config
 
 
 class AliyunOSSClientV2:

@@ -1,15 +1,15 @@
 import os
 import time
-import json
-import requests
 from http import HTTPStatus
 from typing import Dict, Any, List
 
+import dashscope
+import requests
+from dashscope.audio.asr import Transcription
 from pydantic import BaseModel, Field, field_validator
 
 from app.cloud_asr import aliyun_sdk
 from utils import logger
-
 
 
 class ASRRequestError(Exception):
@@ -34,10 +34,6 @@ class ASRRequestError(Exception):
     """阿里云ASR请求错误"""
     pass
 
-
-# 导入阿里云DashScope SDK
-from dashscope.audio.asr import Transcription
-import dashscope
 
 
 class AliyunASRClient:
@@ -123,6 +119,7 @@ class AliyunASRClient:
         Returns:
             Any: 任务状态和结果
         """
+        logger.info(444)
         try:
             # 如果传入的是任务ID字符串
             if isinstance(task_response, str):
@@ -138,7 +135,7 @@ class AliyunASRClient:
 
             # 使用DashScope SDK查询任务状态
             transcribe_response = Transcription.fetch(task=task_id, headers=custom_headers)
-
+            logger.info(5555)
             logger.debug(f"查询ASR任务状态: {transcribe_response.output.task_status}")
             return transcribe_response
 
