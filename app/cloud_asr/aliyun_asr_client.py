@@ -7,8 +7,8 @@ from typing import Dict, Any, List
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.cloud_asr import aliyun_sdk,logger
-
+from app.cloud_asr import aliyun_sdk
+from utils import logger
 
 
 
@@ -300,7 +300,7 @@ def create_aliyun_asr_client() -> AliyunASRClient:
     Returns:
         AliyunASRClient: 阿里云ASR客户端实例
     """
-    if api_key := aliyun_sdk.aki:
+    if api_key := aliyun_sdk.asr_api_key:
         return AliyunASRClient(api_key)
     else:
         raise ValueError("阿里云ASR配置不完整，请检查配置中的阿里云DashScope API Key")
