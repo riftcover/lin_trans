@@ -303,7 +303,6 @@ def upload_file_for_asr(local_file_path: str, progress_callback: Optional[Callab
 
 
 if __name__ == "__main__":
-    # 示例用法
     # 定义进度回调函数
     def progress_callback(progress):
         print(f"\r上传进度: {progress}%", end="")
