@@ -9,11 +9,15 @@ file = "C:/Users/gaosh/Downloads/Video/tt.wav"
 # 获取任务管理器实例
 task_manager = get_task_manager()
 
+# 生成任务ID
+import uuid
+task_id = str(uuid.uuid4())
+
 # 创建ASR任务，可以使用本地文件路径
-task_id = task_manager.create_task(
+task_manager.create_task(
+    task_id=task_id,  # 任务ID
     audio_file=file,  # 本地文件路径
     language="zh",  # 语言代码，'zh'表示中文
-    unid="unique_identifier"  # 应用内唯一标识符
 )
 
 print(f"\n创建ASR任务成功，任务ID: {task_id}")

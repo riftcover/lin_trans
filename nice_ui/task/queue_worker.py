@@ -61,32 +61,32 @@ class LinQueue:
             language_code = config.params["source_language_code"]
 
             # 创建ASR任务
-            logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, unid: {task.unid}')
-            task_id = task_manager.create_task(
+            logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, unid: {task.unid}, task_id: {task.unid}')
+            task_manager.create_task(
+                task_id=task.unid,
                 audio_file=final_name,
                 language=language_code,
-                unid=task.unid
             )
 
             # 提交任务到阿里云
-            logger.info(f'提交ASR任务到阿里云: {task_id}')
-            task_manager.submit_task(task_id)
+            logger.info(f'提交ASR任务到阿里云: {task.unid}')
+            task_manager.submit_task(task.unid)
 
             if config.params.get(
                 "cloud_asr_wait_for_completion", False
             ):
-                logger.info(f'等待云ASR任务完成: {task_id}')
+                logger.info(f'等待云ASR任务完成: {task.unid}')
 
                 while True:
                     # 获取任务状态
-                    asr_task = task_manager.get_task(task_id)
+                    asr_task = task_manager.get_task(task.unid)
 
                     # 检查任务是否完成或失败
                     if asr_task.status == ASRTaskStatus.COMPLETED:
-                        logger.info(f'云ASR任务已完成: {task_id}')
+                        logger.info(f'云ASR任务已完成: {task.unid}')
                         break
                     elif asr_task.status == ASRTaskStatus.FAILED:
-                        logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
+                        logger.error(f'云ASR任务失败: {task.unid}, 错误: {asr_task.error}')
                         break
 
                     # 等待一段时间再检查

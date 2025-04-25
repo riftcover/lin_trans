@@ -28,11 +28,10 @@ class ASRTaskStatus:
 
 class ASRTaskModel(BaseModel):
     """ASR任务数据模型"""
-    task_id: str = Field(..., description="任务ID")
+    task_id: str = Field(..., description="应用内唯一标识符")
     audio_file: str = Field(..., description="音频文件路径")
     audio_url: Optional[str] = Field(None, description="音频文件URL，上传到OSS后生成")
     language: str = Field(..., description="语言代码")
-    unid: str = Field(..., description="应用内唯一标识符")
     status: str = Field(ASRTaskStatus.PENDING, description="任务状态")
     error: Optional[str] = Field(None, description="错误信息")
     progress: int = Field(0, description="任务进度（0-100）")
@@ -71,21 +70,19 @@ class ASRTaskModel(BaseModel):
 class ASRTask:
     """ASR任务对象"""
 
-    def __init__(self, task_id: str, audio_file: str, language: str, unid: str):
+    def __init__(self, task_id: str, audio_file: str, language: str,):
         """
         初始化ASR任务
 
         Args:
-            task_id: 任务ID
+            task_id: 应用内唯一标识符
             audio_file: 音频文件路径
             language: 语言代码
-            unid: 应用内唯一标识符
         """
         self.task_id = task_id
         self.audio_file = audio_file
         self.audio_url = None  # 音频文件URL，上传到OSS后生成
         self.language = language
-        self.unid = unid
         self.response = None  # 保存DashScope响应对象
         self.status = ASRTaskStatus.PENDING
         self.error = None
@@ -106,7 +103,6 @@ class ASRTask:
             audio_file=self.audio_file,
             audio_url=self.audio_url,
             language=self.language,
-            unid=self.unid,
             status=self.status,
             error=self.error,
             progress=self.progress,
@@ -138,8 +134,7 @@ class ASRTask:
         task = cls(
             task_id=model.task_id,
             audio_file=model.audio_file,
-            language=model.language,
-            unid=model.unid
+            language=model.language
         )
 
         # 设置其他属性
@@ -211,7 +206,6 @@ class ASRTaskManager:
                             audio_file=task.audio_file,
                             audio_url=task.audio_url,
                             language=task.language,
-                            unid=task.unid,
                             status=task.status,
                             error=task.error,
                             progress=task.progress,
@@ -237,22 +231,21 @@ class ASRTaskManager:
         except Exception as e:
             logger.error(f"保存ASR任务状态失败: {str(e)}")
 
-    def create_task(self, audio_file: str, language: str, unid: str) -> str:
+    def create_task(self, task_id: str, audio_file: str, language: str) -> str:
         """
         创建新的ASR任务
 
         Args:
+            task_id: 应用内唯一标识符
             audio_file: 音频文件路径
             language: 语言代码
-            unid: 应用内唯一标识符
 
         Returns:
             str: 任务ID
         """
         # 确保语言代码是 'zh' 或 'en'
 
-        task_id = str(uuid.uuid4())
-        task = ASRTask(task_id, audio_file, language, unid)
+        task = ASRTask(task_id, audio_file, language)
 
         with self.lock:
             self.tasks[task_id] = task
@@ -273,18 +266,18 @@ class ASRTaskManager:
         with self.lock:
             return self.tasks.get(task_id)
 
-    def get_tasks_by_unid(self, unid: str) -> List[ASRTask]:
+    def get_tasks_by_task_id(self, task_id: str) -> List[ASRTask]:
         """
-        获取指定unid的所有任务
+        获取指定task_id的所有任务
 
         Args:
-            unid: 应用内唯一标识符
+            task_id: 应用内唯一标识符
 
         Returns:
             List[ASRTask]: 任务列表
         """
         with self.lock:
-            return [task for task in self.tasks.values() if task.unid == unid]
+            return [task for task in self.tasks.values() if task.task_id == task_id]
 
     def update_task(self, task_id: str, **kwargs) -> None:
         """
@@ -511,7 +504,7 @@ class ASRTaskManager:
                             )
 
                             # 通知UI任务完成
-                            self._notify_task_completed(task.unid)
+                            self._notify_task_completed(task.task_id)
 
                             aliyun_task_id = response.output.task_id if hasattr(response, 'output') else 'unknown'
                             logger.info(f"ASR任务完成 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}")
@@ -538,16 +531,17 @@ class ASRTaskManager:
                 logger.error(f"任务轮询线程出错: {str(e)}")
                 time.sleep(10)  # 出错后等待较长时间再重试
 
-    def _notify_task_completed(self, unid: str) -> None:
+    def _notify_task_completed(self, task_id: Optional[str]) -> None:
         """
         通知UI任务完成
 
         Args:
-            unid: 应用内唯一标识符
+            task_id: 应用内唯一标识符（可选）
         """
         try:
-            # 使用数据桥通知UI
-            data_bridge.emit_whisper_finished(unid)
+            # task_id，使用数据桥通知UI
+            if task_id:
+                data_bridge.emit_whisper_finished(task_id)
         except Exception as e:
             logger.error(f"通知任务完成失败: {str(e)}")
 
