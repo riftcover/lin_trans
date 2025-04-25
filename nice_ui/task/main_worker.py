@@ -182,11 +182,8 @@ class Worker(QObject):
         阿里云ASR任务处理
         使用异步提交任务+异步查询任务执行结果的方式
         """
-        from app.cloud_asr.task_manager import get_task_manager
-        from app.video_tools import FFmpegJobs
 
         srt_orm = ToSrtOrm()
-
 
         for it in self.queue_copy:
             logger.debug(f"do_work线程工作中,处理cloud_asr_work任务:{it}")
