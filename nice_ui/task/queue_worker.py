@@ -1,12 +1,15 @@
 from agent.common_agent import translate_document
-from app.cloud_asr import get_task_manager
+from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
+from nice_ui.configure.signal import data_bridge
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
 from orm.queries import ToTranslationOrm, ToSrtOrm
 from utils import logger
+import os
+import time
 
 
 class LinQueue:
@@ -50,19 +53,51 @@ class LinQueue:
             final_name = task.wav_dirname
             logger.debug(f'准备音视频转wav格式:{final_name}')
             FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+
+            # 获取任务管理器实例
             task_manager = get_task_manager()
+
+            # 获取语言代码
+            language_code = config.params["source_language_code"]
+
             # 创建ASR任务
+            logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, unid: {task.unid}')
             task_id = task_manager.create_task(
                 audio_file=final_name,
-                language=config.params["source_language_code"],
+                language=language_code,
                 unid=task.unid
             )
 
-
-
             # 提交任务到阿里云
+            logger.info(f'提交ASR任务到阿里云: {task_id}')
             task_manager.submit_task(task_id)
-            logger.debug('云ASR任务已在工作线程中处理')
+
+            if config.params.get(
+                "cloud_asr_wait_for_completion", False
+            ):
+                logger.info(f'等待云ASR任务完成: {task_id}')
+
+                while True:
+                    # 获取任务状态
+                    asr_task = task_manager.get_task(task_id)
+
+                    # 检查任务是否完成或失败
+                    if asr_task.status == ASRTaskStatus.COMPLETED:
+                        logger.info(f'云ASR任务已完成: {task_id}')
+                        break
+                    elif asr_task.status == ASRTaskStatus.FAILED:
+                        logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
+                        break
+
+                    # 等待一段时间再检查
+                    time.sleep(5)
+
+                # 如果任务完成，可以在这里处理结果
+                if asr_task.status == ASRTaskStatus.COMPLETED:
+                    logger.info('云ASR任务已结束')
+            else:
+                logger.debug('云ASR任务已提交，在后台处理中')
+
 
         elif task.work_type == WORK_TYPE.TRANS:
             logger.debug('消费translate任务')
