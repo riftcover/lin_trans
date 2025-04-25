@@ -336,11 +336,16 @@ class ASRTaskManager:
                     progress=5
                 )
 
+                # 通知UI更新进度
+                self._notify_task_progress(task.task_id, 5)
+
                 # 定义进度回调函数
                 def progress_callback(progress):
                     # 进度范围从5%到9%
                     task_progress = 5 + int(progress * 0.04)
                     self.update_task(task_id, progress=task_progress)
+                    # 通知UI更新进度
+                    self._notify_task_progress(task.task_id, task_progress)
 
                 # 上传文件到OSS
                 logger.info(f"开始上传文件到OSS: {audio_file}")
@@ -369,6 +374,9 @@ class ASRTaskManager:
                     progress=10
                 )
 
+                # 通知UI更新进度
+                self._notify_task_progress(task.task_id, 10)
+
                 # 使用生成的URL作为音频文件路径
                 audio_file = url
             else:
@@ -378,6 +386,9 @@ class ASRTaskManager:
                     audio_url=audio_file,
                     progress=10
                 )
+
+                # 通知UI更新进度
+                self._notify_task_progress(task.task_id, 10)
 
             # 创建阿里云ASR客户端
             client = create_aliyun_asr_client()
@@ -397,6 +408,9 @@ class ASRTaskManager:
                 status=ASRTaskStatus.SUBMITTED,
                 progress=15
             )
+
+            # 通知UI更新进度
+            self._notify_task_progress(task.task_id, 15)
 
             logger.info(f"成功提交ASR任务 - 内部ID: {task_id}, 阿里云ID: {aliyun_task_id}")
 
@@ -463,6 +477,9 @@ class ASRTaskManager:
                                 status=ASRTaskStatus.RUNNING,
                                 progress=progress
                             )
+
+                            # 通知UI更新进度
+                            self._notify_task_progress(task.task_id, progress)
                         elif response.output.task_status == 'SUCCEEDED':
                             # 任务成功完成
                             # 解析结果，获取转写结果的URL
@@ -503,6 +520,9 @@ class ASRTaskManager:
                                 progress=100
                             )
 
+                            # 通知UI更新进度为100%
+                            self._notify_task_progress(task.task_id, 100)
+
                             # 通知UI任务完成
                             self._notify_task_completed(task.task_id)
 
@@ -531,6 +551,22 @@ class ASRTaskManager:
                 logger.error(f"任务轮询线程出错: {str(e)}")
                 time.sleep(10)  # 出错后等待较长时间再重试
 
+    def _notify_task_progress(self, task_id: Optional[str], progress: int) -> None:
+        """
+        通知UI任务进度
+
+        Args:
+            task_id: 应用内唯一标识符（可选）
+            progress: 进度值（0-100）
+        """
+        try:
+            # 如果有task_id，使用数据桥通知UI
+            if task_id:
+                logger.info(f'更新任务进度，task_id: {task_id}, 进度: {progress}%')
+                data_bridge.emit_whisper_working(task_id, progress)
+        except Exception as e:
+            logger.error(f"通知任务进度失败: {str(e)}")
+
     def _notify_task_completed(self, task_id: Optional[str]) -> None:
         """
         通知UI任务完成
@@ -539,8 +575,9 @@ class ASRTaskManager:
             task_id: 应用内唯一标识符（可选）
         """
         try:
-            # task_id，使用数据桥通知UI
+            # 如果有task_id，使用数据桥通知UI
             if task_id:
+                logger.info(f'更新任务完成状态，task_id: {task_id}')
                 data_bridge.emit_whisper_finished(task_id)
         except Exception as e:
             logger.error(f"通知任务完成失败: {str(e)}")
