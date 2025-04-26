@@ -317,12 +317,14 @@ class SecWindow:
         logger.error(f"Error: {error_msg}")
 
     def update_status(self, ty: WORK_TYPE):
-        if ty in [WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS]:
+        if ty in [WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS, WORK_TYPE.CLOUD_ASR]:
             self.main.table.clear_table(self.main.media_table)
             config.queue_asr = []
         elif ty == WORK_TYPE.TRANS:
             self.main.table.clear_table(self.main.media_table)
             config.queue_trans = []
+        else:
+            logger.error(f'WORK_TYPE;{WORK_TYPE} 未匹配')
 
     def check_cloud_asr(self) -> bool:
         """
@@ -346,18 +348,7 @@ class SecWindow:
             logger.info("用户已登录，可以继续使用云引擎")
             is_task = True
 
-        # 计算任务所需总代币
-        task_amount = 0
-
-        # 遍历表格中的所有行，累加每个任务的代币消耗
-        for row in range(self.main.media_table.rowCount()):
-            if token_item := self.main.media_table.item(row, 2):
-                try:
-                    # 尝试将单个任务的代币消耗转换为整数并累加
-                    task_token = int(token_item.text())
-                    task_amount += task_token
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"解析代币消耗失败: {str(e)}")
+        task_amount = self._calculate_total_tokens()
 
         logger.info(f"任务总代币消耗: {task_amount}")
 
@@ -379,3 +370,30 @@ class SecWindow:
             queue_asr_copy = copy.deepcopy(config.queue_asr)
             logger.debug(f"add_queue_thread: {queue_asr_copy}")
             self.add_queue_thread(queue_asr_copy, WORK_TYPE.CLOUD_ASR)
+
+            # 任务开始后，通知更新算力额度
+            self.data_bridge.emit_update_balance.emit()
+        self.update_status(WORK_TYPE.CLOUD_ASR)
+        return is_task
+
+    def _calculate_total_tokens(self) -> int:
+        # 计算任务所需总代币
+        task_amount = 0
+        # 遍历表格中的所有行，累加每个任务的代币消耗
+        for row in range(self.main.media_table.rowCount()):
+            if token_item := self.main.media_table.item(row, 2):
+                try:
+                    # 尝试将单个任务的代币消耗转换为整数并累加
+                    task_token = int(token_item.text())
+                    task_amount += task_token
+
+                    # 获取任务ID
+                    task_id = None
+                    unid_item = self.main.media_table.item(row, 0)
+                    task_id = unid_item.text()
+
+                    config.token_amounts[task_id] = task_token
+                    logger.info(f"保存任务代币消耗: {task_token}, 任务ID: {task_id}")
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"解析代币消耗失败: {str(e)}")
+        return task_amount
