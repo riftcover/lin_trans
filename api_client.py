@@ -1,7 +1,8 @@
 import httpx
 from typing import Optional, Dict, Callable
 from functools import wraps
-
+import time
+from app.core.security import generate_signature
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -488,6 +489,81 @@ class APIClient:
 
         """
         return await self.recharge_packages()
+
+    async def consume_tokens(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+        """
+        消费代币
+
+        Args:
+            token_amount: 消费的代币数量
+            feature_key: 功能标识符，默认为"asr"
+            user_id: 用户ID，如果为None，则使用当前登录用户
+
+        Returns:
+            Dict: API响应结果
+        """
+        try:
+            # 生成时间戳
+            timestamp = int(time.time())
+
+            # 生成签名
+            sign = generate_signature(
+                user_id=user_id,
+                amount=token_amount,
+                timestamp=timestamp,
+                feature_key=feature_key
+            )
+
+            # 构建URL参数
+            params = {
+                "timestamp": timestamp,
+                "sign": sign
+            }
+
+            # 构建请求体
+            json_data = {
+                "feature_key": feature_key,
+                "token_cost": token_amount
+            }
+
+            # 发送请求
+            response = await self.client.post(
+                "/transactions/use",
+                params=params,
+                json=json_data,
+                headers=self.headers
+            )
+            response.raise_for_status()
+
+            # 解析响应
+            result = response.json()
+            logger.info(f"消费代币成功: {result}")
+            return result
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f'消费代币失败: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                raise AuthenticationError("Token已过期，需要重新登录")
+            raise ValueError(f"消费代币失败: {str(e)}")
+        except Exception as e:
+            logger.error(f'消费代币时发生错误: {e}')
+            raise ValueError(f"消费代币失败: {str(e)}") from e
+
+    @to_sync
+    async def consume_tokens_sync(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+        """
+        消费代币（同步版本）
+
+        Args:
+            token_amount: 消费的代币数量
+            feature_key: 功能标识符，默认为"asr"
+            user_id: 用户ID，如果为None，则使用当前登录用户
+
+        Returns:
+            Dict: API响应结果
+        """
+        return await self.consume_tokens(token_amount, feature_key, user_id)
 
     async def close(self):
         """关闭HTTP客户端"""
