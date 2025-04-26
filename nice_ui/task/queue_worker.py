@@ -4,6 +4,7 @@ from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
 from orm.queries import ToTranslationOrm, ToSrtOrm
@@ -60,12 +61,19 @@ class LinQueue:
             # 获取语言代码
             language_code = config.params["source_language_code"]
 
+            # 获取任务消费的代币数量
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+            # 从代币服务中获取代币消费量
+            token_amount = token_service.get_task_token_amount(task.unid, 10)
+            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
+
             # 创建ASR任务
-            logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, unid: {task.unid}, task_id: {task.unid}')
+            logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}, 代币: {token_amount}')
             task_manager.create_task(
                 task_id=task.unid,
                 audio_file=final_name,
-                language=language_code,
+                language=language_code
             )
 
             # 提交任务到阿里云

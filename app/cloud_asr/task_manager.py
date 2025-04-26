@@ -6,15 +6,15 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 
-from pydantic import BaseModel, Field, validator, field_validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
+from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
-
 
 class ASRTaskStatus:
     """ASR任务状态常量"""
@@ -70,7 +70,7 @@ class ASRTaskModel(BaseModel):
 class ASRTask:
     """ASR任务对象"""
 
-    def __init__(self, task_id: str, audio_file: str, language: str,):
+    def __init__(self, task_id: str, audio_file: str, language: str):
         """
         初始化ASR任务
 
@@ -523,6 +523,13 @@ class ASRTaskManager:
                             # 通知UI更新进度为100%
                             self._notify_task_progress(task.task_id, 100)
 
+                            # 消费代币
+                            self._consume_tokens_for_task(task)
+
+                            # 触发更新余额的信号
+                            logger.info("触发更新余额的信号")
+                            data_bridge.update_balance()
+
                             # 通知UI任务完成
                             self._notify_task_completed(task.task_id)
 
@@ -550,6 +557,38 @@ class ASRTaskManager:
             except Exception as e:
                 logger.error(f"任务轮询线程出错: {str(e)}")
                 time.sleep(10)  # 出错后等待较长时间再重试
+
+    def _consume_tokens_for_task(self, task: 'ASRTask') -> None:
+        """
+        为任务消费代币
+
+        Args:
+            task: ASR任务对象
+        """
+        logger.info('消费代币')
+        try:
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+
+            # 从代币服务中获取代币消费量
+            token_amount = token_service.get_task_token_amount(task.task_id, 10)
+            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.task_id}')
+
+            # 消费代币
+            if token_amount > 0:
+                logger.info(f"为ASR任务消费代币: {token_amount}")
+                if success := token_service.consume_tokens(
+                    token_amount, "cloud_asr"
+                ):
+                    logger.info(f"代币消费成功: {token_amount}")
+
+                else:
+                    logger.warning(f"代币消费失败: {token_amount}")
+            else:
+                logger.warning("代币数量为0，不消费代币")
+
+        except Exception as e:
+            logger.error(f"消费代币时发生错误: {str(e)}")
 
     def _notify_task_progress(self, task_id: Optional[str], progress: int) -> None:
         """

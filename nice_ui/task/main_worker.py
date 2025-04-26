@@ -190,6 +190,13 @@ class Worker(QObject):
             # 格式化每个视频信息
             obj_format = self._check_obj(it, WORK_TYPE.CLOUD_ASR)
 
+            # 将文件路径与unid关联起来
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+            # 转移代币消费量
+            token_service.transfer_task_key(it, obj_format.unid)
+            logger.info(f"将文件路径与unid关联: {it} -> {obj_format.unid}")
+
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
 

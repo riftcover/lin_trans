@@ -10,6 +10,7 @@ class DataBridge(QObject):
     whisper_working = Signal(str, int)
     whisper_finished = Signal(str)
     asr_trans_job_asr_finished = Signal(str)
+    emit_update_balance = Signal()  # 更新算力余额的信号
 
     def __init__(self):
         super().__init__()
@@ -47,3 +48,10 @@ class DataBridge(QObject):
         """
         logger.info("emit_asr_finished 触发了")
         self.asr_trans_job_asr_finished.emit(status)
+
+    def update_balance(self):
+        """
+        触发更新算力余额的信号
+        """
+        logger.info("触发更新算力余额信号")
+        self.emit_update_balance.emit()

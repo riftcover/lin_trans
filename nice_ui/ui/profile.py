@@ -1,6 +1,7 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QTimer
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 from api_client import api_client, AuthenticationError
+from nice_ui.configure.signal import data_bridge
 from utils import logger
 from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
                                    InfoBarPosition)
@@ -28,7 +29,7 @@ class ProfileInterface(QFrame):
         self.settings = settings
         self.parent = parent
         self.parent_window = parent  # 父窗口引用
-
+        self.data_bridge = data_bridge
         # 当前页码和每页记录数
         self.current_page = 1
         self.page_size = 10  # 每页显示15条记录
@@ -64,6 +65,10 @@ class ProfileInterface(QFrame):
 
         # 连接分页表格的页码改变信号
         self.transactionTable.pageChanged.connect(self.onPageChanged)
+
+        # 连接算力更新,历史记录信号
+        self.data_bridge.emit_update_balance.connect(self._update_balance)
+        self.data_bridge.emit_update_balance.connect(self.updateUsageHistory)
 
     def _init_title_bar(self):
         """初始化标题栏"""

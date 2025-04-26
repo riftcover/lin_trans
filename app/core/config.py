@@ -2,10 +2,8 @@ import os
 from typing import List
 import secrets  # 用于生成安全的随机字符串
 
-from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
-load_dotenv()
 
 
 def get_cors_origins():

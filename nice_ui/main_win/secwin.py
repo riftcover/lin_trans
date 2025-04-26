@@ -371,8 +371,7 @@ class SecWindow:
             logger.debug(f"add_queue_thread: {queue_asr_copy}")
             self.add_queue_thread(queue_asr_copy, WORK_TYPE.CLOUD_ASR)
 
-            # 任务开始后，通知更新算力额度
-            self.data_bridge.emit_update_balance.emit()
+
         self.update_status(WORK_TYPE.CLOUD_ASR)
         return is_task
 
@@ -387,13 +386,14 @@ class SecWindow:
                     task_token = int(token_item.text())
                     task_amount += task_token
 
-                    # 获取任务ID
-                    task_id = None
-                    unid_item = self.main.media_table.item(row, 0)
-                    task_id = unid_item.text()
-
-                    config.token_amounts[task_id] = task_token
-                    logger.info(f"保存任务代币消耗: {task_token}, 任务ID: {task_id}")
+                    # 获取文件路径
+                    file_path_item = self.main.media_table.item(row, 4)
+                    if file_path_item and file_path_item.text():
+                        file_path = file_path_item.text()
+                        # 使用TokenService存储代币消费量
+                        token_service = ServiceProvider().get_token_service()
+                        token_service.set_task_token_amount(file_path, task_token)
+                        logger.info(f"保存任务代币消耗: {task_token}, 文件路径: {file_path}")
                 except (ValueError, TypeError) as e:
                     logger.warning(f"解析代币消耗失败: {str(e)}")
         return task_amount

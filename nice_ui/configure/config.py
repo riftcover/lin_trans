@@ -390,8 +390,6 @@ is_consuming = False
 
 
 
-
-
 # 全局错误
 errorlist = {}
 
