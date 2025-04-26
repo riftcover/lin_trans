@@ -31,6 +31,9 @@ dependencies = [
     "pyav>=13.1.0",
     "alibabacloud-oss-v2",
     "dashscope>=1.23.1",
+    "pydantic_settings==2.9.1",
+    "dotenv==0.9.9",
+    "pytz>=2025.2",
 ]
 
 [build-system]
