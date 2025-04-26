@@ -246,16 +246,7 @@ class CloudConfig(BaseModel):
     ppl_sdk: PplSdkConfig
 
 # 初始化配置
-aa_bb = CloudConfig(
-    ppl_sdk=PplSdkConfig(
-        aki="LTAI5t7eCsZFb4AnqJFX5e3v",
-        aks="OPwgvUFO30VgALAbvjylXKw7e5HbPl",
-        region="cn-beijing",
-        bucket="asr-file-tth",
-        asr_api_key="sk-b1d261afb71d40bea90b61ac11a202af",
-        asr_model="paraformer-v2"
-    )
-)
+
 # 配置
 params = {  # 操作系统类型:win32、linux、darwin
     "source_mp4": "",  # 需要进行处理的文件
