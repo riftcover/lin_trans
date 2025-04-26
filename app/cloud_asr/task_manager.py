@@ -15,6 +15,7 @@ from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
+from api_client import api_client
 
 class ASRTaskStatus:
     """ASR任务状态常量"""
@@ -520,15 +521,11 @@ class ASRTaskManager:
                                 progress=100
                             )
 
-                            # 通知UI更新进度为100%
-                            self._notify_task_progress(task.task_id, 100)
+                            # 通知UI更新进度为100% - 使用线程安全的信号发送
+                            data_bridge.whisper_working.emit(task.task_id, 100)
 
                             # 消费代币
                             self._consume_tokens_for_task(task)
-
-                            # 触发更新余额的信号
-                            logger.info("触发更新余额的信号")
-                            data_bridge.update_balance()
 
                             # 通知UI任务完成
                             self._notify_task_completed(task.task_id)
@@ -618,6 +615,28 @@ class ASRTaskManager:
             if task_id:
                 logger.info(f'更新任务完成状态，task_id: {task_id}')
                 data_bridge.emit_whisper_finished(task_id)
+
+                # 更新个人中心的余额和历史记录
+                try:
+                    # 获取代币服务
+                    token_service = ServiceProvider().get_token_service()
+
+                    # 更新余额
+                    if balance := token_service.get_user_balance():
+                        logger.info(f"更新用户余额: {balance}")
+                        # 通知UI更新余额显示
+                        data_bridge.emit_update_balance(balance)
+
+                    # 更新历史记录
+                    if transactions := token_service.get_user_history():
+                        logger.info("更新用户历史记录")
+                        # 通知UI更新余额显示
+                        data_bridge.emit_update_history(transactions)
+
+
+                except Exception as e:
+                    logger.error(f"更新个人中心信息失败: {str(e)}")
+
         except Exception as e:
             logger.error(f"通知任务完成失败: {str(e)}")
 

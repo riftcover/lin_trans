@@ -118,6 +118,25 @@ class TokenService(TokenServiceInterface):
             logger.error(f"获取代币余额时发生错误: {str(e)}")
             return False
 
+    def get_user_history(self) -> list:
+        """
+        获取用户当前消费记录
+
+        Returns:
+
+        """
+        # 更新历史记录
+        try:
+            # 获取最新的交易记录
+            history_data = api_client.get_history_sync(page=1, page_size=10)
+            if history_data and 'data' in history_data:
+                transactions = history_data['data'].get('transactions', [])
+                total_records = history_data['data'].get('total', 0)
+                logger.info(f"更新交易历史记录: 共 {total_records} 条记录")
+                return transactions
+                # 通知UI更新历史记录
+        except Exception as e:
+            logger.error(f"获取交易历史记录失败: {str(e)}")
     def calculate_asr_tokens(self, video_duration: float) -> int:
         """
         计算ASR任务所需代币

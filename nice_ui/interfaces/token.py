@@ -16,7 +16,17 @@ class TokenServiceInterface(ABC):
         获取用户当前代币余额
 
         Returns:
-            int: 用户当前代币余额，如果获取失败则返回0
+            int: 用户当前代币余额，如果获取失败则返回False
+        """
+        pass
+
+    @abstractmethod
+    def get_user_history(self) -> list:
+        """
+        获取用户当前消费记录
+
+        Returns:
+
         """
         pass
 
