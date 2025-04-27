@@ -80,7 +80,7 @@ class AliyunASRClient:
 
             """
             自定义请求头
-            
+
             如果使用临时存储空间中的文件，
             则必须在请求的header中添加参数:
                 X-DashScope-OssResourceResolve: enable。
@@ -256,6 +256,108 @@ class AliyunASRClient:
             logger.error(f"下载文件时发生未知错误: {str(e)}")
             raise ASRRequestError(f"下载文件失败: {str(e)}") from e
 
+    def parse_transcription(self, json_file_path: dict) -> List[Dict[str, Any]]:
+        """
+        解析转写结果JSON文件，提取字幕信息
+        按照标点符号分割句子，每遇到一个标点符号就分割成一句话
+
+        Args:
+            json_file_path: 阿里云ASR返回的JSON数据
+
+        Returns:
+            List[Dict[str, Any]]: 解析后的字幕信息列表，每个元素包含begin_time, end_time和text
+        """
+        # 快速处理空输入情况
+        if not json_file_path:
+            return []
+
+        # 使用单次遍历和直接索引获取transcripts
+        transcript = None
+        if 'transcripts' in json_file_path:
+            transcripts = json_file_path['transcripts']
+            if isinstance(transcripts, list) and transcripts:
+                transcript = transcripts[0]
+            elif isinstance(transcripts, dict):
+                transcript = transcripts
+
+        if not transcript or 'sentences' not in transcript:
+            return []
+
+        sentences = transcript['sentences']
+        if not sentences:
+            return []
+
+        # 预分配结果列表 - 使用更精确的估计
+        
+        # 计算所有句子中标点符号的数量
+        punctuation_count = 0
+        for sentence in sentences:
+            if 'words' in sentence:
+                for word in sentence['words']:
+                    if word.get('punctuation', '').strip():
+                        punctuation_count += 1
+
+        # 根据标点符号数量预分配结果数组
+
+        # 每个句子至少有一个标点符号，再加10%的缓冲
+        result_capacity = max(punctuation_count, len(sentences)) + len(sentences) // 10
+        result = [None] * result_capacity
+        result_index = 0
+
+        # 使用单次遍历和直接索引处理所有句子
+        for sentence_idx, sentence in enumerate(sentences):
+            if 'words' not in sentence or not sentence['words']:
+                continue
+
+            words = sentence['words']
+            word_count = len(words)
+
+            # 当前句子的起始时间
+            current_begin_time = words[0]['begin_time']
+            # 使用字符串列表而不是单个字符串，减少内存分配
+            current_text_parts = []
+            current_text_length = 0
+
+            # 使用单次遍历和直接索引处理所有单词
+            i = 0
+            while i < word_count:
+                word = words[i]
+                word_text = word['text']
+                punctuation = word.get('punctuation', '')
+
+                # 使用列表收集文本片段，避免频繁的字符串连接
+                current_text_parts.append(word_text)
+                current_text_length += len(word_text)
+
+                # 如果有标点符号或者是最后一个单词
+                if punctuation.strip() or i == word_count - 1:
+                    # 添加标点符号到文本
+                    if punctuation.strip():
+                        current_text_parts.append(punctuation)
+                        current_text_length += len(punctuation)
+
+                    # 使用预分配的空间创建新的句子对象
+                    if result_index < result_capacity:
+                        # 仅当有实际文本时才创建新的句子
+                        if current_text_length > 0:
+                            # 使用join一次性创建字符串，避免多次连接
+                            result[result_index] = {
+                                'begin_time': current_begin_time,
+                                'end_time': word['end_time'],
+                                'text': ''.join(current_text_parts)
+                            }
+                            result_index += 1
+
+                    # 重置当前句子的状态
+                    if i < word_count - 1:
+                        current_begin_time = word['end_time']
+                        current_text_parts = []
+                        current_text_length = 0
+
+                i += 1
+
+        # 只返回实际使用的部分，避免复制整个数组
+        return result[:result_index] if result_index > 0 else []
     def convert_to_srt(self, parsed_results: List[Dict[str, Any]], output_file: str) -> None:
         """
         将解析后的结果转换为SRT格式并保存
