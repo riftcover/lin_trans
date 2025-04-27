@@ -300,6 +300,7 @@ class ProfileInterface(QFrame):
                 self._fetch_all_transactions(page=1)
             else:
                 # 添加新交易记录到列表中
+
                 # 获取当前总记录数
                 total_records = self.transactionTable.total_records + len(new_transactions)
                 # 更新表格和分页状态

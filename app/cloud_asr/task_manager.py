@@ -15,7 +15,7 @@ from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
-from api_client import api_client
+
 
 class ASRTaskStatus:
     """ASR任务状态常量"""
@@ -434,7 +434,7 @@ class ASRTaskManager:
             self.polling_thread.daemon = True
             self.polling_thread.start()
 
-    def _poll_tasks(self) -> None:    # sourcery skip: low-code-quality
+    def _poll_tasks(self) -> None:  # sourcery skip: low-code-quality
         """轮询任务状态"""
         logger.info("启动ASR任务状态轮询线程")
 
@@ -482,7 +482,6 @@ class ASRTaskManager:
                             # 通知UI更新进度
                             self._notify_task_progress(task.task_id, progress)
                         elif response.output.task_status == 'SUCCEEDED':
-                            # 任务成功完成
                             # 解析结果，获取转写结果的URL
                             transcription_url = client.parse_result(response)
 
@@ -490,7 +489,8 @@ class ASRTaskManager:
                             json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
                             saved_path = client.download_file(transcription_url, json_file_path)
 
-                            # # 读取下载的JSON文件
+                            # 读取下载的JSON文件
+
                             # try:
                             #     with open(saved_path, 'r', encoding='utf-8') as f:
                             #         result_data = json.load(f)
@@ -574,8 +574,8 @@ class ASRTaskManager:
             # 消费代币
             if token_amount > 0:
                 logger.info(f"为ASR任务消费代币: {token_amount}")
-                if success := token_service.consume_tokens(
-                    token_amount, "cloud_asr"
+                if token_service.consume_tokens(
+                        token_amount, "cloud_asr"
                 ):
                     logger.info(f"代币消费成功: {token_amount}")
 
@@ -632,7 +632,6 @@ class ASRTaskManager:
                         logger.info("更新用户历史记录")
                         # 通知UI更新余额显示
                         data_bridge.emit_update_history(transactions)
-
 
                 except Exception as e:
                     logger.error(f"更新个人中心信息失败: {str(e)}")

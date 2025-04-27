@@ -91,6 +91,7 @@ class AliyunASRClient:
             }
 
             # 使用DashScope SDK提交异步转写任务
+            logger.trace(f'aliyun_sdk:{aliyun_sdk}')
             transcribe_response = Transcription.async_call(
                 model=aliyun_sdk.asr_model,  # 使用最新的模型
                 file_urls=[audio_file],  # URL地址

@@ -245,17 +245,58 @@ class PplSdkConfig(BaseModel):
 class CloudConfig(BaseModel):
     ppl_sdk: PplSdkConfig
 
-# 初始化配置
-aa_bb = CloudConfig(
-    ppl_sdk=PplSdkConfig(
-        aki="LTAI5t7eCsZFb4AnqJFX5e3v",
-        aks="OPwgvUFO30VgALAbvjylXKw7e5HbPl",
-        region="cn-beijing",
-        bucket="asr-file-tth",
-        asr_api_key="sk-b1d261afb71d40bea90b61ac11a202af",
-        asr_model="paraformer-v2"
+# 初始化配置 - 使用加密的嵌入式凭证
+def get_cloud_config():
+    """获取云服务配置，优先从加密文件加载，如果不存在则使用环境变量"""
+    try:
+        from nice_ui.util.crypto_utils import crypto_utils
+
+        # 初始化加密工具
+        crypto_utils.initialize()
+
+        # 获取凭证文件路径
+        credentials_file = crypto_utils.get_credentials_file_path()
+
+        # 如果凭证文件存在，从文件中加载
+        if credentials_file.exists():
+            try:
+                credentials = crypto_utils.decrypt_from_file(credentials_file)
+                if isinstance(credentials, dict) and 'ppl_sdk' in credentials:
+                    return CloudConfig(**credentials)
+            except Exception as e:
+                logger.error(f"从加密文件加载凭证失败: {str(e)}")
+
+        # 如果从文件加载失败，尝试从环境变量加载
+        aki = os.environ.get('ALIYUN_AKI', '')
+        aks = os.environ.get('ALIYUN_AKS', '')
+        region = os.environ.get('ALIYUN_REGION', 'cn-beijing')
+        bucket = os.environ.get('ALIYUN_BUCKET', 'asr-file-tth')
+        asr_api_key = os.environ.get('ALIYUN_ASR_API_KEY', '')
+        asr_model = os.environ.get('ALIYUN_ASR_MODEL', 'paraformer-v2')
+
+        # 如果环境变量中有值，使用环境变量的值
+        if aki and aks:
+            return CloudConfig(
+                ppl_sdk=PplSdkConfig(
+                    aki=aki,
+                    aks=aks,
+                    region=region,
+                    bucket=bucket,
+                    asr_api_key=asr_api_key,
+                    asr_model=asr_model
+                )
+            )
+    except Exception as e:
+        logger.error(f"获取云服务配置失败: {str(e)}")
+
+    # 如果都失败了，返回空配置
+    return CloudConfig(
+        ppl_sdk=PplSdkConfig()
     )
-)
+
+# 使用函数获取配置
+aa_bb = get_cloud_config()
+
 # 配置
 params = {  # 操作系统类型:win32、linux、darwin
     "source_mp4": "",  # 需要进行处理的文件
