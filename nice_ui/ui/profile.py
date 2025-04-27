@@ -1,6 +1,7 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QTimer
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 from api_client import api_client, AuthenticationError
+from nice_ui.configure.signal import data_bridge
 from utils import logger
 from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
                                    InfoBarPosition)
@@ -28,7 +29,7 @@ class ProfileInterface(QFrame):
         self.settings = settings
         self.parent = parent
         self.parent_window = parent  # 父窗口引用
-
+        self.data_bridge = data_bridge
         # 当前页码和每页记录数
         self.current_page = 1
         self.page_size = 10  # 每页显示15条记录
@@ -64,6 +65,10 @@ class ProfileInterface(QFrame):
 
         # 连接分页表格的页码改变信号
         self.transactionTable.pageChanged.connect(self.onPageChanged)
+
+        # 连接余额和历史记录更新信号
+        self.data_bridge.update_balance.connect(self.set_balance)
+        self.data_bridge.update_history.connect(self.set_history)
 
     def _init_title_bar(self):
         """初始化标题栏"""
@@ -255,12 +260,31 @@ class ProfileInterface(QFrame):
 
     def _update_balance(self):
         """更新算力余额"""
+        logger.info("个人中心接收到更新余额信号，开始更新余额")
         balance_data = api_client.get_balance_sync()
         if balance_data and 'data' in balance_data:
             balance = balance_data['data'].get('balance', 0)
             self.quotaValue.setText(str(balance))
+            logger.info(f"余额更新成功: {balance}")
         else:
             self.quotaValue.setText('0')
+            logger.warning("获取余额失败或余额为0")
+
+    def set_balance(self, balance: int):
+        """
+        用于每次消费后更新ui，与信号槽连接
+        Args:
+            balance:
+
+        Returns:
+
+        """
+        if isinstance(balance,int):
+            self.quotaValue.setText(str(balance))
+            logger.info(f"余额更新成功: {balance}")
+        else:
+            logger.error(f"余额更新失败，{balance}")
+
 
     def updateUsageHistory(self, new_transactions=None):
         """更新使用记录表格
@@ -276,6 +300,7 @@ class ProfileInterface(QFrame):
                 self._fetch_all_transactions(page=1)
             else:
                 # 添加新交易记录到列表中
+
                 # 获取当前总记录数
                 total_records = self.transactionTable.total_records + len(new_transactions)
                 # 更新表格和分页状态
@@ -290,6 +315,22 @@ class ProfileInterface(QFrame):
             self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
             logger.error(f"更新使用记录失败: {e}")
+
+    def set_history(self,new_transactions):
+        # 添加新交易记录到列表中
+        if isinstance(new_transactions,list):
+            total_records = self.transactionTable.total_records + len(new_transactions)
+            # 更新表格和分页状态
+            self.transactionTable.update_with_data(
+                items=new_transactions,
+                current_page=1,  # 重置到第一页
+                total_records=total_records
+            )
+            # 更新记录数量标签
+            self.recordCountLabel.setText(f'共 {total_records} 条记录')
+        else:
+            logger.error(f"更新使用记录失败，{new_transactions}")
+
 
     def _fetch_all_transactions(self, page=None):
         """从API获取交易记录，支持分页

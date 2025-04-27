@@ -5,10 +5,11 @@ import shutil
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread, QSettings
+from PySide6.QtCore import Qt, QThread
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
 from pydantic import ValidationError
 
+from nice_ui.configure.signal import data_bridge
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
@@ -53,7 +54,7 @@ class TableApp(CardWidget):
         self.settings = settings
         self.setObjectName(text.replace("", "-"))
         self.setupUi()
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
         self._connect_signals()
         # 使用ORM工厂获取ORM实例
         self.orm_factory = OrmFactory()
@@ -218,12 +219,12 @@ class TableApp(CardWidget):
         return button
 
     def _add_common_widgets(
-        self,
-        row_position: int,
-        filename: str,
-        unid: str,
-        job_status: JOB_STATUS,
-        obj_format: VideoFormatInfo,
+            self,
+            row_position: int,
+            filename: str,
+            unid: str,
+            job_status: JOB_STATUS,
+            obj_format: VideoFormatInfo,
     ) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
@@ -369,6 +370,7 @@ class TableApp(CardWidget):
 
     def table_row_finish(self, unid: str):
         logger.info(f"文件处理完成:{unid},更新表单")
+        logger.debug(f"缓存:{self.row_cache}")
 
         if unid in self.row_cache:
             row = self.row_cache[unid]
@@ -397,8 +399,10 @@ class TableApp(CardWidget):
                         ButtonType.DELETE,
                     ],
                 )
-            else:
-                logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
+
+
+        else:
+            logger.error(f'缓存中未找到{unid}的行索引,缓存:{self.row_cache}')
 
     def addRow_init_all(self, edit_dict: VideoFormatInfo):
         try:
@@ -606,7 +610,7 @@ class TableApp(CardWidget):
         dialog = ExportSubtitleDialog(job_paths, self)
         dialog.exec()
 
-           # 清除所有复选框状态
+        # 清除所有复选框状态
         self.selectAllBtn.setChecked(False)  # 清除"全选"按钮状态
         for row in range(self.table.rowCount()):
             checkbox = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
@@ -698,7 +702,6 @@ class TableApp(CardWidget):
         dialog.exec()
 
 
-
 if __name__ == "__main__":
     import sys
     from PySide6.QtCore import QSettings
@@ -706,7 +709,6 @@ if __name__ == "__main__":
 
 
     def main():
-
 
         app = QApplication(sys.argv)
 
@@ -729,4 +731,6 @@ if __name__ == "__main__":
         window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
         window.show()
         sys.exit(app.exec())
+
+
     main()

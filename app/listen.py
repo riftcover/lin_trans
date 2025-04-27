@@ -7,6 +7,7 @@ from pathlib import Path
 
 import soundfile as sf  # 用于读取和裁剪音频文件
 
+from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from utils import logger
 from utils.file_utils import funasr_write_srt_file, Segment
@@ -98,7 +99,7 @@ class SrtWriter:
             raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
         self.input_file = wav_dirname  #ffz转换后的wav文件路径
         self.ln = ln
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
         self.unid = unid
         self._stop_progress_thread = False  # 用于停止进度线程，线程是用来更新funasr的进度条的，是一个假的进度条
 

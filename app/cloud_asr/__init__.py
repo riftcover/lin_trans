@@ -1,12 +1,6 @@
 # 阿里云ASR服务模块
-from app.cloud_asr.aliyun_asr_client import AliyunASRClient, create_aliyun_asr_client
-from app.cloud_asr.task_manager import ASRTaskManager, ASRTask, ASRTaskStatus, get_task_manager
+from nice_ui.configure import config
 
-__all__ = [
-    'AliyunASRClient', 
-    'create_aliyun_asr_client',
-    'ASRTaskManager',
-    'ASRTask',
-    'ASRTaskStatus',
-    'get_task_manager'
-]
+aliyun_sdk = config.aa_bb.ppl_sdk
+
+

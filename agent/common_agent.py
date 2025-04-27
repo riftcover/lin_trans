@@ -4,6 +4,7 @@ from pathlib import Path
 
 from openai import OpenAI, AuthenticationError
 
+from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from nice_ui.util.proxy_client import create_openai_client
 from utils import logger
@@ -54,7 +55,6 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
         sleep_time: 2次翻译间隔时间,根据各api提供方限流来设置
     """
     agent: AgentDict = agent_msg[agent_name]
-    data_bridge = config.data_bridge
     logger.trace(f'chunk_size: {chunk_size}, sleep_time: {sleep_time}')
     with open(in_document, 'r', encoding='utf-8') as file:
         content = file.read()

@@ -1,9 +1,69 @@
-from typing import List
-
+from typing import List, Dict
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from api_client import api_client, AuthenticationError
 from utils import logger
+
+class TokenAmountManager:
+    """代币消费量管理器，负责存储和获取任务的代币消费量"""
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(TokenAmountManager, cls).__new__(cls)
+            cls._instance._token_amounts = {}
+        return cls._instance
+
+    def set_token_amount(self, key: str, amount: int) -> None:
+        """设置任务的代币消费量
+
+        Args:
+            key: 任务ID或文件路径
+            amount: 代币消费量
+        """
+        self._token_amounts[key] = amount
+        logger.info(f"设置任务代币消费量: {amount}, 键: {key}")
+
+    def get_token_amount(self, key: str, default: int = 10) -> int:
+        """获取任务的代币消费量
+
+        Args:
+            key: 任务ID或文件路径
+            default: 默认代币消费量
+
+        Returns:
+            int: 代币消费量
+        """
+        amount = self._token_amounts.get(key, default)
+        logger.info(f"获取任务代币消费量: {amount}, 键: {key}")
+        return amount
+
+    def transfer_key(self, old_key: str, new_key: str) -> None:
+        """将旧键的代币消费量转移到新键
+
+        Args:
+            old_key: 旧键
+            new_key: 新键
+        """
+        if old_key in self._token_amounts:
+            amount = self._token_amounts[old_key]
+            self._token_amounts[new_key] = amount
+            del self._token_amounts[old_key]
+            logger.info(f"转移任务代币消费量: {old_key} -> {new_key}, 代币数量: {amount}")
+
+    def clear(self) -> None:
+        """清空所有代币消费量"""
+        self._token_amounts.clear()
+        logger.info("清空所有任务代币消费量")
+
+    def get_all(self) -> Dict[str, int]:
+        """获取所有代币消费量
+
+        Returns:
+            Dict[str, int]: 所有代币消费量
+        """
+        return self._token_amounts.copy()
 
 
 class TokenService(TokenServiceInterface):
@@ -28,6 +88,7 @@ class TokenService(TokenServiceInterface):
         if getattr(self, '_initialized', False):
             return
         self.ui_manager = ui_manager
+        self.token_amount_manager = TokenAmountManager()
         self._initialized = True
 
     def get_user_balance(self) -> int | bool:
@@ -57,6 +118,25 @@ class TokenService(TokenServiceInterface):
             logger.error(f"获取代币余额时发生错误: {str(e)}")
             return False
 
+    def get_user_history(self) -> list:
+        """
+        获取用户当前消费记录
+
+        Returns:
+
+        """
+        # 更新历史记录
+        try:
+            # 获取最新的交易记录
+            history_data = api_client.get_history_sync(page=1, page_size=10)
+            if history_data and 'data' in history_data:
+                transactions = history_data['data'].get('transactions', [])
+                total_records = history_data['data'].get('total', 0)
+                logger.info(f"更新交易历史记录: 共 {total_records} 条记录")
+                return transactions
+                # 通知UI更新历史记录
+        except Exception as e:
+            logger.error(f"获取交易历史记录失败: {str(e)}")
     def calculate_asr_tokens(self, video_duration: float) -> int:
         """
         计算ASR任务所需代币
@@ -223,3 +303,75 @@ class TokenService(TokenServiceInterface):
         except Exception as e:
             logger.error(f"获取充值套餐列表时发生错误: {str(e)}")
             return []
+
+    def calculate_asr_tokens(self, duration_seconds: float) -> int:
+        """
+        计算ASR任务所需的代币数量
+
+        Args:
+            duration_seconds: 音频时长（秒）
+
+        Returns:
+            int: 所需代币数量
+        """
+        # 每分钟消费10个代币，不足一分钟按一分钟计算
+        return max(1, int(duration_seconds / 60 + 0.5)) * 10
+
+    def set_task_token_amount(self, key: str, amount: int) -> None:
+        """
+        设置任务的代币消费量
+
+        Args:
+            key: 任务ID或文件路径
+            amount: 代币消费量
+        """
+        self.token_amount_manager.set_token_amount(key, amount)
+
+    def get_task_token_amount(self, key: str, default: int = 10) -> int:
+        """
+        获取任务的代币消费量
+
+        Args:
+            key: 任务ID或文件路径
+            default: 默认代币消费量
+
+        Returns:
+            int: 代币消费量
+        """
+        return self.token_amount_manager.get_token_amount(key, default)
+
+    def transfer_task_key(self, old_key: str, new_key: str) -> None:
+        """
+        将旧键的代币消费量转移到新键
+
+        Args:
+            old_key: 旧键
+            new_key: 新键
+        """
+        self.token_amount_manager.transfer_key(old_key, new_key)
+
+    def clear_task_tokens(self) -> None:
+        """清空所有任务的代币消费量"""
+        self.token_amount_manager.clear()
+
+    def consume_tokens(self, token_amount: int, feature_key: str = "asr") -> bool:
+        """
+        消费代币
+
+        Args:
+            token_amount: 消费的代币数量
+            feature_key: 功能标识符，默认为"asr"
+
+        Returns:
+            bool: 消费是否成功
+        """
+        try:
+            # 调用api_client中的方法消费代币
+            us_id = api_client.get_id()
+            api_client.consume_tokens_sync(token_amount, feature_key,us_id)
+            logger.info(f"消费代币成功: {token_amount}")
+            return True
+
+        except Exception as e:
+            logger.error(f"消费代币时发生错误: {str(e)}")
+            return False

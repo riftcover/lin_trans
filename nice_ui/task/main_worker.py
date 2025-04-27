@@ -3,6 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, Signal, Qt
 
+from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from nice_ui.util.tools import StartTools
 from nice_ui.services.service_provider import ServiceProvider
@@ -30,7 +31,7 @@ class Worker(QObject):
         """
         super().__init__()
         self.queue_copy = queue_copy
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
 
     def do_work(self, work_type: WORK_TYPE):
         """
@@ -181,16 +182,20 @@ class Worker(QObject):
         阿里云ASR任务处理
         使用异步提交任务+异步查询任务执行结果的方式
         """
-        from app.cloud_asr.task_manager import get_task_manager
-        from app.video_tools import FFmpegJobs
 
         srt_orm = ToSrtOrm()
-
 
         for it in self.queue_copy:
             logger.debug(f"do_work线程工作中,处理cloud_asr_work任务:{it}")
             # 格式化每个视频信息
             obj_format = self._check_obj(it, WORK_TYPE.CLOUD_ASR)
+
+            # 将文件路径与unid关联起来
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+            # 转移代币消费量
+            token_service.transfer_task_key(it, obj_format.unid)
+            logger.info(f"将文件路径与unid关联: {it} -> {obj_format.unid}")
 
             # 添加到工作队列
             work_queue.lin_queue_put(obj_format)
