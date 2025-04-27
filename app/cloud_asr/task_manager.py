@@ -491,27 +491,18 @@ class ASRTaskManager:
 
                             # 读取下载的JSON文件
 
-                            # try:
-                            #     with open(saved_path, 'r', encoding='utf-8') as f:
-                            #         result_data = json.load(f)
-                            # except Exception as e:
-                            #     logger.error(f"读取ASR结果文件失败: {str(e)}")
-                            #     raise
-                            #
+                            try:
+                                with open(saved_path, 'r', encoding='utf-8') as f:
+                                    json_data = json.load(f)
+                            except Exception as e:
+                                logger.error(f"读取ASR结果文件失败: {str(e)}")
+                                raise
+                            # 解析JSON数据
+                            parsed_results = client.parse_transcription(json_data)
                             # # 从结果中提取字幕信息并生成SRT文件
-                            # srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-                            #
-                            # # 从结果中提取字幕信息
-                            # parsed_results = []
-                            # for sentence in result_data.get('sentences', []):
-                            #     parsed_results.append({
-                            #         "text": sentence.get("text", ""),
-                            #         "begin_time": int(float(sentence.get("begin_time", 0)) * 1000),  # 转换为毫秒
-                            #         "end_time": int(float(sentence.get("end_time", 0)) * 1000),  # 转换为毫秒
-                            #     })
-                            #
-                            # # 生成SRT文件
-                            # client.convert_to_srt(parsed_results, srt_file_path)
+                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            logger.info(f'srt_file_path:{srt_file_path}')
+                            client.convert_to_srt(parsed_results, srt_file_path)
 
                             # 更新任务状态
                             self.update_task(

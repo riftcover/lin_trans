@@ -50,4 +50,5 @@ for emoji in emo_set.union(event_set):
 
 
 ## 打包注意事项
-1.tmp/asr_tasks.json 是asr云任务持久化文件，需要在打包时包含进去一个空列表[]
+1. tmp/asr_tasks.json 是asr云任务持久化文件，需要在打包时包含进去一个空列表[]
+2. .credentials/aliyun_credentials.enc 是阿里云相关key，需要打包进去
