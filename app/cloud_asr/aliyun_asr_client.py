@@ -288,7 +288,7 @@ class AliyunASRClient:
             return []
 
         # 预分配结果列表 - 使用更精确的估计
-        
+
         # 计算所有句子中标点符号的数量
         punctuation_count = 0
         for sentence in sentences:

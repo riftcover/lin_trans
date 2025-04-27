@@ -60,6 +60,10 @@ class StartTools:
         # 计算代币消耗
         return int(word_count * config.trans_qps)
 
+
+start_tools = StartTools()
+
+
 # 执行 ffmpeg
 def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
     logger.info(f"runffmpeg-arg={arg}")
@@ -186,7 +190,7 @@ def runffprobe(cmd):
 
 # 获取视频信息
 def get_video_info(
-    mp4_file, *, video_fps=False, video_scale=False, video_time=False, nocache=False
+        mp4_file, *, video_fps=False, video_scale=False, video_time=False, nocache=False
 ):
     # 如果存在缓存并且没有禁用缓存
     mp4_file = Path(mp4_file).as_posix()
@@ -566,9 +570,9 @@ def format_srt(content):
             # 当前是第一行，并且不是时间格式，跳过
             continue
         elif (
-            re.match(r"^\s*?\d+\s*?$", it)
-            and i < maxindex
-            and re.match(timepat, content[i + 1])
+                re.match(r"^\s*?\d+\s*?$", it)
+                and i < maxindex
+                and re.match(timepat, content[i + 1])
         ):
             # 当前不是时间格式，不是第一行，并且都是数字，并且下一行是时间格式，则当前是行号，跳过
             continue
@@ -802,7 +806,7 @@ def set_process_box(text, type="logs", *, func_name=""):
 
 # 综合写入日志，默认sp界面
 def set_process(
-    text, type="logs", *, qname="sp", func_name="", btnkey="", nologs=False
+        text, type="logs", *, qname="sp", func_name="", btnkey="", nologs=False
 ):
     with contextlib.suppress(Exception):
         if text:
@@ -1060,7 +1064,7 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
-    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS,WORK_TYPE.CLOUD_ASR):
+    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS, WORK_TYPE.CLOUD_ASR):
         media_dirname = name
         wav_finally_path = wav_path.as_posix()
     elif work_type == WORK_TYPE.TRANS:
@@ -1236,13 +1240,13 @@ def format_result(source_list, target_list, target_lang="zh"):
     start = 0
     # 如果是中日韩泰语言，直接按字切割
     if (
-        len(target_lang) < 6 and target_lang[:2].lower() in ["zh", "ja", "ko", "th"]
+            len(target_lang) < 6 and target_lang[:2].lower() in ["zh", "ja", "ko", "th"]
     ) or (
-        len(target_lang) > 5
-        and target_lang[:3].lower() in ["sim", "tra", "jap", "kor", "tha"]
+            len(target_lang) > 5
+            and target_lang[:3].lower() in ["sim", "tra", "jap", "kor", "tha"]
     ):
         for num in target_len:
-            text = target_str[start : start + num]
+            text = target_str[start: start + num]
             start = start + num
             result.append(text)
         return result
@@ -1283,7 +1287,7 @@ def format_result(source_list, target_list, target_lang="zh"):
             lastpos += offset
             # 如果达到了末尾或者找到了标点则切割
             if lastpos >= target_total or target_str[lastpos] in flag:
-                text = target_str[start : lastpos + 1] if start < target_total else ""
+                text = target_str[start: lastpos + 1] if start < target_total else ""
                 start = lastpos + 1
                 result.append(text)
                 break
@@ -1292,7 +1296,7 @@ def format_result(source_list, target_list, target_lang="zh"):
         if offset < 5:
             continue
         # 没找到分割标点，强制截断
-        text = target_str[start : start + num] if start < target_total else ""
+        text = target_str[start: start + num] if start < target_total else ""
         start = start + num
         result.append(text)
     print(f"{result=}")
@@ -1327,4 +1331,4 @@ def list_model_files(model_dir: str = None) -> list:
 
 
 if __name__ == "__main__":
-    print(StartTools().match_model_name("多语言模型"))
+    print(start_tools.match_model_name("多语言模型"))
