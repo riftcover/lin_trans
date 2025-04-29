@@ -16,7 +16,7 @@ from utils import logger
 #asr模型算力消耗（算力/秒）
 asr_qps = 4
 # 翻译模型算力消耗（算力/字）
-trans_qps = 2
+trans_qps = 0.002
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录

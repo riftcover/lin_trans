@@ -27,6 +27,7 @@ class ThreadManager:
     """
     线程管理器，负责创建和管理工作线程和消费线程
     """
+
     def __init__(self):
         self.queue_consumer: Optional[QueueConsumer] = None
         self.queue_consumer_thread: Optional[QThread] = None
@@ -86,6 +87,7 @@ class SecWindow:
     """
     主窗口的辅助类，负责处理各种功能逻辑
     """
+
     def __init__(self, main=None):
         self.main = main
         self.usetype: Optional[str] = None
@@ -294,11 +296,6 @@ class SecWindow:
         """
         保存当前设置
         """
-        all_keys = self.main.settings.allKeys()
-        logger.trace("当前保存设置项：")
-        for key in all_keys:
-            value = self.main.settings.value(key)
-            logger.trace(f"Key: {key}, Value: {value}")
 
         save_setting(self.main.settings)
 
@@ -315,7 +312,7 @@ class SecWindow:
         language_name = self.main.source_language_combo.currentText()
         logger.debug(f"==========language_name:{language_name}")
         config.params["source_language"] = language_name
-
+        is_task = False
         # 获取翻译设置
         self.get_trans_setting(language_name)
 
@@ -326,17 +323,17 @@ class SecWindow:
                 config.transobj["anerror"],
                 config.transobj["bukedoubucunzai"],
             )
-            return False
-
+            return is_task
+        is_task = self._check_auth_and_balance()
         # 保存设置
-        save_setting(self.main.settings)
+        if is_task:
+            self._save_current_settings()
 
-        # 创建工作队列并启动处理
-        queue_srt_copy = copy.deepcopy(config.queue_trans)
-        self.add_queue_thread(queue_srt_copy, WORK_TYPE.TRANS)
+            # 创建工作队列并启动处理
+            queue_srt_copy = copy.deepcopy(config.queue_trans)
+            self.add_queue_thread(queue_srt_copy, WORK_TYPE.TRANS)
         self.update_status(WORK_TYPE.TRANS)
-
-        return True
+        return is_task
 
     def check_cloud_asr(self) -> bool:
         """
@@ -346,9 +343,12 @@ class SecWindow:
             bool: 检查结果，True表示可以继续，False表示需要停止
         """
         # 检查登录状态和代币余额
+
         is_task = self._check_auth_and_balance()
 
         if is_task:
+            # 保存设置
+            self._save_current_settings()
             # 创建工作队列并启动处理
             queue_asr_copy = copy.deepcopy(config.queue_asr)
             logger.debug(f"add_queue_thread: {queue_asr_copy}")
@@ -435,8 +435,6 @@ class SecWindow:
             config.queue_trans = []
         else:
             logger.error(f'WORK_TYPE;{WORK_TYPE} 未匹配')
-
-
 
     def _calculate_total_tokens(self) -> int:
         # 计算任务所需总代币

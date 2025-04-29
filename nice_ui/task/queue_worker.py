@@ -1,5 +1,6 @@
 from agent.common_agent import translate_document
 from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
+from app.cloud_trans.task_manager import TransTaskManager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
@@ -128,6 +129,7 @@ class TranslationTaskProcessor(TaskProcessor):
             config.settings['trans_row'],
             config.settings['trans_sleep']
         )
+        TransTaskManager().consume_tokens_for_task(task.unid)
 
 
 class ASRTransTaskProcessor(TaskProcessor):

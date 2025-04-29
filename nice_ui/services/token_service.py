@@ -1,4 +1,6 @@
 from typing import List, Dict
+
+from nice_ui.configure import config
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from api_client import api_client, AuthenticationError
@@ -147,8 +149,36 @@ class TokenService(TokenServiceInterface):
         Returns:
             int: 所需代币数量
         """
-        from nice_ui.configure import config
-        return int(video_duration * config.trans_qps) if video_duration else 0
+        return int(video_duration * config.asr_qps) if video_duration else 0
+
+
+    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) ->int:
+        """
+
+        Args:
+            word_counts: 翻译文本长度
+            translate_engine:翻译模型
+
+        Returns:
+            int: 所需代币数量
+        """
+        # 根据不同的翻译引擎设置不同的算力消耗系数
+        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
+            # AI大模型翻译，消耗更多算力
+            qps_count = 3
+        elif translate_engine in ["DeepL", "DeepLx"]:
+            # DeepL系列翻译，消耗中等算力
+            qps_count = 2.5
+        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
+            # 传统翻译API，消耗标准算力
+            qps_count = 2
+        else:
+            # 其他翻译引擎，默认算力消耗
+            qps_count = 1.5
+
+
+
+        return int(word_counts * config.trans_qps) if word_counts else 0
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """
