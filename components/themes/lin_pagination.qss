@@ -1,0 +1,63 @@
+/* 分页控件样式 */
+
+/* 页码信息标签 */
+QLabel#pageInfo {
+    color: #6c757d;
+    font-size: 13px;
+}
+
+/* 页码指示器 */
+QLabel#pageIndicator {
+    color: #495057;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 60px;
+    padding: 0 8px;
+}
+
+/* 导航按钮通用样式 */
+TransparentToolButton.NavButton {
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 4px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+TransparentToolButton.NavButton:hover {
+    background-color: #f8f9fa;
+}
+
+TransparentToolButton.NavButton:pressed {
+    background-color: #e9ecef;
+}
+
+TransparentToolButton.NavButton:disabled {
+    opacity: 0.5;
+    border-color: #f1f3f5;
+}
+
+/* 首页按钮 */
+TransparentToolButton#firstButton {
+    qproperty-icon: url(:/icon/assets/MingcuteArrowsLeftLine.svg);
+}
+
+/* 上一页按钮 */
+TransparentToolButton#prevButton {
+    qproperty-icon: url(:/icon/assets/MingcuteLeftLine.svg);
+}
+
+/* 下一页按钮 */
+TransparentToolButton#nextButton {
+    qproperty-icon: url(:/icon/assets/MingcuteRightLine.svg);
+}
+
+/* 末页按钮 */
+TransparentToolButton#lastButton {
+    qproperty-icon: url(:/icon/assets/MingcuteArrowsRightLine.svg);
+}
+
+/* 分页控件容器 */
+QWidget#paginationControls {
+    background-color: transparent;
+}
