@@ -10,6 +10,7 @@ from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget, )
@@ -374,22 +375,12 @@ class LTableWindow:
         # 获取当前选择的翻译引擎
         translate_engine = self.main.translate_model.currentText()
 
-        # 根据不同的翻译引擎设置不同的算力消耗系数
-        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
-            # AI大模型翻译，消耗更多算力
-            qps_count = 3
-        elif translate_engine in ["DeepL", "DeepLx"]:
-            # DeepL系列翻译，消耗中等算力
-            qps_count = 2.5
-        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
-            # 传统翻译API，消耗标准算力
-            qps_count = 2
-        else:
-            # 其他翻译引擎，默认算力消耗
-            qps_count = 1.5
+
+
+        token_service = ServiceProvider().get_token_service()
 
         # 计算结果取整后再返回
-        return int(file_character_count * qps_count)
+        return token_service.calculate_trans_tokens(file_character_count,translate_engine)
 
 if __name__ == "__main__":
     import sys

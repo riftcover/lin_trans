@@ -1,4 +1,6 @@
 from typing import List, Dict
+
+from nice_ui.configure import config
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from api_client import api_client, AuthenticationError
@@ -89,7 +91,41 @@ class TokenService(TokenServiceInterface):
             return
         self.ui_manager = ui_manager
         self.token_amount_manager = TokenAmountManager()
+
+        # 从配置中获取默认系数值
+        from nice_ui.configure import config
+        self.asr_qps = None
+        self.trans_qps = None
+
         self._initialized = True
+
+    def update_token_coefficients(self) -> bool:
+        """
+        从服务器获取并更新算力消耗系数
+
+        Returns:
+            bool: 更新是否成功
+        """
+        try:
+            # 获取代币消耗系数
+            response = api_client.get_token_coefficients_sync()
+            if response and 'data' in response:
+                coefficients = response['data']
+                # 遍历系数列表，更新对应的值
+                for coef in coefficients:
+                    if coef['coefficient_key'] == 'asr_qps':
+                        old_value = self.asr_qps
+                        self.asr_qps = float(coef['coefficient_value'])
+                        logger.info(f"从服务器更新ASR算力消耗系数: {old_value} -> {self.asr_qps}")
+                    elif coef['coefficient_key'] == 'trans_qps':
+                        old_value = self.trans_qps
+                        self.trans_qps = float(coef['coefficient_value'])
+                        logger.info(f"从服务器更新翻译算力消耗系数: {old_value} -> {self.trans_qps}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"更新算力消耗系数失败: {str(e)}")
+            return False
 
     def get_user_balance(self) -> int | bool:
         """
@@ -147,8 +183,36 @@ class TokenService(TokenServiceInterface):
         Returns:
             int: 所需代币数量
         """
-        from nice_ui.configure import config
-        return int(video_duration * config.trans_qps) if video_duration else 0
+        return int(video_duration * self.asr_qps) if video_duration else 0
+
+
+    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) ->int:
+        """
+
+        Args:
+            word_counts: 翻译文本长度
+            translate_engine:翻译模型
+
+        Returns:
+            int: 所需代币数量
+        """
+        # 根据不同的翻译引擎设置不同的算力消耗系数
+        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
+            # AI大模型翻译，消耗更多算力
+            qps_count = 3
+        elif translate_engine in ["DeepL", "DeepLx"]:
+            # DeepL系列翻译，消耗中等算力
+            qps_count = 2.5
+        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
+            # 传统翻译API，消耗标准算力
+            qps_count = 2
+        else:
+            # 其他翻译引擎，默认算力消耗
+            qps_count = 1.5
+
+
+
+        return int(word_counts * self.trans_qps) if word_counts else 0
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """

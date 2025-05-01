@@ -1,7 +1,11 @@
+import os
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem
+from PySide6.QtGui import QIcon
+from pathlib import Path
 
-from vendor.qfluentwidgets import TransparentPushButton, FluentIcon as FIF
+from vendor.qfluentwidgets import TransparentToolButton
+from PySide6.QtCore import QFile
 
 
 class PaginatedTableWidget(QWidget):
@@ -12,6 +16,69 @@ class PaginatedTableWidget(QWidget):
 
     # 定义信号
     pageChanged = Signal(int)  # 页码改变时发出信号
+
+    # 表格样式常量 - 保留表格样式为内联样式，因为它不属于分页控件的一部分
+    TABLE_STYLE = """
+        QTableWidget {
+            background-color: transparent;
+            border: none;
+            selection-background-color: transparent;
+        }
+        QHeaderView::section {
+            background-color: #f5f5f5;
+            padding: 4px;
+            border: none;
+            border-bottom: 2px solid #e9ecef;
+            border-radius: 0px;
+        }
+        QHeaderView::section:first {
+            border-top-left-radius: 8px;
+        }
+        QHeaderView::section:last {
+            border-top-right-radius: 8px;
+        }
+        QTableWidget::item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f3f5;
+            color: #212529;
+        }
+        QTableWidget::item:selected {
+            background-color: transparent;
+            color: #212529;
+        }
+        QScrollBar:vertical {
+            background-color: #f8f9fa;
+            width: 8px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background-color: #ced4da;
+            min-height: 30px;
+            border-radius: 4px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background-color: #adb5bd;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+        QScrollBar:horizontal {
+            background-color: #f8f9fa;
+            height: 8px;
+            margin: 0px;
+        }
+        QScrollBar::handle:horizontal {
+            background-color: #ced4da;
+            min-width: 30px;
+            border-radius: 4px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background-color: #adb5bd;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            width: 0px;
+        }
+    """
 
     def __init__(
         self,
@@ -32,12 +99,30 @@ class PaginatedTableWidget(QWidget):
         """
         super().__init__(parent=parent)
 
-        # 分页相关变量
+        # 分页相关变量初始化
+        self._init_variables(page_size)
+
+        # 创建UI组件
+        self._init_ui()
+
+        # 设置表头
+        self._setup_table_headers(headers, column_widths, stretch_column)
+
+        # 初始化分页控件状态
+        self.update_page_indicator()
+
+    def _init_variables(self, page_size):
+        """初始化分页相关变量"""
         self.all_items = []      # 存储所有数据项
         self.current_page = 1    # 当前页码
         self.page_size = page_size  # 每页显示的记录数
         self.total_pages = 1     # 总页数
         self.total_records = 0   # 总记录数
+
+    def _init_ui(self):
+        """初始化UI组件"""
+        # 加载分页控件样式
+        self._load_pagination_style()
 
         # 创建主布局
         self.main_layout = QVBoxLayout(self)
@@ -45,146 +130,154 @@ class PaginatedTableWidget(QWidget):
         self.main_layout.setSpacing(10)
 
         # 创建表格
+        self._create_table()
+
+        # 创建分页控件
+        self._create_pagination_controls()
+
+    def _load_pagination_style(self):
+        """加载分页控件样式"""
+        # 使用QRC资源加载样式表
+        style_file = QFile(":/qss/themes/lin_pagination.qss")
+        if style_file.open(QFile.ReadOnly | QFile.Text):
+            style_sheet = style_file.readAll().data().decode("utf-8")
+            self.setStyleSheet(style_sheet)
+            style_file.close()
+
+    def _create_table(self):
+        """创建表格"""
         self.table = QTableWidget(self)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)  # 禁止编辑
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
-
-        # 设置表格样式 - 现代化设计
-        self.table.setStyleSheet("""
-            QTableWidget {
-                background-color: transparent;
-                border: none;
-                selection-background-color: transparent;
-            }
-            QHeaderView::section {
-                background-color: #f5f5f5;
-                padding: 4px;
-                border: none;
-                border-bottom: 2px solid #e9ecef;
-                border-radius: 0px;
-            }
-            QHeaderView::section:first {
-                border-top-left-radius: 8px;
-            }
-            QHeaderView::section:last {
-                border-top-right-radius: 8px;
-            }
-            QTableWidget::item {
-                padding: 12px 15px;
-                border-bottom: 1px solid #f1f3f5;
-                color: #212529;
-            }
-            QTableWidget::item:selected {
-                background-color: transparent;
-                color: #212529;
-            }
-            QScrollBar:vertical {
-                background-color: #f8f9fa;
-                width: 8px;
-                margin: 0px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #ced4da;
-                min-height: 30px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #adb5bd;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-            QScrollBar:horizontal {
-                background-color: #f8f9fa;
-                height: 8px;
-                margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                background-color: #ced4da;
-                min-width: 30px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:horizontal:hover {
-                background-color: #adb5bd;
-            }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-                width: 0px;
-            }
-        """)
-
-        # 设置表头
-        if headers:
-            self.table.setColumnCount(len(headers))
-            self.table.setHorizontalHeaderLabels(headers)
-
-            # 设置列宽
-            header = self.table.horizontalHeader()
-            if column_widths:
-                for i, width in enumerate(column_widths):
-                    if width > 0:
-                        self.table.setColumnWidth(i, width)
-                        header.setSectionResizeMode(i, header.ResizeMode.Fixed)
-
-            # 设置自适应列
-            if stretch_column is not None and 0 <= stretch_column < len(headers):
-                header.setSectionResizeMode(stretch_column, header.ResizeMode.Stretch)
+        self.table.setStyleSheet(self.TABLE_STYLE)
 
         # 添加表格到布局
         self.main_layout.addWidget(self.table)
 
-        # 创建分页控件
+    def _create_pagination_controls(self):
+        """创建分页控件"""
+        # 创建分页布局
         self.pagination_layout = QHBoxLayout()
-        self.pagination_layout.setContentsMargins(0, 10, 0, 0)
-        self.pagination_layout.setSpacing(15)
+        self.pagination_layout.setContentsMargins(10, 10, 10, 5)
+        self.pagination_layout.setSpacing(8)  # 减小间距使组件更紧凑
 
-        # 首页按钮
-        #todo ：4个图标替换
-        self.first_button = TransparentPushButton('', self, FIF.UP)
-        self.first_button.clicked.connect(self.first_page)
-        self.first_button.setToolTip('首页')
+        # 创建页码信息标签
+        self._create_page_info()
 
-        # 上一页按钮
-        self.prev_button = TransparentPushButton('', self, FIF.LEFT_ARROW)
-        self.prev_button.clicked.connect(self.prev_page)
-        self.prev_button.setToolTip('上一页')
-
-        # 页码指示器
-        self.page_indicator = QLabel('1/1', self)
-        self.page_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.page_indicator.setStyleSheet("""
-            QLabel {
-                color: #495057;
-                font-size: 14px;
-                font-weight: 500;
-                min-width: 60px;
-            }
-        """)
-
-        # 下一页按钮
-        self.next_button = TransparentPushButton('', self, FIF.RIGHT_ARROW)
-        self.next_button.clicked.connect(self.next_page)
-        self.next_button.setToolTip('下一页')
-
-        # 末页按钮
-        self.last_button = TransparentPushButton('', self, FIF.DOWN)
-        self.last_button.clicked.connect(self.last_page)
-        self.last_button.setToolTip('末页')
-
-        # 添加到分页布局
-        self.pagination_layout.addStretch()
-        self.pagination_layout.addWidget(self.first_button)
-        self.pagination_layout.addWidget(self.prev_button)
-        self.pagination_layout.addWidget(self.page_indicator)
-        self.pagination_layout.addWidget(self.next_button)
-        self.pagination_layout.addWidget(self.last_button)
-        self.pagination_layout.addStretch()
+        # 创建分页按钮
+        self._create_pagination_buttons()
 
         # 添加分页布局
         self.main_layout.addLayout(self.pagination_layout)
 
-        # 初始化分页控件状态
-        self.update_page_indicator()
+    def _create_page_info(self):
+        """创建页码信息标签"""
+        self.page_info = QLabel('共 0 条', self)
+        self.page_info.setObjectName("pageInfo")  # 设置对象名称以匹配QSS
+        self.pagination_layout.addWidget(self.page_info)
+        self.pagination_layout.addStretch(1)  # 左侧信息和分页控件之间的弹性空间
+
+    def _create_pagination_buttons(self):
+        """创建分页按钮"""
+        # 获取资源路径
+        assets_path = self._get_assets_path()
+
+        # 创建分页控件容器
+        pagination_controls = QWidget()
+        pagination_controls.setObjectName("paginationControls")  # 设置对象名称以匹配QSS
+        pagination_controls_layout = QHBoxLayout(pagination_controls)
+        pagination_controls_layout.setContentsMargins(0, 0, 0, 0)
+        pagination_controls_layout.setSpacing(2)  # 减小间距
+
+        # 创建按钮
+        self.first_button = self._create_nav_button(
+            '首页',
+            self.first_page
+        )
+        self.first_button.setObjectName("firstButton")  # 设置对象名称以匹配QSS
+
+        self.prev_button = self._create_nav_button(
+            '上一页',
+            self.prev_page
+        )
+        self.prev_button.setObjectName("prevButton")  # 设置对象名称以匹配QSS
+
+        # 页码指示器
+        self.page_indicator = QLabel('1/1', self)
+        self.page_indicator.setObjectName("pageIndicator")  # 设置对象名称以匹配QSS
+        self.page_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.next_button = self._create_nav_button(
+            '下一页',
+            self.next_page
+        )
+        self.next_button.setObjectName("nextButton")  # 设置对象名称以匹配QSS
+
+        self.last_button = self._create_nav_button(
+            '末页',
+            self.last_page
+        )
+        self.last_button.setObjectName("lastButton")  # 设置对象名称以匹配QSS
+
+
+        # 添加分页控件到容器
+        pagination_controls_layout.addWidget(self.first_button)
+        pagination_controls_layout.addWidget(self.prev_button)
+        pagination_controls_layout.addWidget(self.page_indicator)
+        pagination_controls_layout.addWidget(self.next_button)
+        pagination_controls_layout.addWidget(self.last_button)
+
+        # 将分页控件容器添加到主分页布局
+        self.pagination_layout.addWidget(pagination_controls)
+
+    def _get_assets_path(self):
+        """获取资源路径"""
+        # 使用相对路径，更好的跨平台支持
+        return str(Path(__file__).parent.parent / 'assets')
+
+    def _create_nav_button(self, tooltip, callback):
+        """创建导航按钮
+
+        Args:
+            tooltip: 提示文本
+            callback: 点击回调函数
+
+        Returns:
+            TransparentToolButton: 创建的按钮
+        """
+        button = TransparentToolButton()
+        button.setFixedSize(32, 32)  # 设置为正方形
+        button.clicked.connect(callback)
+        button.setToolTip(tooltip)
+        button.setProperty("class", "NavButton")  # 设置类名以匹配QSS
+        return button
+
+    def _setup_table_headers(self, headers, column_widths, stretch_column):
+        """设置表头
+
+        Args:
+            headers: 表头列表
+            column_widths: 列宽列表
+            stretch_column: 自适应宽度的列索引
+        """
+        if not headers:
+            return
+
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+
+        # 设置列宽
+        header = self.table.horizontalHeader()
+        if column_widths:
+            for i, width in enumerate(column_widths):
+                if width > 0:
+                    self.table.setColumnWidth(i, width)
+                    header.setSectionResizeMode(i, header.ResizeMode.Fixed)
+
+        # 设置自适应列
+        if stretch_column is not None and 0 <= stretch_column < len(headers):
+            header.setSectionResizeMode(stretch_column, header.ResizeMode.Stretch)
 
     def set_data(self, items, reset_page=True, total_pages=None, total_records=None):
         """设置表格数据
@@ -193,10 +286,30 @@ class PaginatedTableWidget(QWidget):
             items: 数据项列表
             reset_page: 是否重置到第一页，默认为True
             total_pages: 可选，直接设置总页数
-            total_records: 可选，总记录数（仅用于调试）
+            total_records: 可选，总记录数
         """
         self.all_items = items
 
+        # 更新分页信息
+        self._update_pagination_info(reset_page, total_pages, total_records)
+
+        # 更新页码指示器
+        self.update_page_indicator()
+
+        # 显示当前页数据
+        self.display_current_page()
+
+        # 发出页码改变信号
+        self.pageChanged.emit(self.current_page)
+
+    def _update_pagination_info(self, reset_page, total_pages, total_records):
+        """更新分页信息
+
+        Args:
+            reset_page: 是否重置到第一页
+            total_pages: 总页数
+            total_records: 总记录数
+        """
         # 如果提供了总页数，直接使用；否则根据当前数据计算
         if total_pages is not None:
             self.total_pages = max(1, total_pages)
@@ -210,18 +323,9 @@ class PaginatedTableWidget(QWidget):
         elif self.current_page > self.total_pages:
             self.current_page = self.total_pages
 
-        # 输出调试信息
+        # 更新总记录数
         if total_records is not None:
-            print(f"PaginatedTableWidget: 设置数据 - 当前页={self.current_page}, 总页数={self.total_pages}, 总记录数={total_records}")
-
-        # 更新页码指示器
-        self.update_page_indicator()
-
-        # 显示当前页数据
-        self.display_current_page()
-
-        # 发出页码改变信号
-        self.pageChanged.emit(self.current_page)
+            self.total_records = total_records
 
     def display_current_page(self):
         """显示当前页的数据"""
@@ -256,8 +360,22 @@ class PaginatedTableWidget(QWidget):
         pass
 
     def update_page_indicator(self):
-        """更新页码指示器"""
+        """更新页码指示器和页面信息"""
+        # 更新页码指示器
         self.page_indicator.setText(f"{self.current_page}/{self.total_pages}")
+
+        # 计算当前页的记录范围
+        total_items = len(self.all_items)
+        start_idx = (self.current_page - 1) * self.page_size + 1 if total_items > 0 else 0
+        end_idx = min(start_idx + self.page_size - 1, total_items)
+
+        # 更新页面信息标签
+        if hasattr(self, 'total_records') and self.total_records > 0:
+            self.page_info.setText(f"共 {self.total_records} 条记录")
+        elif total_items > 0:
+            self.page_info.setText(f"显示 {start_idx}-{end_idx} 条，共 {total_items} 条")
+        else:
+            self.page_info.setText("暂无记录")
 
         # 更新分页按钮状态
         has_prev = self.current_page > 1

@@ -8,6 +8,7 @@
         <file>themes/linlin_edit.qss</file>
         <file>themes/subedit_head.qss</file>
         <file>themes/subedit_table.qss</file>
+        <file>themes/lin_pagination.qss</file>
     </qresource>
     <qresource prefix="/icon">
         <file>assets/AntDesignDownSquareFilled.svg</file>
@@ -17,6 +18,9 @@
         <file>assets/PhExport.svg</file>
         <file>assets/ClarityExportLine.svg</file>
         <file>assets/linlin.png</file>
-        <file>assets/cpu.svg</file>
+        <file>assets/MingcuteArrowsLeftLine.svg</file>
+        <file>assets/MingcuteArrowsRightLine.svg</file>
+        <file>assets/MingcuteLeftLine.svg</file>
+        <file>assets/MingcuteRightLine.svg</file>
     </qresource>
 </RCC>

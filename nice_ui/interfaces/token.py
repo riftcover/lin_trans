@@ -101,3 +101,13 @@ class TokenServiceInterface(ABC):
             bool: 消费是否成功
         """
         pass
+
+    @abstractmethod
+    def update_token_coefficients(self) -> bool:
+        """
+        从服务器获取并更新算力消耗系数
+
+        Returns:
+            bool: 更新是否成功
+        """
+        pass

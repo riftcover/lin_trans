@@ -200,6 +200,11 @@ class Window(FluentWindow):
                         self.avatarWidget.setName(user_info['email'])
                         # 更新个人中心页面
                         logger.info("自动登录成功")
+
+                        # 更新算力消耗系数
+                        from nice_ui.services.service_provider import ServiceProvider
+                        token_service = ServiceProvider().get_token_service()
+                        token_service.update_token_coefficients()
                 except AuthenticationError as e:
                     logger.warning(f"Token验证失败，尝试刷新: {e}")
                     # 尝试刷新token
@@ -299,6 +304,11 @@ class Window(FluentWindow):
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
 
+        # 从服务器获取并更新算力消耗系数
+        from nice_ui.services.service_provider import ServiceProvider
+        token_service = ServiceProvider().get_token_service()
+        token_service.update_token_coefficients()
+
         # 如果需要切换到个人中心页面，则切换
         if switch_to_profile:
             self.switchTo(self.loginInterface)
@@ -313,6 +323,11 @@ class Window(FluentWindow):
             if api_client._refresh_token:
                 self.settings.setValue('refresh_token', api_client._refresh_token)
             self.settings.sync()
+
+            # 从服务器获取并更新算力消耗系数
+            from nice_ui.services.service_provider import ServiceProvider
+            token_service = ServiceProvider().get_token_service()
+            token_service.update_token_coefficients()
 
             # 显示成功提示
             InfoBar.success(

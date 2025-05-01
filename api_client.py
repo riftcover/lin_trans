@@ -565,6 +565,48 @@ class APIClient:
         """
         return await self.consume_tokens(token_amount, feature_key, user_id)
 
+    async def get_token_coefficients(self) -> Dict:
+        """
+        获取代币消耗系数（异步版本）
+
+        Returns:
+            Dict: 包含代币消耗系数的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            response = await self.client.get("/features/coefficients", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Get token coefficients failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                # 尝试刷新token
+                if await self.refresh_session():
+                    # 刷新成功，重试请求
+                    logger.info('Token refreshed, retrying request')
+                    try:
+                        response = await self.client.get("/features/coefficients", headers=self.headers)
+                        response.raise_for_status()
+                        return response.json()
+                    except Exception as retry_error:
+                        logger.error(f'Retry after token refresh failed: {retry_error}')
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
+                else:
+                    # 刷新失败
+                    logger.warning('Token refresh failed')
+                    raise AuthenticationError("Token已过期，需要重新登录")
+            raise Exception(f"获取代币消耗系数失败: {str(e)}")
+
+    @to_sync
+    async def get_token_coefficients_sync(self) -> Dict:
+        """
+        获取代币消耗系数（同步版本）
+        """
+        return await self.get_token_coefficients()
+
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()

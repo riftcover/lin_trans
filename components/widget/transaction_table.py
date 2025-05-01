@@ -1,7 +1,5 @@
 import pytz
-from PySide6.QtCore import QDateTime
 from PySide6.QtWidgets import QTableWidgetItem
-from PySide6.QtCore import Qt
 from datetime import datetime
 
 from utils import logger
