@@ -6,11 +6,12 @@ import sys
 
 import httpx
 from PySide6.QtCore import QUrl, QSettings, Qt
-from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
+from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont, QPixmap, QImage
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
+from components.widget.navigation_avatar_widget import CustomNavigationAvatarWidget
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.ui import MAIN_WINDOW_SIZE
@@ -86,7 +87,7 @@ class Window(FluentWindow):
         # 创建头像按钮
         self.avatarWidget = NavigationAvatarWidget(
             '未登录',
-            ':icon/assets/linlin.png'
+            ':icon/assets/MdiLightAccount.png'
         )
 
         # 添加个人中心到导航，使用头像作为按钮
@@ -119,17 +120,6 @@ class Window(FluentWindow):
             self.settings.allKeys()
         )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
 
-    def showMessageBox(self):
-        w = MessageBox(
-            "支持作者🥰",
-            "个人开发不易，如果这个项目帮助到了您，可以考虑请作者喝一瓶快乐水🥤。您的支持就是作者开发和维护项目的动力🚀",
-            self,
-        )
-        w.yesButton.setText("来啦老弟")
-        w.cancelButton.setText("下次一定")
-
-        if w.exec():
-            QDesktopServices.openUrl(QUrl("https://afdian.net/a/zhiyiYo"))
 
     def load_proxy_settings(self):
         if self.settings.value("use_proxy", False, type=bool):
@@ -297,8 +287,10 @@ class Window(FluentWindow):
         """
         self.is_logged_in = True
         self.avatarWidget.setName(user_info.get('email', '已登录'))
-        # 可以设置用户头像
-        # self.avatarWidget.setAvatar('path_to_avatar')
+
+        # 登录成功后使用设置图标作为头像
+        # 直接使用FluentIcon作为头像，确保与导航图标一致
+        self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
         self.login_window.hide()
 
         # 更新个人中心页面的信息

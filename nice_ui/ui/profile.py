@@ -488,4 +488,4 @@ class ProfileInterface(QFrame):
         if self.parent:
             self.parent.is_logged_in = False
             self.parent.avatarWidget.setName('未登录')
-            self.parent.avatarWidget.setAvatar(':icon/assets/default_avatar.png')
+            self.parent.avatarWidget.setAvatar(':icon/assets/MdiLightAccount.png')

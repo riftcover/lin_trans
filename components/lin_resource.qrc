@@ -22,5 +22,7 @@
         <file>assets/MingcuteArrowsRightLine.svg</file>
         <file>assets/MingcuteLeftLine.svg</file>
         <file>assets/MingcuteRightLine.svg</file>
+        <file>assets/MdiAccount.png</file>
+        <file>assets/MdiLightAccount.png</file>
     </qresource>
 </RCC>
