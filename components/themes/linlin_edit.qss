@@ -1,7 +1,29 @@
 LinLineEdit {
-    border-left: 1px solid #d0d0d0;  /* 左边框为灰色 */
-    border-right: 1px solid #d0d0d0;  /* 右边框为灰 色 */
-    border-top: 2px solid transparent;  /* 上边框为透明 */
-    border-bottom: 2px solid transparent;  /* 下边框为透明 */
-    padding: 2px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: #ffffff;
+    padding: 6px 8px;
+    color: #212529;
+    font-size: 14px;
+}
+
+LinLineEdit:hover {
+    border-color: #adb5bd;
+    background-color: #f8f9fa;
+}
+
+LinLineEdit:focus {
+    border: 2px solid #4dabf7;
+    background-color: #ffffff;
+    outline: none;
+}
+
+LinLineEdit[readOnly="true"] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+LinLineEdit::selection {
+    background-color: #4dabf7;
+    color: white;
 }

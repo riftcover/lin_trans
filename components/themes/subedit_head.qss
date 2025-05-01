@@ -1,8 +1,18 @@
 QHeaderView::section {
-    background-color: #f0f0f0;
-    padding: 4px;
+    background-color: #f8f9fa;
+    padding: 8px;
     border: none;
-    border-bottom: 1px solid #d0d0d0;
+    border-bottom: 2px solid #e9ecef;
     border-right: none;
     font-weight: bold;
+    color: #495057;
+    border-radius: 4px 4px 0 0;
+}
+
+QHeaderView::section:hover {
+    background-color: #e9ecef;
+}
+
+QHeaderView::section:pressed {
+    background-color: #dee2e6;
 }
