@@ -2,30 +2,29 @@
 import asyncio
 import os
 import platform
-import sys
 
 import httpx
+import sys
 from PySide6.QtCore import QUrl, QSettings, Qt
-from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont, QPixmap, QImage
+from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
-from components.widget.navigation_avatar_widget import CustomNavigationAvatarWidget
+from api_client import api_client, AuthenticationError
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import MAIN_WINDOW_SIZE
 from nice_ui.ui.my_story import TableApp
+from nice_ui.ui.profile import ProfileInterface
 from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
-from nice_ui.ui.profile import ProfileInterface
 from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
-from api_client import api_client, AuthenticationError
-from nice_ui.services.service_provider import ServiceProvider
 
 
 class Window(FluentWindow):
