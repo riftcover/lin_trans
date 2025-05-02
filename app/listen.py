@@ -283,7 +283,8 @@ class SrtWriter:
             progress = min(round((i + 1) * 100 / total_segments), 100)
             self.data_bridge.emit_whisper_working(self.unid, progress)
 
-            text = rich_transcription_postprocess(res[0]["text"])
+            # 使用自定义函数保留emoji
+            text = self.custom_rich_transcription_postprocess(res[0]["text"])
             time_res = time_model.generate(input=(temp_file.name, text), data_type=("sound", "text"))
 
             # 添加输入验证
@@ -315,6 +316,40 @@ class SrtWriter:
         start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
         end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
         return audio_data[start_sample:end_sample]
+
+    def custom_rich_transcription_postprocess(self, s):
+        """
+        自定义的后处理函数，保留emoji
+        基于FunASR的rich_transcription_postprocess函数修改
+        """
+        from funasr.utils.postprocess_utils import format_str_v2, lang_dict, emo_set, event_set
+
+        def get_emo(s):
+            return s[-1] if s[-1] in emo_set else None
+
+        def get_event(s):
+            return s[0] if s[0] in event_set else None
+
+        s = s.replace("<|nospeech|><|Event_UNK|>", "❓")
+        for lang in lang_dict:
+            s = s.replace(lang, "<|lang|>")
+        s_list = [format_str_v2(s_i).strip(" ") for s_i in s.split("<|lang|>")]
+        new_s = " " + s_list[0]
+        cur_ent_event = get_event(new_s)
+        for i in range(1, len(s_list)):
+            if len(s_list[i]) == 0:
+                continue
+            if get_event(s_list[i]) == cur_ent_event and get_event(s_list[i]) != None:
+                s_list[i] = s_list[i][1:]
+            # else:
+            cur_ent_event = get_event(s_list[i])
+            if get_emo(s_list[i]) != None and get_emo(s_list[i]) == get_emo(new_s):
+                new_s = new_s[:-1]
+            new_s += s_list[i].strip().lstrip()
+        new_s = new_s.replace("The.", " ")
+        for emoji in emo_set.union(event_set):
+            new_s = new_s.replace(emoji, " ")
+        return new_s.strip()
 
     # def factory_whisper(self, model_name, system_type: str, cuda_status: bool):
     #     if system_type != 'darwin':
