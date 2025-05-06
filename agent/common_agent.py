@@ -1,16 +1,13 @@
 import re
-import time
 from pathlib import Path
 
+import time
 from openai import OpenAI, AuthenticationError
 
 from nice_ui.configure.signal import data_bridge
-from nice_ui.configure import config
 from nice_ui.util.proxy_client import create_openai_client
 from utils import logger
-from utils.agent_dict import agent_settings, AgentDict
-
-agent_msg = agent_settings()
+from utils.agent_dict import agent_msg, AgentConfig
 
 
 def uoload_file(agent, file_path):
@@ -20,7 +17,7 @@ def uoload_file(agent, file_path):
     return file_object.id
 
 
-def chat_translate(agent: AgentDict, prompt_content: str, text: str) -> str:
+def chat_translate(agent: AgentConfig, prompt_content: str, text: str) -> str:
     """
 
     Args:
@@ -54,7 +51,7 @@ def translate_document(unid, in_document, out_document, agent_name, prompt, chun
         prompt: 翻译提示
         sleep_time: 2次翻译间隔时间,根据各api提供方限流来设置
     """
-    agent: AgentDict = agent_msg[agent_name]
+    agent: AgentConfig = agent_msg[agent_name]
     logger.trace(f'chunk_size: {chunk_size}, sleep_time: {sleep_time}')
     with open(in_document, 'r', encoding='utf-8') as file:
         content = file.read()

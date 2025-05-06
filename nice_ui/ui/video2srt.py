@@ -427,7 +427,9 @@ class TableWindow:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
             # 计算代币消耗
+            logger.info('重新计算')
             amount = token_service.calculate_asr_tokens(video_long)
+            logger.info(f'代币消耗: {amount}')
 
         #todo: 此时还不知道字数，待调整
         # # 判断是否勾选翻译
