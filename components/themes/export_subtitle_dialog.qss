@@ -1,0 +1,102 @@
+/* 导出字幕对话框样式 */
+
+/* 对话框主体样式 */
+#exportDialogWidget {
+    background-color: white;
+    border-radius: 8px;
+}
+
+/* 标题样式 */
+#dialogTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333333;
+    padding-bottom: 6px;
+}
+
+/* 内容卡片样式 */
+#contentCard {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 标签样式 */
+#formatLabel, #pathLabel {
+    font-weight: 500;
+    color: #555555;
+    padding: 3px 0;
+    font-size: 13px;
+}
+
+/* 单选按钮样式 */
+RadioButton {
+    color: #555555;
+    font-size: 13px;
+    padding: 3px;
+}
+
+RadioButton::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+/* 路径输入框样式 */
+#pathInputFrame LineEdit {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 6px 10px;
+    background-color: white;
+    font-size: 13px;
+}
+
+#pathInputFrame LineEdit:focus {
+    border-color: #3d7eff;
+}
+
+/* 浏览按钮样式 */
+#pathInputFrame PushButton {
+    padding: 6px 10px;
+    border-radius: 4px;
+    background-color: #f1f3f5;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    font-size: 13px;
+}
+
+#pathInputFrame PushButton:hover {
+    background-color: #e9ecef;
+}
+
+/* 底部按钮样式 */
+PushButton {
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: #f1f3f5;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    min-width: 75px;
+    font-size: 13px;
+}
+
+PushButton:hover {
+    background-color: #e9ecef;
+}
+
+PrimaryPushButton {
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: #3d7eff;
+    color: white;
+    border: none;
+    min-width: 75px;
+    font-size: 13px;
+}
+
+PrimaryPushButton:hover {
+    background-color: #2b6bed;
+}
+
+PrimaryPushButton:pressed {
+    background-color: #1a5fd9;
+}

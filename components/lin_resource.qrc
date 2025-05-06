@@ -9,6 +9,7 @@
         <file>themes/subedit_head.qss</file>
         <file>themes/subedit_table.qss</file>
         <file>themes/lin_pagination.qss</file>
+        <file>themes/export_subtitle_dialog.qss</file>
     </qresource>
     <qresource prefix="/icon">
         <file>assets/AntDesignDownSquareFilled.svg</file>
@@ -22,5 +23,7 @@
         <file>assets/MingcuteArrowsRightLine.svg</file>
         <file>assets/MingcuteLeftLine.svg</file>
         <file>assets/MingcuteRightLine.svg</file>
+        <file>assets/MdiAccount.png</file>
+        <file>assets/MdiLightAccount.png</file>
     </qresource>
 </RCC>

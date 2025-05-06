@@ -214,7 +214,6 @@ class LocalModelPage(QWidget):
             最后下载的是文件是tokens.json
             """
             rr_dir = os.path.join(config.funasr_model_path, model_folder,"tokens.json")
-            logger.info(f"检查模型是否已安装: {rr_dir}")
 
             is_installed = os.path.exists(
                 rr_dir
