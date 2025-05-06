@@ -7,7 +7,7 @@ import argparse
 import site
 import time
 import pkgutil
-import logging
+from nice_ui.ui import __version__
 
 # ... (保留现有的 import 语句和函数定义) ...
 
@@ -17,7 +17,7 @@ parser.add_argument('--debug', action='store_true', help='启用调试模式')
 args = parser.parse_args()
 
 # 定义版本号
-your_version = "0.1.0"  # 替换为您的实际版本号
+your_version = __version__  # 替换为您的实际版本号
 
 # 定义项目根目录和其他目录
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
