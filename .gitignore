@@ -166,3 +166,4 @@ ffmpeg_output/
 orm/linlin.db
 /nuitka-crash-report.xml
 !/tmp/asr_tasks.json
+!/.vscode/

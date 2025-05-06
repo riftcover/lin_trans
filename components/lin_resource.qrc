@@ -9,6 +9,7 @@
         <file>themes/subedit_head.qss</file>
         <file>themes/subedit_table.qss</file>
         <file>themes/lin_pagination.qss</file>
+        <file>themes/export_subtitle_dialog.qss</file>
     </qresource>
     <qresource prefix="/icon">
         <file>assets/AntDesignDownSquareFilled.svg</file>
