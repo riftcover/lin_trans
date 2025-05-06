@@ -62,8 +62,8 @@ class WorkSrt(QWidget):
         self.source_language_combo.setFixedWidth(98)
         self.source_language_combo.addItems(self.language_name)
         if (
-            config.params["source_language"]
-            and config.params["source_language"] in self.language_name
+                config.params["source_language"]
+                and config.params["source_language"] in self.language_name
         ):
             self.source_language_combo.setCurrentText(config.params["source_language"])
         else:
@@ -87,8 +87,8 @@ class WorkSrt(QWidget):
         self.translate_language_combo.setFixedWidth(117)
         self.translate_language_combo.addItems(self.language_name)
         if (
-            config.params["target_language"]
-            and config.params["target_language"] in self.language_name
+                config.params["target_language"]
+                and config.params["target_language"] in self.language_name
         ):
             self.translate_language_combo.setCurrentText(
                 config.params["target_language"]
@@ -278,7 +278,7 @@ class LTableWindow:
         row_position = ui_table.rowCount()
         file_character_count = self.get_file_character_count(file_path)
         ts_count = str(self._calc_ds(file_character_count))
-        if file_character_count :
+        if file_character_count:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
             logger.info(f"file_name type: {type(file_name)}")
@@ -325,8 +325,8 @@ class LTableWindow:
             for line in lines:
                 # 跳过序号和时间戳
                 if re.match(r"^\d+$", line.strip()) or re.match(
-                    r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
-                    line.strip(),
+                        r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
+                        line.strip(),
                 ):
                     continue
                 character_count += len(line.strip())
@@ -374,13 +374,16 @@ class LTableWindow:
 
         # 获取当前选择的翻译引擎
         translate_engine = self.main.translate_model.currentText()
+        logger.info(translate_engine)
+        if translate_engine =='云翻译':
 
+            token_service = ServiceProvider().get_token_service()
 
+            # 计算结果取整后再返回
+            return token_service.calculate_trans_tokens(file_character_count, translate_engine)
+        else:
+            return 0
 
-        token_service = ServiceProvider().get_token_service()
-
-        # 计算结果取整后再返回
-        return token_service.calculate_trans_tokens(file_character_count,translate_engine)
 
 if __name__ == "__main__":
     import sys

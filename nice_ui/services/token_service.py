@@ -368,19 +368,6 @@ class TokenService(TokenServiceInterface):
             logger.error(f"获取充值套餐列表时发生错误: {str(e)}")
             return []
 
-    def calculate_asr_tokens(self, duration_seconds: float) -> int:
-        """
-        计算ASR任务所需的代币数量
-
-        Args:
-            duration_seconds: 音频时长（秒）
-
-        Returns:
-            int: 所需代币数量
-        """
-        # 每分钟消费10个代币，不足一分钟按一分钟计算
-        return max(1, int(duration_seconds / 60 + 0.5)) * 10
-
     def set_task_token_amount(self, key: str, amount: int) -> None:
         """
         设置任务的代币消费量

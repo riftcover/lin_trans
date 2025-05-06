@@ -1,6 +1,7 @@
 import httpx
-from PySide6.QtCore import QSettings
 from openai import OpenAI
+
+from nice_ui.ui import SettingsManager
 
 
 def get_proxy_from_settings():
@@ -10,7 +11,7 @@ def get_proxy_from_settings():
     Returns:
 
     """
-    settings = QSettings("Locoweed", "LinLInTrans")
+    settings = SettingsManager.get_instance()
     use_proxy = settings.value("use_proxy", False, type=bool)
     if not use_proxy:
         return None
