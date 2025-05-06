@@ -5,6 +5,8 @@ from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 
 from app.cloud_asr import aliyun_sdk
+from nice_ui.ui import SettingsManager
+
 
 class AgentConfig(BaseModel):
     """
@@ -51,17 +53,6 @@ class AgentRegistry(BaseModel):
             "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL,key =None)
         }
 
-    def _find_main_window(self):
-        """查找主窗口实例
-
-        Returns:
-            主窗口实例或None
-        """
-        for widget in QApplication.topLevelWidgets():
-            if widget.objectName() == "MainWindow":
-                return widget
-        return None
-
     def load_keys_from_settings(self, settings: Optional[QSettings] = None) -> None:
         """从用户设置中加载API密钥
 
@@ -69,13 +60,8 @@ class AgentRegistry(BaseModel):
             settings: 可选的QSettings实例，如果提供则使用该实例，否则尝试从MainWindow获取
         """
         # 如果没有提供settings，尝试从MainWindow获取，如果失败则创建新的实例
-        if settings is None:
-            # 尝试从MainWindow获取settings
-            main_window = self._find_main_window()
-            if main_window and hasattr(main_window, 'settings'):
-                settings = main_window.settings
-            else:
-                settings = QSettings("Locoweed3", "LinLInTrans")
+
+        settings = SettingsManager.get_instance()
 
         # 加载各AI服务的API密钥
         for agent_name in self.agents.keys():

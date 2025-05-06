@@ -2,9 +2,10 @@ import time
 
 from PySide6.QtCore import QSettings
 
+from nice_ui.ui import SettingsManager
 from nice_ui.util.proxy_client import create_openai_client
 
-settings = QSettings("Locoweed", "LinLInTrans")
+settings = SettingsManager.get_instance()
 kimi_key = settings.value("kimi", type=str)
 
 local_content = """

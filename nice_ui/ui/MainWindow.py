@@ -15,7 +15,7 @@ from api_client import api_client, AuthenticationError
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.services.service_provider import ServiceProvider
-from nice_ui.ui import MAIN_WINDOW_SIZE
+from nice_ui.ui import MAIN_WINDOW_SIZE, SettingsManager
 from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.profile import ProfileInterface
 from nice_ui.ui.setting_ui import SettingInterface
@@ -36,7 +36,7 @@ class Window(FluentWindow):
 
         # 获取当前工作目录
         current_directory = os.path.basename(os.getcwd())
-        self.settings = QSettings("Locoweed3",  f"LinLInTrans_{current_directory}")
+        self.settings = SettingsManager.get_instance()
         # 设置主题颜色为蓝色
         setThemeColor(QColor("#0078d4"))
 
