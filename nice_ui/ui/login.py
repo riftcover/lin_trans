@@ -108,10 +108,8 @@ class LoginWindow(QFrame):
         self.loginButton = PrimaryPushButton('登录', self)
         self.loginButton.setFixedHeight(40)
 
-        # 忘记密码按钮
-        self.forgotPasswordButton = PrimaryPushButton('忘记密码？', self)
-        self.forgotPasswordButton.setFixedHeight(30)
-        self.forgotPasswordButton.setStyleSheet("""
+        # 忘记密码和注册按钮的样式
+        self.linkButtonStyle = """
             PrimaryPushButton {
                 font-size: 13px;
                 color: rgb(96, 96, 96);
@@ -128,7 +126,17 @@ class LoginWindow(QFrame):
                 color: rgb(0, 90, 158);
                 background-color: rgba(0, 120, 212, 0.15);
             }
-        """)
+        """
+
+        # 忘记密码按钮
+        self.forgotPasswordButton = PrimaryPushButton('忘记密码？', self)
+        self.forgotPasswordButton.setFixedHeight(30)
+        self.forgotPasswordButton.setStyleSheet(self.linkButtonStyle)
+
+        # 注册按钮
+        self.registerButton = PrimaryPushButton('注册账号', self)
+        self.registerButton.setFixedHeight(30)
+        self.registerButton.setStyleSheet(self.linkButtonStyle)
 
         # 添加所有控件到布局
         self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignCenter)
@@ -140,7 +148,16 @@ class LoginWindow(QFrame):
         self.loginLayout.addWidget(self.passwordInput)
         self.loginLayout.addWidget(self.rememberCheckBox)
         self.loginLayout.addWidget(self.loginButton)
-        self.loginLayout.addWidget(self.forgotPasswordButton, 0, Qt.AlignCenter)
+
+        # 创建水平布局放置忘记密码和注册按钮
+        self.buttonsLayout = QHBoxLayout()
+        self.buttonsLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonsLayout.setSpacing(10)
+        self.buttonsLayout.addWidget(self.forgotPasswordButton)
+        self.buttonsLayout.addWidget(self.registerButton)
+
+        # 将水平布局添加到登录卡片布局
+        self.loginLayout.addLayout(self.buttonsLayout)
 
         self.vBoxLayout.addWidget(self.loginCard)
         self.vBoxLayout.addStretch()
@@ -148,6 +165,7 @@ class LoginWindow(QFrame):
         # 连接信号
         self.loginButton.clicked.connect(self.handle_login)
         self.forgotPasswordButton.clicked.connect(self.handle_forgot_password)
+        self.registerButton.clicked.connect(self.handle_register)
 
     def setup_animation(self):
         # 窗口打开时的动画效果
@@ -243,40 +261,53 @@ class LoginWindow(QFrame):
             )
 
     def handle_forgot_password(self):
-        email = self.emailInput.text()
-        if not email:
-            InfoBar.error(
-                title='错误',
-                content='请输入邮箱地址',
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self
-            )
-            return
+        # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        from utils.config_manager import get_web_url
 
-        try:
-            api_client.reset_password_sync(email)
-            InfoBar.success(
-                title='成功',
-                content='重置密码链接已发送到您的邮箱',
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
-        except Exception as e:
-            InfoBar.error(
-                title='错误',
-                content=str(e),
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
+        # 尝试获取邮箱地址，如果有的话可以作为参数传递
+        email = self.emailInput.text()
+
+        # 从配置中获取忘记密码页面的URL
+        forgot_password_url = get_web_url('forgot_password')
+
+        # 打开浏览器并跳转到指定的URL
+        QDesktopServices.openUrl(QUrl(forgot_password_url))
+
+        # 显示提示信息
+        InfoBar.success(
+            title='成功',
+            content='已打开密码重置页面',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
+
+    def handle_register(self):
+        # 使用QDesktopServices打开浏览器并跳转到注册页面
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        from utils.config_manager import get_web_url
+
+        # 从配置中获取注册页面的URL
+        register_url = get_web_url('register')
+
+        # 打开浏览器并跳转到指定的URL
+        QDesktopServices.openUrl(QUrl(register_url))
+
+        # 显示提示信息
+        InfoBar.success(
+            title='成功',
+            content='已打开注册页面',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
 
     def get_window_opacity(self):
         return self.opacity
