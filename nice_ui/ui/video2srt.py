@@ -224,6 +224,25 @@ class Video2SRT(QWidget):
         self.source_model.currentTextChanged.connect(self.recalculate_computing_power)
 
     def on_start_clicked(self):
+        # 获取识别引擎代码
+        model_key = self.source_model.currentText()
+        model_info = start_tools.match_source_model(model_key)
+        model_status = model_info["status"]
+
+        if self.check_fanyi.isChecked() == True and model_status < 100:
+            # 显示警告提示
+            #todo： 支持云识别+翻译后取消这个
+            InfoBar.warning(
+                title="提示",
+                content="使用云模型识别字幕后，请在字幕翻译页面进行翻译操作",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=4000,
+                parent=self,
+            )
+            return
+
         # 显示成功提示
         InfoBar.success(
             title="成功",
@@ -235,10 +254,7 @@ class Video2SRT(QWidget):
             parent=self,
         )
 
-        # 获取识别引擎代码
-        model_key = self.source_model.currentText()
-        model_info = start_tools.match_source_model(model_key)
-        model_status = model_info["status"]
+
         # 保存媒体列表
         self.add_queue_mp4()
         # 是否需要翻译

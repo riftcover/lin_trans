@@ -116,11 +116,9 @@ class TokenService(TokenServiceInterface):
                     if coef['coefficient_key'] == 'asr_qps':
                         old_value = self.asr_qps
                         self.asr_qps = float(coef['coefficient_value'])
-                        logger.info(f"从服务器更新ASR算力消耗系数: {old_value} -> {self.asr_qps}")
                     elif coef['coefficient_key'] == 'trans_qps':
                         old_value = self.trans_qps
                         self.trans_qps = float(coef['coefficient_value'])
-                        logger.info(f"从服务器更新翻译算力消耗系数: {old_value} -> {self.trans_qps}")
                 return True
             return False
         except Exception as e:
