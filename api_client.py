@@ -1,11 +1,12 @@
-import httpx
-from typing import Optional, Dict, Callable
-from functools import wraps
-import time
-from app.core.security import generate_signature
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
+from typing import Optional, Dict, Callable
 
+import httpx
+import time
+
+from app.core.security import generate_signature
 from utils import logger
 
 
@@ -41,9 +42,18 @@ def _run_async(coro):
 
 
 class APIClient:
-    def __init__(self, base_url: str = "http://123.57.206.182:8000/api"):
-        self.base_url = base_url
-        self.client = httpx.AsyncClient(base_url=base_url, timeout=15.0)
+    def __init__(self, base_url: str = None, timeout: float = None):
+        # 从配置管理器获取API配置
+        from utils.config_manager import get_api_base_url, get_api_timeout
+
+        # 如果没有提供基础URL，从配置中获取
+        self.base_url = base_url or get_api_base_url()
+        # 如果没有提供超时时间，从配置中获取
+        timeout_value = timeout or get_api_timeout()
+
+        logger.info(f"Initializing API client with base_url: {self.base_url}, timeout: {timeout_value}")
+
+        self.client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout_value)
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
         self._executor = ThreadPoolExecutor(max_workers=1)
@@ -620,8 +630,8 @@ class APIClient:
 
 
 # 创建全局API客户端实例
-# api_client = APIClient()
-api_client = APIClient("http://127.0.0.1:8000/api")
+# 使用配置管理器中的设置创建API客户端
+api_client = APIClient()
 
 if __name__ == '__main__':
     user_login = api_client.login_sync("tiaodanwusha@gmail.com", "1234567")
