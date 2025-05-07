@@ -102,9 +102,10 @@ class APIClient:
             data = response.json()
             self._update_token(data)
             return data
-        except httpx.HTTPError as e:
-            logger.error(f'Login failed: {e}')
-            raise Exception(f"登录失败: {str(e)}")
+        except httpx.HTTPStatusError as e:
+            error_json = e.response.json()
+            logger.error(f'Login failed: {error_json}')
+            raise Exception(error_json.get('detail'))
 
     def _update_token(self, response_data: Dict) -> None:
         """更新token和refresh_token的辅助方法"""
@@ -619,4 +620,8 @@ class APIClient:
 
 
 # 创建全局API客户端实例
-api_client = APIClient()
+# api_client = APIClient()
+api_client = APIClient("http://127.0.0.1:8000/api")
+
+if __name__ == '__main__':
+    user_login = api_client.login_sync("tiaodanwusha@gmail.com", "1234567")

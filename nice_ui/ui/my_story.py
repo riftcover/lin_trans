@@ -326,7 +326,6 @@ class TableApp(CardWidget):
         unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
-        logger.info("我的创作列表中添加新行")
         chk, file_status = self._add_common_widgets(
             row_position, filename, unid, job_status, obj_format
         )
@@ -334,7 +333,6 @@ class TableApp(CardWidget):
             chk.setEnabled(False)
             file_status.set_status("排队中")
         elif job_status == 0:
-            logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)
             file_status.set_status("处理失败")
             # self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
