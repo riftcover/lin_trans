@@ -53,6 +53,7 @@ cmd = [
     f"--add-data=result{os.pathsep}result",
     f"--add-data=tmp{os.pathsep}tmp",
     f"--add-data=.credentials{os.pathsep}.credentials",
+    f"--add-data=config{os.pathsep}config",
 ]
 
 # todo: 打包前重新生成orm/linlin.db文件
