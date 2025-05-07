@@ -196,12 +196,8 @@ class ProfileInterface(QFrame):
         # 使用记录标题和记录数量显示
         self.usageTitleLayout = QHBoxLayout()
         self.usageTitle = SubtitleLabel('使用记录', self)
-        self.recordCountLabel = BodyLabel('共 0 条记录', self)
-        self.recordCountLabel.setStyleSheet('color: #666666;')
-
         self.usageTitleLayout.addWidget(self.usageTitle)
         self.usageTitleLayout.addStretch()
-        self.usageTitleLayout.addWidget(self.recordCountLabel)
 
         self.usageLayout.addLayout(self.usageTitleLayout)
 
@@ -309,8 +305,6 @@ class ProfileInterface(QFrame):
                     current_page=1,  # 重置到第一页
                     total_records=total_records
                 )
-                # 更新记录数量标签
-                self.recordCountLabel.setText(f'共 {total_records} 条记录')
         except AuthenticationError as e:
             self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
@@ -326,8 +320,6 @@ class ProfileInterface(QFrame):
                 current_page=1,  # 重置到第一页
                 total_records=total_records
             )
-            # 更新记录数量标签
-            self.recordCountLabel.setText(f'共 {total_records} 条记录')
         else:
             logger.error(f"更新使用记录失败，{new_transactions}")
 
@@ -358,8 +350,6 @@ class ProfileInterface(QFrame):
         # 输出分页信息到日志
         logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
 
-        # 更新记录数量标签
-        self.recordCountLabel.setText(f'共 {total_records} 条记录')
 
         # 使用新方法更新表格和分页状态
         self.transactionTable.update_with_data(
@@ -441,8 +431,6 @@ class ProfileInterface(QFrame):
             # 增加总记录数
             self.transactionTable.total_records += 1
             total_records = self.transactionTable.total_records
-            # 更新记录数量标签
-            self.recordCountLabel.setText(f'共 {total_records} 条记录')
 
             # 重置到第一页
             self.current_page = 1
@@ -466,7 +454,6 @@ class ProfileInterface(QFrame):
         self.emailValue.setText('未登录')
         self.quotaValue.setText('0')
         self.logoutButton.setVisible(False)  # 退出后隐藏退出按钮
-        self.recordCountLabel.setText('共 0 条记录')  # 重置记录数量标签
 
         # 清空使用记录表格
         self.transactionTable.clear()

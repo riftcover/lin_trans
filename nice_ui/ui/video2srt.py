@@ -241,8 +241,6 @@ class Video2SRT(QWidget):
                 duration=4000,
                 parent=self,
             )
-            # 取消勾选翻译选项
-            # self.check_fanyi.setChecked(False)
             return
 
         # 显示成功提示
