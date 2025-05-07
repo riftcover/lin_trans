@@ -51,6 +51,8 @@ cmd = [
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
     f"--add-data=logs{os.pathsep}logs",
     f"--add-data=result{os.pathsep}result",
+    f"--add-data=tmp{os.pathsep}tmp",
+    f"--add-data=.credentials{os.pathsep}.credentials",
 ]
 
 # todo: 打包前重新生成orm/linlin.db文件
