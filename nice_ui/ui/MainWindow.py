@@ -189,6 +189,7 @@ class Window(FluentWindow):
                         self.avatarWidget.setName(user_info['email'])
                         # 更新个人中心页面
                         logger.info("自动登录成功")
+                        self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
 
                         # 更新算力消耗系数
                         from nice_ui.services.service_provider import ServiceProvider
@@ -290,7 +291,7 @@ class Window(FluentWindow):
         # 登录成功后使用设置图标作为头像
         # 直接使用FluentIcon作为头像，确保与导航图标一致
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
-        self.login_window.hide()
+        # self.login_window.hide()
 
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
