@@ -198,7 +198,7 @@ class Window(FluentWindow):
                 except AuthenticationError as e:
                     logger.warning(f"Token验证失败，尝试刷新: {e}")
                     # 尝试刷新token
-                    if api_client.refresh_session_sync():
+                    if api_client.refresh_session_t():
                         logger.info("Token刷新成功，重新尝试自动登录")
                         # 刷新成功，更新设置中的token
                         self.settings.setValue('token', api_client._token)
@@ -308,7 +308,7 @@ class Window(FluentWindow):
     def handleAuthError(self):
         """处理认证错误（401）"""
         # 尝试刷新token
-        if api_client.refresh_session_sync():
+        if api_client.refresh_session_t():
             logger.info("Token刷新成功")
             # 刷新成功，更新设置中的token
             self.settings.setValue('token', api_client._token)
@@ -362,7 +362,7 @@ class Window(FluentWindow):
         try:
             # 清理API客户端资源
             if hasattr(self, 'is_logged_in') and self.is_logged_in:
-                api_client.close_sync()
+                api_client.close_t()
                 logger.info("API client resources cleaned up")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")

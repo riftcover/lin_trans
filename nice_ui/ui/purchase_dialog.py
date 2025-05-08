@@ -396,7 +396,7 @@ class PurchaseDialog(MaskDialogBase):
     def _update_balance(self):
         """更新当前余额"""
         try:
-            balance_data = api_client.get_balance_sync()
+            balance_data = api_client.get_balance_t()
             if balance_data and 'data' in balance_data:
                 balance = balance_data['data'].get('balance', 0)
                 self.balanceValue.setText(str(balance))
@@ -449,7 +449,7 @@ class PurchaseDialog(MaskDialogBase):
                 # 调用充值接口
                 us_id = api_client.get_id()
                 logger.info(f'user_id:{us_id}')
-                result = api_client.recharge_tokens_sync(us_id,self.selected_amount)
+                result = api_client.recharge_tokens_t(us_id, self.selected_amount)
 
                 # 处理成功响应
                 if result and 'data' in result:

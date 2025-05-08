@@ -225,7 +225,7 @@ class LoginWindow(QFrame):
             return
 
         try:
-            user_login = api_client.login_sync(email, password)
+            user_login = api_client.login_t(email, password)
             # 保存邮箱账号和登录状态
             if user_login:
                 self.save_email(email)

@@ -257,7 +257,7 @@ class ProfileInterface(QFrame):
     def _update_balance(self):
         """更新算力余额"""
         logger.info("个人中心接收到更新余额信号，开始更新余额")
-        balance_data = api_client.get_balance_sync()
+        balance_data = api_client.get_balance_t()
         if balance_data and 'data' in balance_data:
             balance = balance_data['data'].get('balance', 0)
             self.quotaValue.setText(str(balance))
@@ -335,7 +335,7 @@ class ProfileInterface(QFrame):
             self.current_page = page
 
         # 调用API获取指定页的交易记录
-        history_data = api_client.get_history_sync(
+        history_data = api_client.get_history_t(
             page=self.current_page,
             page_size=self.page_size
         )

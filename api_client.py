@@ -15,7 +15,7 @@ class AuthenticationError(Exception):
     pass
 
 
-def to_sync(func: Callable):
+def to_t(func: Callable):
     """将异步方法转换为同步方法的装饰器"""
 
     @wraps(func)
@@ -163,13 +163,13 @@ class APIClient:
             logger.error(f'Failed to refresh session: {e}')
             return False
 
-    @to_sync
-    async def refresh_session_sync(self) -> bool:
+    @to_t
+    async def refresh_session_t(self) -> bool:
         """刷新会话token（同步版本）"""
         return await self.refresh_session()
 
-    @to_sync
-    async def login_sync(self, email: str, password: str) -> Dict:
+    @to_t
+    async def login_t(self, email: str, password: str) -> Dict:
         """用户登录（同步版本）"""
         return await self.login(email, password)
 
@@ -208,8 +208,8 @@ class APIClient:
                     raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取余额失败: {str(e)}")
 
-    @to_sync
-    async def get_balance_sync(self) -> Dict:
+    @to_t
+    async def get_balance_t(self) -> Dict:
         """
         获取用户余额（同步版本）
         """
@@ -232,8 +232,8 @@ class APIClient:
         except httpx.HTTPError as e:
             raise Exception(f"重置密码请求失败: {str(e)}") from e
 
-    @to_sync
-    async def reset_password_sync(self, email: str) -> Dict:
+    @to_t
+    async def reset_password_t(self, email: str) -> Dict:
         """
         请求重置密码（同步版本）
         """
@@ -299,9 +299,9 @@ class APIClient:
             logger.error(f'Unexpected error in get_history: {e}')
             raise ValueError(f"获取交易历史失败: {str(e)}")
 
-    @to_sync
-    async def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
-                               start_date: Optional[str] = None, end_date: Optional[str] = None):
+    @to_t
+    async def get_history_t(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
+                            start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
         获取交易历史记录（同步版本）
 
@@ -349,7 +349,7 @@ class APIClient:
             if e.response.status_code == 401:
                 logger.warning("Authentication failed (401), attempting to refresh token")
                 # 尝试刷新token
-                if self.refresh_session_sync():
+                if self.refresh_session_t():
                     # 刷新成功，重试请求
                     logger.info('Token refreshed, retrying request')
                     try:
@@ -459,8 +459,8 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_tokens: {e}')
             raise ValueError(f"充值失败: {str(e)}") from e
 
-    @to_sync
-    async def recharge_tokens_sync(self, us_id: str, amount: int) -> Dict:
+    @to_t
+    async def recharge_tokens_t(self, us_id: str, amount: int) -> Dict:
         """
         充值代币（同步版本）
 
@@ -492,8 +492,8 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_packages: {e}')
             raise ValueError(f"充值套餐失败: {str(e)}") from e
 
-    @to_sync
-    async def recharge_packages_sync(self) -> Dict:
+    @to_t
+    async def recharge_packages_t(self) -> Dict:
         """
         充值套餐（同步版本）
         Returns:
@@ -561,8 +561,8 @@ class APIClient:
             logger.error(f'消费代币时发生错误: {e}')
             raise ValueError(f"消费代币失败: {str(e)}") from e
 
-    @to_sync
-    async def consume_tokens_sync(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+    @to_t
+    async def consume_tokens_t(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
         """
         消费代币（同步版本）
 
@@ -611,8 +611,8 @@ class APIClient:
                     raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取代币消耗系数失败: {str(e)}")
 
-    @to_sync
-    async def get_token_coefficients_sync(self) -> Dict:
+    @to_t
+    async def get_token_coefficients_t(self) -> Dict:
         """
         获取代币消耗系数（同步版本）
         """
@@ -623,8 +623,8 @@ class APIClient:
         await self.client.aclose()
         self._executor.shutdown(wait=True)
 
-    @to_sync
-    async def close_sync(self):
+    @to_t
+    async def close_t(self):
         """关闭HTTP客户端（同步版本）"""
         await self.close()
 
@@ -634,4 +634,4 @@ class APIClient:
 api_client = APIClient()
 
 if __name__ == '__main__':
-    user_login = api_client.login_sync("tiaodanwusha@gmail.com", "1234567")
+    user_login = api_client.login_t("tiaodanwusha@gmail.com", "1234567")

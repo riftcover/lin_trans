@@ -69,7 +69,7 @@ class AuthService(AuthInterface):
             # 尝试进行一个简单的API调用来验证token是否有效
             try:
                 # 获取用户余额信息来验证token
-                balance_data = api_client.get_balance_sync()
+                balance_data = api_client.get_balance_t()
                 if 'data' in balance_data and 'balance' in balance_data['data']:
                     user_balance = int(balance_data['data']['balance'])
                     logger.info(f"用户当前代币余额: {user_balance}")

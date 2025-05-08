@@ -108,7 +108,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取代币消耗系数
-            response = api_client.get_token_coefficients_sync()
+            response = api_client.get_token_coefficients_t()
             if response and 'data' in response:
                 coefficients = response['data']
                 # 遍历系数列表，更新对应的值
@@ -134,7 +134,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取用户余额
-            balance_data = api_client.get_balance_sync()
+            balance_data = api_client.get_balance_t()
 
             # 解析响应数据获取代币余额
             if 'data' in balance_data and 'balance' in balance_data['data']:
@@ -162,7 +162,7 @@ class TokenService(TokenServiceInterface):
         # 更新历史记录
         try:
             # 获取最新的交易记录
-            history_data = api_client.get_history_sync(page=1, page_size=10)
+            history_data = api_client.get_history_t(page=1, page_size=10)
             if history_data and 'data' in history_data:
                 transactions = history_data['data'].get('transactions', [])
                 total_records = history_data['data'].get('total', 0)
@@ -356,7 +356,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取充值套餐列表
-            packages_data = api_client.recharge_packages_sync()
+            packages_data = api_client.recharge_packages_t()
 
             # 解析响应数据获取充值套餐列表
             packages = packages_data.get('data', [])
@@ -417,7 +417,7 @@ class TokenService(TokenServiceInterface):
         try:
             # 调用api_client中的方法消费代币
             us_id = api_client.get_id()
-            api_client.consume_tokens_sync(token_amount, feature_key,us_id)
+            api_client.consume_tokens_t(token_amount, feature_key, us_id)
             logger.info(f"消费代币成功: {token_amount}")
             return True
 
