@@ -54,6 +54,11 @@ cmd = [
     f"--add-data=tmp{os.pathsep}tmp",
     f"--add-data=.credentials{os.pathsep}.credentials",
     f"--add-data=config{os.pathsep}config",
+    # 排除docs和xff文件夹
+    "--exclude=docs",
+    "--exclude=xff",
+    "--exclude=.github",
+    "--exclude=test",
 ]
 
 # todo: 打包前重新生成orm/linlin.db文件
@@ -71,13 +76,9 @@ if args.debug:
 
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
-    cmd.extend([
-        "--icon={}".format(os.path.join("components", "assets", "linlin.ico")),
-    ])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.ico")}'])
 elif platform.system() == "Darwin":  # macOS
-    cmd.extend([
-        "--icon={}".format(os.path.join("components", "assets", "linlin.icns"))
-    ])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.icns")}'])
     if platform.machine() == "arm64":
         cmd.append("--target-architecture=arm64")
     else:
