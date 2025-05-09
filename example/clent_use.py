@@ -2,7 +2,6 @@ import time
 
 import httpx
 
-# PROFILE = "http://127.0.0.1:8000/user/profile"
 PROFILE = "http://127.0.0.1:8000/api/client/tt"
 check_endpoint = "http://127.0.0.1:8000/api/client/check-version"
 json_data = {
