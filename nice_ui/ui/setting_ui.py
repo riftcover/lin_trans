@@ -1144,7 +1144,24 @@ class CommonPage(QWidget):
         try:
             # 禁用检查更新按钮，直到检查完成
             self.check_update_button.setEnabled(False)
+            
+            # 获取当前版本
+            current_version = self.version_value.text()
+            
+            # 清空之前的任务
+            self.api_worker.clear_tasks()
+            
+            # 添加版本检查任务
+            self.api_worker.add_task(
+                "version",
+                self.api_worker.client.check_version,
+                'windows',
+                current_version
+            )
+            
+            # 启动工作线程
             self.api_worker.start()
+            
             InfoBar.info(
                 title="检查更新",
                 content="正在检查更新，请稍候...",
@@ -1154,10 +1171,6 @@ class CommonPage(QWidget):
                 duration=2000,
                 parent=self,
             )
-
-            # 获取当前版本
-            current_version = self.version_value.text()
-
 
         except Exception as e:
             logger.error(f"检查更新失败: {str(e)}")
