@@ -26,38 +26,53 @@ class ApiClient:
         """初始化API客户端"""
         self.tasks = []
         self.results = {}
+        self.client = None
+
+    async def initialize(self):
+        """初始化HTTP客户端"""
+        self.client = httpx.AsyncClient()
+
+    async def cleanup(self):
+        """清理HTTP客户端"""
+        if self.client:
+            await self.client.aclose()
+            self.client = None
 
     async def ask_version(self) -> Dict[str, Any]:
         """异步获取版本信息"""
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                check_endpoint,
-                headers=headers,
-                json=json_data,
-                timeout=10
-            )
-            result = response.json()
-            # print("版本信息获取成功:")
-            # print(result)
-            # 如果有回调函数，在这里调用
-            return result
+        if not self.client:
+            await self.initialize()
+            
+        response = await self.client.post(
+            check_endpoint,
+            headers=headers,
+            json=json_data,
+            timeout=10
+        )
+        result = response.json()
+        # print("版本信息获取成功:")
+        # print(result)
+        # 如果有回调函数，在这里调用
+        return result
 
     async def get_profile(self) -> Dict[str, Any]:
         """异步获取用户资料"""
         # 模拟这个API需要更长的时间
         await asyncio.sleep(2)
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                PROFILE,
-                headers=headers,
-                timeout=10
-            )
-            result = response.json()
-            # print("用户资料获取成功")
-            # print(result)
-            # 如果有回调函数，在这里调用
-            return result
+        if not self.client:
+            await self.initialize()
+            
+        response = await self.client.get(
+            PROFILE,
+            headers=headers,
+            timeout=10
+        )
+        result = response.json()
+        # print("用户资料获取成功")
+        # print(result)
+        # 如果有回调函数，在这里调用
+        return result
 
     def add_task(self, api_func: Callable, api_name: str, callback: Callable = None):
         """

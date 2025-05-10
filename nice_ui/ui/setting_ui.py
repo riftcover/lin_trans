@@ -2,10 +2,12 @@ import os
 import sys
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal,Qt, QUrl, QSize, QTimer
+from PySide6.QtCore import QThread, Signal, Qt, QUrl, QSize, QTimer, Slot
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
+
+from nice_ui.task.api_thread import ApiWorker
 from nice_ui.ui import __version__
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
@@ -1069,6 +1071,7 @@ class CommonPage(QWidget):
         self.settings = settings
         self.setup_ui()
         self.bind_actions()
+        self._setup_api_worker()
 
     def setup_ui(self):
         # 创建主布局
@@ -1137,10 +1140,11 @@ class CommonPage(QWidget):
         self.check_update_button.clicked.connect(self.check_for_updates)
 
     def check_for_updates(self):
-        """检查更新"""
+        """检查更新 - 异步方式"""
         try:
-            # 这里实现检查更新的逻辑
-            # 显示正在检查更新的提示
+            # 禁用检查更新按钮，直到检查完成
+            self.check_update_button.setEnabled(False)
+            self.api_worker.start()
             InfoBar.info(
                 title="检查更新",
                 content="正在检查更新，请稍候...",
@@ -1151,8 +1155,10 @@ class CommonPage(QWidget):
                 parent=self,
             )
 
-            # 模拟检查更新过程
-            QTimer.singleShot(1500, self.show_update_result)
+            # 获取当前版本
+            current_version = self.version_value.text()
+
+
         except Exception as e:
             logger.error(f"检查更新失败: {str(e)}")
             InfoBar.error(
@@ -1164,13 +1170,53 @@ class CommonPage(QWidget):
                 duration=3000,
                 parent=self,
             )
+            self.check_update_button.setEnabled(True)
 
-    def show_update_result(self):
-        """显示更新结果"""
-        # 这里可以根据实际情况修改，目前是模拟已经是最新版本
+    def handle_version_check_result(self, result):
+        """处理版本检查结果"""
+        try:
+            logger.info(f"版本检查结果: {result}")
+
+            # 解析API返回的结果
+            if result.get("code") == 200 and result.get("message") == "success":
+                data = result.get("data", {})
+
+                if data.get("need_update", False):
+                    # 需要更新
+                    self.show_update_available(data)
+                else:
+                    # 已是最新版本
+                    self.show_latest_version()
+            else:
+                # API返回错误
+                data = result.get("data", {})
+                if isinstance(data, dict) and "detail" in data:
+                    error_msg = data.get("detail")
+                else:
+                    error_msg = result.get("message", "未知错误")
+
+                self.handle_version_check_error(error_msg)
+
+        except Exception as e:
+            logger.error(f"处理版本检查结果出错: {str(e)}")
+            self.handle_version_check_error(str(e))
+
+    def handle_version_check_error(self, error_msg):
+        """处理版本检查错误"""
+        logger.error(f"版本检查错误: {error_msg}")
+        InfoBar.error(
+            title="检查更新失败",
+            content=f"错误: {error_msg}",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
+
+    def show_latest_version(self):
+        """显示已是最新版本的对话框"""
         current_version = self.version_value.text()
-
-        # 创建对话框
         dialog = MessageBox(
             "检查更新",
             f"当前版本 {current_version} 已经是最新版本。",
@@ -1180,6 +1226,90 @@ class CommonPage(QWidget):
         dialog.cancelButton.setVisible(False)  # 隐藏取消按钮
         dialog.exec()
 
+    def show_update_available(self, data):
+        """显示有新版本可用的对话框"""
+        latest_version = data.get("latest_version", "")
+        release_notes = data.get("release_notes", "无发行说明")
+        update_url = data.get("update_url", "")
+
+        message = f"发现新版本: {latest_version}\n\n更新内容:\n{release_notes}"
+
+        dialog = MessageBox(
+            "发现新版本",
+            message,
+            self
+        )
+        dialog.yesButton.setText("前往下载")
+        dialog.cancelButton.setText("稍后再说")
+
+        if dialog.exec():
+            # 用户点击了"前往下载"
+            import webbrowser
+            webbrowser.open(update_url)
+
+    def on_version_check_finished(self):
+        """版本检查完成时调用"""
+        # 重新启用检查更新按钮
+        self.check_update_button.setEnabled(True)
+
+    def _setup_api_worker(self):
+        """设置API工作线程"""
+        self.api_worker = ApiWorker()
+        self.api_worker.signals.data_received.connect(self._on_data_received)
+        self.api_worker.signals.error_occurred.connect(self._on_error_occurred)
+        self.api_worker.signals.all_completed.connect(self._on_all_completed)
+
+    @Slot(str, str)
+    def _on_error_occurred(self, endpoint_name: str, error_msg: str):
+        """发生错误"""
+        logger.error(f"API错误: {endpoint_name} - {error_msg}")
+        InfoBar.error(
+            title="错误",
+            content=f"检查更新失败: {error_msg}",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
+        self.check_update_button.setEnabled(True)
+
+    @Slot()
+    def _on_all_completed(self):
+        """所有请求完成"""
+        self.check_update_button.setEnabled(True)
+
+    @Slot(str, dict)
+    def _on_data_received(self, endpoint_name: str, result: dict):
+        """接收到数据"""
+        if endpoint_name == "version":
+            """处理版本检查结果"""
+            try:
+                logger.info(f"版本检查结果: {result}")
+
+                # 解析API返回的结果
+                if result.get("code") == 200 and result.get("message") == "success":
+                    data = result.get("data", {})
+
+                    if data.get("need_update", False):
+                        # 需要更新
+                        self.show_update_available(data)
+                    else:
+                        # 已是最新版本
+                        self.show_latest_version()
+                else:
+                    # API返回错误
+                    data = result.get("data", {})
+                    if isinstance(data, dict) and "detail" in data:
+                        error_msg = data.get("detail")
+                    else:
+                        error_msg = result.get("message", "未知错误")
+
+                    self.handle_version_check_error(error_msg)
+
+            except Exception as e:
+                logger.error(f"处理版本检查结果出错: {str(e)}")
+                self.handle_version_check_error(str(e))
 
 class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):

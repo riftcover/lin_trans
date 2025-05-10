@@ -49,14 +49,26 @@ class APIClient:
         # 如果没有提供基础URL，从配置中获取
         self.base_url = base_url or get_api_base_url()
         # 如果没有提供超时时间，从配置中获取
-        timeout_value = timeout or get_api_timeout()
+        self.timeout_value = timeout or get_api_timeout()
 
-        logger.info(f"Initializing API client with base_url: {self.base_url}, timeout: {timeout_value}")
+        logger.info(f"Initializing API client with base_url: {self.base_url}, timeout: {self.timeout_value}")
 
-        self.client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout_value)
+        self.client = None
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
         self._executor = ThreadPoolExecutor(max_workers=1)
+
+    async def initialize(self):
+        """初始化HTTP客户端"""
+
+        if not self.client:
+            self.client = httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout_value)
+
+    async def cleanup(self):
+        """清理HTTP客户端"""
+        if self.client:
+            await self.client.aclose()
+            self.client = None
 
     def load_token_from_settings(self, settings) -> bool:
         """
@@ -106,6 +118,9 @@ class APIClient:
         Returns:
             Dict: 包含用户信息和token的响应数据
         """
+        if not self.client:
+            await self.initialize()
+            
         try:
             response = await self.client.post("/auth/login", json={"email": email, "password": password}, headers=self.headers)
             response.raise_for_status()
@@ -553,10 +568,6 @@ class APIClient:
 
         except httpx.HTTPStatusError as e:
             logger.error(f'消费代币失败: {e}')
-            if e.response.status_code == 401:
-                logger.warning('Authentication failed (401), attempting to refresh token')
-                raise AuthenticationError("Token已过期，需要重新登录")
-            raise ValueError(f"消费代币失败: {str(e)}")
         except Exception as e:
             logger.error(f'消费代币时发生错误: {e}')
             raise ValueError(f"消费代币失败: {str(e)}") from e
@@ -592,23 +603,6 @@ class APIClient:
             return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f'Get token coefficients failed: {e}')
-            if e.response.status_code == 401:
-                logger.warning('Authentication failed (401), attempting to refresh token')
-                # 尝试刷新token
-                if await self.refresh_session():
-                    # 刷新成功，重试请求
-                    logger.info('Token refreshed, retrying request')
-                    try:
-                        response = await self.client.get("/features/coefficients", headers=self.headers)
-                        response.raise_for_status()
-                        return response.json()
-                    except Exception as retry_error:
-                        logger.error(f'Retry after token refresh failed: {retry_error}')
-                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
-                else:
-                    # 刷新失败
-                    logger.warning('Token refresh failed')
-                    raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取代币消耗系数失败: {str(e)}")
 
     @to_t
@@ -618,10 +612,50 @@ class APIClient:
         """
         return await self.get_token_coefficients()
 
+    async def check_version(self, platform: str, current_version: str):
+        """
+        检查客户端版本是否需要更新
+
+        Args:
+            platform: 客户端平台
+            current_version: 当前版本
+
+        Returns:
+            Dict: 包含版本检查结果的响应数据
+        """
+        if not self.client:
+            await self.initialize()
+        try:
+            response = await self.client.post(
+                "/client/check-version",
+                json={"platform": platform, "current_version": current_version},
+                headers=self.headers
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Check version failed: {e}')
+            raise Exception(f"检查版本失败: {str(e)}")
+
+    @to_t
+    async def check_version_t(self, platform: str, current_version: str):
+        return await self.check_version(platform, current_version)
+
+    async def get_profile(self):
+        """异步获取用户资料"""
+        if not self.client:
+            await self.initialize()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "/client/tt",
+                headers=self.headers,
+            )
+            response.raise_for_status()
+            return response.json()
+
     async def close(self):
         """关闭HTTP客户端"""
-        await self.client.aclose()
-        self._executor.shutdown(wait=True)
+        await self.cleanup()
 
     @to_t
     async def close_t(self):

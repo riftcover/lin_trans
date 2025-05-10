@@ -33,10 +33,16 @@ class ApiWorker(QThread):
         except Exception as e:
             self.signals.error_occurred.emit("system", str(e))
         finally:
+            # 确保清理HTTP客户端
+            if self.loop.is_running():
+                self.loop.run_until_complete(self.client.cleanup())
             self.loop.close()
 
     async def _fetch_all_data(self):
         """获取所有API数据"""
+        # 初始化HTTP客户端
+        await self.client.initialize()
+        
         tasks = {
             "version": asyncio.create_task(self.client.ask_version()),
             "profile": asyncio.create_task(self.client.get_profile())
@@ -49,6 +55,8 @@ class ApiWorker(QThread):
             except Exception as e:
                 self.signals.error_occurred.emit(name, str(e))
         
+        # 清理HTTP客户端
+        await self.client.cleanup()
         self.signals.all_completed.emit()
 
 class ResultDisplay(QFrame):
