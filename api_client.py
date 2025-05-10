@@ -49,26 +49,14 @@ class APIClient:
         # 如果没有提供基础URL，从配置中获取
         self.base_url = base_url or get_api_base_url()
         # 如果没有提供超时时间，从配置中获取
-        self.timeout_value = timeout or get_api_timeout()
+        timeout_value = timeout or get_api_timeout()
 
-        logger.info(f"Initializing API client with base_url: {self.base_url}, timeout: {self.timeout_value}")
+        logger.info(f"Initializing API client with base_url: {self.base_url}, timeout: {timeout_value}")
 
-        self.client = None
+        self.client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout_value)
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
         self._executor = ThreadPoolExecutor(max_workers=1)
-
-    async def initialize(self):
-        """初始化HTTP客户端"""
-
-        if not self.client:
-            self.client = httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout_value)
-
-    async def cleanup(self):
-        """清理HTTP客户端"""
-        if self.client:
-            await self.client.aclose()
-            self.client = None
 
     def load_token_from_settings(self, settings) -> bool:
         """
@@ -118,9 +106,6 @@ class APIClient:
         Returns:
             Dict: 包含用户信息和token的响应数据
         """
-        if not self.client:
-            await self.initialize()
-            
         try:
             response = await self.client.post("/auth/login", json={"email": email, "password": password}, headers=self.headers)
             response.raise_for_status()
@@ -623,19 +608,18 @@ class APIClient:
         Returns:
             Dict: 包含版本检查结果的响应数据
         """
-        if not self.client:
-            await self.initialize()
-        try:
-            response = await self.client.post(
-                "/client/check-version",
-                json={"platform": platform, "current_version": current_version},
-                headers=self.headers
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            logger.error(f'Check version failed: {e}')
-            raise Exception(f"检查版本失败: {str(e)}")
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/client/check-version",
+                    json={"platform": platform, "current_version": current_version},
+                    headers=self.headers
+                )
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as e:
+                logger.error(f'Check version failed: {e}')
+                raise Exception(f"检查版本失败: {str(e)}") from e
 
     @to_t
     async def check_version_t(self, platform: str, current_version: str):
@@ -643,8 +627,6 @@ class APIClient:
 
     async def get_profile(self):
         """异步获取用户资料"""
-        if not self.client:
-            await self.initialize()
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 "/client/tt",
@@ -655,7 +637,8 @@ class APIClient:
 
     async def close(self):
         """关闭HTTP客户端"""
-        await self.cleanup()
+        await self.client.aclose()
+        self._executor.shutdown(wait=True)
 
     @to_t
     async def close_t(self):

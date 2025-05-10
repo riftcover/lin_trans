@@ -51,9 +51,6 @@ class ApiWorker(QThread):
         except Exception as e:
             self.signals.error_occurred.emit("system", str(e))
         finally:
-            # 确保清理HTTP客户端
-            if self.loop.is_running():
-                self.loop.run_until_complete(self.client.cleanup())
             self.loop.close()
 
     async def _fetch_all_data(self):
@@ -61,9 +58,6 @@ class ApiWorker(QThread):
         if not self.tasks:
             logger.warning("No tasks added to ApiWorker")
             return
-
-        # 初始化HTTP客户端
-        await self.client.initialize()
 
         # 创建所有任务
         async_tasks = {}
@@ -78,6 +72,4 @@ class ApiWorker(QThread):
             except Exception as e:
                 self.signals.error_occurred.emit(name, str(e))
 
-        # 清理HTTP客户端
-        await self.client.cleanup()
         self.signals.all_completed.emit()
