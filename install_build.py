@@ -45,7 +45,8 @@ cmd = [
     "-m", "PyInstaller",
     "--name=LinLin",
     "--onedir",
-    "--console",
+    "--noconsole",
+    "--windowed",   # 添加 --windowed 参数，使用 GUI 模式
     f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     f"--add-data=models{os.pathsep}models",
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
