@@ -1,12 +1,11 @@
-import time
 from typing import Optional, Dict, Any, Callable
 
+from PySide6.QtCore import QSettings
+
+from api_client import api_client
 from nice_ui.interfaces.auth import AuthInterface
 from nice_ui.interfaces.ui_manager import UIManagerInterface
-from nice_ui.configure import config
 from utils import logger
-from api_client import api_client, AuthenticationError
-from PySide6.QtCore import QSettings
 
 
 class AuthService(AuthInterface):

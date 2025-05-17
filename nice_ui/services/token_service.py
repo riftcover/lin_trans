@@ -1,10 +1,10 @@
 from typing import List, Dict
 
-from nice_ui.configure import config
+from api_client import api_client, AuthenticationError
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
-from api_client import api_client, AuthenticationError
 from utils import logger
+
 
 class TokenAmountManager:
     """代币消费量管理器，负责存储和获取任务的代币消费量"""
@@ -93,7 +93,6 @@ class TokenService(TokenServiceInterface):
         self.token_amount_manager = TokenAmountManager()
 
         # 从配置中获取默认系数值
-        from nice_ui.configure import config
         self.asr_qps = None
         self.trans_qps = None
 

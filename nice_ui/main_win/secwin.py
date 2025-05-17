@@ -1,20 +1,19 @@
 import copy
 import os
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QMessageBox
 
-from nice_ui.configure.signal import data_bridge
 from agent import translate_api_name
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import save_setting
+from nice_ui.configure.signal import data_bridge
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import QueueConsumer, Worker
 from nice_ui.util import tools
-from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
-from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from videotrans import translator
 

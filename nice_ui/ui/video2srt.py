@@ -11,10 +11,11 @@ from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.util.code_tools import language_code
+from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
-from nice_ui.util.tools import start_tools
+
 
 class CustomTableItemDelegate(TableItemDelegate):
     def paint(self, painter, option, index):

@@ -1,11 +1,12 @@
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal, QSettings
+import asyncio
+
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
-import asyncio
-from functools import partial
 
-from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton, CheckBox)
 from api_client import api_client
+from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
+                                   CheckBox)
 
 
 class LoginWindow(QFrame):

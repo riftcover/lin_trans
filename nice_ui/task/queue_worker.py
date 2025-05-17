@@ -1,18 +1,17 @@
+import time
+from abc import ABC, abstractmethod
+
 from agent.common_agent import translate_document
 from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
 from app.cloud_trans.task_manager import TransTaskManager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
-from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
 from orm.queries import ToTranslationOrm, ToSrtOrm
 from utils import logger
-import os
-import time
-from abc import ABC, abstractmethod
 
 
 class TaskProcessor(ABC):

@@ -1,20 +1,19 @@
 import json
 import os
 import shutil
-
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
 from PySide6.QtCore import Qt, QThread
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, )
 from pydantic import ValidationError
 
-from nice_ui.configure.signal import data_bridge
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
-from nice_ui.task.orm_factory import OrmFactory
+from nice_ui.configure.signal import data_bridge
 from nice_ui.task.main_worker import work_queue, QueueConsumer
+from nice_ui.task.orm_factory import OrmFactory
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util.tools import VideoFormatInfo

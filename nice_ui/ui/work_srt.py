@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, Q
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
-from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import PromptsOrm
 from utils import logger

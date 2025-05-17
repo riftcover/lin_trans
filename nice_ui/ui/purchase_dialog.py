@@ -2,13 +2,14 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
-                              QFrame, QPushButton, QWidget)
+                               QFrame, QPushButton, QWidget)
+
 from api_client import api_client
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from vendor.qfluentwidgets import (SubtitleLabel, BodyLabel, PrimaryPushButton, FluentIcon as FIF, StrongBodyLabel)
-from vendor.qfluentwidgets.components.dialog_box.mask_dialog_base import MaskDialogBase
 from vendor.qfluentwidgets.common.style_sheet import FluentStyleSheet
+from vendor.qfluentwidgets.components.dialog_box.mask_dialog_base import MaskDialogBase
 
 
 class RechargeCard(QFrame):

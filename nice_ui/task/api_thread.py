@@ -1,9 +1,7 @@
-import sys
 import asyncio
-import json
-from typing import Optional, Dict, List, Callable, Any
+from typing import Optional, Dict, Callable
 
-from PySide6.QtCore import QObject, Signal, Slot, Qt, QThread
+from PySide6.QtCore import QObject, Signal, QThread
 
 from api_client import APIClient
 from utils import logger
