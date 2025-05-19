@@ -1118,8 +1118,7 @@ class CommonPage(QWidget):
 
         # 添加描述文本
         description_label = BodyLabel(
-            "叠影是一款功能强大的字幕翻译工具，支持多种语言的字幕识别、翻译和编辑功能。"
-            "我们致力于提供高质量的翻译服务，帮助用户轻松处理视频字幕。",
+            "一款为内容创作者而生的字幕助手",
             about_card
         )
         description_label.setWordWrap(True)
