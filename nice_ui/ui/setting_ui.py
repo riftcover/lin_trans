@@ -1118,7 +1118,7 @@ class CommonPage(QWidget):
 
         # 添加描述文本
         description_label = BodyLabel(
-            "LinLin Trans是一款功能强大的字幕翻译工具，支持多种语言的字幕识别、翻译和编辑功能。"
+            "叠影是一款功能强大的字幕翻译工具，支持多种语言的字幕识别、翻译和编辑功能。"
             "我们致力于提供高质量的翻译服务，帮助用户轻松处理视频字幕。",
             about_card
         )
@@ -1126,7 +1126,7 @@ class CommonPage(QWidget):
         about_layout.addWidget(description_label)
 
         # 添加版权信息
-        copyright_label = CaptionLabel("© 2024 LinLin Trans. 保留所有权利。", about_card)
+        copyright_label = CaptionLabel("© 2025 叠影. 保留所有权利。", about_card)
         about_layout.addWidget(copyright_label, alignment=Qt.AlignBottom)
 
         # 添加卡片到主布局

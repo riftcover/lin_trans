@@ -103,7 +103,7 @@ class Window(FluentWindow):
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
         self.setWindowIcon(QIcon(":icon/assets/linlin.png"))
-        self.setWindowTitle("林林字幕")
+        self.setWindowTitle("叠影")
 
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
