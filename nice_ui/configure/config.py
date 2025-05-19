@@ -6,10 +6,7 @@ from pathlib import Path
 from queue import Queue
 
 from nice_ui.configure import ModelDict
-
 from utils import logger
-
-
 
 
 def get_executable_path():

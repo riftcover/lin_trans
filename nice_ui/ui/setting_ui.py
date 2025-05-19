@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import Optional
 
 from PySide6.QtCore import QThread, Signal, Qt, QUrl, QSize, QTimer, Slot
@@ -7,16 +6,15 @@ from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkReq
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
 
+from nice_ui.configure import config
 from nice_ui.task.api_thread import ApiWorker
 from nice_ui.ui import __version__
-from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
 from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, MessageBox,
-                                   CompactDoubleSpinBox,
                                    )
 
 

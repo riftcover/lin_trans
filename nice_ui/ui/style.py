@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtWidgets import (QWidget, QButtonGroup,QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, )
+from PySide6.QtWidgets import (QWidget, QButtonGroup, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, )
 
 from agent import translate_api_name
 from components.resource_manager import StyleManager

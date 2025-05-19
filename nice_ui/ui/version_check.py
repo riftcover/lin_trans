@@ -1,7 +1,10 @@
 import asyncio
+
 from PySide6.QtCore import QThread, Signal
-from utils import logger
+
 from api_client import api_client
+from utils import logger
+
 
 class VersionCheckThread(QThread):
     """版本检查线程 - 支持异步API调用"""

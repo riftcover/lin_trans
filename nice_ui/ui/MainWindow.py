@@ -2,10 +2,10 @@
 import asyncio
 import os
 import platform
+import sys
 
 import httpx
-import sys
-from PySide6.QtCore import QUrl, QSettings, Qt
+from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
