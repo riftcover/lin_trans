@@ -59,7 +59,7 @@ exclude_patterns = [
 cmd = [
     sys.executable,
     "-m", "PyInstaller",
-    "--name=LinLin",
+    "--name=Lapped",
     "--onedir",
     "--noconsole",
     "--windowed",   # 添加 --windowed 参数，使用 GUI 模式
