@@ -4,17 +4,16 @@ import subprocess
 import sys
 import platform
 import argparse
-import site
 import time
-import pkgutil
 import fnmatch
+import pkgutil
 from nice_ui.ui import __version__
 
-# ... (保留现有的 import 语句和函数定义) ...
-
 # 添加命令行参数解析
-parser = argparse.ArgumentParser(description='构建应用程序')
+parser = argparse.ArgumentParser(description='增量编译应用程序')
 parser.add_argument('--debug', action='store_true', help='启用调试模式')
+parser.add_argument('--full', action='store_true', help='执行完整编译（包括第三方库）')
+parser.add_argument('--clean', action='store_true', help='清理之前的编译文件')
 args = parser.parse_args()
 
 # 定义版本号
@@ -27,83 +26,17 @@ RESULT_DIR = os.path.join(PROJECT_ROOT, 'result')
 NICE_UI_DIR = os.path.join(PROJECT_ROOT, 'nice_ui')
 LOGS_DIR = os.path.join(PROJECT_ROOT, 'logs')
 ORM_DIR = os.path.join(PROJECT_ROOT, 'orm')
-
+SPEC_FILE = os.path.join(PROJECT_ROOT, 'LinLin.spec')
 
 def ensure_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         print(f"创建目录: {directory}")
 
-
 # 确保必要的目录存在
 ensure_dir(RESULT_DIR)
 ensure_dir(LOGS_DIR)
 ensure_dir(MODELS_DIR)
-
-# 定义要排除的文件和目录
-# 排除文档和测试文件
-exclude_patterns = [
-    "docs", "xff", ".github", "test", "tests", "examples", "sample", "samples",
-    "__pycache__", "*.dist-info", "*.egg-info",
-    # 特定库的排除
-    "torch/test", "torch/testing", "torch/optim", "torch/distributed", "torch/utils/data", "torch/onnx", "torch/profiler",
-    "modelscope/examples", "modelscope/metrics", "modelscope/trainers", "modelscope/utils/test_utils",
-    "funasr/bin", "funasr/datasets", "funasr/train",
-    "scipy/optimize", "scipy/spatial", "scipy/stats", "scipy/cluster", "scipy/fft", "scipy/integrate",
-    "scipy/interpolate", "scipy/io", "scipy/linalg", "scipy/misc", "scipy/ndimage", "scipy/odr",
-    "scipy/signal", "scipy/sparse", "scipy/special",
-    "numpy/distutils", "numpy/doc", "numpy/f2py", "numpy/testing", "numpy/typing"
-]
-
-# PyInstaller 打包命令
-cmd = [
-    sys.executable,
-    "-m", "PyInstaller",
-    "--name=LinLin",
-    "--onedir",
-    "--noconsole",
-    "--windowed",   # 添加 --windowed 参数，使用 GUI 模式
-    f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
-    f"--add-data=models{os.pathsep}models",
-    f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
-    f"--add-data=logs{os.pathsep}logs",
-    f"--add-data=result{os.pathsep}result",
-    f"--add-data=tmp{os.pathsep}tmp",
-    f"--add-data=.credentials{os.pathsep}.credentials",
-    f"--add-data=config{os.pathsep}config",
-    "--noconfirm",  # 不询问确认
-    "--clean",      # 清理临时文件
-]
-
-# 添加所有排除模式
-for pattern in exclude_patterns:
-    cmd.append(f"--exclude={pattern}")
-
-# todo: 打包前重新生成orm/linlin.db文件
-#todo: console不输出内容
-
-# modelscope_path = pkgutil.get_loader("modelscope").path
-# for _, name, _ in pkgutil.walk_packages([modelscope_path]):
-#     cmd.append(f"--hidden-import=modelscope.{name}")
-
-if args.debug:
-    cmd.extend([
-        "--debug=all",
-        "--log-level=DEBUG",
-    ])
-
-# 根据操作系统添加特定选项
-if platform.system() == "Windows":
-    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.ico")}'])
-elif platform.system() == "Darwin":  # macOS
-    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.icns")}'])
-    if platform.machine() == "arm64":
-        cmd.append("--target-architecture=arm64")
-    else:
-        cmd.append("--target-architecture=x86_64")
-
-# 添加主文件路径
-cmd.append("run.py")
 
 def clean_logs_directory():
     """清空 logs 文件夹中的所有文件，但保留文件夹"""
@@ -130,25 +63,59 @@ def clean_logs_directory():
     except Exception as e:
         print(f"清理 logs 目录时出错: {e}")
 
+# 检查 spec 文件是否存在
+if not os.path.exists(SPEC_FILE):
+    print("未找到 spec 文件，正在创建...")
+    try:
+        subprocess.run([sys.executable, "create_spec.py"] + (["--debug"] if args.debug else []), check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"创建 spec 文件失败: {e}")
+        sys.exit(1)
+
+# 清理旧的构建文件
+if args.clean:
+    print("清理旧的构建文件...")
+    if os.path.exists("build"):
+        shutil.rmtree("build")
+    if os.path.exists("dist"):
+        shutil.rmtree("dist")
+    clean_logs_directory()
+
 # 执行打包命令
 start_time = time.time()
 
-# 清理旧的构建文件和日志
-if os.path.exists("dist"):
-    shutil.rmtree("dist")
-if os.path.exists("build"):
-    shutil.rmtree("build")
-clean_logs_directory()
-
 print("开始打包...")
+
+# 构建 PyInstaller 命令
+cmd = [
+    sys.executable,
+    "-m", "PyInstaller",
+    SPEC_FILE,
+    "--noconfirm",  # 不询问确认
+]
+
+if args.debug:
+    cmd.extend([
+        "--debug=all",
+        "--log-level=DEBUG",
+    ])
+
+# 如果是完整编译，添加 --clean 参数
+if args.full:
+    cmd.append("--clean")
+
 # 执行 PyInstaller 命令
 subprocess.run(cmd, check=True)
 
 print("打包完成!")
 
-
 # 复制模型库到 _internal 目录，并排除不必要的文件
 def copy_models():
+    # 如果不是完整编译，且目标目录已存在，则跳过
+    if not args.full and os.path.exists(os.path.join("dist", "LinLin", "_internal")):
+        print("跳过复制模型库（增量编译模式）")
+        return
+
     # 要排除的目录和文件模式
     exclude_dirs = [
         'docs', 'test', 'tests', 'examples', 'sample', 'samples',
@@ -159,7 +126,7 @@ def copy_models():
         '*.pyc', '*.pyo', '*.pyd', '*.so', '*.a', '*.lib',
         '*.md', '*.rst', '*.txt', '*.html', '*.pdf'
     ]
-
+    
     # 特定库的排除目录
     specific_excludes = {
         'torch': ['test', 'testing', 'optim', 'distributed', 'utils/data', 'onnx', 'profiler'],
@@ -190,7 +157,7 @@ def copy_models():
             # 复制库目录，排除不必要的文件
             def custom_ignore(src, names):
                 ignored_names = []
-
+                
                 # 检查是否在排除目录列表中
                 for name in names:
                     full_path = os.path.join(src, name)
@@ -199,7 +166,7 @@ def copy_models():
                         if any(exclude in name for exclude in exclude_dirs):
                             ignored_names.append(name)
                             continue
-
+                        
                         # 检查特定库的排除目录
                         for lib, excludes in specific_excludes.items():
                             if lib in src:
@@ -212,7 +179,7 @@ def copy_models():
                     elif os.path.isfile(full_path):
                         if any(fnmatch.fnmatch(name, pattern) for pattern in exclude_files):
                             ignored_names.append(name)
-
+                
                 return ignored_names
 
             # 使用自定义忽略函数复制文件
@@ -223,8 +190,7 @@ def copy_models():
         except Exception as e:
             print(f"复制 {model} 库时出错: {e}")
 
-
-# 复制 funasr 库
+# 复制模型库（仅在完整编译或目标目录不存在时）
 copy_models()
 
 end_time = time.time()
@@ -233,40 +199,6 @@ hours, rem = divmod(total_time, 3600)
 minutes, seconds = divmod(rem, 60)
 print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
 
-"""
-2024-10-22 14:43:45.981 | DEBUG    | nice_ui.task.queue_worker:consume_queue:28 - 获取到任务:raw_name='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' raw_dirname='F:/ski/国外教学翻译' raw_basename='Top 10 Affordable Ski Resorts in Europe.mp4' raw_noextname='Top 10 Affordable Ski Resorts in Europe' raw_ext='mp4' codec_type='video' output='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48' wav_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.wav' media_dirname='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' srt_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.srt' unid='2db4247eee62b0a4a56ca1e8acda7d48' source_mp4='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' work_type=<WORK_TYPE.ASR: 1>
-
-result 输出目录不对
-"""
-
-# # 在主程序 run.py 中添加以下代码来处理控制台输出
-# if not os.path.exists('logs'):
-#     os.makedirs('logs')
-
-# class StreamToLogger:
-#     def __init__(self, logger, log_level=logging.INFO):
-#         self.logger = logger
-#         self.log_level = log_level
-#         self.linebuf = ''
-
-#     def write(self, buf):
-#         for line in buf.rstrip().splitlines():
-#             self.logger.log(self.log_level, line.rstrip())
-
-#     def flush(self):
-#         pass
-
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     format='%(asctime)s:%(levelname)s:%(message)s',
-#     filename='logs/output.log',
-#     filemode='a'
-# )
-
-# stdout_logger = logging.getLogger('STDOUT')
-# sl = StreamToLogger(stdout_logger, logging.INFO)
-# sys.stdout = sl
-
-# stderr_logger = logging.getLogger('STDERR')
-# sl = StreamToLogger(stderr_logger, logging.ERROR)
-# sys.stderr = sl
+print("\n增量编译完成！")
+print("如果您只修改了项目文件，下次可以不使用 --full 参数，以加快编译速度。")
+print("如果您更新了第三方库或需要完整重新编译，请使用 --full 参数。")

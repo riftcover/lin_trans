@@ -20,7 +20,7 @@ class SettingsManager:
             # 获取当前工作目录
             current_directory = os.path.basename(os.getcwd())
             cls._instance = QSettings(
-                "Locoweed3",
+                "Locoweed32",
                 f"LinLInTrans_{current_directory}"
             )
         return cls._instance
