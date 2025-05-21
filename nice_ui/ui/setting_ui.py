@@ -1110,7 +1110,7 @@ class CommonPage(QWidget):
         website_layout = QHBoxLayout()
         website_label = BodyLabel("官方网站:", about_card)
         self.website_link = HyperlinkLabel("访问官网", about_card)
-        self.website_link.setUrl("https://github.com/")  # 设置为实际的官网地址
+        self.website_link.setUrl("https://www.lapped-ai.com/")  # 设置为实际的官网地址
         website_layout.addWidget(website_label)
         website_layout.addWidget(self.website_link)
         website_layout.addStretch(1)
