@@ -123,7 +123,8 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
 
 class Segment:
     """
-    用于SenseVoiceSmall模型处理时间戳
+    在使用SenseVoiceSmall模型时调用
+    功能：处理时间戳
     """
 
     def __init__(self, punctuation_res:list, time_res:list):
@@ -199,8 +200,9 @@ class Segment:
 
     def create_segmented_transcript(self, segment_start_time: int, split_index: List[int]) -> List[Dict[str, Union[int, str]]]:
         """
-        使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
-        将字级时间戳，拼接成句子时间戳
+        将字级时间戳，拼接成句子时间戳。
+        使用SenseVoiceSmall模型时调用。
+        因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
         Args:
             segment_start_time: vad切割音频后，每段的开始时间
             time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段

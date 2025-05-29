@@ -238,7 +238,9 @@ class SrtWriter:
         from funasr.utils.postprocess_utils import rich_transcription_postprocess
         logger.info('使用SenseVoiceSmall')
         model_dir = f'{config.funasr_model_path}/{model_name}'
+        # 语音端点检测
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
+        # 标点恢复
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
 
         # 加载模型
@@ -271,6 +273,7 @@ class SrtWriter:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 sf.write(temp_file.name, cropped_audio, sample_rate)
 
+                # 输出识别后的纯文本
                 res = model.generate(
                     input=temp_file.name,
                     cache={},
@@ -283,9 +286,12 @@ class SrtWriter:
             progress = min(round((i + 1) * 100 / total_segments), 100)
             self.data_bridge.emit_whisper_working(self.unid, progress)
 
-            # 使用自定义函数保留emoji
+            # 使用自定义函数取消emoji
             text = self.custom_rich_transcription_postprocess(res[0]["text"])
+            # 输出字的时间戳
             time_res = time_model.generate(input=(temp_file.name, text), data_type=("sound", "text"))
+            logger.info('===time_res===')
+            logger.info(time_res)
 
             # 添加输入验证
             if not text or len(text.strip()) == 0:
@@ -294,17 +300,26 @@ class SrtWriter:
 
             # 确保文本转换为正确的类型
             text = text.strip()
+            logger.info("===text===")
+            logger.info(text)
             try:
+                # 添加标点
                 punctuation_res = punctuation_model.generate(input=text)
             except RuntimeError as e:
                 logger.error(f"标点符号处理失败: {e}")
                 continue
-
+            logger.info("===punctuation_res===")
+            logger.info(punctuation_res)
             msg = Segment(punctuation_res, time_res)
-            work_list = msg.get_segmented_index()
+            punc_list = msg.get_segmented_index()
+            logger.info("===work_list===")
+            logger.info(punc_list)
             if not msg.ask_res_len():
                 msg.fix_wrong_index()
-            rrl = msg.create_segmented_transcript(start_time, work_list)
+            # 将字级时间戳拼接成句子
+            rrl = msg.create_segmented_transcript(start_time, punc_list)
+            logger.info("===rrl===")
+            logger.info(rrl)
             results.extend(rrl)
 
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
@@ -319,7 +334,7 @@ class SrtWriter:
 
     def custom_rich_transcription_postprocess(self, s):
         """
-        自定义的后处理函数，保留emoji
+        自定义的后处理函数，取消emoji
         基于FunASR的rich_transcription_postprocess函数修改
         """
         from funasr.utils.postprocess_utils import format_str_v2, lang_dict, emo_set, event_set
@@ -362,9 +377,9 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    output = 'D:\\dcode\lin_trans\\result\\tt1'
+    output = r'D:\\dcode\lin_trans\\result\\72c63b3fe150d5e95e7b56593d2bb0ac'
     logger.info(output)
-    tt1 = r'D:\dcode\d0e24a75acddc02ced0cdb39c9f05b78\Modifications To Make Ski Boots More Comfortable.wav'
+    tt1 = r'D:\dcode\lin_trans\result\72c63b3fe150d5e95e7b56593d2bb0ac\44.wav'
     # # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     # models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
