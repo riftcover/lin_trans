@@ -68,27 +68,29 @@ def analyze_semantic_boundary(doc, token) -> Tuple[bool, bool]:
                 
     return False, False
 
-def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> List[str]:
+def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> tuple[List[str],List[int]]:
     """
     Split text into sentences using both syntactic and semantic boundaries.
-
+    
     Args:
         text: Input text to split
         context_words: Number of context words to keep around split points
         nlp: spaCy NLP model
-
+        
     Returns:
-        List of split sentences
+        Tuple of (List of split sentences, List of split indices)
     """
     doc = nlp(text)
     # 标点算一位
     sentences = [doc.text]
+    split_indices = []
+    current_offset = 0  # 用于累加之前的分割点位置
 
     while True:
         split_occurred = False
         new_sentences = []
-        sentences_index = []
-        sentences_start = 0
+        last_start = 0  # 记录上一次分割的起始位置
+        
         for sent in sentences:
             doc = nlp(sent)
             start = 0
@@ -105,9 +107,7 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
 
                 # Get context words
                 left_words = doc[max(0, token.i - context_words):token.i]
-                left_i = max(0, token.i - context_words)
                 right_words = doc[token.i+1:min(len(doc), token.i + context_words + 1)]
-                right_i = min(len(doc), token.i + context_words + 1)
 
                 left_words = [word.text for word in left_words if not word.is_punct]
                 right_words = [word.text for word in right_words if not word.is_punct]
@@ -119,18 +119,18 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
                         sentence_end_index = token.i
                         print(f"[yellow]✂️  Split before '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)}| {token.text} {' '.join(right_words)}[/yellow]")
                         new_sentences.append(doc[start:token.i].text.strip())
+                        split_indices.append(current_offset + token.i)
                         start = token.i
+                        last_start = token.i
                     elif split_after:
                         # 打印整句话的下标
                         sentence_start_index = start
                         sentence_end_index = token.i + 1
                         print(f"[yellow]✂️  Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}[/yellow]")
                         new_sentences.append(doc[start:token.i + 1].text.strip())
+                        split_indices.append(current_offset + token.i + 1)
                         start = token.i + 1
-
-                    print(start,token.text)
-                    split_occurred = True
-                    break
+                        last_start = token.i + 1
 
                     split_occurred = True
                     break
@@ -142,9 +142,12 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
             break
 
         sentences = new_sentences
+        # 更新偏移量，加上上一次分割的起始位置
+        current_offset += last_start
         print(sentences)
-        print(sentences_index)
-    return sentences
+        print("Split indices:", split_indices)
+    return sentences, split_indices
+
 
 def main():
     nlp = init_nlp()
@@ -154,7 +157,7 @@ def main():
     all_split_sentences = []
     # Process each input sentence
     for sentence in sentences:
-        split_sentences = smart_split_by_boundaries(sentence.strip(), nlp = nlp)
+        split_sentences, split_indices = smart_split_by_boundaries(sentence.strip(), nlp = nlp)
         all_split_sentences.extend(split_sentences)
 
     with open(SPLIT_BY_CONNECTOR_FILE, "w+", encoding="utf-8") as output_file:
@@ -170,9 +173,11 @@ def example():
 
     # Example usage
     text = "I really encourage you to try and sense your body more and sense the skis on the snow. Because that enables you to then switch off the overcritical part of your brain and really start skiing by feel."
-    text2 ='Because that enables you to then switch off the overcritical part of your brain and really start skiing by feel.'
-    split_sentences = smart_split_by_boundaries(text, nlp=nlp)
+    
 
+    
+    # 使用原始函数获取分割后的句子
+    split_sentences, _ = smart_split_by_boundaries(text, nlp=nlp)
     for i, sent in enumerate(split_sentences, 1):
         print(f"Sentence {i}: {sent}")
 
