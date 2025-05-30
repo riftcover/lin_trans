@@ -68,70 +68,154 @@ class SrtWriter:
             logger.error(f'模型匹配失败：{model_name}')
 
     def funasr_zn_model(self, model_name: str):
-        from funasr import AutoModel
+        """使用中文模型进行语音识别
+        
+        Args:
+            model_name: 模型名称
+        """
         logger.info('使用中文模型')
+        
+        # 1. 初始化模型
+        model = self._init_zn_model(model_name)
+        
+        # 2. 启动进度更新线程
+        progress_thread = threading.Thread(target=self._update_progress)
+        progress_thread.start()
+        
+        try:
+            # 3. 生成识别结果
+            res = model.generate(
+                input=self.input_file, 
+                batch_size_s=300,
+                hotword=None, 
+                language=self.ln
+            )
+        finally:
+            # 4. 停止进度更新
+            self._stop_progress_thread = True
+            progress_thread.join()
+            
+        # 5. 更新进度
+        self.data_bridge.emit_whisper_working(self.unid, 93)
+        
+        # 6. 处理识别结果
+        segments = self._process_recognition_results(res[0]['sentence_info'])
+        
+        # 7. 生成SRT文件
+        self._generate_srt_file(segments)
+        
+        # 8. 完成处理
+        self.data_bridge.emit_whisper_finished(self.unid)
 
+    def _init_zn_model(self, model_name: str):
+        """初始化中文模型
+        
+        Args:
+            model_name: 模型名称
+            
+        Returns:
+            初始化好的模型对象
+        """
+        from funasr import AutoModel
+        
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
         spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
-        model = AutoModel(model=model_dir, model_revision="v2.0.4",
-                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
-                          punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号
-                          spk_model=spk_model_dir, spk_model_revision="v2.0.2",  # 说话人确认
-                          vad_kwargs={"max_single_segment_time": 30000},
-                          disable_update=True,
-                          disable_pbar=True,disable_log=True
-                          )
-        # 启动进度更新线程
-        progress_thread = threading.Thread(target=self._update_progress)
-        progress_thread.start()
-        try:
-            res = model.generate(input=self.input_file, batch_size_s=300,
-                                 hotword=None, language=self.ln
-                                 )
-        finally:
-            self._stop_progress_thread = True
-            progress_thread.join()  # 模型生成完成，更新进度值到 80
-        self.data_bridge.emit_whisper_working(self.unid, 93)
-        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        segments = res[0]['sentence_info']
+        
+        return AutoModel(
+            model=model_dir, 
+            model_revision="v2.0.4",
+            vad_model=vad_model_dir, 
+            vad_model_revision="v2.0.4",
+            punc_model=punc_model_dir, 
+            punc_model_revision="v2.0.4",
+            spk_model=spk_model_dir, 
+            spk_model_revision="v2.0.2",
+            vad_kwargs={"max_single_segment_time": 30000},
+            disable_update=True,
+            disable_pbar=True,
+            disable_log=True
+        )
 
+    def _process_recognition_results(self, segments: list) -> list:
+        """处理识别结果，分割长句
+        
+        Args:
+            segments: 原始识别结果
+            
+        Returns:
+            处理后的片段列表
+        """
         segments_new = []
         nlp = init_nlp('zh')
+        
         for segment in segments:
+            # 1. 分割文本
             split_text_list, split_index = set_nlp(segment['text'], nlp)
+            
+            # 2. 如果不需要分割，直接添加
             if len(split_text_list) <= 1:
                 segments_new.append(segment)
+                continue
+                
+            # 3. 分割长句
+            segments_new.extend(
+                self._split_long_segment(
+                    segment, 
+                    split_text_list, 
+                    split_index
+                )
+            )
+            
+        return segments_new
+
+    def _split_long_segment(self, segment: dict, split_text_list: list, split_index: list) -> list:
+        """分割长句
+        
+        Args:
+            segment: 原始片段
+            split_text_list: 分割后的文本列表
+            split_index: 分割位置列表
+            
+        Returns:
+            分割后的片段列表
+        """
+        segments = []
+        timestamp = segment.get('timestamp')
+        start = 0
+        
+        for i in range(len(split_text_list)):
+            segment_dict = {}
+            ll = len(split_text_list[i])
+            end = start + ll - 1
+            
+            if i < len(split_text_list) - 1:
+                segment_dict = {
+                    'text': split_text_list[i],
+                    'start': timestamp[start][0],
+                    'end': timestamp[end][1]
+                }
             else:
-                split_len = len(split_text_list)
-                timestamp = segment.get('timestamp')
-                start = 0
-                for i in range(split_len):
-                    segment_dict = {}
-                    ll = len(split_text_list[i])
-                    end = start + ll - 1
-                    print(end)
-                    if i < split_len - 1:
-                        segment_dict = {
-                            'text': split_text_list[i],
-                            'start': timestamp[start][0],
-                            'end': timestamp[end][1]
-                        }
+                segment_dict = {
+                    'text': split_text_list[i],
+                    'start': timestamp[start + 1][0],
+                    'end': timestamp[-1][1]
+                }
+                
+            start = end
+            segments.append(segment_dict)
+            
+        return segments
 
-                    else:
-                        segment_dict = {
-                            'text': split_text_list[i],
-                            'start': timestamp[start + 1][0],
-                            'end': timestamp[-1][1]
-                        }
-                    start = end
-
-                    segments_new.append(segment_dict)
-
-        # self.data_bridge.emit_whisper_working(self.unid, 90)
-        funasr_write_srt_file(segments_new, srt_file_path)
-        self.data_bridge.emit_whisper_finished(self.unid)
+    def _generate_srt_file(self, segments: list):
+        """生成SRT文件
+        
+        Args:
+            segments: 处理后的片段列表
+        """
+        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+        funasr_write_srt_file(segments, srt_file_path)
 
     def funasr_sense_model(self, model_name: str):
         """
@@ -271,18 +355,6 @@ class SrtWriter:
         split_list = get_sub_index(punc_list, words, nlp)
         
         return msg.create_segmented_transcript(start_time, split_list)
-
-    def _generate_srt_file(self, results: list):
-        """生成SRT文件"""
-        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        funasr_write_srt_file(results, srt_file_path)
-        self.data_bridge.emit_whisper_finished(self.unid)
-
-    @staticmethod
-    def crop_audio(audio_data, start_time, end_time, sample_rate):
-        start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
-        end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
-        return audio_data[start_sample:end_sample]
 
     def custom_rich_transcription_postprocess(self, s):
         """
