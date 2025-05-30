@@ -102,112 +102,139 @@ class SrtWriter:
 
     def funasr_sense_model(self, model_name: str):
         """
-        由于直接用model加载音频，显存占用会随着音频长度增加，几何倍增长。
-        因此，这里使用VAD模型，将音频分割为多个片段，然后逐个处理。
-
+        使用SenseVoiceSmall模型进行语音识别，将音频分割为多个片段处理
+        
         Args:
-            model_name:
-
-        Returns:
-
+            model_name: 模型名称
         """
-        from funasr.utils.postprocess_utils import rich_transcription_postprocess
         logger.info('使用SenseVoiceSmall')
+        
+        # 1. 初始化所有需要的模型
+        models = self._init_models(model_name)
+        
+        # 2. 使用VAD模型分割音频
+        segments = self._split_audio_by_vad(models['vad'])
+        
+        # 3. 处理每个音频片段
+        results = self._process_audio_segments(segments, models)
+        
+        # 4. 生成SRT文件
+        self._generate_srt_file(results)
+
+    def _init_models(self, model_name: str) -> dict:
+        """初始化所有需要的模型"""
         model_dir = f'{config.funasr_model_path}/{model_name}'
-        # 语音端点检测
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         # 标点恢复
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
 
-        # 加载模型
-        vad_model = load_model(vad_model_dir)
-        model = load_model(model_dir)
-        # todo： fa-zh模型还是online的
-        time_model = load_model("fa-zh")
-        punctuation_model = load_model(punc_model_dir)
+        return {
+            'vad': load_model(vad_model_dir),
+            'asr': load_model(model_dir),
+            # todo： 目前没有下载到本地：speech_timestamp_prediction-v1-16k-offline
+            'time': load_model("fa-zh"),
+            'punc': load_model(punc_model_dir),
+            'nlp': init_nlp()
+        }
 
-        # nlp 模型
-        nlp = init_nlp()
-
-        # 使用VAD模型处理音频文件
+    def _split_audio_by_vad(self, vad_model) -> list:
+        """使用VAD模型分割音频"""
         vad_res = vad_model.generate(
             input=self.input_file,
             cache={},
             max_single_segment_time=30000,  # 最大单个片段时长
         )
+        return vad_res[0]['value']
 
-        # 从VAD模型的输出中提取每个语音片段的开始和结束时间
-        segments = vad_res[0]['value']  # 假设只有一段音频，且其片段信息存储在第一个元素中
-        # 加载原始音频数据
+    def _process_audio_segments(self, segments: list, models: dict) -> list:
+        """处理每个音频片段"""
         audio_data, sample_rate = sf.read(self.input_file)
-
         results = []
-        self.data_bridge.emit_whisper_working(self.unid, 16)
         total_segments = len(segments)
-
+        
         for i, segment in enumerate(segments):
-            start_time, end_time = segment  # 获取开始和结束时间
-            cropped_audio = self.crop_audio(audio_data, start_time, end_time, sample_rate)
-
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
-                sf.write(temp_file.name, cropped_audio, sample_rate)
-
-                # 输出识别后的纯文本
-                res = model.generate(
-                    input=temp_file.name,
-                    cache={},
-                    language=self.ln,
-                    batch_size_s=60,
-                    merge_vad=True,
-                    merge_length_s=10000,
-                )
-
+            # 1. 裁剪音频片段
+            cropped_audio = self.crop_audio(audio_data, segment[0], segment[1], sample_rate)
+            
+            # 2. 处理音频片段
+            segment_results = self._process_single_segment(
+                cropped_audio, 
+                sample_rate, 
+                segment[0], 
+                models
+            )
+            results.extend(segment_results)
+            
+            # 3. 更新进度
             progress = min(round((i + 1) * 100 / total_segments), 100)
             self.data_bridge.emit_whisper_working(self.unid, progress)
+            
+        return results
 
-            # 使用自定义函数取消emoji
-            text = self.custom_rich_transcription_postprocess(res[0]["text"])
-            # 输出字的时间戳
-            time_res = time_model.generate(input=(temp_file.name, text), data_type=("sound", "text"))
-            # logger.trace('===time_res===')
-            # logger.trace(time_res)
+    def _process_single_segment(self, audio_data, sample_rate, start_time, models: dict) -> list:
+        """处理单个音频片段"""
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            sf.write(temp_file.name, audio_data, sample_rate)
+            
+            # 1. 识别文本
+            text = self._recognize_text(temp_file.name, models['asr'])
+            if not text:
+                return []
+                
+            # 2. 获取时间戳
+            time_res = models['time'].generate(
+                input=(temp_file.name, text), 
+                data_type=("sound", "text")
+            )
+            
+            # 3. 添加标点
+            punctuation_res = self._add_punctuation(text, models['punc'])
+            if not punctuation_res:
+                return []
+                
+            # 4. 分割句子
+            return self._split_and_align_sentences(
+                punctuation_res, 
+                time_res, 
+                start_time, 
+                models['nlp']
+            )
 
-            # 添加输入验证
-            if not text or len(text.strip()) == 0:
-                logger.warning("输入文本为空，跳过标点符号处理")
-                continue
+    def _recognize_text(self, audio_file: str, model) -> str:
+        """识别音频文件中的文本"""
+        res = model.generate(
+            input=audio_file,
+            cache={},
+            language=self.ln,
+            batch_size_s=60,
+            merge_vad=True,
+            merge_length_s=10000,
+        )
+        return self.custom_rich_transcription_postprocess(res[0]["text"])
 
-            # 确保文本转换为正确的类型
-            text = text.strip()
-            # logger.trace("===text===")
-            # logger.trace(text)
-            try:
-                # 添加标点
-                punctuation_res = punctuation_model.generate(input=text)
-            except RuntimeError as e:
-                logger.error(f"标点符号处理失败: {e}")
-                continue
-            # logger.trace("===punctuation_res===")
-            # logger.trace(punctuation_res)
-            msg = Segment(punctuation_res, time_res)
-            punc_list = msg.get_segmented_index()
-            # logger.trace("===punc_list===")
-            # logger.trace(punc_list)
-            if not msg.ask_res_len():
-                msg.fix_wrong_index()
+    def _add_punctuation(self, text: str, model) -> list:
+        """为文本添加标点符号"""
+        try:
+            return model.generate(input=text)
+        except RuntimeError as e:
+            logger.error(f"标点符号处理失败: {e}")
+            return []
 
-            # 将长句分割成短句
-            words = split_sentence(punctuation_res[0].get('text'))
-            split_list =get_sub_index(punc_list,words, nlp)
-            # logger.trace("===split_list===")
-            # logger.trace(split_list)
-            # 将字级时间戳拼接成句子
+    def _split_and_align_sentences(self, punctuation_res: list, time_res: list, start_time: int, nlp) -> list:
+        """分割句子并对齐时间戳"""
+        msg = Segment(punctuation_res, time_res)
+        punc_list = msg.get_segmented_index()
+        
+        if not msg.ask_res_len():
+            msg.fix_wrong_index()
+            
+        words = split_sentence(punctuation_res[0].get('text'))
+        split_list = get_sub_index(punc_list, words, nlp)
+        
+        return msg.create_segmented_transcript(start_time, split_list)
 
-            rrl = msg.create_segmented_transcript(start_time, split_list)
-            # logger.trace("===rrl===")
-            # logger.trace(rrl)
-            results.extend(rrl)
-
+    def _generate_srt_file(self, results: list):
+        """生成SRT文件"""
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
         funasr_write_srt_file(results, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
