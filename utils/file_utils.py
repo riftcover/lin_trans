@@ -127,7 +127,7 @@ class Segment:
     功能：处理时间戳
     """
 
-    def __init__(self, punctuation_res:list, time_res:list):
+    def __init__(self, punctuation_res: list, time_res: list):
         """
 
         Args:
@@ -182,20 +182,22 @@ class Segment:
 
         """
         ll = len(self.punc_text)
-        turns = len(self.punc_array)-len(self.time_timestamp)
+        turns = len(self.punc_array) - len(self.time_timestamp)
         i = 0
         logger.info(f"fix turns: {turns}")
+        print(self.time_timestamp)
         for _ in range(turns):
             while i < ll:
                 if self.punc_text[i].lower() != self.time_text[i].lower() and self.punc_text[i].lower()[:-1] != self.time_text[i].lower():
                     self.time_text.insert(i, '')  # 添加一组空数据
-                    self.time_timestamp.insert(i, self.time_timestamp[i])  # 添加一组时间
-                    logger.error(f"wrong text: {self.punc_text[i-5:i]}:{self.time_text[i-5:i]}")
+                    self.time_timestamp.insert(i, self.time_timestamp[i])  # 添加一组i的重复时间
+                    logger.error(f"wrong text: {self.punc_text[i - 3:i + 2]}:{self.time_text[i - 3:i + 2]}")
                     i += 1  # 移动到下一个位置
                     break
                 i += 1
             if i >= ll:
                 break  # 如果已经检查完所有元素，就退出外层循环
+            print(self.time_timestamp)
             logger.info(f"fix wrong finish")
 
     def create_segmented_transcript(self, segment_start_time: int, split_index: List[int]) -> List[Dict[str, Union[int, str]]]:
@@ -236,7 +238,7 @@ class Segment:
             #     # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
             #     current_segment["text"] = key_text + " "
 
-            for word in words[begin:end+1]:
+            for word in words[begin:end + 1]:
                 if is_cjk(word[0]):
                     current_segment["text"] += word
                 else:

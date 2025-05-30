@@ -126,7 +126,7 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
                         # 打印整句话的下标
                         sentence_start_index = start
                         sentence_end_index = token.i + 1
-                        print(f"[yellow]✂️  Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}[/yellow]")
+                        # print(f"[yellow]✂️  Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}[/yellow]")
                         new_sentences.append(doc[start:token.i + 1].text.strip())
                         split_indices.append(current_offset + token.i + 1)
                         start = token.i + 1
@@ -144,8 +144,6 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
         sentences = new_sentences
         # 更新偏移量，加上上一次分割的起始位置
         current_offset += last_start
-        print(sentences)
-        print("Split indices:", split_indices)
     return sentences, split_indices
 
 
