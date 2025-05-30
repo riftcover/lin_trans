@@ -9,8 +9,13 @@ def get_spacy_model(language: str):
     return load_key("spacy_model_map",language)
 
 
-def init_nlp():
-    language = config.params.get('source_language_code')
+def init_nlp(ln= None):
+    language = None
+    if not ln:
+        language = config.params.get('source_language_code')
+    else:
+        language = ln
+
 
     model = get_spacy_model(language)
 
