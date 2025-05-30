@@ -21,6 +21,20 @@ def process_sentence(start_idx: int, end_idx: int, words: List[str], nlp=None) -
     return split_indices
 
 
+def set_nlp(text, nlp) -> tuple[List[str],List[int]]:
+    """
+
+    Args:
+        text: '呃欢迎大家来继续参加我的精益产品探索的课程。'
+        nlp:
+
+    Returns:['呃欢迎大家来继续', '参加我的精益产品探索的课程。'] [5]
+
+    """
+    split_sentences, split_indices = smart_split_by_boundaries(text=text, nlp=nlp)
+    return split_sentences,split_indices
+
+
 def update_sub_list(split_indices: List[int], prev_end_idx: int) -> List[int]:
     """
     更新sub_list，处理分割后的索引
@@ -53,6 +67,16 @@ def is_split_needed(current, previous=None) -> bool:
 
 
 def get_sub_index(punc_index: List[int], words_list: list, nlp) -> list:
+    """
+
+    Args:
+        punc_index: 标点列表
+        words_list: 句子单词列表
+        nlp:
+
+    Returns:
+
+    """
     sub_list = []
 
     # 处理每个句子

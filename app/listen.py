@@ -8,7 +8,7 @@ from pathlib import Path
 import soundfile as sf  # 用于读取和裁剪音频文件
 
 from app.spacy_utils.load_nlp_model import init_nlp
-from app.spacy_utils.sentence_processor import get_sub_index
+from app.spacy_utils.sentence_processor import get_sub_index, set_nlp
 from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from utils import logger
@@ -53,7 +53,7 @@ class SrtWriter:
             progress += 1
             if progress >= 93:
                 break
-            time.sleep(1)
+            time.sleep(3)
 
 
     def funasr_to_srt(self, model_name: str):
@@ -96,8 +96,41 @@ class SrtWriter:
         self.data_bridge.emit_whisper_working(self.unid, 93)
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
         segments = res[0]['sentence_info']
+
+        segments_new = []
+        nlp = init_nlp('zh')
+        for segment in segments:
+            split_text_list, split_index = set_nlp(segment['text'], nlp)
+            if len(split_text_list) <= 1:
+                segments_new.append(segment)
+            else:
+                split_len = len(split_text_list)
+                timestamp = segment.get('timestamp')
+                start = 0
+                for i in range(split_len):
+                    segment_dict = {}
+                    ll = len(split_text_list[i])
+                    end = start + ll - 1
+                    print(end)
+                    if i < split_len - 1:
+                        segment_dict = {
+                            'text': split_text_list[i],
+                            'start': timestamp[start][0],
+                            'end': timestamp[end][1]
+                        }
+
+                    else:
+                        segment_dict = {
+                            'text': split_text_list[i],
+                            'start': timestamp[start + 1][0],
+                            'end': timestamp[-1][1]
+                        }
+                    start = end
+
+                    segments_new.append(segment_dict)
+
         # self.data_bridge.emit_whisper_working(self.unid, 90)
-        funasr_write_srt_file(segments, srt_file_path)
+        funasr_write_srt_file(segments_new, srt_file_path)
         self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_sense_model(self, model_name: str):
@@ -147,7 +180,13 @@ class SrtWriter:
         return vad_res[0]['value']
 
     def _process_audio_segments(self, segments: list, models: dict) -> list:
-        """处理每个音频片段"""
+        """处理每个音频片段
+        Return:
+            [{'start': 230, 'end': 1230, 'text': 'When you go out there,'},
+            {'start': 1230, 'end': 4590, 'text': 'i really encourage you to try and sense your body more'},
+            {'start': 4610, 'end': 6770, 'text': 'and sense the skis on the snow,'}]
+        """
+
         audio_data, sample_rate = sf.read(self.input_file)
         results = []
         total_segments = len(segments)
@@ -221,7 +260,7 @@ class SrtWriter:
             return []
 
     def _split_and_align_sentences(self, punctuation_res: list, time_res: list, start_time: int, nlp) -> list:
-        """分割句子并对齐时间戳"""
+        """分割句子并对齐时间戳,返回按照短句切割的list"""
         msg = Segment(punctuation_res, time_res)
         punc_list = msg.get_segmented_index()
         
@@ -284,11 +323,11 @@ if __name__ == '__main__':
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
     output = r'D:\\dcode\lin_trans\\result\\72c63b3fe150d5e95e7b56593d2bb0ac'
     logger.info(output)
-    tt1 = r'D:\dcode\lin_trans\result\72c63b3fe150d5e95e7b56593d2bb0ac\44.wav'
+    tt1 = r'D:\dcode\lin_trans\result\72c63b3fe150d5e95e7b56593d2bb0ac\33.wav'
     # # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
     # # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     # models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
     models = 'SenseVoiceSmall'
     #
     # # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
-    SrtWriter('xxx', tt1, output, 'en').funasr_to_srt(models)
+    SrtWriter('xxx', tt1, output, 'zh').funasr_to_srt(models)
