@@ -1,5 +1,5 @@
 import os
-
+import unicodedata
 import spacy
 from typing import List, Tuple
 
@@ -69,6 +69,31 @@ def analyze_semantic_boundary(doc, token) -> Tuple[bool, bool]:
                 
     return False, False
 
+def get_split_index_type(doc) -> bool:
+    """
+    根据文本特征决定使用词下标还是字符下标
+    
+    Args:
+        doc: spaCy文档对象
+        
+    Returns:
+        bool: True表示使用字符下标，False表示使用词下标
+    """
+    # 1. 检查是否包含CJK字符
+    has_cjk = any('CJK' in unicodedata.name(char, '') for char in doc.text)
+    if has_cjk:
+        return True
+        
+    # 2. 检查词的平均长度
+    if len(doc) > 0:
+        avg_word_length = sum(len(token.text) for token in doc) / len(doc)
+        # 如果平均词长度接近1，可能是字符语言
+        if avg_word_length < 1.5:
+            return True
+            
+    # 3. 默认使用词下标
+    return False
+
 def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> tuple[List[str],List[int]]:
     """
     Split text into sentences using both syntactic and semantic boundaries.
@@ -80,23 +105,34 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
         
     Returns:
         Tuple of (List of split sentences, List of split indices)
+        - 对于使用词的语言（如英语、德语等），返回词的下标
+        - 对于使用字符的语言（如中文、日语等），返回字符的下标
+
+    输入："I really encourage you to try and sense your body more and sense the skis on the snow."
+    输出：
+        ['I really encourage you to try', 'and sense your body more', 'and sense the skis on the snow']
+        [6, 11]
+
+    输入："欢迎参加我的课程。"
+    输出：
+        ['欢迎参加', '我的课程。']
+        [4, 7]  # 字符位置
     """
     doc = nlp(text)
-    # 标点算一位
     sentences = [doc.text]
     split_indices = []
-    current_offset = 0  # 用于累加之前的分割点位置
+    current_offset = 0
+    use_char_index = get_split_index_type(doc)  # 根据语言类型决定使用哪种下标
 
     while True:
         split_occurred = False
         new_sentences = []
-        last_start = 0  # 记录上一次分割的起始位置
+        last_start = 0
         
         for sent in sentences:
             doc = nlp(sent)
             start = 0
             for i, token in enumerate(doc):
-                # Check both syntactic and semantic boundaries
                 syntactic_split_before, syntactic_split_after = analyze_clause_boundary(doc, token)
                 semantic_split_before, semantic_split_after = analyze_semantic_boundary(doc, token)
 
@@ -106,7 +142,6 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
                 if not (split_before or split_after):
                     continue
 
-                # Get context words
                 left_words = doc[max(0, token.i - context_words):token.i]
                 right_words = doc[token.i+1:min(len(doc), token.i + context_words + 1)]
 
@@ -115,21 +150,17 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
 
                 if len(left_words) >= context_words and len(right_words) >= context_words:
                     if split_before:
-                        # 打印整句话的下标
-                        sentence_start_index = start
-                        sentence_end_index = token.i
-                        logger.trace(f"Split before '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)}| {token.text} {' '.join(right_words)}")
+                        # 根据语言类型选择使用词下标还是字符下标
+                        split_idx = token.idx if use_char_index else token.i
                         new_sentences.append(doc[start:token.i].text.strip())
-                        split_indices.append(current_offset + token.i)
+                        split_indices.append(current_offset + split_idx)
                         start = token.i
                         last_start = token.i
                     elif split_after:
-                        # 打印整句话的下标
-                        sentence_start_index = start
-                        sentence_end_index = token.i + 1
-                        # logger.trace(f"Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}")
+                        # 根据语言类型选择使用词下标还是字符下标
+                        split_idx = token.idx + len(token.text) if use_char_index else token.i + 1
                         new_sentences.append(doc[start:token.i + 1].text.strip())
-                        split_indices.append(current_offset + token.i + 1)
+                        split_indices.append(current_offset + split_idx)
                         start = token.i + 1
                         last_start = token.i + 1
 
@@ -143,7 +174,6 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
             break
 
         sentences = new_sentences
-        # 更新偏移量，加上上一次分割的起始位置
         current_offset += last_start
     return sentences, split_indices
 
@@ -168,18 +198,23 @@ def main():
 
 
 def example():
-    nlp = init_nlp()
+    nlp = init_nlp('zh')
+    # nlp = init_nlp('en')
 
     # Example usage
-    text = "I really encourage you to try and sense your body more and sense the skis on the snow. Because that enables you to then switch off the overcritical part of your brain and really start skiing by feel."
+    # text = "I really encourage you to try and sense your body more and sense the skis on the snow"
+    text ='呃欢迎VIP来继续参加我的精益产品探索的课程。'
     
 
     
     # 使用原始函数获取分割后的句子
-    split_sentences, _ = smart_split_by_boundaries(text, nlp=nlp)
-    for i, sent in enumerate(split_sentences, 1):
-        print(f"Sentence {i}: {sent}")
+    split_sentences, b = smart_split_by_boundaries(text, nlp=nlp)
+    # for i, sent in enumerate(split_sentences, 1):
+    #     print(f"Sentence {i}: {sent}")
+    print(split_sentences)
+    print(b)
 
 if __name__ == "__main__":
     # main()
     example()
+    # main()
