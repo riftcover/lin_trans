@@ -891,6 +891,7 @@ dependencies = [
     { name = "scipy" },
     { name = "socksio" },
     { name = "spacy" },
+    { name = "spacy-pkuseg" },
     { name = "sqlalchemy" },
     { name = "torch" },
     { name = "torchaudio" },
@@ -923,6 +924,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "socksio", specifier = ">=1.0.0" },
     { name = "spacy", specifier = ">=3.8.7" },
+    { name = "spacy-pkuseg", specifier = ">=0.0.33" },
     { name = "sqlalchemy", specifier = ">=2.0.35" },
     { name = "torch", specifier = "==2.4.1" },
     { name = "torchaudio", specifier = ">=2.4.1" },
@@ -4550,6 +4552,28 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/67/3d/926db774c9c98acf66cb4ed7faf6c377746f3e00b84b700d0868b95d0712/spacy-loggers-1.0.5.tar.gz", hash = "sha256:d60b0bdbf915a60e516cc2e653baeff946f0cfc461b452d11a4d5458c6fe5f24", size = 20811 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/78/d1a1a026ef3af911159398c939b1509d5c36fe524c7b644f34a5146c4e16/spacy_loggers-1.0.5-py3-none-any.whl", hash = "sha256:196284c9c446cc0cdb944005384270d775fdeaf4f494d8e269466cfa497ef645", size = 22343 },
+]
+
+[[package]]
+name = "spacy-pkuseg"
+version = "0.0.33"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "srsly" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/35/55/20a2454330e2c31cf356595c8dbc80780d281b580bf0e172af3d45881bbb/spacy_pkuseg-0.0.33.tar.gz", hash = "sha256:f13156ac4e04460f1ac35edfd036e99704dbbad19ad0a39b06c340f802a29e62", size = 2130958 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/06/8126830d7d5cc7c3858bae422b4fbc137a0596a41ee4df8596df14d1e94c/spacy_pkuseg-0.0.33-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6d00a91fffdf15cc4c8f4125874a10e883e00cb908db0bfb096ab0b0a4cc8251", size = 2468959 },
+    { url = "https://files.pythonhosted.org/packages/2d/52/64b4692503d8e920437c1defa0ba4b94fd8a54f252a070119c6c87cbca52/spacy_pkuseg-0.0.33-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e866bd32acfe663c90788776e50b1b99c3cb7713dbfbb0458e9888a202f2e2e4", size = 2443406 },
+    { url = "https://files.pythonhosted.org/packages/2e/24/4e19049a7e31bd2dcd8a76f6ca9f3f05ef10ff1ff83c76a988e950fa0bd0/spacy_pkuseg-0.0.33-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b267ecc111941f663e4dba3d2f5a3cb4a33901939b4cd03ccafe7a9050588054", size = 2473675 },
+    { url = "https://files.pythonhosted.org/packages/fd/3e/35be49add3f5451ebd538db0742973aea895b5b13935221b03839d1123bb/spacy_pkuseg-0.0.33-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fcf4bf95fb5c73b2352d4f0c5ce7b343ed73b384633f0ec39218df35da87289f", size = 2503623 },
+    { url = "https://files.pythonhosted.org/packages/f8/ad/3722ce633e8ef4ffb5a77376a435354173e0bf012b8297ab8918cfd775b4/spacy_pkuseg-0.0.33-cp311-cp311-win_amd64.whl", hash = "sha256:bc255516451c2b05df05dafba4960ad2b7123562833540facb2ee8cb0664313c", size = 2402622 },
+    { url = "https://files.pythonhosted.org/packages/65/a9/e2a7c6a9235f941f63945e45d6c406f4171ea96e575f1fa59790b7a33ba1/spacy_pkuseg-0.0.33-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:5be681d0a69ce6db57b16d9b966423eaa55d3c44a7e138fbb120de0b416f6fb3", size = 2464329 },
+    { url = "https://files.pythonhosted.org/packages/89/bc/e25d2f7d1f2d9ed99f8d342e4428cefe2ece5b62ab9cba281f804f9be2e6/spacy_pkuseg-0.0.33-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2dcce14c4f3c920a1bbb5f91bd94422d3c97fe44aaea0eac47392218f5ed18ce", size = 2442190 },
+    { url = "https://files.pythonhosted.org/packages/ed/08/6381e855c279dc380e8a38f6388f60ec4c6bc7d5816075fe4fd95a5bde83/spacy_pkuseg-0.0.33-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:079727a4a138da320c766500e7da9d431bbd2468fa3e0453474620978b842f1d", size = 2458330 },
+    { url = "https://files.pythonhosted.org/packages/f7/81/dd892c8b8b281ed4ac6cc248c0a7161a8dd3099670d4d87741f13801282d/spacy_pkuseg-0.0.33-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bf266ba8f1826665f08f5b8a83f74f4ae78394e2ed498400c5bd2fbde63556b8", size = 2486751 },
+    { url = "https://files.pythonhosted.org/packages/19/c8/d03a14e9b6789802ac3828d47461e4793aed61b46a94b8a67bf4bd6646c8/spacy_pkuseg-0.0.33-cp312-cp312-win_amd64.whl", hash = "sha256:a2082e1c81462ac381ac185282968badbb4daf0eff301bb81bb7f289598c1e73", size = 2398398 },
 ]
 
 [[package]]

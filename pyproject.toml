@@ -36,6 +36,7 @@ dependencies = [
     "pytz>=2025.2",
     "spacy>=3.8.7",
     "pip>=25.1.1",
+    "spacy-pkuseg>=0.0.33",
 ]
 
 [build-system]
