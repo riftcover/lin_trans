@@ -4,6 +4,7 @@ import spacy
 from typing import List, Tuple
 
 from app.spacy_utils.load_nlp_model import init_nlp
+from utils import logger
 
 SPLIT_BY_COMMA_FILE = 'D:\dcode\VideoLingo\output\log\split_by_comma.txt'
 SPLIT_BY_CONNECTOR_FILE ='D:\dcode\VideoLingo\output\log\split_by_connector.txt'
@@ -117,7 +118,7 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
                         # 打印整句话的下标
                         sentence_start_index = start
                         sentence_end_index = token.i
-                        print(f"[yellow]✂️  Split before '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)}| {token.text} {' '.join(right_words)}[/yellow]")
+                        logger.trace(f"Split before '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)}| {token.text} {' '.join(right_words)}")
                         new_sentences.append(doc[start:token.i].text.strip())
                         split_indices.append(current_offset + token.i)
                         start = token.i
@@ -126,7 +127,7 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
                         # 打印整句话的下标
                         sentence_start_index = start
                         sentence_end_index = token.i + 1
-                        # print(f"[yellow]✂️  Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}[/yellow]")
+                        # logger.trace(f"Split after '{token.text}' at index {token.i}: Sentence indices [{sentence_start_index}:{sentence_end_index}] - {' '.join(left_words)} {token.text}| {' '.join(right_words)}")
                         new_sentences.append(doc[start:token.i + 1].text.strip())
                         split_indices.append(current_offset + token.i + 1)
                         start = token.i + 1

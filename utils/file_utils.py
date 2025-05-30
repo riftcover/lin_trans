@@ -185,7 +185,7 @@ class Segment:
         turns = len(self.punc_array) - len(self.time_timestamp)
         i = 0
         logger.info(f"fix turns: {turns}")
-        print(self.time_timestamp)
+
         for _ in range(turns):
             while i < ll:
                 if self.punc_text[i].lower() != self.time_text[i].lower() and self.punc_text[i].lower()[:-1] != self.time_text[i].lower():
@@ -197,7 +197,6 @@ class Segment:
                 i += 1
             if i >= ll:
                 break  # 如果已经检查完所有元素，就退出外层循环
-            print(self.time_timestamp)
             logger.info(f"fix wrong finish")
 
     def create_segmented_transcript(self, segment_start_time: int, split_index: List[int]) -> List[Dict[str, Union[int, str]]]:
@@ -207,9 +206,6 @@ class Segment:
         因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
         Args:
             segment_start_time: vad切割音频后，每段的开始时间
-            time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段
-            text: 标点预测模型输出的文本text字段
-            key_text: 标点预测模型输出的文本key字段
             split_index: 标点预测模型输出的punc_array大于1的列表
         Examples:
             a = "today's podcast is about modifying ski bootss and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years"
@@ -237,13 +233,13 @@ class Segment:
             # if i == 0:
             #     # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
             #     current_segment["text"] = key_text + " "
-
             for word in words[begin:end + 1]:
                 if is_cjk(word[0]):
                     current_segment["text"] += word
                 else:
                     current_segment["text"] += word + ' '
             current_segment["text"] = current_segment["text"].strip()
+
 
             sentence_info.append(current_segment)
             begin = end + 1
