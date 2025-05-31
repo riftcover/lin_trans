@@ -8,21 +8,21 @@ from pathlib import Path
 import soundfile as sf  # 用于读取和裁剪音频文件
 
 from app.spacy_utils.load_nlp_model import init_nlp
-from app.spacy_utils.sentence_processor import get_sub_index, set_nlp
+from app.spacy_utils.sentence_processor import get_sub_index, split_segments_by_boundaries
 from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from utils import logger
 from utils.file_utils import funasr_write_srt_file, Segment, split_sentence
 from utils.lazy_loader import LazyLoader
 
-
 funasr = LazyLoader('funasr')
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 
 @lru_cache(maxsize=None)
 def load_model(model_path, model_revision="v2.0.4"):
     from funasr import AutoModel
-    return AutoModel(model=model_path, model_revision=model_revision, disable_update=True,disable_pbar=True,disable_log=True)
+    return AutoModel(model=model_path, model_revision=model_revision, disable_update=True, disable_pbar=True, disable_log=True)
 
 
 class SrtWriter:
@@ -39,7 +39,7 @@ class SrtWriter:
         if not Path(wav_dirname).is_file():
             logger.error(f"The file {wav_dirname} does not exist.")
             raise FileNotFoundError(f"The file {wav_dirname} does not exist.")
-        self.input_file = wav_dirname  #ffz转换后的wav文件路径
+        self.input_file = wav_dirname  # ffz转换后的wav文件路径
         self.ln = ln
         self.data_bridge = data_bridge
         self.unid = unid
@@ -55,7 +55,6 @@ class SrtWriter:
                 break
             time.sleep(3)
 
-
     def funasr_to_srt(self, model_name: str):
         logger.info("使用FunASR开始识别")
         if model_name == 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch':
@@ -68,173 +67,60 @@ class SrtWriter:
             logger.error(f'模型匹配失败：{model_name}')
 
     def funasr_zn_model(self, model_name: str):
-        """使用中文模型进行语音识别
-        
-        Args:
-            model_name: 模型名称
-        """
-        logger.info('使用中文模型')
-        
-        # 1. 初始化模型
-        model = self._init_zn_model(model_name)
-        
-        # 2. 启动进度更新线程
-        progress_thread = threading.Thread(target=self._update_progress)
-        progress_thread.start()
-        
-        try:
-            # 3. 生成识别结果
-            res = model.generate(
-                input=self.input_file, 
-                batch_size_s=300,
-                hotword=None, 
-                language=self.ln
-            )
-        finally:
-            # 4. 停止进度更新
-            self._stop_progress_thread = True
-            progress_thread.join()
-            
-        # 5. 更新进度
-        self.data_bridge.emit_whisper_working(self.unid, 93)
-        
-        # 6. 处理识别结果
-        segments = self._process_recognition_results(res[0]['sentence_info'])
-        
-        # 7. 生成SRT文件
-        self._generate_srt_file(segments)
-        
-        # 8. 完成处理
-        self.data_bridge.emit_whisper_finished(self.unid)
-
-    def _init_zn_model(self, model_name: str):
-        """初始化中文模型
-        
-        Args:
-            model_name: 模型名称
-            
-        Returns:
-            初始化好的模型对象
-        """
         from funasr import AutoModel
-        
+        logger.info('使用中文模型')
+
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
         spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
-        
-        return AutoModel(
-            model=model_dir, 
-            model_revision="v2.0.4",
-            vad_model=vad_model_dir, 
-            vad_model_revision="v2.0.4",
-            punc_model=punc_model_dir, 
-            punc_model_revision="v2.0.4",
-            spk_model=spk_model_dir, 
-            spk_model_revision="v2.0.2",
-            vad_kwargs={"max_single_segment_time": 30000},
-            disable_update=True,
-            disable_pbar=True,
-            disable_log=True
-        )
-
-    def _process_recognition_results(self, segments: list) -> list:
-        """处理识别结果，分割长句
-        
-        Args:
-            segments: 原始识别结果
-            
-        Returns:
-            处理后的片段列表
-        """
-        segments_new = []
-        nlp = init_nlp('zh')
-        
-        for segment in segments:
-            # 1. 分割文本
-            split_text_list, split_index = set_nlp(segment['text'], nlp)
-            
-            # 2. 如果不需要分割，直接添加
-            if len(split_text_list) <= 1:
-                segments_new.append(segment)
-                continue
-                
-            # 3. 分割长句
-            segments_new.extend(
-                self._split_long_segment(
-                    segment, 
-                    split_text_list, 
-                    split_index
-                )
-            )
-            
-        return segments_new
-
-    def _split_long_segment(self, segment: dict, split_text_list: list, split_index: list) -> list:
-        """分割长句
-        
-        Args:
-            segment: 原始片段
-            split_text_list: 分割后的文本列表
-            split_index: 分割位置列表
-            
-        Returns:
-            分割后的片段列表
-        """
-        segments = []
-        timestamp = segment.get('timestamp')
-        start = 0
-        
-        for i in range(len(split_text_list)):
-            segment_dict = {}
-            ll = len(split_text_list[i])
-            end = start + ll - 1
-            
-            if i < len(split_text_list) - 1:
-                segment_dict = {
-                    'text': split_text_list[i],
-                    'start': timestamp[start][0],
-                    'end': timestamp[end][1]
-                }
-            else:
-                segment_dict = {
-                    'text': split_text_list[i],
-                    'start': timestamp[start + 1][0],
-                    'end': timestamp[-1][1]
-                }
-                
-            start = end
-            segments.append(segment_dict)
-            
-        return segments
-
-    def _generate_srt_file(self, segments: list):
-        """生成SRT文件
-        
-        Args:
-            segments: 处理后的片段列表
-        """
+        model = AutoModel(model=model_dir, model_revision="v2.0.4",
+                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
+                          punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号
+                          spk_model=spk_model_dir, spk_model_revision="v2.0.2",  # 说话人确认
+                          vad_kwargs={"max_single_segment_time": 30000},
+                          disable_update=True,
+                          disable_pbar=True, disable_log=True
+                          )
+        # 启动进度更新线程
+        progress_thread = threading.Thread(target=self._update_progress)
+        progress_thread.start()
+        try:
+            res = model.generate(input=self.input_file, batch_size_s=300,
+                                 hotword=None, language=self.ln
+                                 )
+        finally:
+            self._stop_progress_thread = True
+            progress_thread.join()  # 模型生成完成，更新进度值到 80
+        self.data_bridge.emit_whisper_working(self.unid, 93)
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        funasr_write_srt_file(segments, srt_file_path)
+        segments = res[0]['sentence_info']
+        nlp = init_nlp()
+        segments_new = split_segments_by_boundaries(segments, nlp)
+
+
+        # self.data_bridge.emit_whisper_working(self.unid, 90)
+        funasr_write_srt_file(segments_new, srt_file_path)
+        self.data_bridge.emit_whisper_finished(self.unid)
 
     def funasr_sense_model(self, model_name: str):
         """
         使用SenseVoiceSmall模型进行语音识别，将音频分割为多个片段处理
-        
+
         Args:
             model_name: 模型名称
         """
         logger.info('使用SenseVoiceSmall')
-        
+
         # 1. 初始化所有需要的模型
         models = self._init_models(model_name)
-        
+
         # 2. 使用VAD模型分割音频
         segments = self._split_audio_by_vad(models['vad'])
-        
+
         # 3. 处理每个音频片段
         results = self._process_audio_segments(segments, models)
-        
+
         # 4. 生成SRT文件
         self._generate_srt_file(results)
 
@@ -274,52 +160,52 @@ class SrtWriter:
         audio_data, sample_rate = sf.read(self.input_file)
         results = []
         total_segments = len(segments)
-        
+
         for i, segment in enumerate(segments):
             # 1. 裁剪音频片段
             cropped_audio = self.crop_audio(audio_data, segment[0], segment[1], sample_rate)
-            
+
             # 2. 处理音频片段
             segment_results = self._process_single_segment(
-                cropped_audio, 
-                sample_rate, 
-                segment[0], 
+                cropped_audio,
+                sample_rate,
+                segment[0],
                 models
             )
             results.extend(segment_results)
-            
+
             # 3. 更新进度
             progress = min(round((i + 1) * 100 / total_segments), 100)
             self.data_bridge.emit_whisper_working(self.unid, progress)
-            
+
         return results
 
     def _process_single_segment(self, audio_data, sample_rate, start_time, models: dict) -> list:
         """处理单个音频片段"""
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
             sf.write(temp_file.name, audio_data, sample_rate)
-            
+
             # 1. 识别文本
             text = self._recognize_text(temp_file.name, models['asr'])
             if not text:
                 return []
-                
+
             # 2. 获取时间戳
             time_res = models['time'].generate(
-                input=(temp_file.name, text), 
+                input=(temp_file.name, text),
                 data_type=("sound", "text")
             )
-            
+
             # 3. 添加标点
             punctuation_res = self._add_punctuation(text, models['punc'])
             if not punctuation_res:
                 return []
-                
+
             # 4. 分割句子
             return self._split_and_align_sentences(
-                punctuation_res, 
-                time_res, 
-                start_time, 
+                punctuation_res,
+                time_res,
+                start_time,
                 models['nlp']
             )
 
@@ -347,14 +233,26 @@ class SrtWriter:
         """分割句子并对齐时间戳,返回按照短句切割的list"""
         msg = Segment(punctuation_res, time_res)
         punc_list = msg.get_segmented_index()
-        
+
         if not msg.ask_res_len():
             msg.fix_wrong_index()
-            
+
         words = split_sentence(punctuation_res[0].get('text'))
         split_list = get_sub_index(punc_list, words, nlp)
-        
+
         return msg.create_segmented_transcript(start_time, split_list)
+
+    def _generate_srt_file(self, results: list):
+        """生成SRT文件"""
+        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+        funasr_write_srt_file(results, srt_file_path)
+        self.data_bridge.emit_whisper_finished(self.unid)
+
+    @staticmethod
+    def crop_audio(audio_data, start_time, end_time, sample_rate):
+        start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
+        end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
+        return audio_data[start_sample:end_sample]
 
     def custom_rich_transcription_postprocess(self, s):
         """
@@ -389,6 +287,7 @@ class SrtWriter:
         for emoji in emo_set.union(event_set):
             new_s = new_s.replace(emoji, " ")
         return new_s.strip()
+
 
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()

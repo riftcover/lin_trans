@@ -11,10 +11,13 @@ from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
+from app.spacy_utils.load_nlp_model import init_nlp
+from app.spacy_utils.sentence_processor import split_segments_by_boundaries
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
+from utils.file_utils import funasr_write_srt_file
 
 
 class ASRTaskStatus:
@@ -23,6 +26,7 @@ class ASRTaskStatus:
     UPLOADING = "UPLOADING"  # 上传中
     SUBMITTED = "SUBMITTED"  # 已提交
     RUNNING = "RUNNING"  # 运行中
+    SPLITING = "SPLITING" # 分词中
     COMPLETED = "COMPLETED"  # 已完成
     FAILED = "FAILED"  # 失败
 
@@ -47,6 +51,7 @@ class ASRTaskModel(BaseModel):
             ASRTaskStatus.UPLOADING,
             ASRTaskStatus.SUBMITTED,
             ASRTaskStatus.RUNNING,
+            ASRTaskStatus.SPLITING,
             ASRTaskStatus.COMPLETED,
             ASRTaskStatus.FAILED
         ]
@@ -160,6 +165,7 @@ class ASRTaskManager:
         self.stop_polling = threading.Event()
         self.task_state_file = Path(config.root_path) / "tmp" / "asr_tasks.json"
         self._load_tasks()
+        self.nlp = init_nlp()
 
     def _load_tasks(self) -> None:
         """从文件加载任务状态，使用Pydantic模型进行验证和转换"""
@@ -489,22 +495,46 @@ class ASRTaskManager:
                             json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
                             saved_path = client.download_file(transcription_url, json_file_path)
 
-                            # 读取下载的JSON文件
+                            # 更新任务状态为分词中
+                            self.update_task(
+                                task.task_id,
+                                status=ASRTaskStatus.SPLITING,
+                                progress=92
+                            )
+                            self._notify_task_progress(task.task_id, 92)
 
+                            # 读取下载的JSON文件
                             try:
                                 with open(saved_path, 'r', encoding='utf-8') as f:
                                     json_data = json.load(f)
                             except Exception as e:
                                 logger.error(f"读取ASR结果文件失败: {str(e)}")
                                 raise
-                            # 解析JSON数据
-                            parsed_results = client.parse_transcription(json_data)
-                            # # 从结果中提取字幕信息并生成SRT文件
-                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-                            logger.info(f'srt_file_path:{srt_file_path}')
-                            client.convert_to_srt(parsed_results, srt_file_path)
 
-                            # 更新任务状态
+                            # 使用convert_to_segments_format转换格式
+                            logger.info("开始转换ASR结果格式...")
+                            segments = client.convert_to_segments_format(json_data)
+                            logger.info(f"转换完成，得到 {len(segments)} 个segments")
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=95)
+                            self._notify_task_progress(task.task_id, 95)
+
+                            # 使用split_segments_by_boundaries分解句子
+                            logger.info("开始使用NLP模型分解句子...")
+                            segments_new = split_segments_by_boundaries(segments, self.nlp)
+                            logger.info(f"分解完成，得到 {len(segments_new)} 个分解后的segments")
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=98)
+                            self._notify_task_progress(task.task_id, 98)
+
+                            # 生成SRT文件
+                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            logger.info(f'生成SRT文件: {srt_file_path}')
+                            funasr_write_srt_file(segments_new, srt_file_path)
+
+                            # 更新任务状态为完成
                             self.update_task(
                                 task.task_id,
                                 response=response,
