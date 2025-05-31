@@ -93,7 +93,7 @@ class Window(FluentWindow):
         self.navigationInterface.addWidget(
             routeKey=self.loginInterface.objectName(),
             widget=self.avatarWidget,
-            onClick=self.showLoginInterface,
+            onClick=lambda: self.showLoginInterface(switch_to_profile=True),
             position=NavigationItemPosition.BOTTOM
         )
 
@@ -247,12 +247,12 @@ class Window(FluentWindow):
         except Exception as e:
             logger.error(f"自动登录过程出错: {e}")
 
-    def showLoginInterface(self, switch_to_profile=True):
+    def showLoginInterface(self, switch_to_profile=False):
         """
         显示登录界面
 
         Args:
-            switch_to_profile: 是否在登录后切换到个人中心页面，默认为True
+            switch_to_profile: 是否在登录后切换到个人中心页面，默认为False
                               当用户主动点击个人中心按钮时为True
                               当系统自动调用登录界面时为False
         """
@@ -272,10 +272,8 @@ class Window(FluentWindow):
             self.login_window.move(login_x, login_y)
 
             self.login_window.show()
-        else:
-            # 如果已登录且是用户主动点击，则切换到个人中心页面
-            if switch_to_profile:
-                self.switchTo(self.loginInterface)
+        elif switch_to_profile:
+            self.switchTo(self.loginInterface)
 
     def handleLoginSuccess(self, user_info, switch_to_profile=False):
         """
@@ -291,7 +289,10 @@ class Window(FluentWindow):
         # 登录成功后使用设置图标作为头像
         # 直接使用FluentIcon作为头像，确保与导航图标一致
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
-        # self.login_window.hide()
+        
+        # 关闭登录窗口
+        if self.login_window:
+            self.login_window.hide()
 
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
