@@ -1,10 +1,8 @@
 import os
 import unicodedata
-import spacy
 from typing import List, Tuple
 
 from app.spacy_utils.load_nlp_model import init_nlp
-from utils import logger
 
 SPLIT_BY_COMMA_FILE = 'D:\dcode\VideoLingo\output\log\split_by_comma.txt'
 SPLIT_BY_CONNECTOR_FILE ='D:\dcode\VideoLingo\output\log\split_by_connector.txt'
@@ -178,7 +176,7 @@ def smart_split_by_boundaries(text: str, context_words: int = 5, nlp = None) -> 
     return sentences, split_indices
 
 
-def main():
+def text_full():
     nlp = init_nlp()
     with open(SPLIT_BY_COMMA_FILE, "r", encoding="utf-8") as input_file:
         sentences = input_file.readlines()
@@ -215,6 +213,5 @@ def example():
     print(b)
 
 if __name__ == "__main__":
-    # main()
+    # text_full()
     example()
-    # main()

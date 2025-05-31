@@ -1,10 +1,13 @@
-from app.spacy_utils.load_nlp_model import init_nlp
-from app.spacy_utils.sentence_processor import get_sub_index, set_nlp
+import os
 
+from app.spacy_utils.load_nlp_model import init_nlp
+from app.spacy_utils.sentence_processor import split_segments_by_boundaries
+from utils.file_utils import funasr_write_srt_file
+# 添加项目根目录到Python路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
 segments = [{
     'text': '嗯，',
-    'start': 2290,
-    'end': 2530,
     'timestamp': [
         [
             2290,
@@ -105,38 +108,34 @@ segments = [{
         ],
         'spk': 0
     }, ]
-segments_new = []
+
+# segments = [{'text': 'Picture a winter wonderland,', 'timestamp': [
+#             [
+#                 0,
+#                 478
+#             ],
+#             [
+#                 478,
+#                 717
+#             ],
+#             [
+#                 717,
+#                 1196
+#             ],
+#             [
+#                 1196,
+#                 1913
+#             ]
+#         ]
+#     }]
+srt_file_path = os.path.join(current_dir, 'ta_asr_result.srt')
 nlp = init_nlp('zh')
-for segment in segments:
-    split_text_list, split_index = set_nlp(segment['text'], nlp)
-    if len(split_text_list) <= 1:
-        segments_new.append(segment)
-    else:
-        split_len = len(split_text_list)
-        timestamp = segment.get('timestamp')
-        start = 0
-        for i in range(split_len):
-            segment_dict = {}
-            ll = len(split_text_list[i])
-            end = start + ll - 1
-            print(end)
-            if i < split_len - 1:
-                segment_dict = {
-                    'text': split_text_list[i],
-                    'start': timestamp[start][0],
-                    'end': timestamp[end][1]
-                }
-
-            else:
-                segment_dict = {
-                    'text': split_text_list[i],
-                    'start': timestamp[start + 1][0],
-                    'end': timestamp[-1][1]
-                }
-            start = end
-
-            segments_new.append(segment_dict)
-
-
-
+segments_new = split_segments_by_boundaries(segments, nlp)
 print(segments_new)
+
+funasr_write_srt_file(segments_new, srt_file_path)
+
+
+
+
+# print(segments_new)

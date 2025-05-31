@@ -9,6 +9,10 @@ import sys
 import json
 import time
 
+from app.spacy_utils.load_nlp_model import init_nlp
+from app.spacy_utils.sentence_processor import split_segments_by_boundaries
+from utils.file_utils import funasr_write_srt_file
+
 # 添加项目根目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -43,8 +47,11 @@ def test_parse_transcription():
     start_time = time.time()
 
     # 解析JSON数据
-    parsed_results = client.parse_transcription(json_data)
-
+    parsed_results = client.convert_to_segments_format(json_data)
+    print(parsed_results)
+    nlp = init_nlp('en')
+    segments_new = split_segments_by_boundaries(parsed_results, nlp)
+    print(segments_new)
     # 计算耗时
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -60,7 +67,7 @@ def test_parse_transcription():
 
     # 转换为SRT文件
     output_srt_path = os.path.join(current_dir, 'ta_asr_result.srt')
-    client.convert_to_srt(parsed_results, output_srt_path)
+    funasr_write_srt_file(segments_new, output_srt_path)
 
     # 计算耗时
     end_time = time.time()

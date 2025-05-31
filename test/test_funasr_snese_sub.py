@@ -38,14 +38,14 @@ time_list = time_res[0].get('timestamp')
 #         print(i)
 
 msg = Segment(punctuation_res, time_res)
-# punc_list = msg.get_segmented_index()
-# print(punc_list)
-# if not msg.ask_res_len():
-#     msg.fix_wrong_index()
-# nlp = init_nlp()
-#
-# split_list = get_sub_index(punc_list,words, nlp)
-# print(split_list)
+punc_list = msg.get_segmented_index()
+print(punc_list)
+if not msg.ask_res_len():
+    msg.fix_wrong_index()
+nlp = init_nlp()
+
+split_list = get_sub_index(punc_list,words, nlp)
+print(split_list)
 split_list = [4, 10, 15, 22, 36, 42, 50]
 # # split_list = [4, 22, 42, 50]
 start_time =1
