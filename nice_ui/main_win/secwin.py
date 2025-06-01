@@ -346,6 +346,9 @@ class SecWindow:
         is_task = self._check_auth_and_balance()
 
         if is_task:
+            # 保持模型信息
+            self._save_soure_model_info()
+
             # 保存设置
             self._save_current_settings()
             # 创建工作队列并启动处理
@@ -457,3 +460,15 @@ class SecWindow:
                 except (ValueError, TypeError) as e:
                     logger.warning(f"解析代币消耗失败: {str(e)}")
         return task_amount
+
+    def _save_soure_model_info(self):
+        source_model_info = self.tools.match_source_model(
+            self.main.source_model.currentText()
+        )
+        logger.debug(f"==========source_model_info:{source_model_info}")
+
+        model_name = source_model_info["model_name"]
+        config.params["source_module_key"] = self.main.source_model.currentText()
+        config.params["source_module_name"] = model_name
+        config.params["source_module_status"] = source_model_info["status"]
+        logger.debug(config.params["source_module_status"])

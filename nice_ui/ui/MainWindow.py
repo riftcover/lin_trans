@@ -119,7 +119,6 @@ class Window(FluentWindow):
             self.settings.allKeys()
         )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
 
-
     def load_proxy_settings(self):
         if self.settings.value("use_proxy", False, type=bool):
             proxy_type = self.settings.value("proxy_type", "http", type=str)
@@ -289,7 +288,7 @@ class Window(FluentWindow):
         # 登录成功后使用设置图标作为头像
         # 直接使用FluentIcon作为头像，确保与导航图标一致
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
-        
+
         # 关闭登录窗口
         if self.login_window:
             self.login_window.hide()
@@ -379,4 +378,6 @@ if __name__ == "__main__":
         window = Window()
         window.show()
         sys.exit(app.exec())
+
+
     main()
