@@ -1,7 +1,5 @@
 from PySide6.QtCore import Signal, QObject
 
-from utils import logger
-
 
 class DataBridge(QObject):
     # 定义信号
@@ -47,7 +45,6 @@ class DataBridge(QObject):
         Args:
             status: unid
         """
-        logger.info("emit_asr_finished 触发了")
         self.asr_trans_job_asr_finished.emit(status)
 
     def emit_update_balance(self, balance: int):

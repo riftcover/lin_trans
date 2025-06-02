@@ -379,15 +379,13 @@ class ExportSubtitleDialog(QDialog):
             while i < len(lines) and not lines[i].strip():
                 i += 1
 
-        # logger.info(first_line_subtitles)
-        # logger.info(second_line_subtitles)
         # 保存提取的文本到 export_path
         export_name = os.path.splitext(os.path.basename(src_path))[0]
         with open(
                 f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
         ) as dest_file:
-            # 写入第一行字幕
-            dest_file.write("".join(first_line_subtitles) + "\n")
-            # 写入第二行字幕（如果存在）
+            # 写入第一行字幕，每行都换行
+            dest_file.write("\n".join(first_line_subtitles) + "\n")
+            # 写入第二行字幕（如果存在），每行都换行
             if second_line_subtitles:
-                dest_file.write("\n\n".join(second_line_subtitles) + "\n")
+                dest_file.write("\n".join(second_line_subtitles) + "\n")
