@@ -45,7 +45,14 @@ temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
 
+# home
+homepath = Path.home() / "Videos/lapped"
+homepath.mkdir(parents=True, exist_ok=True)
+homedir = homepath.as_posix()
 
+1# home tmp
+TEMP_HOME = homedir + "/tmp"
+Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
 
