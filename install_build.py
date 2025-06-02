@@ -94,9 +94,9 @@ if args.debug:
 
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
-    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.ico")}'])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.ico")}'])
 elif platform.system() == "Darwin":  # macOS
-    cmd.extend([f'--icon={os.path.join("components", "assets", "linlin.icns")}'])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.icns")}'])
     if platform.machine() == "arm64":
         cmd.append("--target-architecture=arm64")
     else:
@@ -182,7 +182,7 @@ def copy_models():
             print(f"{model} 库路径: {model_root}")
 
             # 目标路径 (_internal 目录)
-            target_path = os.path.join("dist", "LinLin", "_internal", model)
+            target_path = os.path.join("dist", "Lapped", "_internal", model)
 
             # 确保目标目录存在
             os.makedirs(target_path, exist_ok=True)

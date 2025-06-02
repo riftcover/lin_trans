@@ -8,10 +8,24 @@ pyside6-rcc components/lin_resource.qrc -o components/lin_resource_rc.py
 
 ## 杀掉进程
 ```bash
-ps -ef | grep linlin | awk '{print $2}' | xargs kill -9
+ps -ef | grep lapped | awk '{print $2}' | xargs kill -9
 ```
 
 ## 打包注意事项
 ### 目录结构
 ffmpeg目录(plugin)为项目同级目录
 models目录为项目同级目录
+
+## 依赖下载安装
+
+```
+### 1.下载离线安装包
+```json lines
+ pip download --prefer-binary --dest wheels -r requirements.txt     
+```
+
+
+### 2. 离线环境部署
+```bash
+pip install --no-index --find-links wheels -r requirements.txt
+```

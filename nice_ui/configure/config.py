@@ -45,14 +45,7 @@ temp_path = root_path / "tmp"
 temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
 
-# home
-homepath = Path.home() / "Videos/linlin"
-homepath.mkdir(parents=True, exist_ok=True)
-homedir = homepath.as_posix()
 
-# home tmp
-TEMP_HOME = homedir + "/tmp"
-Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
 
@@ -198,7 +191,7 @@ box_lang = obj["toolbox_lang"]
 #     os.environ["PATH"] = f"{root_path}/whisper.cpp:" + os.environ["PATH"]
 
 os.environ["QT_API"] = "pyside6"
-os.environ["SOFT_NAME"] = "linlintrans"
+os.environ["SOFT_NAME"] = "Lapped AI"
 # spwin主窗口
 queue_logs = Queue(1000)
 # box窗口

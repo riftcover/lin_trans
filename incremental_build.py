@@ -112,7 +112,7 @@ print("打包完成!")
 # 复制模型库到 _internal 目录，并排除不必要的文件
 def copy_models():
     # 如果不是完整编译，且目标目录已存在，则跳过
-    if not args.full and os.path.exists(os.path.join("dist", "LinLin", "_internal")):
+    if not args.full and os.path.exists(os.path.join("dist", "Lapped", "_internal")):
         print("跳过复制模型库（增量编译模式）")
         return
 

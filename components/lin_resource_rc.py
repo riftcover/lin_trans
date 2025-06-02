@@ -44,6 +44,178 @@ ewBox=\x220 0 15 15\
 66666\x22 d=\x22M7.5 1\
 2L0 4h15z\x22/></sv\
 g>\
+\x00\x00\x03\x86\
+<\
+svg xmlns=\x22http:\
+//www.w3.org/200\
+0/svg\x22 width=\x2213\
+0\x22 height=\x22130\x22 \
+viewBox=\x220 0 24 \
+24\x22><g fill=\x22non\
+e\x22 fill-rule=\x22ev\
+enodd\x22><path d=\x22\
+M24 0v24H0V0zM12\
+.594 23.258l-.01\
+2.002l-.071.035l\
+-.02.004l-.014-.\
+004l-.071-.036q-\
+.016-.004-.024.0\
+06l-.004.01l-.01\
+7.428l.005.02l.0\
+1.013l.104.074l.\
+015.004l.012-.00\
+4l.104-.074l.012\
+-.016l.004-.017l\
+-.017-.427q-.004\
+-.016-.016-.018m\
+.264-.113l-.014.\
+002l-.184.093l-.\
+01.01l-.003.011l\
+.018.43l.005.012\
+l.008.008l.201.0\
+92q.019.005.029-\
+.008l.004-.014l-\
+.034-.614q-.005-\
+.018-.02-.022m-.\
+715.002a.02.02 0\
+ 0 0-.027.006l-.\
+006.014l-.034.61\
+4q.001.018.017.0\
+24l.015-.002l.20\
+1-.093l.01-.008l\
+.003-.011l.018-.\
+43l-.003-.012l-.\
+01-.01z\x22/><path \
+fill=\x22#000000\x22 d\
+=\x22M11.707 6.293a\
+1 1 0 0 1 0 1.41\
+4L7.414 12l4.293\
+ 4.293a1 1 0 0 1\
+-1.414 1.414l-5-\
+5a1 1 0 0 1 0-1.\
+414l5-5a1 1 0 0 \
+1 1.414 0m6 0a1 \
+1 0 0 1 0 1.414L\
+13.414 12l4.293 \
+4.293a1 1 0 0 1-\
+1.414 1.414l-5-5\
+a1 1 0 0 1 0-1.4\
+14l5-5a1 1 0 0 1\
+ 1.414 0\x22/></g><\
+/svg>\
+\x00\x00\x03\x0f\
+<\
+svg xmlns=\x22http:\
+//www.w3.org/200\
+0/svg\x22 width=\x2213\
+0\x22 height=\x22130\x22 \
+viewBox=\x220 0 24 \
+24\x22><g fill=\x22non\
+e\x22 fill-rule=\x22ev\
+enodd\x22><path d=\x22\
+M24 0v24H0V0zM12\
+.593 23.258l-.01\
+1.002l-.071.035l\
+-.02.004l-.014-.\
+004l-.071-.035q-\
+.016-.005-.024.0\
+05l-.004.01l-.01\
+7.428l.005.02l.0\
+1.013l.104.074l.\
+015.004l.012-.00\
+4l.104-.074l.012\
+-.016l.004-.017l\
+-.017-.427q-.004\
+-.016-.017-.018m\
+.265-.113l-.013.\
+002l-.185.093l-.\
+01.01l-.003.011l\
+.018.43l.005.012\
+l.008.007l.201.0\
+93q.019.005.029-\
+.008l.004-.014l-\
+.034-.614q-.005-\
+.019-.02-.022m-.\
+715.002a.02.02 0\
+ 0 0-.027.006l-.\
+006.014l-.034.61\
+4q.001.018.017.0\
+24l.015-.002l.20\
+1-.093l.01-.008l\
+.004-.011l.017-.\
+43l-.003-.012l-.\
+01-.01z\x22/><path \
+fill=\x22#000000\x22 d\
+=\x22M15.707 11.293\
+a1 1 0 0 1 0 1.4\
+14l-5.657 5.657a\
+1 1 0 1 1-1.414-\
+1.414l4.95-4.95l\
+-4.95-4.95a1 1 0\
+ 0 1 1.414-1.414\
+z\x22/></g></svg>\
+\x00\x00\x00\x83\
+<\
+svg xmlns=\x22http:\
+//www.w3.org/200\
+0/svg\x22 width=\x2217\
+\x22 height=\x2211\x22 vi\
+ewBox=\x220 0 15 15\
+\x22><path fill=\x22#6\
+66666\x22 d=\x22m7.5 3\
+l7.5 8H0z\x22/></sv\
+g>\
+\x00\x00\x03\x0c\
+<\
+svg xmlns=\x22http:\
+//www.w3.org/200\
+0/svg\x22 width=\x2213\
+0\x22 height=\x22130\x22 \
+viewBox=\x220 0 24 \
+24\x22><g fill=\x22non\
+e\x22 fill-rule=\x22ev\
+enodd\x22><path d=\x22\
+M24 0v24H0V0zM12\
+.593 23.258l-.01\
+1.002l-.071.035l\
+-.02.004l-.014-.\
+004l-.071-.035q-\
+.016-.005-.024.0\
+05l-.004.01l-.01\
+7.428l.005.02l.0\
+1.013l.104.074l.\
+015.004l.012-.00\
+4l.104-.074l.012\
+-.016l.004-.017l\
+-.017-.427q-.004\
+-.016-.017-.018m\
+.265-.113l-.013.\
+002l-.185.093l-.\
+01.01l-.003.011l\
+.018.43l.005.012\
+l.008.007l.201.0\
+93q.019.005.029-\
+.008l.004-.014l-\
+.034-.614q-.005-\
+.019-.02-.022m-.\
+715.002a.02.02 0\
+ 0 0-.027.006l-.\
+006.014l-.034.61\
+4q.001.018.017.0\
+24l.015-.002l.20\
+1-.093l.01-.008l\
+.004-.011l.017-.\
+43l-.003-.012l-.\
+01-.01z\x22/><path \
+fill=\x22#000000\x22 d\
+=\x22M8.293 12.707a\
+1 1 0 0 1 0-1.41\
+4l5.657-5.657a1 \
+1 0 1 1 1.414 1.\
+414L10.414 12l4.\
+95 4.95a1 1 0 0 \
+1-1.414 1.414z\x22/\
+></g></svg>\
 \x00\x00\xc4X\
 \x89\
 PNG\x0d\x0a\x1a\x0a\x00\x00\x00\x0dIHDR\x00\
@@ -3188,178 +3360,6 @@ w.4JD\x8b\x8a\xc8\xe1\xdb<;8\x18\x04\xea\
 \x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x88\x08\
 \x00\xf0_\x07\xb6I\x87\xea\x86+\x1f\x00\x00\x00\x00I\
 END\xaeB`\x82\
-\x00\x00\x03\x86\
-<\
-svg xmlns=\x22http:\
-//www.w3.org/200\
-0/svg\x22 width=\x2213\
-0\x22 height=\x22130\x22 \
-viewBox=\x220 0 24 \
-24\x22><g fill=\x22non\
-e\x22 fill-rule=\x22ev\
-enodd\x22><path d=\x22\
-M24 0v24H0V0zM12\
-.594 23.258l-.01\
-2.002l-.071.035l\
--.02.004l-.014-.\
-004l-.071-.036q-\
-.016-.004-.024.0\
-06l-.004.01l-.01\
-7.428l.005.02l.0\
-1.013l.104.074l.\
-015.004l.012-.00\
-4l.104-.074l.012\
--.016l.004-.017l\
--.017-.427q-.004\
--.016-.016-.018m\
-.264-.113l-.014.\
-002l-.184.093l-.\
-01.01l-.003.011l\
-.018.43l.005.012\
-l.008.008l.201.0\
-92q.019.005.029-\
-.008l.004-.014l-\
-.034-.614q-.005-\
-.018-.02-.022m-.\
-715.002a.02.02 0\
- 0 0-.027.006l-.\
-006.014l-.034.61\
-4q.001.018.017.0\
-24l.015-.002l.20\
-1-.093l.01-.008l\
-.003-.011l.018-.\
-43l-.003-.012l-.\
-01-.01z\x22/><path \
-fill=\x22#000000\x22 d\
-=\x22M11.707 6.293a\
-1 1 0 0 1 0 1.41\
-4L7.414 12l4.293\
- 4.293a1 1 0 0 1\
--1.414 1.414l-5-\
-5a1 1 0 0 1 0-1.\
-414l5-5a1 1 0 0 \
-1 1.414 0m6 0a1 \
-1 0 0 1 0 1.414L\
-13.414 12l4.293 \
-4.293a1 1 0 0 1-\
-1.414 1.414l-5-5\
-a1 1 0 0 1 0-1.4\
-14l5-5a1 1 0 0 1\
- 1.414 0\x22/></g><\
-/svg>\
-\x00\x00\x03\x0f\
-<\
-svg xmlns=\x22http:\
-//www.w3.org/200\
-0/svg\x22 width=\x2213\
-0\x22 height=\x22130\x22 \
-viewBox=\x220 0 24 \
-24\x22><g fill=\x22non\
-e\x22 fill-rule=\x22ev\
-enodd\x22><path d=\x22\
-M24 0v24H0V0zM12\
-.593 23.258l-.01\
-1.002l-.071.035l\
--.02.004l-.014-.\
-004l-.071-.035q-\
-.016-.005-.024.0\
-05l-.004.01l-.01\
-7.428l.005.02l.0\
-1.013l.104.074l.\
-015.004l.012-.00\
-4l.104-.074l.012\
--.016l.004-.017l\
--.017-.427q-.004\
--.016-.017-.018m\
-.265-.113l-.013.\
-002l-.185.093l-.\
-01.01l-.003.011l\
-.018.43l.005.012\
-l.008.007l.201.0\
-93q.019.005.029-\
-.008l.004-.014l-\
-.034-.614q-.005-\
-.019-.02-.022m-.\
-715.002a.02.02 0\
- 0 0-.027.006l-.\
-006.014l-.034.61\
-4q.001.018.017.0\
-24l.015-.002l.20\
-1-.093l.01-.008l\
-.004-.011l.017-.\
-43l-.003-.012l-.\
-01-.01z\x22/><path \
-fill=\x22#000000\x22 d\
-=\x22M15.707 11.293\
-a1 1 0 0 1 0 1.4\
-14l-5.657 5.657a\
-1 1 0 1 1-1.414-\
-1.414l4.95-4.95l\
--4.95-4.95a1 1 0\
- 0 1 1.414-1.414\
-z\x22/></g></svg>\
-\x00\x00\x00\x83\
-<\
-svg xmlns=\x22http:\
-//www.w3.org/200\
-0/svg\x22 width=\x2217\
-\x22 height=\x2211\x22 vi\
-ewBox=\x220 0 15 15\
-\x22><path fill=\x22#6\
-66666\x22 d=\x22m7.5 3\
-l7.5 8H0z\x22/></sv\
-g>\
-\x00\x00\x03\x0c\
-<\
-svg xmlns=\x22http:\
-//www.w3.org/200\
-0/svg\x22 width=\x2213\
-0\x22 height=\x22130\x22 \
-viewBox=\x220 0 24 \
-24\x22><g fill=\x22non\
-e\x22 fill-rule=\x22ev\
-enodd\x22><path d=\x22\
-M24 0v24H0V0zM12\
-.593 23.258l-.01\
-1.002l-.071.035l\
--.02.004l-.014-.\
-004l-.071-.035q-\
-.016-.005-.024.0\
-05l-.004.01l-.01\
-7.428l.005.02l.0\
-1.013l.104.074l.\
-015.004l.012-.00\
-4l.104-.074l.012\
--.016l.004-.017l\
--.017-.427q-.004\
--.016-.017-.018m\
-.265-.113l-.013.\
-002l-.185.093l-.\
-01.01l-.003.011l\
-.018.43l.005.012\
-l.008.007l.201.0\
-93q.019.005.029-\
-.008l.004-.014l-\
-.034-.614q-.005-\
-.019-.02-.022m-.\
-715.002a.02.02 0\
- 0 0-.027.006l-.\
-006.014l-.034.61\
-4q.001.018.017.0\
-24l.015-.002l.20\
-1-.093l.01-.008l\
-.004-.011l.017-.\
-43l-.003-.012l-.\
-01-.01z\x22/><path \
-fill=\x22#000000\x22 d\
-=\x22M8.293 12.707a\
-1 1 0 0 1 0-1.41\
-4l5.657-5.657a1 \
-1 0 1 1 1.414 1.\
-414L10.414 12l4.\
-95 4.95a1 1 0 0 \
-1-1.414 1.414z\x22/\
-></g></svg>\
 \x00\x00\x01\x9b\
 <\
 svg xmlns=\x22http:\
@@ -3697,88 +3697,92 @@ t9\xae\x0f\xd9\xf5\xb8\x93\xef\xa0C/Z%\x15\xfb\
 4\xbd\xfe\xb1\x9cN\xfc\x7f\xda\xf1\xc0\xfd\xda\x8f\xfdU\
 \x16w\xdb\xddW\xd0Yg\xa0\xa2\xdb\x5c\x96\xdcv\xf4\
 \x03\x19\xb3\x95\xff\
-\x00\x00\x04\xfa\
+\x00\x00\x059\
 /\
 * \xe5\x88\x86\xe9\xa1\xb5\xe6\x8e\xa7\xe4\xbb\xb6\xe6\xa0\
-\xb7\xe5\xbc\x8f */\x0a\x0a/* \xe9\xa1\xb5\xe7\
-\xa0\x81\xe4\xbf\xa1\xe6\x81\xaf\xe6\xa0\x87\xe7\xad\xbe *\
-/\x0aQLabel#pageInf\
-o {\x0a    color: #\
-6c757d;\x0a    font\
--size: 13px;\x0a}\x0a\x0a\
-/* \xe9\xa1\xb5\xe7\xa0\x81\xe6\x8c\x87\xe7\xa4\xba\xe5\
-\x99\xa8 */\x0aQLabel#pag\
-eIndicator {\x0a   \
- color: #495057;\
-\x0a    font-size: \
-14px;\x0a    font-w\
-eight: 500;\x0a    \
-min-width: 60px;\
-\x0a    padding: 0 \
-8px;\x0a}\x0a\x0a/* \xe5\xaf\xbc\xe8\x88\
-\xaa\xe6\x8c\x89\xe9\x92\xae\xe9\x80\x9a\xe7\x94\xa8\xe6\xa0\xb7\
-\xe5\xbc\x8f */\x0aTranspare\
-ntToolButton.Nav\
-Button {\x0a    bor\
-der: 1px solid #\
-e9ecef;\x0a    bord\
-er-radius: 4px;\x0a\
-    padding: 4px\
-;\x0a    min-width:\
- 32px;\x0a    min-h\
-eight: 32px;\x0a}\x0a\x0a\
-TransparentToolB\
-utton.NavButton:\
-hover {\x0a    back\
-ground-color: #f\
-8f9fa;\x0a}\x0a\x0aTransp\
+\xb7\xe5\xbc\x8f */\x0d\x0a\x0d\x0a/* \xe9\xa1\
+\xb5\xe7\xa0\x81\xe4\xbf\xa1\xe6\x81\xaf\xe6\xa0\x87\xe7\xad\xbe\
+ */\x0d\x0aQLabel#page\
+Info {\x0d\x0a    colo\
+r: #6c757d;\x0d\x0a   \
+ font-size: 13px\
+;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe9\xa1\xb5\xe7\xa0\
+\x81\xe6\x8c\x87\xe7\xa4\xba\xe5\x99\xa8 */\x0d\x0aQ\
+Label#pageIndica\
+tor {\x0d\x0a    color\
+: #495057;\x0d\x0a    \
+font-size: 14px;\
+\x0d\x0a    font-weigh\
+t: 500;\x0d\x0a    min\
+-width: 60px;\x0d\x0a \
+   padding: 0 8p\
+x;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe5\xaf\xbc\xe8\
+\x88\xaa\xe6\x8c\x89\xe9\x92\xae\xe9\x80\x9a\xe7\x94\xa8\xe6\xa0\
+\xb7\xe5\xbc\x8f */\x0d\x0aTranspa\
+rentToolButton.N\
+avButton {\x0d\x0a    \
+border: 1px soli\
+d #e9ecef;\x0d\x0a    \
+border-radius: 4\
+px;\x0d\x0a    padding\
+: 4px;\x0d\x0a    min-\
+width: 32px;\x0d\x0a  \
+  min-height: 32\
+px;\x0d\x0a}\x0d\x0a\x0d\x0aTransp\
 arentToolButton.\
-NavButton:presse\
-d {\x0a    backgrou\
-nd-color: #e9ece\
-f;\x0a}\x0a\x0aTransparen\
-tToolButton.NavB\
-utton:disabled {\
-\x0a    opacity: 0.\
-5;\x0a    border-co\
-lor: #f1f3f5;\x0a}\x0a\
-\x0a/* \xe9\xa6\x96\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae\
- */\x0aTransparentT\
-oolButton#firstB\
-utton {\x0a    qpro\
-perty-icon: url(\
-:/icon/assets/Mi\
-ngcuteArrowsLeft\
-Line.svg);\x0a}\x0a\x0a/*\
- \xe4\xb8\x8a\xe4\xb8\x80\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae\
- */\x0aTransparentT\
-oolButton#prevBu\
-tton {\x0a    qprop\
-erty-icon: url(:\
-/icon/assets/Min\
-gcuteLeftLine.sv\
-g);\x0a}\x0a\x0a/* \xe4\xb8\x8b\xe4\xb8\x80\
-\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae */\x0aTra\
-nsparentToolButt\
-on#nextButton {\x0a\
-    qproperty-ic\
-on: url(:/icon/a\
-ssets/MingcuteRi\
-ghtLine.svg);\x0a}\x0a\
-\x0a/* \xe6\x9c\xab\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae\
- */\x0aTransparentT\
-oolButton#lastBu\
-tton {\x0a    qprop\
-erty-icon: url(:\
-/icon/assets/Min\
-gcuteArrowsRight\
-Line.svg);\x0a}\x0a\x0a/*\
- \xe5\x88\x86\xe9\xa1\xb5\xe6\x8e\xa7\xe4\xbb\xb6\xe5\xae\xb9\
-\xe5\x99\xa8 */\x0aQWidget#p\
-aginationControl\
-s {\x0a    backgrou\
-nd-color: transp\
-arent;\x0a}\x0a\
+NavButton:hover \
+{\x0d\x0a    backgroun\
+d-color: #f8f9fa\
+;\x0d\x0a}\x0d\x0a\x0d\x0aTranspar\
+entToolButton.Na\
+vButton:pressed \
+{\x0d\x0a    backgroun\
+d-color: #e9ecef\
+;\x0d\x0a}\x0d\x0a\x0d\x0aTranspar\
+entToolButton.Na\
+vButton:disabled\
+ {\x0d\x0a    opacity:\
+ 0.5;\x0d\x0a    borde\
+r-color: #f1f3f5\
+;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe9\xa6\x96\xe9\xa1\
+\xb5\xe6\x8c\x89\xe9\x92\xae */\x0d\x0aTran\
+sparentToolButto\
+n#firstButton {\x0d\
+\x0a    qproperty-i\
+con: url(:/icon/\
+assets/MingcuteA\
+rrowsLeftLine.sv\
+g);\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe4\xb8\x8a\
+\xe4\xb8\x80\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae */\x0d\
+\x0aTransparentTool\
+Button#prevButto\
+n {\x0d\x0a    qproper\
+ty-icon: url(:/i\
+con/assets/Mingc\
+uteLeftLine.svg)\
+;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe4\xb8\x8b\xe4\xb8\
+\x80\xe9\xa1\xb5\xe6\x8c\x89\xe9\x92\xae */\x0d\x0aT\
+ransparentToolBu\
+tton#nextButton \
+{\x0d\x0a    qproperty\
+-icon: url(:/ico\
+n/assets/Mingcut\
+eRightLine.svg);\
+\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe6\x9c\xab\xe9\xa1\xb5\
+\xe6\x8c\x89\xe9\x92\xae */\x0d\x0aTrans\
+parentToolButton\
+#lastButton {\x0d\x0a \
+   qproperty-ico\
+n: url(:/icon/as\
+sets/MingcuteArr\
+owsRightLine.svg\
+);\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe5\x88\x86\xe9\
+\xa1\xb5\xe6\x8e\xa7\xe4\xbb\xb6\xe5\xae\xb9\xe5\x99\xa8 *\
+/\x0d\x0aQWidget#pagin\
+ationControls {\x0d\
+\x0a    background-\
+color: transpare\
+nt;\x0d\x0a}\x0d\x0a\
 \x00\x00\x02w\
 C\
 omboBox {\x0d\x0a    b\
@@ -3957,121 +3961,127 @@ mage: url(:/icon\
 /assets/Teenyico\
 nsDownSolid.svg)\
 ;\x0d\x0a}\
-\x00\x00\x07\x02\
+\x00\x00\x07h\
 /\
 * \xe5\xaf\xbc\xe5\x87\xba\xe5\xad\x97\xe5\xb9\x95\xe5\xaf\
 \xb9\xe8\xaf\x9d\xe6\xa1\x86\xe6\xa0\xb7\xe5\xbc\x8f */\
-\x0a\x0a/* \xe5\xaf\xb9\xe8\xaf\x9d\xe6\xa1\x86\xe4\xb8\
-\xbb\xe4\xbd\x93\xe6\xa0\xb7\xe5\xbc\x8f */\x0a#e\
-xportDialogWidge\
-t {\x0a    backgrou\
-nd-color: white;\
-\x0a    border-radi\
-us: 8px;\x0a}\x0a\x0a/* \xe6\
-\xa0\x87\xe9\xa2\x98\xe6\xa0\xb7\xe5\xbc\x8f */\x0a#\
-dialogTitle {\x0a  \
-  font-size: 18p\
-x;\x0a    font-weig\
-ht: bold;\x0a    co\
-lor: #333333;\x0a  \
-  padding-bottom\
-: 6px;\x0a}\x0a\x0a/* \xe5\x86\x85\
+\x0d\x0a\x0d\x0a/* \xe5\xaf\xb9\xe8\xaf\x9d\xe6\xa1\x86\
+\xe4\xb8\xbb\xe4\xbd\x93\xe6\xa0\xb7\xe5\xbc\x8f */\x0d\
+\x0a#exportDialogWi\
+dget {\x0d\x0a    back\
+ground-color: wh\
+ite;\x0d\x0a    border\
+-radius: 8px;\x0d\x0a}\
+\x0d\x0a\x0d\x0a/* \xe6\xa0\x87\xe9\xa2\x98\xe6\xa0\xb7\
+\xe5\xbc\x8f */\x0d\x0a#dialogT\
+itle {\x0d\x0a    font\
+-size: 18px;\x0d\x0a  \
+  font-weight: b\
+old;\x0d\x0a    color:\
+ #333333;\x0d\x0a    p\
+adding-bottom: 6\
+px;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe5\x86\x85\
 \xe5\xae\xb9\xe5\x8d\xa1\xe7\x89\x87\xe6\xa0\xb7\xe5\xbc\x8f \
-*/\x0a#contentCard \
-{\x0a    background\
--color: #f8f9fa;\
-\x0a    border-radi\
-us: 6px;\x0a    bor\
-der: 1px solid r\
-gba(0, 0, 0, 0.0\
-5);\x0a}\x0a\x0a/* \xe6\xa0\x87\xe7\xad\xbe\
-\xe6\xa0\xb7\xe5\xbc\x8f */\x0a#forma\
-tLabel, #pathLab\
-el {\x0a    font-we\
-ight: 500;\x0a    c\
-olor: #555555;\x0a \
-   padding: 3px \
-0;\x0a    font-size\
-: 13px;\x0a}\x0a\x0a/* \xe5\x8d\
-\x95\xe9\x80\x89\xe6\x8c\x89\xe9\x92\xae\xe6\xa0\xb7\xe5\xbc\x8f\
- */\x0aRadioButton \
-{\x0a    color: #55\
-5555;\x0a    font-s\
-ize: 13px;\x0a    p\
-adding: 3px;\x0a}\x0a\x0a\
-RadioButton::ind\
-icator {\x0a    wid\
-th: 16px;\x0a    he\
-ight: 16px;\x0a}\x0a\x0a/\
-* \xe8\xb7\xaf\xe5\xbe\x84\xe8\xbe\x93\xe5\x85\xa5\xe6\xa1\
-\x86\xe6\xa0\xb7\xe5\xbc\x8f */\x0a#path\
-InputFrame LineE\
-dit {\x0a    border\
-: 1px solid #dee\
-2e6;\x0a    border-\
-radius: 4px;\x0a   \
- padding: 6px 10\
-px;\x0a    backgrou\
-nd-color: white;\
-\x0a    font-size: \
-13px;\x0a}\x0a\x0a#pathIn\
-putFrame LineEdi\
-t:focus {\x0a    bo\
-rder-color: #3d7\
-eff;\x0a}\x0a\x0a/* \xe6\xb5\x8f\xe8\xa7\
-\x88\xe6\x8c\x89\xe9\x92\xae\xe6\xa0\xb7\xe5\xbc\x8f */\
-\x0a#pathInputFrame\
- PushButton {\x0a  \
-  padding: 6px 1\
-0px;\x0a    border-\
-radius: 4px;\x0a   \
- background-colo\
-r: #f1f3f5;\x0a    \
-border: 1px soli\
-d #dee2e6;\x0a    c\
-olor: #495057;\x0a \
+*/\x0d\x0a#contentCard\
+ {\x0d\x0a    backgrou\
+nd-color: #f8f9f\
+a;\x0d\x0a    border-r\
+adius: 6px;\x0d\x0a   \
+ border: 1px sol\
+id rgba(0, 0, 0,\
+ 0.05);\x0d\x0a}\x0d\x0a\x0d\x0a/*\
+ \xe6\xa0\x87\xe7\xad\xbe\xe6\xa0\xb7\xe5\xbc\x8f */\
+\x0d\x0a#formatLabel, \
+#pathLabel {\x0d\x0a  \
+  font-weight: 5\
+00;\x0d\x0a    color: \
+#555555;\x0d\x0a    pa\
+dding: 3px 0;\x0d\x0a \
    font-size: 13\
-px;\x0a}\x0a\x0a#pathInpu\
-tFrame PushButto\
-n:hover {\x0a    ba\
-ckground-color: \
-#e9ecef;\x0a}\x0a\x0a/* \xe5\
-\xba\x95\xe9\x83\xa8\xe6\x8c\x89\xe9\x92\xae\xe6\xa0\xb7\xe5\xbc\
-\x8f */\x0aPushButton \
-{\x0a    padding: 6\
-px 12px;\x0a    bor\
-der-radius: 4px;\
-\x0a    background-\
-color: #f1f3f5;\x0a\
-    border: 1px \
-solid #dee2e6;\x0a \
-   color: #49505\
-7;\x0a    min-width\
-: 75px;\x0a    font\
--size: 13px;\x0a}\x0a\x0a\
-PushButton:hover\
- {\x0a    backgroun\
-d-color: #e9ecef\
-;\x0a}\x0a\x0aPrimaryPush\
-Button {\x0a    pad\
-ding: 6px 12px;\x0a\
+px;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe5\x8d\x95\
+\xe9\x80\x89\xe6\x8c\x89\xe9\x92\xae\xe6\xa0\xb7\xe5\xbc\x8f \
+*/\x0d\x0aRadioButton \
+{\x0d\x0a    color: #5\
+55555;\x0d\x0a    font\
+-size: 13px;\x0d\x0a  \
+  padding: 3px;\x0d\
+\x0a}\x0d\x0a\x0d\x0aRadioButto\
+n::indicator {\x0d\x0a\
+    width: 16px;\
+\x0d\x0a    height: 16\
+px;\x0d\x0a}\x0d\x0a\x0d\x0a/* \xe8\xb7\xaf\
+\xe5\xbe\x84\xe8\xbe\x93\xe5\x85\xa5\xe6\xa1\x86\xe6\xa0\xb7\xe5\
+\xbc\x8f */\x0d\x0a#pathInpu\
+tFrame LineEdit \
+{\x0d\x0a    border: 1\
+px solid #dee2e6\
+;\x0d\x0a    border-ra\
+dius: 4px;\x0d\x0a    \
+padding: 6px 10p\
+x;\x0d\x0a    backgrou\
+nd-color: white;\
+\x0d\x0a    font-size:\
+ 13px;\x0d\x0a}\x0d\x0a\x0d\x0a#pa\
+thInputFrame Lin\
+eEdit:focus {\x0d\x0a \
+   border-color:\
+ #3d7eff;\x0d\x0a}\x0d\x0a\x0d\x0a\
+/* \xe6\xb5\x8f\xe8\xa7\x88\xe6\x8c\x89\xe9\x92\xae\xe6\
+\xa0\xb7\xe5\xbc\x8f */\x0d\x0a#pathI\
+nputFrame PushBu\
+tton {\x0d\x0a    padd\
+ing: 6px 10px;\x0d\x0a\
     border-radiu\
-s: 4px;\x0a    back\
-ground-color: #3\
-d7eff;\x0a    color\
-: white;\x0a    bor\
-der: none;\x0a    m\
-in-width: 75px;\x0a\
-    font-size: 1\
-3px;\x0a}\x0a\x0aPrimaryP\
-ushButton:hover \
-{\x0a    background\
--color: #2b6bed;\
-\x0a}\x0a\x0aPrimaryPushB\
-utton:pressed {\x0a\
+s: 4px;\x0d\x0a    bac\
+kground-color: #\
+f1f3f5;\x0d\x0a    bor\
+der: 1px solid #\
+dee2e6;\x0d\x0a    col\
+or: #495057;\x0d\x0a  \
+  font-size: 13p\
+x;\x0d\x0a}\x0d\x0a\x0d\x0a#pathIn\
+putFrame PushBut\
+ton:hover {\x0d\x0a   \
+ background-colo\
+r: #e9ecef;\x0d\x0a}\x0d\x0a\
+\x0d\x0a/* \xe5\xba\x95\xe9\x83\xa8\xe6\x8c\x89\xe9\x92\
+\xae\xe6\xa0\xb7\xe5\xbc\x8f */\x0d\x0aPush\
+Button {\x0d\x0a    pa\
+dding: 6px 12px;\
+\x0d\x0a    border-rad\
+ius: 4px;\x0d\x0a    b\
+ackground-color:\
+ #f1f3f5;\x0d\x0a    b\
+order: 1px solid\
+ #dee2e6;\x0d\x0a    c\
+olor: #495057;\x0d\x0a\
+    min-width: 7\
+5px;\x0d\x0a    font-s\
+ize: 13px;\x0d\x0a}\x0d\x0a\x0d\
+\x0aPushButton:hove\
+r {\x0d\x0a    backgro\
+und-color: #e9ec\
+ef;\x0d\x0a}\x0d\x0a\x0d\x0aPrimar\
+yPushButton {\x0d\x0a \
+   padding: 6px \
+12px;\x0d\x0a    borde\
+r-radius: 4px;\x0d\x0a\
     background-c\
-olor: #1a5fd9;\x0a}\
-\x0a\
+olor: #3d7eff;\x0d\x0a\
+    color: white\
+;\x0d\x0a    border: n\
+one;\x0d\x0a    min-wi\
+dth: 75px;\x0d\x0a    \
+font-size: 13px;\
+\x0d\x0a}\x0d\x0a\x0d\x0aPrimaryPu\
+shButton:hover {\
+\x0d\x0a    background\
+-color: #2b6bed;\
+\x0d\x0a}\x0d\x0a\x0d\x0aPrimaryPu\
+shButton:pressed\
+ {\x0d\x0a    backgrou\
+nd-color: #1a5fd\
+9;\x0d\x0a}\x0d\x0a\
 \x00\x00\x02\x22\
 L\
 inLineEdit {\x0d\x0a  \
@@ -4133,10 +4143,6 @@ qt_resource_name = b"\
 \x00T\
 \x00e\x00e\x00n\x00y\x00i\x00c\x00o\x00n\x00s\x00D\x00o\x00w\x00n\x00S\x00o\x00l\
 \x00i\x00d\x00.\x00s\x00v\x00g\
-\x00\x0a\
-\x03\x0f7\xe7\
-\x00l\
-\x00i\x00n\x00l\x00i\x00n\x00.\x00p\x00n\x00g\
 \x00\x1a\
 \x04\x5c\x82G\
 \x00M\
@@ -4157,6 +4163,10 @@ qt_resource_name = b"\
 \x00M\
 \x00i\x00n\x00g\x00c\x00u\x00t\x00e\x00L\x00e\x00f\x00t\x00L\x00i\x00n\x00e\x00.\
 \x00s\x00v\x00g\
+\x00\x0a\
+\x06\xb9\x07\xa7\
+\x00l\
+\x00a\x00p\x00p\x00e\x00d\x00.\x00p\x00n\x00g\
 \x00\x1b\
 \x09\xd2\x1c\xc7\
 \x00A\
@@ -4244,51 +4254,51 @@ qt_resource_struct = b"\
 \x00\x00\x00\x1a\x00\x02\x00\x00\x00\x0d\x00\x00\x00\x04\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x01\xcc\x00\x00\x00\x00\x00\x01\x00\x00\xd42\
-\x00\x00\x01\x96\x8b\xf34\xc8\
+\x00\x00\x01\x97/\x1a\x8b\x1c\
 \x00\x00\x00~\x00\x00\x00\x00\x00\x01\x00\x00\x02\x1a\
-\x00\x00\x01\x92\x17\xc4\x15G\
-\x00\x00\x00\x98\x00\x00\x00\x00\x00\x01\x00\x00\xc6v\
-\x00\x00\x01\x96\x87\x06\x85\xd9\
+\x00\x00\x01\x97/\x1a\x8b\x1d\
 \x00\x00\x01\x9c\x00\x00\x00\x00\x00\x01\x00\x00\xd2I\
-\x00\x00\x01\x91\xf9C/\x99\
+\x00\x00\x01\x97/\x1a\x8b\x1c\
+\x00\x00\x01F\x00\x00\x00\x00\x00\x01\x00\x00\x0cN\
+\x00\x00\x01\x97/\x1a\x8b \
 \x00\x00\x02V\x00\x00\x00\x00\x00\x01\x00\x00\xe1\x8e\
-\x00\x00\x01\x91\xf61\xe1]\
-\x00\x00\x01\x02\x00\x00\x00\x00\x00\x01\x00\x00\xcd\x13\
-\x00\x00\x01\x91\xf61\xdf\xe3\
+\x00\x00\x01\x97/\x1a\x8b\x1c\
+\x00\x00\x00\xe8\x00\x00\x00\x00\x00\x01\x00\x00\x08\xb7\
+\x00\x00\x01\x97/\x1a\x8b\x1e\
 \x00\x00\x00J\x00\x00\x00\x00\x00\x01\x00\x00\x01\x93\
-\x00\x00\x01\x91\xf61\xdet\
+\x00\x00\x01\x97/\x1a\x8b\x1e\
 \x00\x00\x01`\x00\x00\x00\x00\x00\x01\x00\x00\xd0\xaa\
-\x00\x00\x01\x91\xf61\xdd\x03\
+\x00\x00\x01\x97/\x1a\x8b\x1c\
 \x00\x00\x00,\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
-\x00\x00\x01\x91\xf9;\x85\x19\
+\x00\x00\x01\x97/\x1a\x8b\x1e\
 \x00\x00\x02\x1a\x00\x00\x00\x00\x00\x01\x00\x00\xde\x03\
-\x00\x00\x01\x96\x87\x07-}\
-\x00\x00\x012\x00\x00\x00\x00\x00\x01\x00\x00\xcd\x9a\
-\x00\x00\x01\x96\x87\x04\xffv\
+\x00\x00\x01\x97/\x1a\x8b\x1d\
+\x00\x00\x01\x18\x00\x00\x00\x00\x00\x01\x00\x00\x09>\
+\x00\x00\x01\x97/\x1a\x8b\x1d\
 \x00\x00\x01\xee\x00\x00\x00\x00\x00\x01\x00\x00\xd8\x9e\
-\x00\x00\x01\x96\x8b\xf3\x1a\xf3\
-\x00\x00\x00\xd2\x00\x00\x00\x00\x00\x01\x00\x00\xca\x00\
-\x00\x00\x01\x96\x87\x07\x87\x1e\
+\x00\x00\x01\x97/\x1a\x8b\x1d\
+\x00\x00\x00\xb8\x00\x00\x00\x00\x00\x01\x00\x00\x05\xa4\
+\x00\x00\x01\x97/\x1a\x8b\x1e\
 \x00\x00\x02\x96\x00\x02\x00\x00\x00\x09\x00\x00\x00\x12\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x03\xf8\x00\x00\x00\x00\x00\x01\x00\x00\xfb#\
-\x00\x00\x01\x96\x89\xd4\xa2)\
-\x00\x00\x03\xbe\x00\x00\x00\x00\x00\x01\x00\x00\xf4\x1d\
-\x00\x00\x01\x96\xa4.oB\
-\x00\x00\x03H\x00\x00\x00\x00\x00\x01\x00\x00\xee\xda\
-\x00\x00\x01\x96\x89\xd4d\x1c\
-\x00\x00\x02\xfa\x00\x00\x00\x00\x00\x01\x00\x00\xe9\xb7\
-\x00\x00\x01\x91\xff\xec)G\
-\x00\x00\x03\x1a\x00\x00\x00\x00\x00\x01\x00\x00\xec2\
-\x00\x00\x01\x91\xf61\x19M\
+\x00\x00\x03\xf8\x00\x00\x00\x00\x00\x01\x00\x00\xfb\xc8\
+\x00\x00\x01\x97/\x1a\x8b&\
+\x00\x00\x03\xbe\x00\x00\x00\x00\x00\x01\x00\x00\xf4\x5c\
+\x00\x00\x01\x97/\x1a\x8b%\
+\x00\x00\x03H\x00\x00\x00\x00\x00\x01\x00\x00\xef\x19\
+\x00\x00\x01\x97/\x1a\x8b'\
+\x00\x00\x02\xfa\x00\x00\x00\x00\x00\x01\x00\x00\xe9\xf6\
+\x00\x00\x01\x97/\x1a\x8b%\
+\x00\x00\x03\x1a\x00\x00\x00\x00\x00\x01\x00\x00\xecq\
+\x00\x00\x01\x97/\x1a\x8b&\
 \x00\x00\x02\xa8\x00\x01\x00\x00\x00\x01\x00\x00\xe3/\
-\x00\x00\x01\x96\x89\xd40\xa0\
-\x00\x00\x03\x96\x00\x00\x00\x00\x00\x01\x00\x00\xf1t\
-\x00\x00\x01\x96\x89\xe6Z\xea\
-\x00\x00\x03n\x00\x00\x00\x00\x00\x01\x00\x00\xf0S\
-\x00\x00\x01\x91\xff\xa9\xd0\xc4\
+\x00\x00\x01\x97/\x1a\x8b'\
+\x00\x00\x03\x96\x00\x00\x00\x00\x00\x01\x00\x00\xf1\xb3\
+\x00\x00\x01\x97/\x1a\x8b&\
+\x00\x00\x03n\x00\x00\x00\x00\x00\x01\x00\x00\xf0\x92\
+\x00\x00\x01\x97/\x1a\x8b%\
 \x00\x00\x02\xd0\x00\x00\x00\x00\x00\x01\x00\x00\xe4\xb9\
-\x00\x00\x01\x96\x87 h\x15\
+\x00\x00\x01\x97/\x1a\x8b%\
 "
 
 def qInitResources():
