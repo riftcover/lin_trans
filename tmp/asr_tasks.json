@@ -1,12 +1,2 @@
 [
-  {
-    "task_id": "3ba51745d4342b8497631426dbe14b72",
-    "audio_file": "D:/dcode/lin_trans/result/3ba51745d4342b8497631426dbe14b72/ta.wav",
-    "audio_url": "https://asr-file-tth.oss-cn-beijing.aliyuncs.com/audio/1746597888_15b5e5ab.wav?x-oss-signature-version=OSS4-HMAC-SHA256&x-oss-date=20250507T060448Z&x-oss-expires=900&x-oss-credential=LTAI5t7eCsZFb4AnqJFX5e3v%2F20250507%2Fcn-beijing%2Foss%2Faliyun_v4_request&x-oss-signature=3a00dcbedb88f9665d10c2c04f472f267dc0cf69c227135032d1d9ddff0961a6",
-    "language": "en",
-    "status": "COMPLETED",
-    "progress": 100,
-    "created_at": 1746597888.2483387,
-    "updated_at": 1746597900.049983
-  }
 ]
