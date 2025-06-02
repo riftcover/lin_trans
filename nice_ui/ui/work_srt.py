@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, Q
 from agent import get_translate_code
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
-from nice_ui.main_win.secwin import SecWindow
+from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget, )
@@ -61,8 +62,8 @@ class WorkSrt(QWidget):
         self.source_language_combo.setFixedWidth(98)
         self.source_language_combo.addItems(self.language_name)
         if (
-            config.params["source_language"]
-            and config.params["source_language"] in self.language_name
+                config.params["source_language"]
+                and config.params["source_language"] in self.language_name
         ):
             self.source_language_combo.setCurrentText(config.params["source_language"])
         else:
@@ -86,8 +87,8 @@ class WorkSrt(QWidget):
         self.translate_language_combo.setFixedWidth(117)
         self.translate_language_combo.addItems(self.language_name)
         if (
-            config.params["target_language"]
-            and config.params["target_language"] in self.language_name
+                config.params["target_language"]
+                and config.params["target_language"] in self.language_name
         ):
             self.translate_language_combo.setCurrentText(
                 config.params["target_language"]
@@ -170,7 +171,7 @@ class WorkSrt(QWidget):
         self.media_table.setColumnWidth(2, 100)
         self.media_table.setColumnWidth(3, 100)
         self.media_table.setColumnWidth(4, 100)
-        self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
+        # self.media_table.setColumnHidden(2, True)  # 隐藏算力消耗列
         self.media_table.setColumnHidden(4, True)  # 隐藏文件路径列
         self.media_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # 禁止编辑
 
@@ -199,6 +200,9 @@ class WorkSrt(QWidget):
 
         self.start_btn.clicked.connect(self.on_start_clicked)
 
+        # 添加翻译引擎切换事件，重新计算算力消耗
+        self.translate_model.currentTextChanged.connect(self.recalculate_computing_power)
+
     def on_start_clicked(self):
         # 显示成功提示
         InfoBar.success(
@@ -210,7 +214,7 @@ class WorkSrt(QWidget):
             duration=2000,
             parent=self,
         )
-
+        self.add_queue_srt()
         self.util.check_translate()
 
     def add_queue_srt(self):
@@ -225,6 +229,22 @@ class WorkSrt(QWidget):
         # 获取AI提示列表
         prompt_names = self.prompts_orm.get_prompt_name()
         return [i.prompt_name for i in prompt_names]
+
+    def recalculate_computing_power(self):
+        """当切换翻译引擎时，重新计算所有文件的算力消耗"""
+        # 遍历表格中的所有行
+        for row in range(self.media_table.rowCount()):
+            # 获取当前行的字符数
+            character_count_str = self.media_table.item(row, 1).text()
+            if character_count_str:
+                # 将字符数转换为整数
+                character_count = int(character_count_str)
+
+                # 重新计算算力消耗
+                ds_count = str(self.table._calc_ds(character_count))
+
+                # 更新表格中的算力消耗
+                self.media_table.item(row, 2).setText(ds_count)
 
 
 class LTableWindow:
@@ -256,7 +276,9 @@ class LTableWindow:
         # 添加文件到表格
         logger.info(f"add_file_to_table: {file_path}")
         row_position = ui_table.rowCount()
-        if file_character_count := self.get_file_character_count(file_path):
+        file_character_count = self.get_file_character_count(file_path)
+        ts_count = str(self._calc_ds(file_character_count))
+        if file_character_count:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
             logger.info(f"file_name type: {type(file_name)}")
@@ -270,7 +292,7 @@ class LTableWindow:
                 row_position, 1, QTableWidgetItem(str(file_character_count))
             )
             # 算力消耗
-            ui_table.setItem(row_position, 2, QTableWidgetItem("未知"))
+            ui_table.setItem(row_position, 2, QTableWidgetItem(ts_count))
             # 操作
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
@@ -303,8 +325,8 @@ class LTableWindow:
             for line in lines:
                 # 跳过序号和时间戳
                 if re.match(r"^\d+$", line.strip()) or re.match(
-                    r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
-                    line.strip(),
+                        r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
+                        line.strip(),
                 ):
                     continue
                 character_count += len(line.strip())
@@ -344,3 +366,31 @@ class LTableWindow:
     def clear_table(self, ui_table: QTableWidget):
         # 清空表格
         ui_table.setRowCount(0)
+
+    def _calc_ds(self, file_character_count):
+        # 计算翻译代币消耗
+        if not file_character_count:
+            return 0
+
+        # 获取当前选择的翻译引擎
+        translate_engine = self.main.translate_model.currentText()
+        logger.info(translate_engine)
+        if translate_engine =='云翻译':
+
+            token_service = ServiceProvider().get_token_service()
+
+            # 计算结果取整后再返回
+            return token_service.calculate_trans_tokens(file_character_count, translate_engine)
+        else:
+            return 0
+
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings
+
+    app = QApplication(sys.argv)
+    window = WorkSrt("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window.show()
+    sys.exit(app.exec())

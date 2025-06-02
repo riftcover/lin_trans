@@ -317,8 +317,8 @@ class LinMediaPlayBar(MediaPlayBarBase):
     def _formatTime(self, time: int):
         time = int(time / 1000)
         s = time % 60
-        m = int(time / 60)
-        h = int(time / 3600)
+        m = (time // 60) % 60  # 修改这里：分钟数需要对60取余
+        h = time // 3600       # 使用整除运算符
         return f'{h}:{m:02}:{s:02}'
 
 class StandardMediaPlayBar(MediaPlayBarBase):

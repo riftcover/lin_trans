@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QUrl, QSizeF
 from PySide6.QtGui import QPainter, QFont, QColor
 from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
 from PySide6.QtWidgets import QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QGraphicsTextItem, QGraphicsDropShadowEffect, QGraphicsRectItem
+from PySide6.QtGui import QTextOption
 
 from components.widget import SubtitleTable
 from ..common.style_sheet import FluentStyleSheet
@@ -75,19 +76,25 @@ class LinVideoWidget(QWidget):
         self.graphicsView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicsView.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
-        # 添加字幕项
+        # 修改字幕项的样式
         self.subtitleItem = QGraphicsTextItem()
-        self.subtitleItem.setDefaultTextColor(Qt.white)
+        self.subtitleItem.setDefaultTextColor(QColor(255, 255, 255))
         self.subtitleItem.setFont(QFont("Arial", 11))
-        self.graphicsScene.addItem(self.subtitleItem)
-
+        # 添加文本对齐方式设置
+        self.subtitleItem.setTextWidth(-1)  # 需要先设置为-1以便后续设置对齐方式
+        document = self.subtitleItem.document()
+        document.setDefaultTextOption(QTextOption(Qt.AlignCenter))  # 设置文本居中对齐
+        
         # 创建并设置阴影效果
         shadow_effect = QGraphicsDropShadowEffect()
-        shadow_effect.setBlurRadius(0)  # 不模糊，纯黑边
-        shadow_effect.setColor(Qt.black)  # 阴影颜色为黑色
-        shadow_effect.setOffset(1, 1)  # 阴影偏移量，调整黑边的粗细
+        shadow_effect.setBlurRadius(4)  # 增加模糊半径
+        shadow_effect.setColor(QColor(0, 0, 0))  # 设置阴影颜色为黑色
+        shadow_effect.setOffset(2, 2)  # 添加一些偏移，使阴影更明显
+        shadow_effect.setXOffset(1)  # 水平偏移
+        shadow_effect.setYOffset(1)  # 垂直偏移
         self.subtitleItem.setGraphicsEffect(shadow_effect)
 
+        # 添加到场景
         self.graphicsScene.addItem(self.subtitleItem)
 
         self.vBoxLayout.addWidget(self.graphicsView)
@@ -218,11 +225,18 @@ class LinVideoWidget(QWidget):
     def position_subtitle(self):
         """ 调整字幕位置 """
         video_rect = self.videoItem.boundingRect()
+    
+        # 设置字幕最大宽度为视频宽度的80%
+        max_width = video_rect.width() * 0.8
+        self.subtitleItem.setTextWidth(max_width)
+        
+        # 获取自动换行后的字幕矩形
         subtitle_rect = self.subtitleItem.boundingRect()
+
+        
 
         x = (video_rect.width() - subtitle_rect.width()) / 2
         y = video_rect.height() - subtitle_rect.height() - 10  # 增加底部边距到40像素
-
         self.subtitleItem.setPos(x, y)
 
     def play(self):
@@ -253,3 +267,23 @@ class LinVideoWidget(QWidget):
     def setPosition(self, position):
         """ Set the current position of the video """
         self.player.setPosition(position)
+
+    
+        
+    def update_subtitle_at_position(self, position_ms):
+        """
+        手动更新指定时间点的字幕
+        Args:
+            position_ms: 时间点（毫秒）
+        """
+        # 使用二分查找找到当前时间对应的字幕
+        index = bisect_right(self.subtitles, (position_ms,)) - 1
+        if 0 <= index < len(self.subtitles):
+            start_ms, end_ms, subtitle_text = self.subtitles[index]
+            if start_ms <= position_ms <= end_ms:
+                self.subtitleItem.setPlainText(subtitle_text)
+                self.position_subtitle()
+            else:
+                self.subtitleItem.setPlainText("")  # 如果不在任何字幕时间范围内，清空字幕
+        else:
+            self.subtitleItem.setPlainText("")  # 如果找不到对应字幕，清空字幕

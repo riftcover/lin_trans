@@ -9,7 +9,6 @@ from nice_ui.ui.MainWindow import Window
 
 def start():
     app = QApplication(sys.argv)
-    # window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
     window = Window()
     window.show()
     sys.exit(app.exec())

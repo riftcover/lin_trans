@@ -6,14 +6,16 @@ from PySide6.QtCore import QThread, Signal,Qt, QUrl, QSize, QTimer
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
-
+from nice_ui.ui import __version__
 from nice_ui.configure import config
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
-from nice_ui.util.tools import StartTools
+from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
-                                   InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, )
+                                   InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, MessageBox,
+                                   CompactDoubleSpinBox,
+                                   )
 
 
 class DownloadThread(QThread):
@@ -214,7 +216,6 @@ class LocalModelPage(QWidget):
             最后下载的是文件是tokens.json
             """
             rr_dir = os.path.join(config.funasr_model_path, model_folder,"tokens.json")
-            logger.info(f"检查模型是否已安装: {rr_dir}")
 
             is_installed = os.path.exists(
                 rr_dir
@@ -243,7 +244,7 @@ class LocalModelPage(QWidget):
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
         logger.info(f'row: {row}, model: {model_cn_name}')
-        model_name = StartTools().match_model_name(model_cn_name)
+        model_name = start_tools.match_model_name(model_cn_name)
         logger.info(f'model_name: {model_name}')
 
         if not model_name:
@@ -815,6 +816,7 @@ class ProxyPage(QWidget):
         host_label = BodyLabel("主机名(H):")
         self.host_input = LineEdit()
         self.host_input.setPlaceholderText("127.0.0.1")
+        self.host_input.setMinimumWidth(250)  # 设置最小宽度为250像素
         # host_layout.addSpacing(20)
         host_layout.addWidget(host_label)
         host_layout.addWidget(self.host_input)
@@ -827,6 +829,7 @@ class ProxyPage(QWidget):
         self.port_input = SpinBox()
         self.port_input.setRange(0, 65535)
         self.port_input.setValue(7890)
+        self.port_input.setMinimumWidth(150)  # 设置最小宽度为150像素
         # port_layout.addSpacing(20)
         port_layout.addWidget(port_label)
         port_layout.addWidget(self.port_input)
@@ -1059,6 +1062,124 @@ class ProxyPage(QWidget):
 
         reply.deleteLater()
 
+class CommonPage(QWidget):
+    """关于我们页面"""
+    def __init__(self, settings=None, parent=None):
+        super().__init__(parent=parent)
+        self.settings = settings
+        self.setup_ui()
+        self.bind_actions()
+
+    def setup_ui(self):
+        # 创建主布局
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+
+        # 关于我们卡片
+        about_card = CardWidget(self)
+        about_layout = QVBoxLayout(about_card)
+        about_layout.setSpacing(15)
+        about_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_label = SubtitleLabel("关于我们", about_card)
+        about_layout.addWidget(title_label)
+
+        # 软件版本信息
+        version_layout = QHBoxLayout()
+        version_label = BodyLabel("软件版本:", about_card)
+        # 使用项目中的版本号
+        version = __version__
+        self.version_value = BodyLabel(version, about_card)
+        version_layout.addWidget(version_label)
+        version_layout.addWidget(self.version_value)
+        version_layout.addStretch(1)
+        about_layout.addLayout(version_layout)
+
+        # 检查更新按钮
+        update_layout = QHBoxLayout()
+        self.check_update_button = PrimaryPushButton("检查更新", about_card)
+        self.check_update_button.setIcon(FluentIcon.UPDATE)
+        update_layout.addWidget(self.check_update_button)
+        update_layout.addStretch(1)
+        about_layout.addLayout(update_layout)
+
+        # 官网链接
+        website_layout = QHBoxLayout()
+        website_label = BodyLabel("官方网站:", about_card)
+        self.website_link = HyperlinkLabel("访问官网", about_card)
+        self.website_link.setUrl("https://github.com/")  # 设置为实际的官网地址
+        website_layout.addWidget(website_label)
+        website_layout.addWidget(self.website_link)
+        website_layout.addStretch(1)
+        about_layout.addLayout(website_layout)
+
+        # 添加描述文本
+        description_label = BodyLabel(
+            "LinLin Trans是一款功能强大的字幕翻译工具，支持多种语言的字幕识别、翻译和编辑功能。"
+            "我们致力于提供高质量的翻译服务，帮助用户轻松处理视频字幕。",
+            about_card
+        )
+        description_label.setWordWrap(True)
+        about_layout.addWidget(description_label)
+
+        # 添加版权信息
+        copyright_label = CaptionLabel("© 2024 LinLin Trans. 保留所有权利。", about_card)
+        about_layout.addWidget(copyright_label, alignment=Qt.AlignBottom)
+
+        # 添加卡片到主布局
+        main_layout.addWidget(about_card)
+        main_layout.addStretch(1)
+
+    def bind_actions(self):
+        """绑定按钮事件"""
+        self.check_update_button.clicked.connect(self.check_for_updates)
+
+    def check_for_updates(self):
+        """检查更新"""
+        try:
+            # 这里实现检查更新的逻辑
+            # 显示正在检查更新的提示
+            InfoBar.info(
+                title="检查更新",
+                content="正在检查更新，请稍候...",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
+
+            # 模拟检查更新过程
+            QTimer.singleShot(1500, self.show_update_result)
+        except Exception as e:
+            logger.error(f"检查更新失败: {str(e)}")
+            InfoBar.error(
+                title="错误",
+                content=f"检查更新失败: {str(e)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+
+    def show_update_result(self):
+        """显示更新结果"""
+        # 这里可以根据实际情况修改，目前是模拟已经是最新版本
+        current_version = self.version_value.text()
+
+        # 创建对话框
+        dialog = MessageBox(
+            "检查更新",
+            f"当前版本 {current_version} 已经是最新版本。",
+            self
+        )
+        dialog.yesButton.setText("确定")
+        dialog.cancelButton.setVisible(False)  # 隐藏取消按钮
+        dialog.exec()
+
 
 class SettingInterface(QWidget):
     def __init__(self, title: str, settings=None):
@@ -1073,16 +1194,19 @@ class SettingInterface(QWidget):
 
         self.localModelPage = LocalModelPage(settings=self.settings)
         self.llmConfigPage = LLMConfigPage(settings=self.settings)
-        self.translationPage = TranslationPage(settings=self.settings)
+        # self.translationPage = TranslationPage(settings=self.settings)
         self.proxyPage = ProxyPage(setting=self.settings)
+        self.commonPage = CommonPage(settings=self.settings)
 
         self.tabs.addTab(self.localModelPage, "本地模型")
         self.tabs.addTab(self.llmConfigPage, "LLM配置")
-        self.tabs.addTab(self.translationPage, "翻译配置")
+        # self.tabs.addTab(self.translationPage, "翻译配置")
         self.tabs.addTab(self.proxyPage, "代理设置")
+        self.tabs.addTab(self.commonPage, "关于我们")
 
         layout.addWidget(self.tabs)
         self.setLayout(layout)
+
 
 if __name__ == "__main__":
     import sys

@@ -48,12 +48,20 @@ class StartTools:
     @staticmethod
     def ask_model_folder(model_name: str) -> bool:
         # todo：当前是写死funasr，后续需要改成根据模型名称来获取模型路径
-        is_installed = os.path.exists(os.path.join(config.funasr_model_path, model_name))
-        logger.info(f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}")
+        is_installed = os.path.exists(
+            os.path.join(config.funasr_model_path, model_name)
+        )
+        logger.info(
+            f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}"
+        )
         return is_installed
 
+    def calc_trans_ds(self, word_count: int) -> int:
+        # 计算代币消耗
+        return int(word_count * config.trans_qps)
 
-#  get role by edge tts
+
+start_tools = StartTools()
 
 
 # 执行 ffmpeg
@@ -182,7 +190,7 @@ def runffprobe(cmd):
 
 # 获取视频信息
 def get_video_info(
-    mp4_file, *, video_fps=False, video_scale=False, video_time=False, nocache=False
+        mp4_file, *, video_fps=False, video_scale=False, video_time=False, nocache=False
 ):
     # 如果存在缓存并且没有禁用缓存
     mp4_file = Path(mp4_file).as_posix()
@@ -486,8 +494,6 @@ def speed_up_mp3(*, filename=None, speed=1, out=None):
     )
 
 
-
-
 def show_popup(title, text, parent=None):
     from PySide6.QtGui import QIcon
     from PySide6.QtCore import Qt
@@ -532,7 +538,7 @@ def ms_to_time_string(*, ms=0, seconds=None):
 [
 {'line': 13, 'time': '00:01:56,423 --> 00:02:06,423', 'text': '因此，如果您准备好停止沉迷于不太理想的解决方案并开始构建下一个
 出色的语音产品，我们已准备好帮助您实现这一目标。深度图。没有妥协。唯一的机会..', 'startraw': '00:01:56,423', 'endraw': '00:02:06,423', 'start_time'
-: 116423, 'end_time': 126423}, 
+: 116423, 'end_time': 126423},
 {'line': 14, 'time': '00:02:06,423 --> 00:02:07,429', 'text': '机会..', 'startraw': '00:02:06,423', 'endraw': '00:02
 :07,429', 'start_time': 126423, 'end_time': 127429}
 ]
@@ -564,9 +570,9 @@ def format_srt(content):
             # 当前是第一行，并且不是时间格式，跳过
             continue
         elif (
-            re.match(r"^\s*?\d+\s*?$", it)
-            and i < maxindex
-            and re.match(timepat, content[i + 1])
+                re.match(r"^\s*?\d+\s*?$", it)
+                and i < maxindex
+                and re.match(timepat, content[i + 1])
         ):
             # 当前不是时间格式，不是第一行，并且都是数字，并且下一行是时间格式，则当前是行号，跳过
             continue
@@ -633,10 +639,7 @@ def get_subtitle_from_srt(srtfile, *, is_file=True):
             startraw, endraw = it["time"].strip().split("-->")
 
             startraw = format_time(
-                startraw.strip()
-                .replace(",", ".")
-                .replace("，", ".")
-                .replace("：", ":"),
+                startraw.strip().replace(",", ".").replace("，", ".").replace("：", ":"),
                 ".",
             )
             start = startraw.split(":")
@@ -796,9 +799,6 @@ def cut_from_audio(*, ss, to, audio_file, out_file):
     return runffmpeg(cmd)
 
 
-
-
-
 # 工具箱写入日志队列
 def set_process_box(text, type="logs", *, func_name=""):
     set_process(text, type, qname="box", func_name=func_name)
@@ -806,7 +806,7 @@ def set_process_box(text, type="logs", *, func_name=""):
 
 # 综合写入日志，默认sp界面
 def set_process(
-    text, type="logs", *, qname="sp", func_name="", btnkey="", nologs=False
+        text, type="logs", *, qname="sp", func_name="", btnkey="", nologs=False
 ):
     with contextlib.suppress(Exception):
         if text:
@@ -901,8 +901,8 @@ def kill_ffmpeg_processes():
                     pid = int(line.split(None, 1)[0])
                     os.kill(pid, signal.SIGKILL)
 
-# 从 google_url 中获取可用地址
 
+# 从 google_url 中获取可用地址
 
 
 def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
@@ -1064,13 +1064,15 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
     output_path.mkdir(parents=True, exist_ok=True)
     # 判断文件是视频还是音频
     media_type = detect_media_type(name)
-    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS):
+    if work_type in (WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS, WORK_TYPE.CLOUD_ASR):
         media_dirname = name
         wav_finally_path = wav_path.as_posix()
-    else:
+    elif work_type == WORK_TYPE.TRANS:
         media_dirname = ""
         wav_finally_path = ""
-    video_info = VideoFormatInfo(
+    else:
+        logger.error(f"unknown work_type: {work_type}")
+    return VideoFormatInfo(
         raw_name=name,
         raw_dirname=raw_dirname,
         raw_basename=raw_basename,
@@ -1085,8 +1087,6 @@ def format_job_msg(name: str, out, work_type: WORK_TYPE) -> VideoFormatInfo:
         source_mp4=name,
         work_type=work_type,
     )
-
-    return video_info
 
 
 def change_job_format(asr_task_finished: VideoFormatInfo) -> VideoFormatInfo:
@@ -1207,14 +1207,14 @@ def set_ass_font(srtfile=None):
 
     for i, it in enumerate(ass_str):
         if it.find("Style: ") == 0:
-            ass_str[i] = (
-                "Style: Default,{fontname},{fontsize},{fontcolor},&HFFFFFF,{fontbordercolor},&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,{subtitle_bottom},1".format(
-                    fontname=config.settings["fontname"],
-                    fontsize=config.settings["fontsize"],
-                    fontcolor=config.settings["fontcolor"],
-                    fontbordercolor=config.settings["fontbordercolor"],
-                    subtitle_bottom=config.settings["subtitle_bottom"],
-                )
+            ass_str[
+                i
+            ] = "Style: Default,{fontname},{fontsize},{fontcolor},&HFFFFFF,{fontbordercolor},&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,{subtitle_bottom},1".format(
+                fontname=config.settings["fontname"],
+                fontsize=config.settings["fontsize"],
+                fontcolor=config.settings["fontcolor"],
+                fontbordercolor=config.settings["fontbordercolor"],
+                subtitle_bottom=config.settings["subtitle_bottom"],
             )
             break
 
@@ -1240,13 +1240,13 @@ def format_result(source_list, target_list, target_lang="zh"):
     start = 0
     # 如果是中日韩泰语言，直接按字切割
     if (
-        len(target_lang) < 6 and target_lang[:2].lower() in ["zh", "ja", "ko", "th"]
+            len(target_lang) < 6 and target_lang[:2].lower() in ["zh", "ja", "ko", "th"]
     ) or (
-        len(target_lang) > 5
-        and target_lang[:3].lower() in ["sim", "tra", "jap", "kor", "tha"]
+            len(target_lang) > 5
+            and target_lang[:3].lower() in ["sim", "tra", "jap", "kor", "tha"]
     ):
         for num in target_len:
-            text = target_str[start : start + num]
+            text = target_str[start: start + num]
             start = start + num
             result.append(text)
         return result
@@ -1287,7 +1287,7 @@ def format_result(source_list, target_list, target_lang="zh"):
             lastpos += offset
             # 如果达到了末尾或者找到了标点则切割
             if lastpos >= target_total or target_str[lastpos] in flag:
-                text = target_str[start : lastpos + 1] if start < target_total else ""
+                text = target_str[start: lastpos + 1] if start < target_total else ""
                 start = lastpos + 1
                 result.append(text)
                 break
@@ -1296,7 +1296,7 @@ def format_result(source_list, target_list, target_lang="zh"):
         if offset < 5:
             continue
         # 没找到分割标点，强制截断
-        text = target_str[start : start + num] if start < target_total else ""
+        text = target_str[start: start + num] if start < target_total else ""
         start = start + num
         result.append(text)
     print(f"{result=}")
@@ -1331,4 +1331,4 @@ def list_model_files(model_dir: str = None) -> list:
 
 
 if __name__ == "__main__":
-    print(StartTools().match_model_name('多语言模型'))
+    print(start_tools.match_model_name("多语言模型"))

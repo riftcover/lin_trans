@@ -81,6 +81,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
@@ -164,3 +165,5 @@ dmypy.json
 ffmpeg_output/
 orm/linlin.db
 /nuitka-crash-report.xml
+!/tmp/asr_tasks.json
+!/.vscode/

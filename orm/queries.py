@@ -68,7 +68,14 @@ class ToSrtOrm:
 
     @session_manager
     def query_data_format_unid_path(self, session=None):
-        return session.query(ToSrt).order_by(ToSrt.created_at.asc()).all()
+        # 修改查询以立即加载所有需要的属性
+        results = session.query(ToSrt).filter(ToSrt.translate_status == 0).order_by(ToSrt.created_at.asc()).all()
+        # 确保在会话关闭前加载所有需要的属性
+        for result in results:
+            session.refresh(result)
+            # 将对象从会话中分离，但保留其数据
+            session.expunge(result)
+        return results
 
     @session_manager
     def update_table_unid(self, unid, session=None, **kwargs):

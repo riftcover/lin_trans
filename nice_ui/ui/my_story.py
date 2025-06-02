@@ -1,18 +1,19 @@
 import json
 import os
 import shutil
-import sys
+
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread, QSettings
+from PySide6.QtCore import Qt, QThread
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
 from pydantic import ValidationError
 
+from nice_ui.configure.signal import data_bridge
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
-from nice_ui.task import WORK_TYPE
+from nice_ui.task.orm_factory import OrmFactory
 from nice_ui.task.main_worker import work_queue, QueueConsumer
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
@@ -53,10 +54,12 @@ class TableApp(CardWidget):
         self.settings = settings
         self.setObjectName(title)
         self.setupUi()
-        self.data_bridge = config.data_bridge
+        self.data_bridge = data_bridge
         self._connect_signals()
-        self.srt_orm = ToSrtOrm()
-        self.trans_orm = ToTranslationOrm()
+        # 使用ORM工厂获取ORM实例
+        self.orm_factory = OrmFactory()
+        self.srt_orm = self.orm_factory.get_srt_orm()
+        self.trans_orm = self.orm_factory.get_trans_orm()
         self.row_cache = {}
         self._init_table()
 
@@ -170,7 +173,7 @@ class TableApp(CardWidget):
 
     def _init_table(self):
         # 初始化列表数据：srt文件任务和翻译字幕任务
-        # srt_data = self.srt_orm.query_data_format_unid_path()
+        srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
         processed_unids = set()
@@ -178,9 +181,9 @@ class TableApp(CardWidget):
         for item in trans_data:
             self._process_item(item, processed_unids)
 
-        # for item in srt_data:
-        #     if item.unid not in processed_unids:
-        #         self._process_item(item, processed_unids)
+        for item in srt_data:
+            if item not in processed_unids:
+                self._process_item(item, processed_unids)
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
         item = self.table.item(row, TableWidgetColumn.JOB_OBJ)
@@ -188,12 +191,8 @@ class TableApp(CardWidget):
         work_obj = item.data(VideoFormatInfoRole)
 
         work_type = work_obj.work_type
-        if work_type == WORK_TYPE.ASR:
-            return self.srt_orm
-        elif work_type == WORK_TYPE.TRANS:
-            return self.trans_orm
-        elif work_type == WORK_TYPE.ASR_TRANS:
-            return self.srt_orm, self.trans_orm
+        # 使用ORM工厂获取对应的ORM
+        return self.orm_factory.get_orm_by_work_type(work_type)
 
     def _create_action_button(self, icon, tooltip: str, callback: callable):
         """
@@ -220,12 +219,12 @@ class TableApp(CardWidget):
         return button
 
     def _add_common_widgets(
-        self,
-        row_position: int,
-        filename: str,
-        unid: str,
-        job_status: JOB_STATUS,
-        obj_format: VideoFormatInfo,
+            self,
+            row_position: int,
+            filename: str,
+            unid: str,
+            job_status: JOB_STATUS,
+            obj_format: VideoFormatInfo,
     ) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
@@ -316,13 +315,8 @@ class TableApp(CardWidget):
 
     def _update_job_status(self, item, edit_dict):
         new_status = 0
-        orm_w = None
         work_type = edit_dict.work_type
-        if work_type in (1, 3):
-            orm_w = self.srt_orm
-        elif work_type in (2, 3):
-            orm_w = self.trans_orm
-
+        orm_w = self.orm_factory.set_orm_job_status(work_type)
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
     def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1):
@@ -332,7 +326,6 @@ class TableApp(CardWidget):
         unid = obj_format.unid
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
-        logger.info("我的创作列表中添加新行")
         chk, file_status = self._add_common_widgets(
             row_position, filename, unid, job_status, obj_format
         )
@@ -340,7 +333,6 @@ class TableApp(CardWidget):
             chk.setEnabled(False)
             file_status.set_status("排队中")
         elif job_status == 0:
-            logger.debug(f"文件:{filename} 状态更新为未开始")
             chk.setEnabled(False)
             file_status.set_status("处理失败")
             # self._set_row_buttons(row_position, [ButtonType.START, ButtonType.DELETE])
@@ -376,6 +368,7 @@ class TableApp(CardWidget):
 
     def table_row_finish(self, unid: str):
         logger.info(f"文件处理完成:{unid},更新表单")
+        logger.debug(f"缓存:{self.row_cache}")
 
         if unid in self.row_cache:
             row = self.row_cache[unid]
@@ -404,8 +397,10 @@ class TableApp(CardWidget):
                         ButtonType.DELETE,
                     ],
                 )
-            else:
-                logger.error(f"文件:{unid}的行索引,缓存中未找到,缓存未更新")
+
+
+        else:
+            logger.error(f'缓存中未找到{unid}的行索引,缓存:{self.row_cache}')
 
     def addRow_init_all(self, edit_dict: VideoFormatInfo):
         try:
@@ -414,7 +409,7 @@ class TableApp(CardWidget):
             logger.error(f"添加行失败, 缺少必要参数: {edit_dict}")
             return
         unid = edit_dict.unid
-        logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
+        # logger.info(f"添加已完成:{filename_without_extension} 到我的创作列表")
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
@@ -613,7 +608,7 @@ class TableApp(CardWidget):
         dialog = ExportSubtitleDialog(job_paths, self)
         dialog.exec()
 
-           # 清除所有复选框状态
+        # 清除所有复选框状态
         self.selectAllBtn.setChecked(False)  # 清除"全选"按钮状态
         for row in range(self.table.rowCount()):
             checkbox = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
@@ -643,16 +638,16 @@ class TableApp(CardWidget):
         logger.info(f"导出字幕:{srt_path}")
 
         dialog = ExportSubtitleDialog([srt_path], self)
-        dialog.exec()
-        InfoBar.success(
-            title="成功",
-            content="文件已导出",
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self,
-        )
+        if dialog.exec() == QDialog.Accepted:  # 如果导出成功
+            InfoBar.success(
+                title="成功",
+                content="文件已导出",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
 
     def _update_buttons_visibility(self):
         # 检查所有行的复选框状态，如果有任何一个被勾选，则显示按钮
@@ -704,28 +699,36 @@ class TableApp(CardWidget):
         # 显示对话框
         dialog.exec()
 
-# def main():
-#     app = QApplication(sys.argv)
-#
-#     # 为 Mac 系统设置全局字体
-#     if sys.platform == 'darwin':
-#         font = app.font()
-#         font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
-#         app.setFont(font)
-#
-#         # 设置全局样式表
-#         app.setStyleSheet("""
-#             * {
-#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-#             }
-#             QWidget {
-#                 font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-#             }
-#         """)
-#
-#     window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-#     window.show()
-#     sys.exit(app.exec())
-#
-# if __name__ == "__main__":
-#     main()
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QApplication
+
+
+    def main():
+
+        app = QApplication(sys.argv)
+
+        # 为 Mac 系统设置全局字体
+        if sys.platform == 'darwin':
+            font = app.font()
+            font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
+            app.setFont(font)
+
+            # 设置全局样式表
+            app.setStyleSheet("""
+                * {
+                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+                }
+                QWidget {
+                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
+                }
+            """)
+
+        window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+        window.show()
+        sys.exit(app.exec())
+
+
+    main()

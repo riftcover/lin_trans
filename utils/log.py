@@ -34,12 +34,12 @@ class Logings:
         # 配置日志
         log_file = log_path / f"{DATE}.log"
         error_file = log_path / f"error_{DATE}.log"
-        
+
         handlers = [
             {"sink": str(log_file),
              "level": "TRACE",
              "rotation": "1 day",
-             "retention": "1 week",
+             "retention": "1 day",  # 只保留1天的日志
              "encoding": 'utf-8',
              "backtrace": True,
              "diagnose": True,
@@ -47,7 +47,7 @@ class Logings:
             {"sink": str(error_file),
              "level": "ERROR",
              "rotation": "1 day",
-             "retention": "1 month",
+             "retention": "1 day",  # 错误日志也只保留1天
              "encoding": 'utf-8',
              "backtrace": True,
              "diagnose": True,

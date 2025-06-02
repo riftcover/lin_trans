@@ -18,7 +18,7 @@ class ToSrt(Base):
     source_language_code = Column(String)  # 原始语言code
     source_module_status = Column(Integer)  # 语音模型code
     source_module_name = Column(String)  # 语音模型名称
-    translate_status = Column(BOOLEAN)  # 是否翻译
+    translate_status = Column(BOOLEAN)  # 是否翻译:0:不翻译，1：翻译
     cuda = Column(BOOLEAN)
     raw_ext = Column(String)  # 原始文件后缀
     job_status = Column(Integer)  # 任务状态 0:未开始 1:排队中  2:完成 3:已终止 4:失败

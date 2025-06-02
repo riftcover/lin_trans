@@ -110,28 +110,22 @@ class CustomItemDelegate(QStyledItemDelegate):
         # 调用原有的绘制逻辑
         if index.column() == 2:  # 行号列
             # 使用自定义绘制方法来居中显示行号
-            painter.setPen(QColor("#000000"))  # 设置文字颜色
+            painter.setPen(QColor("#495057"))  # 设置文字颜色
             painter.setFont(option.font)  # 使用默认字体
 
             # 计算文本
             text = str(index.row() + 1)
 
-            # 计算文本矩形
-            text_rect = painter.boundingRect(option.rect, Qt.AlignCenter, text)
-
             # 绘制居中的文本
             painter.drawText(option.rect, Qt.AlignCenter, text)
-        else:
-            # 对于其他列，保持原有的逻辑
-            pass  # 这里应该是你原有的绘制逻辑
 
-        # 在原有绘制逻辑之后，为所有列添加红色底部边框
-        painter.setPen(QColor("#d0d0d0"))
-        # if index.column() == 3:  # 第二列
-        #     # 为第二列特别处理，确保边框被绘制
-        #     painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight() + QPoint(5, 0))
-        # else:
+        # 绘制单元格底部边框
+        painter.setPen(QColor("#e9ecef"))
         painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+
+        # 如果是最后一列，绘制右边框
+        if index.column() == 6:
+            painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
 
         # 恢复painter的状态
         painter.restore()
@@ -298,6 +292,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
 class SubtitleModel(QAbstractTableModel):
     dataChangedSignal = Signal()
+    subtitleUpdated = Signal()  # 添加新的信号
 
     # 定义数据模型
     def __init__(self, file_path, parent=None):
@@ -429,6 +424,7 @@ class SubtitleModel(QAbstractTableModel):
 
             # 发出信号通知数据变化
             self.dataChangedSignal.emit()
+            self.subtitleUpdated.emit()  # 发出字幕更新信号
         elif role == Qt.UserRole and col == 3:  # 时间列
             self.sub_data[row] = (value[0], value[1], self.sub_data[row][2], self.sub_data[row][3])
 
@@ -469,12 +465,12 @@ class SubtitleModel(QAbstractTableModel):
                 prev_start, prev_end = self.sub_data[row][0:2]
             else:
                 prev_start = prev_end = '00:00:00,000'
-            
+
             # 插入新的空字幕条目
             new_entry = (prev_start, prev_end, "", "")
             self.sub_data.insert(row + 1, new_entry)
             self.endInsertRows()
-            
+
             # 发出数据变化信号
             self.dataChangedSignal.emit()
             return True
@@ -558,7 +554,7 @@ class SubtitleModel(QAbstractTableModel):
         if not current_text:  # 如果当前行为空，无需移动
             return
 
-        self.setData(self.index(row, 5), "", Qt.EditRole)  
+        self.setData(self.index(row, 5), "", Qt.EditRole)
 
         for i in range(row, self.rowCount()):
             next_text = self.data(self.index(i + 1, 5), Qt.EditRole)
@@ -568,7 +564,7 @@ class SubtitleModel(QAbstractTableModel):
             # 否则，交换当前行和下一行的内容
             self.setData(self.index(i + 1, 5), current_text, Qt.EditRole)
             current_text = next_text
-            logger.trace(f'{row}:{current_text}')
+            # logger.trace(f'{row}:{current_text}')
 
         # 发出数据变化信号
         self.dataChanged.emit(self.index(row, 5), self.index(self.rowCount() - 1, 5), [Qt.EditRole])
@@ -781,12 +777,19 @@ class SubtitleTable(QTableView):
         header.setFixedHeight(30)
 
         # 设置固定宽度的列
-        fixed_widths = [40, 40, 40, 120, 0, 0, 40]  # 0 表示自适应宽度
+        fixed_widths = [40, 40, 40, 140, 0, 0, 40]  # 0 表示自适应宽度
+        stretch_ratios = [0, 0, 0, 0, 4, 6, 0]  # 原文和译文列的伸缩比例
+
+        # 先设置所有列的固定宽度
         for col, width in enumerate(fixed_widths):
             if width > 0:
                 header.resizeSection(col, width)
-            else:
-                header.setSectionResizeMode(col, QHeaderView.Stretch)  # 列会自动调整以填充可用空间
+                header.setSectionResizeMode(col, QHeaderView.Fixed)
+
+        # 设置原文和译文列的伸缩模式
+        for col, ratio in enumerate(stretch_ratios):
+            if ratio > 0:
+                header.setSectionResizeMode(col, QHeaderView.Stretch)
 
     def delayed_update(self) -> None:
         self.create_visible_editors()
@@ -816,16 +819,16 @@ class SubtitleTable(QTableView):
         """创建下一批编辑器"""
         start_row = self.current_batch * self.batch_size
         end_row = min(start_row + self.batch_size, self.model.rowCount())
-        
+
         for row in range(start_row, end_row):
             for col in range(self.model.columnCount()):
                 if col != 2 and (row, col) not in self.visible_editors:  # 跳过行号列（索引2）
                     index = self.model.index(row, col)
                     self.openPersistentEditor(index)
                     self.visible_editors.add((row, col))
-        
+
         self.current_batch += 1
-        
+
         # 检查是否需要继续创建
         if end_row < self.model.rowCount():
             # 使用计时器延迟创建下一批，避免界面卡顿
@@ -833,7 +836,7 @@ class SubtitleTable(QTableView):
         else:
             self.create_timer.stop()
             logger.debug("All editors created")
-    
+
     # def create_visible_editors(self) -> None:
         # 只为可见区域创建编辑器。
         # 获取当前视口（可见区域）的矩形
@@ -967,7 +970,7 @@ class SubtitleTable(QTableView):
                         index = self.model.index(new_row, col)
                         self.openPersistentEditor(index)
                         self.visible_editors.add((new_row, col))
-                
+
                 # 更新后续行的编辑器索引
                 updated_editors = set()
                 for (r, c) in self.visible_editors:
@@ -976,7 +979,7 @@ class SubtitleTable(QTableView):
                     else:
                         updated_editors.add((r, c))
                 self.visible_editors = updated_editors
-                
+
         except Exception as e:
             logger.error(f"Error inserting row: {e}")
 
@@ -1079,7 +1082,7 @@ if __name__ == "__main__":
     import sys
 
 
-    patt = r'D:\dcode\lin_trans\result\tt1\tt.srt'
+    patt = r'D:\dcode\lin_trans\test\ta_asr_result.srt'
     app = QApplication(sys.argv)
     table = SubtitleTable(patt)  # 创建10行的表格
     table.resize(800, 600)  # 设置表格大小

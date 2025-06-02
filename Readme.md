@@ -1,6 +1,9 @@
 ## 变更tmp下资源文件
 1. lin_resource.qrc中添加相关路径
-2. pyside6-rcc lin_resource.qrc -o lin_resource_rc.py生成二进制文件
+2. 生成二进制文件
+```bash
+pyside6-rcc components/lin_resource.qrc -o components/lin_resource_rc.py
+```
 3. resource_manager.py中_load_all_styles添加对应映射
 
 
@@ -47,3 +50,8 @@ def rich_transcription_postprocess(s):
 for emoji in emo_set.union(event_set):
     new_s = new_s.replace(emoji, " ")
 是新添加的,为了取消输出文本中的emoji
+
+
+## 打包注意事项
+1. tmp/asr_tasks.json 是asr云任务持久化文件，需要在打包时包含进去一个空列表[]
+2. .credentials/aliyun_credentials.enc 是阿里云相关key，需要打包进去

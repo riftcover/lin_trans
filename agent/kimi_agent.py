@@ -2,11 +2,11 @@ import time
 
 from PySide6.QtCore import QSettings
 
+from nice_ui.ui import SettingsManager
 from nice_ui.util.proxy_client import create_openai_client
 
-settings = QSettings("Locoweed", "LinLInTrans")
+settings = SettingsManager.get_instance()
 kimi_key = settings.value("kimi", type=str)
-kimi_key = "sk-sPxaILKN9LDvVsybCzFMTiDZMxMmFRJTTDoBW5ACDbRsYpqF"
 
 local_content = """
              你是一位精通简体中文的专业翻译，尤其擅长滑雪相关教学的翻译，我会给你一份英文文件，帮我把这段英文翻译成中文，提供给我完整的中文尽量保证中文内容的行数与英文文件一致.

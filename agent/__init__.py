@@ -3,7 +3,7 @@
 
 SRT_NAME = "srt"
 # 翻译通道
-translate_api_name = {'qwen': '通义千问','zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI', }
+translate_api_name = {'qwen_cloud':'云翻译','qwen': '通义千问','zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI', }
 
 # translate_api_name = {'qwen': '通义千问','google': '谷歌翻译', 'deepl': 'DeepL翻译', 'deeplx': 'DeepL翻译X', 'tencent': '腾讯翻译', 'baidu': '百度翻译' ,
 #     'zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI', }

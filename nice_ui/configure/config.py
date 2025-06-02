@@ -6,13 +6,10 @@ from pathlib import Path
 from queue import Queue
 
 from nice_ui.configure import ModelDict
-from nice_ui.ui.SingalBridge import DataBridge
+
 from utils import logger
 
 
-# from utils.log import Logings
-#
-# logger = Logings().logger
 
 
 def get_executable_path():
@@ -32,15 +29,17 @@ sys_platform = sys.platform
 # models_path = os.path.join(root_path,'models')
 root_same = Path(__file__).parent.parent.parent.parent
 models_path = root_same / "models"
-funasr_model_path = models_path/"funasr"/"iic"
+funasr_model_path = models_path / "funasr" / "iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
+
 
 # 修改为函数，方便动态更新
 def update_funasr_path():
     global funasr_model_path
-    funasr_model_path = Path(models_path)/"funasr"/"iic"
+    funasr_model_path = Path(models_path) / "funasr" / "iic"
     funasr_model_path.mkdir(parents=True, exist_ok=True)
     return funasr_model_path
+
 
 # 初始化 funasr_model_path
 funasr_model_path = update_funasr_path()
@@ -141,8 +140,8 @@ def parse_init():
         except Exception as e:
             logger.error(f"set.ini 中有语法错误:{str(e)}")
         if (
-            isinstance(init_settings["fontsize"], str)
-            and init_settings["fontsize"].find("px") > 0
+                isinstance(init_settings["fontsize"], str)
+                and init_settings["fontsize"].find("px") > 0
         ):
             init_settings["fontsize"] = int(init_settings["fontsize"].replace("px", ""))
     return init_settings
@@ -227,6 +226,70 @@ zijiehuoshan_model_list = [
 edgeTTS_rolelist = None
 AzureTTS_rolelist = None
 proxy = None
+from pydantic import BaseModel
+
+class PplSdkConfig(BaseModel):
+    aki: str = ""
+    aks: str = ""
+    region: str = "cn-beijing"
+    bucket: str = "asr-file-tth"
+    asr_api_key: str = ""
+    asr_model: str = "paraformer-v2"
+
+class CloudConfig(BaseModel):
+    ppl_sdk: PplSdkConfig
+
+# 初始化配置 - 使用加密的嵌入式凭证
+def get_cloud_config():
+    """获取云服务配置，优先从加密文件加载，如果不存在则使用环境变量"""
+    try:
+        from nice_ui.util.crypto_utils import crypto_utils
+
+        # 初始化加密工具
+        crypto_utils.initialize()
+
+        # 获取凭证文件路径
+        credentials_file = crypto_utils.get_credentials_file_path()
+
+        # 如果凭证文件存在，从文件中加载
+        if credentials_file.exists():
+            try:
+                credentials = crypto_utils.decrypt_from_file(credentials_file)
+                if isinstance(credentials, dict) and 'ppl_sdk' in credentials:
+                    return CloudConfig(**credentials)
+            except Exception as e:
+                logger.error(f"从加密文件加载凭证失败: {str(e)}")
+
+        # 如果从文件加载失败，尝试从环境变量加载
+        aki = os.environ.get('ALIYUN_AKI', '')
+        aks = os.environ.get('ALIYUN_AKS', '')
+        region = os.environ.get('ALIYUN_REGION', 'cn-beijing')
+        bucket = os.environ.get('ALIYUN_BUCKET', 'asr-file-tth')
+        asr_api_key = os.environ.get('ALIYUN_ASR_API_KEY', '')
+        asr_model = os.environ.get('ALIYUN_ASR_MODEL', 'paraformer-v2')
+
+        # 如果环境变量中有值，使用环境变量的值
+        if aki and aks:
+            return CloudConfig(
+                ppl_sdk=PplSdkConfig(
+                    aki=aki,
+                    aks=aks,
+                    region=region,
+                    bucket=bucket,
+                    asr_api_key=asr_api_key,
+                    asr_model=asr_model
+                )
+            )
+    except Exception as e:
+        logger.error(f"获取云服务配置失败: {str(e)}")
+
+    # 如果都失败了，返回空配置
+    return CloudConfig(
+        ppl_sdk=PplSdkConfig()
+    )
+
+# 使用函数获取配置
+aa_bb = get_cloud_config()
 
 # 配置
 params = {  # 操作系统类型:win32、linux、darwin
@@ -237,7 +300,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "source_language": "英文",
     "source_module_status": 302,  # 语音转文本模型
     "source_module_name": "small",
-    "source_module_key":"中文模型",
+    "source_module_key": "中文模型",
     "detect_language": "en",
     "translate_status": False,
     "target_language": "zh-cn",
@@ -307,6 +370,9 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_url": "",
     "gptsovits_role": "",
     "gptsovits_extra": "linlin",
+
+    # 阿里云ASR配置
+    "aliyun_asr_api_key": "",
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"
@@ -358,17 +424,6 @@ lin_queue = Queue()  # 任务队列
 is_consuming = False
 
 
-class SingletonDataBridge:
-    _instance = None
-
-    @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = DataBridge()
-        return cls._instance
-
-
-data_bridge = SingletonDataBridge.get_instance()
 
 # 全局错误
 errorlist = {}

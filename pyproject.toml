@@ -1,36 +1,44 @@
-[tool.poetry]
+[project]
 name = "lin-trans"
 version = "0.1.0"
 description = ""
-authors = ["riftcover <44368727+riftcover@users.noreply.github.com>"]
+authors = [
+    {name = "riftcover", email = "44368727+riftcover@users.noreply.github.com"}
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-httpx = "0.27.2"
-loguru = "^0.7.2"
-modelscope = "^1.18.1"
-openai = "^1.50.2"
-sqlalchemy = "^2.0.35"
-socksio = "^1.0.0"
-packaging = "^24.1"
-darkdetect = "^0.8.0"
-colorthief = "^0.2.1"
-path = "^17.0.0"
-scipy = "^1.14.1"
-nuitka = "^2.4.8"
-numpy = "^1.24.4"
-pysidesix-frameless-window = "^0.4.3"
-torch = "2.4.1"
-torchaudio = "^2.4.1"
-funasr = "^1.1.12"
-pydantic = "^2.9.2"
-pyside6 = "6.6.3.1" # 必须这个版本，使用6.8.0 do_work() 线程工作完成后会卡住，无法进行下一步
-pyinstaller = "^6.11.0"
-pyav = "^13.1.0"
-
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "httpx==0.27.2",
+    "loguru>=0.7.2",
+    "modelscope>=1.18.1",
+    "openai>=1.50.2",
+    "sqlalchemy>=2.0.35",
+    "socksio>=1.0.0",
+    "packaging>=24.1",
+    "darkdetect>=0.8.0",
+    "colorthief>=0.2.1",
+    "path>=17.0.0",
+    "scipy>=1.14.1",
+    "nuitka>=2.4.8",
+    "numpy==1.24.4",
+    "pysidesix-frameless-window==0.4.3",
+    "torch==2.4.1",
+    "torchaudio>=2.4.1",
+    "funasr>=1.1.12",
+    "pydantic>=2.9.2",
+    "pyside6==6.7.2", # 必须这个版本，使用6.8.0 do_work() 线程工作完成后会卡住，无法进行下一步
+    "pyinstaller>=6.11.0",
+    "pyav>=13.1.0",
+    "alibabacloud-oss-v2",
+    "dashscope>=1.23.1",
+    "pydantic_settings==2.9.1",
+    "dotenv==0.9.9",
+    "pytz>=2025.2",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
