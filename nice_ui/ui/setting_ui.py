@@ -1064,8 +1064,8 @@ class ProxyPage(QWidget):
 
 class CommonPage(QWidget):
     """关于我们页面"""
-    def __init__(self, settings=None, parent=None):
-        super().__init__(parent=parent)
+    def __init__(self, settings=None):
+        super().__init__()
         self.settings = settings
         self.setup_ui()
         self.bind_actions()
