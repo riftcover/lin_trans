@@ -22,14 +22,14 @@ class CustomTableItemDelegate(TableItemDelegate):
 
 
 class Video2SRT(QWidget):
-    def __init__(self, text: str, parent=None, settings=None):
-        super().__init__(parent=parent)
+    def __init__(self, title: str,settings=None):
+        super().__init__()
         self.prompts_orm = PromptsOrm()
         self.settings = settings
         self.table = TableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(title)
         self.setupUi()
         self.bind_action()
 
@@ -375,12 +375,12 @@ class TableWindow:
         ui_table.setRowCount(0)
 
 
-if __name__ == "__main__":
-    import sys
-    from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
-
-    app = QApplication(sys.argv)
-    window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     import sys
+#     from PySide6.QtWidgets import QApplication
+#     from PySide6.QtCore import QSettings
+#
+#     app = QApplication(sys.argv)
+#     window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+#     window.show()
+#     sys.exit(app.exec())

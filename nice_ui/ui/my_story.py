@@ -48,10 +48,10 @@ VideoFormatInfoRole = Qt.UserRole + 1
 class TableApp(CardWidget):
     button_size = GuiSize.row_button_size
 
-    def __init__(self, text: str, parent=None, settings=None):
-        super().__init__(parent=parent)
+    def __init__(self, title: str, settings=None):
+        super().__init__()
         self.settings = settings
-        self.setObjectName(text.replace("", "-"))
+        self.setObjectName(title)
         self.setupUi()
         self.data_bridge = config.data_bridge
         self._connect_signals()
