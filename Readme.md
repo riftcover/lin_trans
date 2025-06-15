@@ -20,6 +20,7 @@ models目录为项目同级目录
 
 ```
 ### 1.下载离线安装包
+
 ```json lines
  pip download --prefer-binary --dest wheels -r requirements.txt     
 ```
