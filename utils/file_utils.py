@@ -28,10 +28,17 @@ def format_time(seconds):
 
 def funasr_write_srt_file(segments, srt_file_path):
     with open(srt_file_path, "w", encoding="utf-8") as srt_file:
+        # 定义多语言标点符号
+        punctuation_marks = [',', '.', '，', '。', '、', '；', ';']
+        
         for i, segment in enumerate(segments, 1):
             start_time = format_time(segment['start'] / 1000)  # Convert milliseconds to seconds
             end_time = format_time(segment['end'] / 1000)  # Convert milliseconds to seconds
             text = segment['text'].strip()
+            
+            # 处理句子结尾的标点符号
+            while text and text[-1] in punctuation_marks:
+                text = text[:-1]
 
             srt_file.write(f"{i}\n")
             srt_file.write(f"{start_time} --> {end_time}\n")

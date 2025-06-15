@@ -367,17 +367,23 @@ class AliyunASRClient:
             output_file: 输出SRT文件路径
         """
         with open(output_file, "w", encoding="utf-8") as f:
+            # 定义多语言标点符号
+            punctuation_marks = [',', '.', '，', '。', '、', '；', ';']
             for i, item in enumerate(parsed_results, 1):
                 begin_time = item["begin_time"]
                 end_time = item["end_time"]
+                text = item['text']
 
                 # 转换毫秒为SRT格式的时间戳 (HH:MM:SS,mmm)
                 begin_str = self._format_timestamp(begin_time)
                 end_str = self._format_timestamp(end_time)
+                # 处理句子结尾的标点符号
+                while text and text[-1] in punctuation_marks:
+                    text = text[:-1]
 
                 f.write(f"{i}\n")
                 f.write(f"{begin_str} --> {end_str}\n")
-                f.write(f"{item['text']}\n\n")
+                f.write(f"{text}\n\n")
 
     @staticmethod
     def _format_timestamp(ms: int) -> str:
