@@ -24,6 +24,7 @@ class AgentRegistry(BaseModel):
     AI代理注册表
 
     管理所有支持的AI代理配置
+    QWEN_CLOUD为系统自带的，其他的需要用户自己配置
     """
     # 预定义的配置
     QWEN_CLOUD_BASE_URL: ClassVar[str] = "https://dashscope.aliyuncs.com/compatible-mode/v1"

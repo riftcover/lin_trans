@@ -1,6 +1,6 @@
 [project]
 name = "lin-trans"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = [
     {name = "riftcover", email = "44368727+riftcover@users.noreply.github.com"}
@@ -35,6 +35,8 @@ dependencies = [
     "dotenv==0.9.9",
     "pytz>=2025.2",
     "pip>=25.1.1",
+    "pandas>=2.1.0",
+    "json-repair>=0.46.2",
 ]
 
 [build-system]
