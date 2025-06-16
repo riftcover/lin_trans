@@ -1,0 +1,263 @@
+import json
+import time
+from typing import Dict, List, Optional, Tuple
+from openai import OpenAI
+from utils import logger
+from utils.agent_dict import AgentConfig
+
+
+class VideoLingoTranslator:
+    """VideoLingo翻译器适配版本"""
+    
+    def __init__(self, agent: AgentConfig, target_language: str = "中文", source_language: str = "English"):
+        self.agent = agent
+        self.client = OpenAI(api_key=agent['key'], base_url=agent['base_url'])
+        self.target_language = target_language
+        self.source_language = source_language
+        self.reflect_translate = True  # 是否使用两步翻译
+        self.terminology_manager = None  # 术语管理器，由外部设置
+        self.terminology_manager = None  # 术语管理器，由外部设置
+    
+    def ask_gpt(self, prompt: str, resp_type: str = 'json', max_retries: int = 3) -> Dict:
+        """适配ask_gpt函数接口"""
+        for retry in range(max_retries):
+            try:
+                completion = self.client.chat.completions.create(
+                    model=self.agent['model'],
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3
+                )
+                
+                content = completion.choices[0].message.content
+                
+                if resp_type == 'json':
+                    # 提取JSON内容
+                    if '```json' in content:
+                        json_start = content.find('```json') + 7
+                        json_end = content.find('```', json_start)
+                        json_content = content[json_start:json_end].strip()
+                    else:
+                        json_content = content.strip()
+                    
+                    return json.loads(json_content)
+                else:
+                    return {'content': content}
+                    
+            except Exception as e:
+                logger.error(f"GPT调用失败 (重试 {retry + 1}/{max_retries}): {e}")
+                if retry == max_retries - 1:
+                    raise e
+                time.sleep(1)
+    
+    def generate_shared_prompt(self, previous_content_prompt: Optional[List[str]], 
+                             after_content_prompt: Optional[List[str]], 
+                             summary_prompt: str, 
+                             things_to_note_prompt: str) -> str:
+        """生成共享提示"""
+        previous_content = ""
+        if previous_content_prompt:
+            previous_content = "\n".join(previous_content_prompt)
+        
+        after_content = ""
+        if after_content_prompt:
+            after_content = "\n".join(after_content_prompt)
+        
+        return f'''### Context Information
+<previous_content>
+{previous_content}
+</previous_content>
+
+<subsequent_content>
+{after_content}
+</subsequent_content>
+
+### Content Summary
+{summary_prompt}
+
+### Points to Note
+{things_to_note_prompt}'''
+    
+    def get_prompt_faithfulness(self, lines: str, shared_prompt: str) -> str:
+        """获取忠实翻译提示"""
+        line_splits = lines.split('\n')
+        
+        json_dict = {}
+        for i, line in enumerate(line_splits, 1):
+            json_dict[f"{i}"] = {"origin": line, "direct": f"direct {self.target_language} translation {i}."}
+        json_format = json.dumps(json_dict, indent=2, ensure_ascii=False)
+
+        prompt_faithfulness = f'''
+## Role
+You are a professional Netflix subtitle translator, fluent in both {self.source_language} and {self.target_language}, as well as their respective cultures. 
+Your expertise lies in accurately understanding the semantics and structure of the original {self.source_language} text and faithfully translating it into {self.target_language} while preserving the original meaning.
+
+## Task
+We have a segment of original {self.source_language} subtitles that need to be directly translated into {self.target_language}. These subtitles come from a specific context and may contain specific themes and terminology.
+
+1. Translate the original {self.source_language} subtitles into {self.target_language} line by line
+2. Ensure the translation is faithful to the original, accurately conveying the original meaning
+3. Consider the context and professional terminology
+
+{shared_prompt}
+
+<translation_principles>
+1. Faithful to the original: Accurately convey the content and meaning of the original text, without arbitrarily changing, adding, or omitting content.
+2. Accurate terminology: Use professional terms correctly and maintain consistency in terminology.
+3. Understand the context: Fully comprehend and reflect the background and contextual relationships of the text.
+</translation_principles>
+
+## INPUT
+<subtitles>
+{lines}
+</subtitles>
+
+## Output in only JSON format and no other text
+```json
+{json_format}
+```
+
+Note: Start you answer with ```json and end with ```, do not add any other text.
+'''
+        return prompt_faithfulness.strip()
+    
+    def get_prompt_expressiveness(self, faithfulness_result: Dict, lines: str, shared_prompt: str) -> str:
+        """获取表达优化提示"""
+        json_format = {
+            key: {
+                "origin": value["origin"],
+                "direct": value["direct"],
+                "reflect": "your reflection on direct translation",
+                "free": "your free translation"
+            }
+            for key, value in faithfulness_result.items()
+        }
+        json_format = json.dumps(json_format, indent=2, ensure_ascii=False)
+
+        prompt_expressiveness = f'''
+## Role
+You are a professional Netflix subtitle translator and language consultant.
+Your expertise lies not only in accurately understanding the original {self.source_language} but also in optimizing the {self.target_language} translation to better suit the target language's expression habits and cultural background.
+
+## Task
+We already have a direct translation version of the original {self.source_language} subtitles.
+Your task is to reflect on and improve these direct translations to create more natural and fluent {self.target_language} subtitles.
+
+1. Analyze the direct translation results line by line, pointing out existing issues
+2. Provide detailed modification suggestions
+3. Perform free translation based on your analysis
+4. Do not add comments or explanations in the translation, as the subtitles are for the audience to read
+5. Do not leave empty lines in the free translation, as the subtitles are for the audience to read
+
+{shared_prompt}
+
+<Translation Analysis Steps>
+Please use a two-step thinking process to handle the text line by line:
+
+1. Direct Translation Reflection:
+   - Evaluate language fluency
+   - Check if the language style is consistent with the original text
+   - Check the conciseness of the subtitles, point out where the translation is too wordy
+
+2. {self.target_language} Free Translation:
+   - Aim for contextual smoothness and naturalness, conforming to {self.target_language} expression habits
+   - Ensure it's easy for {self.target_language} audience to understand and accept
+   - Adapt the language style to match the theme (e.g., use casual language for tutorials, professional terminology for technical content, formal language for documentaries)
+</Translation Analysis Steps>
+   
+## INPUT
+<subtitles>
+{lines}
+</subtitles>
+
+## Output in only JSON format and no other text
+```json
+{json_format}
+```
+
+Note: Start you answer with ```json and end with ```, do not add any other text.
+'''
+        return prompt_expressiveness.strip()
+    
+    def valid_translate_result(self, result: dict, required_keys: list, required_sub_keys: list) -> Dict[str, str]:
+        """验证翻译结果"""
+        # 检查所需键
+        if not all(key in result for key in required_keys):
+            return {"status": "error", "message": f"Missing required key(s): {', '.join(set(required_keys) - set(result.keys()))}"}
+        
+        # 检查所有项目中的所需子键
+        for key in result:
+            if not all(sub_key in result[key] for sub_key in required_sub_keys):
+                return {"status": "error", "message": f"Missing required sub-key(s) in item {key}: {', '.join(set(required_sub_keys) - set(result[key].keys()))}"}
+
+        return {"status": "success", "message": "Translation completed"}
+    
+    def translate_lines(self, lines: str, previous_content_prompt: Optional[List[str]], 
+                       after_content_prompt: Optional[List[str]], 
+                       things_to_note_prompt: str, 
+                       summary_prompt: str, 
+                       index: int = 0) -> Tuple[str, str]:
+        """翻译文本行"""
+        shared_prompt = self.generate_shared_prompt(previous_content_prompt, after_content_prompt, summary_prompt, things_to_note_prompt)
+
+        # 重试翻译函数
+        def retry_translation(prompt: str, length: int, step_name: str):
+            def valid_faith(response_data):
+                return self.valid_translate_result(response_data, [str(i) for i in range(1, length+1)], ['direct'])
+            def valid_express(response_data):
+                return self.valid_translate_result(response_data, [str(i) for i in range(1, length+1)], ['free'])
+            
+            for retry in range(3):
+                try:
+                    result = self.ask_gpt(prompt + retry * " ", resp_type='json')
+                    
+                    # 验证结果
+                    if step_name == 'faithfulness':
+                        validation = valid_faith(result)
+                    elif step_name == 'expressiveness':
+                        validation = valid_express(result)
+                    
+                    if validation["status"] == "success" and len(lines.split('\n')) == len(result):
+                        return result
+                    
+                    if retry != 2:
+                        logger.warning(f'{step_name.capitalize()} translation of block {index} failed, Retry...')
+                        
+                except Exception as e:
+                    logger.error(f'{step_name.capitalize()} translation error: {e}')
+                    if retry == 2:
+                        raise e
+                        
+            raise ValueError(f'{step_name.capitalize()} translation of block {index} failed after 3 retries.')
+
+        ## 第一步：忠实翻译
+        prompt1 = self.get_prompt_faithfulness(lines, shared_prompt)
+        faith_result = retry_translation(prompt1, len(lines.split('\n')), 'faithfulness')
+
+        for i in faith_result:
+            faith_result[i]["direct"] = faith_result[i]["direct"].replace('\n', ' ')
+
+        # 如果不使用反思翻译，直接使用忠实翻译
+        if not self.reflect_translate:
+            translate_result = "\n".join([faith_result[i]["direct"].strip() for i in faith_result])
+            logger.info(f"Block {index} - Using direct translation only")
+            return translate_result, lines
+
+        ## 第二步：表达优化
+        prompt2 = self.get_prompt_expressiveness(faith_result, lines, shared_prompt)
+        express_result = retry_translation(prompt2, len(lines.split('\n')), 'expressiveness')
+
+        translate_result = "\n".join([express_result[i]["free"].replace('\n', ' ').strip() for i in express_result])
+
+        if len(lines.split('\n')) != len(translate_result.split('\n')):
+            logger.error(f'Translation of block {index} failed, Length Mismatch')
+            raise ValueError(f'Origin: {lines}, but got: {translate_result}')
+
+        logger.info(f"Block {index} - Two-step translation completed")
+        return translate_result, lines
+
+
+def search_things_to_note_in_prompt(chunk: str) -> str:
+    """搜索需要注意的事项（简化版本）"""
+    # 这里可以根据需要实现更复杂的术语识别逻辑
+    # 目前返回基本的注意事项
+    return "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style." 
