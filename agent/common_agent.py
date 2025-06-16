@@ -5,7 +5,7 @@ import time
 from openai import OpenAI, AuthenticationError
 
 from nice_ui.configure.signal import data_bridge
-from nice_ui.util.proxy_client import create_openai_client
+from services.llm_client import create_openai_client
 from utils import logger
 from utils.agent_dict import agent_msg, AgentConfig
 

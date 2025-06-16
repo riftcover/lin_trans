@@ -7,8 +7,8 @@
 """
 
 import logging
-import os
 from typing import Dict, Any
+from pathlib import Path
 
 import yaml
 
@@ -43,12 +43,13 @@ class ConfigManager:
         if config_dir is None:
             # 获取项目根目录
             root_dir = self._get_project_root()
-            config_dir = os.path.join(root_dir, 'config')
+            config_dir = root_dir / 'config'
 
-        self.config_dir = config_dir
+        self.config_dir = Path(config_dir)
 
         # 确定当前环境
         if env is None:
+            import os
             env = os.environ.get('APP_ENV')
 
         self.env = env
@@ -58,16 +59,16 @@ class ConfigManager:
         # 加载API配置
         self.load_api_config()
 
-    def _get_project_root(self) -> str:
+    def _get_project_root(self) -> Path:
         """获取项目根目录
 
         Returns:
-            str: 项目根目录的路径
+            Path: 项目根目录的路径
         """
         # 当前文件所在目录
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        current_file = Path(__file__).resolve()
         # 项目根目录（假设utils是项目根目录的直接子目录）
-        return os.path.dirname(current_dir)
+        return current_file.parent.parent
 
     def load_api_config(self) -> Dict[str, Any]:
         """加载API配置
@@ -75,10 +76,10 @@ class ConfigManager:
         Returns:
             Dict[str, Any]: API配置字典
         """
-        api_config_path = os.path.join(self.config_dir, 'api_config.yaml')
+        api_config_path = self.config_dir / 'api_config.yaml'
 
         try:
-            if not os.path.exists(api_config_path):
+            if not api_config_path.exists():
                 logger.warning(f"API配置文件不存在: {api_config_path}")
                 # 创建默认配置
                 self._create_default_api_config(api_config_path)
@@ -146,14 +147,14 @@ class ConfigManager:
             self.configs['api'] = default_config
             return default_config
 
-    def _create_default_api_config(self, config_path: str) -> None:
+    def _create_default_api_config(self, config_path: Path) -> None:
         """创建默认API配置文件
 
         Args:
             config_path: 配置文件路径
         """
         # 确保目录存在
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
 
         default_config = {
             # 共享配置
@@ -167,7 +168,19 @@ class ConfigManager:
                     'terms': '/terms',
                     'privacy': '/privacy',
                     'help': '/help'
-                }
+                },
+
+            },
+
+            # 高级翻译配置
+            'translator': {
+                'summary_length': 8000,
+                'max_split_length': 20,
+                'reflect_translate': True,
+                'subtitle_max_length': 75,
+                'target_multiplier': 1.2,
+                'min_subtitle_duration': 2.5,
+                'min_trim_duration': 3.5
             },
             # 环境特定配置 - 只包含URL
             'development': {
@@ -267,6 +280,78 @@ class ConfigManager:
         self.load_api_config()
         logger.info("已重新加载所有配置")
 
+    def get_translator_config(self) -> Dict[str, Any]:
+        """获取高级翻译相关配置
+
+        Returns:
+            Dict[str, Any]: 翻译配置字典
+        """
+        api_config = self.get_api_config()
+        return api_config.get('translator', {})
+    
+    def get_summary_length(self) -> int:
+        """获取术语上下文最大长度
+
+        Returns:
+            int: 最大长度，默认8000
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('summary_length', 8000)
+    
+    def get_max_split_length(self) -> int:
+        """获取最大分割长度
+
+        Returns:
+            int: 最大分割长度，默认20
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('max_split_length', 20)
+    
+    def get_reflect_translate(self) -> bool:
+        """获取是否启用二次优化翻译
+
+        Returns:
+            bool: 是否启用二次优化，默认True
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('reflect_translate', True)
+    
+    def get_subtitle_max_length(self) -> int:
+        """获取字幕行最大长度
+
+        Returns:
+            int: 字幕行最大长度，默认75
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('subtitle_max_length', 75)
+    
+    def get_target_multiplier(self) -> float:
+        """获取目标语言文本长度乘数
+
+        Returns:
+            float: 目标语言乘数，默认1.2
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('target_multiplier', 1.2)
+    
+    def get_min_subtitle_duration(self) -> float:
+        """获取最小字幕持续时间
+
+        Returns:
+            float: 最小字幕持续时间（秒），默认2.5
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('min_subtitle_duration', 2.5)
+    
+    def get_min_trim_duration(self) -> float:
+        """获取最小修剪持续时间
+
+        Returns:
+            float: 最小修剪持续时间（秒），默认3.5
+        """
+        translator_config = self.get_translator_config()
+        return translator_config.get('min_trim_duration', 3.5)
+
 
 # 创建全局配置管理器实例
 config_manager = ConfigManager()
@@ -301,3 +386,44 @@ def set_environment(env: str) -> None:
 def reload_configs() -> None:
     """重新加载所有配置"""
     config_manager.reload_configs()
+
+
+# translator相关配置的便捷函数
+def get_summary_length() -> int:
+    """获取术语上下文最大长度"""
+    return config_manager.get_summary_length()
+
+
+def get_max_split_length() -> int:
+    """获取最大分割长度"""
+    return config_manager.get_max_split_length()
+
+
+def get_reflect_translate() -> bool:
+    """获取是否反思翻译结果"""
+    return config_manager.get_reflect_translate()
+
+
+def get_subtitle_max_length() -> int:
+    """获取字幕最大长度"""
+    return config_manager.get_subtitle_max_length()
+
+
+def get_target_multiplier() -> float:
+    """获取目标语言乘数"""
+    return config_manager.get_target_multiplier()
+
+
+def get_min_subtitle_duration() -> float:
+    """获取最小字幕持续时间"""
+    return config_manager.get_min_subtitle_duration()
+
+
+def get_min_trim_duration() -> float:
+    """获取最小修剪持续时间"""
+    return config_manager.get_min_trim_duration()
+
+
+def get_translator_config() -> Dict[str, Any]:
+    """获取高级翻译相关配置"""
+    return config_manager.get_translator_config()

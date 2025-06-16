@@ -1,67 +1,34 @@
 import json
-import time
 from typing import Dict, List, Optional, Tuple
-from openai import OpenAI
+
+from services.llm_client import ask_gpt
 from utils import logger
 from utils.agent_dict import AgentConfig
 
 
-class VideoLingoTranslator:
-    """VideoLingo翻译器适配版本"""
-    
+class Translator:
+    """翻译器"""
+
     def __init__(self, agent: AgentConfig, target_language: str = "中文", source_language: str = "English"):
         self.agent = agent
-        self.client = OpenAI(api_key=agent['key'], base_url=agent['base_url'])
         self.target_language = target_language
         self.source_language = source_language
         self.reflect_translate = True  # 是否使用两步翻译
         self.terminology_manager = None  # 术语管理器，由外部设置
-        self.terminology_manager = None  # 术语管理器，由外部设置
-    
-    def ask_gpt(self, prompt: str, resp_type: str = 'json', max_retries: int = 3) -> Dict:
-        """适配ask_gpt函数接口"""
-        for retry in range(max_retries):
-            try:
-                completion = self.client.chat.completions.create(
-                    model=self.agent['model'],
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3
-                )
-                
-                content = completion.choices[0].message.content
-                
-                if resp_type == 'json':
-                    # 提取JSON内容
-                    if '```json' in content:
-                        json_start = content.find('```json') + 7
-                        json_end = content.find('```', json_start)
-                        json_content = content[json_start:json_end].strip()
-                    else:
-                        json_content = content.strip()
-                    
-                    return json.loads(json_content)
-                else:
-                    return {'content': content}
-                    
-            except Exception as e:
-                logger.error(f"GPT调用失败 (重试 {retry + 1}/{max_retries}): {e}")
-                if retry == max_retries - 1:
-                    raise e
-                time.sleep(1)
-    
-    def generate_shared_prompt(self, previous_content_prompt: Optional[List[str]], 
-                             after_content_prompt: Optional[List[str]], 
-                             summary_prompt: str, 
-                             things_to_note_prompt: str) -> str:
+
+    def generate_shared_prompt(self, previous_content_prompt: Optional[List[str]],
+                               after_content_prompt: Optional[List[str]],
+                               summary_prompt: str,
+                               things_to_note_prompt: str) -> str:
         """生成共享提示"""
         previous_content = ""
         if previous_content_prompt:
             previous_content = "\n".join(previous_content_prompt)
-        
+
         after_content = ""
         if after_content_prompt:
             after_content = "\n".join(after_content_prompt)
-        
+
         return f'''### Context Information
 <previous_content>
 {previous_content}
@@ -76,11 +43,11 @@ class VideoLingoTranslator:
 
 ### Points to Note
 {things_to_note_prompt}'''
-    
+
     def get_prompt_faithfulness(self, lines: str, shared_prompt: str) -> str:
         """获取忠实翻译提示"""
         line_splits = lines.split('\n')
-        
+
         json_dict = {}
         for i, line in enumerate(line_splits, 1):
             json_dict[f"{i}"] = {"origin": line, "direct": f"direct {self.target_language} translation {i}."}
@@ -119,7 +86,7 @@ We have a segment of original {self.source_language} subtitles that need to be d
 Note: Start you answer with ```json and end with ```, do not add any other text.
 '''
         return prompt_faithfulness.strip()
-    
+
     def get_prompt_expressiveness(self, faithfulness_result: Dict, lines: str, shared_prompt: str) -> str:
         """获取表达优化提示"""
         json_format = {
@@ -177,56 +144,59 @@ Please use a two-step thinking process to handle the text line by line:
 Note: Start you answer with ```json and end with ```, do not add any other text.
 '''
         return prompt_expressiveness.strip()
-    
+
     def valid_translate_result(self, result: dict, required_keys: list, required_sub_keys: list) -> Dict[str, str]:
         """验证翻译结果"""
         # 检查所需键
         if not all(key in result for key in required_keys):
             return {"status": "error", "message": f"Missing required key(s): {', '.join(set(required_keys) - set(result.keys()))}"}
-        
+
         # 检查所有项目中的所需子键
         for key in result:
             if not all(sub_key in result[key] for sub_key in required_sub_keys):
-                return {"status": "error", "message": f"Missing required sub-key(s) in item {key}: {', '.join(set(required_sub_keys) - set(result[key].keys()))}"}
+                return {"status": "error",
+                        "message": f"Missing required sub-key(s) in item {key}: {', '.join(set(required_sub_keys) - set(result[key].keys()))}"}
 
         return {"status": "success", "message": "Translation completed"}
-    
-    def translate_lines(self, lines: str, previous_content_prompt: Optional[List[str]], 
-                       after_content_prompt: Optional[List[str]], 
-                       things_to_note_prompt: str, 
-                       summary_prompt: str, 
-                       index: int = 0) -> Tuple[str, str]:
+
+    def translate_lines(self, lines: str, previous_content_prompt: Optional[List[str]],
+                        after_content_prompt: Optional[List[str]],
+                        things_to_note_prompt: str,
+                        summary_prompt: str,
+                        index: int = 0) -> Tuple[str, str]:
         """翻译文本行"""
         shared_prompt = self.generate_shared_prompt(previous_content_prompt, after_content_prompt, summary_prompt, things_to_note_prompt)
 
         # 重试翻译函数
         def retry_translation(prompt: str, length: int, step_name: str):
             def valid_faith(response_data):
-                return self.valid_translate_result(response_data, [str(i) for i in range(1, length+1)], ['direct'])
+                return self.valid_translate_result(response_data, [str(i) for i in range(1, length + 1)], ['direct'])
+
             def valid_express(response_data):
-                return self.valid_translate_result(response_data, [str(i) for i in range(1, length+1)], ['free'])
-            
+                return self.valid_translate_result(response_data, [str(i) for i in range(1, length + 1)], ['free'])
+
             for retry in range(3):
                 try:
-                    result = self.ask_gpt(prompt + retry * " ", resp_type='json')
-                    
-                    # 验证结果
-                    if step_name == 'faithfulness':
-                        validation = valid_faith(result)
-                    elif step_name == 'expressiveness':
-                        validation = valid_express(result)
-                    
-                    if validation["status"] == "success" and len(lines.split('\n')) == len(result):
+                    # 使用utils中的ask_gpt函数
+                    result = ask_gpt(
+                        model_api=self.agent,
+                        prompt=prompt + retry * " ",
+                        resp_type='json',
+                        valid_def=valid_faith if step_name == 'faithfulness' else valid_express,
+                        log_title=f'translate_{step_name}_{index}'
+                    )
+
+                    if len(lines.split('\n')) == len(result):
                         return result
-                    
+
                     if retry != 2:
                         logger.warning(f'{step_name.capitalize()} translation of block {index} failed, Retry...')
-                        
+
                 except Exception as e:
                     logger.error(f'{step_name.capitalize()} translation error: {e}')
                     if retry == 2:
                         raise e
-                        
+
             raise ValueError(f'{step_name.capitalize()} translation of block {index} failed after 3 retries.')
 
         ## 第一步：忠实翻译
@@ -256,8 +226,8 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
         return translate_result, lines
 
 
-def search_things_to_note_in_prompt(chunk: str) -> str:
+def search_things_to_note_in_prompt() -> str:
     """搜索需要注意的事项（简化版本）"""
     # 这里可以根据需要实现更复杂的术语识别逻辑
     # 目前返回基本的注意事项
-    return "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style." 
+    return "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style."

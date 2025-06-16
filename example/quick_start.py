@@ -9,18 +9,18 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent.enhanced_common_agent import translate_document_videolingo
+from agent.enhanced_common_agent import translate_document
 
 
 def quick_translation_example():
     """最简单的翻译示例"""
     
     # 基本参数配置
-    translate_document_videolingo(
-        unid="quick_start_001",                    # 任务ID
+    translate_document(
+        unid="f92f54737832bee014ec51e4a8b523cb",                    # 任务ID
         in_document=r"D:\dcode\lin_trans\result\f92f54737832bee014ec51e4a8b523cb\44.srt",                   # 输入文件路径
         out_document=r"D:\dcode\lin_trans\result\f92f54737832bee014ec51e4a8b523cb\44_cn.srt",                 # 输出文件路径
-        agent_name="qwen",                         # AI模型（确保在agent_dict中已配置）
+        agent_name="qwen_cloud",                         # AI模型（确保在agent_dict中已配置）
         chunk_size=600,                            # 推荐值：600-800
         max_entries=10,                            # 推荐值：8-12
         sleep_time=1,                              # API调用间隔
@@ -34,7 +34,7 @@ def custom_translation_example():
     """自定义参数的翻译示例"""
     
     # 技术内容翻译配置
-    translate_document_videolingo(
+    translate_document(
         unid="tech_translation",
         in_document="technical_video.srt",
         out_document="technical_video_cn.srt",
@@ -53,31 +53,20 @@ def main(choice: int):
     print("VideoLingo翻译快速开始")
     print("1. 基本翻译示例")
     print("2. 自定义翻译示例")
-    
-    try:
-        
-        if choice == "1":
-            print("运行基本翻译示例...")
-            quick_translation_example()
-            print("✅ 基本翻译完成")
-            
-        elif choice == "2":
-            print("运行自定义翻译示例...")
-            custom_translation_example()
-            print("✅ 自定义翻译完成")
-            
-        else:
-            print("无效选择，运行基本示例...")
-            quick_translation_example()
-            
-    except KeyboardInterrupt:
-        print("\n❌ 用户取消操作")
-    except Exception as e:
-        print(f"❌ 翻译失败: {e}")
-        print("\n💡 请检查:")
-        print("- 输入SRT文件是否存在")
-        print("- agent_name是否在agent_dict中配置")
-        print("- API密钥是否有效")
+
+    if choice == 1:
+        print("运行基本翻译示例...")
+        quick_translation_example()
+        print("✅ 基本翻译完成")
+
+    elif choice == 2:
+        print("运行自定义翻译示例...")
+        custom_translation_example()
+        print("✅ 自定义翻译完成")
+
+    else:
+        print("无效选择，运行基本示例...")
+        quick_translation_example()
 
 
 if __name__ == "__main__":

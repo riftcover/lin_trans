@@ -265,7 +265,7 @@ class LoginWindow(QFrame):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
         from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
-        from utils.config_manager import get_web_url
+        from services.config_manager import get_web_url
 
         # 尝试获取邮箱地址，如果有的话可以作为参数传递
         email = self.emailInput.text()
@@ -291,7 +291,7 @@ class LoginWindow(QFrame):
         # 使用QDesktopServices打开浏览器并跳转到注册页面
         from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
-        from utils.config_manager import get_web_url
+        from services.config_manager import get_web_url
 
         # 从配置中获取注册页面的URL
         register_url = get_web_url('register')

@@ -1,8 +1,8 @@
 import json
-import os
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-from nice_ui.util.proxy_client import ask_gpt
+from services.llm_client import ask_gpt
 from utils import logger
 from utils.agent_dict import agent_msg, AgentConfig
 
@@ -11,7 +11,8 @@ class TerminologyManager:
     """术语管理器 - 实现VideoLingo的terminology功能"""
 
     def __init__(self, custom_terms_path: str = "custom_terms.xlsx"):
-        self.custom_terms_path = custom_terms_path
+        # 当前未使用自定义术语功能，后期添加后打开
+        # self.custom_terms_path = custom_terms_path
         self.terminology_data = {
             "theme": "",
             "terms": []
@@ -193,23 +194,28 @@ class TerminologyManager:
     def save_terminology(self, filepath: str):
         """保存术语数据到文件"""
         try:
-            with open(filepath, 'w', encoding='utf-8') as f:
+            filepath_obj = Path(filepath)
+            # 确保父目录存在
+            filepath_obj.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(filepath_obj, 'w', encoding='utf-8') as f:
                 json.dump(self.terminology_data, f, ensure_ascii=False, indent=4)
-            print(f"💾 Terminology saved to: {filepath}")
+            logger.info(f"术语数据已保存到: {filepath_obj}")
         except Exception as e:
-            print(f"❌ Failed to save terminology: {e}")
+            logger.error(f"保存术语数据失败: {e}")
 
     def load_terminology(self, filepath: str) -> bool:
         """从文件加载术语数据"""
         try:
-            if os.path.exists(filepath):
-                with open(filepath, 'r', encoding='utf-8') as f:
+            filepath_obj = Path(filepath)
+            if filepath_obj.exists():
+                with open(filepath_obj, 'r', encoding='utf-8') as f:
                     self.terminology_data = json.load(f)
-                print(f"📖 Terminology loaded from: {filepath}")
+                logger.info(f"📖 术语数据已从文件加载: {filepath_obj}")
                 return True
             return False
         except Exception as e:
-            print(f"❌ Failed to load terminology: {e}")
+            logger.error(f"❌ 加载术语数据失败: {e}")
             return False
 
     def get_theme(self) -> str:

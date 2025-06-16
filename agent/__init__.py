@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from pathlib import Path
 
 SRT_NAME = "srt"
 # 翻译通道
@@ -230,6 +230,15 @@ LANG_CODE = {
         "Czech language"
     ],
 }
+
+def get_terminolog_file(unid):
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent
+    result_dir = project_root / "result" / unid
+
+    # 确保result目录存在
+    result_dir.mkdir(parents=True, exist_ok=True)
+    return result_dir
 
 
 # 根据界面显示的语言名称，比如“简体中文、English” 获取语言代码，比如 zh-cn en 等, 如果是cli，则直接是语言代码

@@ -5,7 +5,7 @@ from http import HTTPStatus
 import dashscope
 from dashscope import Generation  # 建议dashscope SDK 的版本 >= 1.14.0
 
-from nice_ui.util.proxy_client import create_openai_client
+from services.llm_client import create_openai_client
 from utils.log import Logings
 
 logger = Logings().logger

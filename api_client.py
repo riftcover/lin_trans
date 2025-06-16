@@ -44,7 +44,7 @@ def _run_async(coro):
 class APIClient:
     def __init__(self, base_url: str = None, timeout: float = None):
         # 从配置管理器获取API配置
-        from utils.config_manager import get_api_base_url, get_api_timeout
+        from services.config_manager import get_api_base_url, get_api_timeout
 
         # 如果没有提供基础URL，从配置中获取
         self.base_url = base_url or get_api_base_url()

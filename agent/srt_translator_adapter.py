@@ -1,8 +1,9 @@
 import re
-import json
-from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
+from typing import List, Dict, Tuple, Optional
+
 from utils import logger
+from services.config_manager import get_summary_length
 
 
 @dataclass
@@ -16,7 +17,7 @@ class SRTEntry:
 
 
 class SRTTranslatorAdapter:
-    """SRT翻译适配器，将SRT格式转换为VideoLingo兼容格式"""
+    """SRT翻译适配器，将SRT格式转换为Translator兼容格式"""
     
     def __init__(self):
         self.srt_pattern = r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n(.*?)(?=\n\n|\Z)'
@@ -113,13 +114,24 @@ class SRTTranslatorAdapter:
         return '\n'.join(srt_lines)
     
     def extract_terminology_context(self, entries: List[SRTEntry]) -> str:
-        """从SRT条目中提取术语上下文"""
-        return ' '.join([entry.text for entry in entries])
+        """从SRT条目中提取部分文本"""
+        # 提取所有文本并清理
+        cleaned_sentences = [entry.text.strip() for entry in entries if entry.text.strip()]
+        # 用空格连接
+        combined_text = ' '.join(cleaned_sentences)
+        
+        # 从配置文件获取最大长度
+        max_length = get_summary_length()
+        if len(combined_text) > max_length:
+            combined_text = combined_text[:max_length]
+            logger.info(f"术语上下文被截取至 {max_length} 字符")
+        
+        return combined_text
     
     def calculate_time_gaps(self, entries: List[SRTEntry]) -> List[float]:
         """计算字幕之间的时间间隔（用于判断是否需要上下文）"""
         gaps = []
-        for i in range(len(entries) - 1):
+        for _ in range(len(entries) - 1):
             # 这里简化处理，实际可以解析时间戳计算精确间隔
             gaps.append(1.0)  # 默认1秒间隔
         return gaps
@@ -137,15 +149,10 @@ def create_trans_compatible_data(srt_content: str, chunk_size: int = 600, max_en
     
     # 转换为文本块
     text_chunks = adapter.entries_to_text_chunks(entry_chunks)
-    
-    # 提取术语上下文
+
+    # 截取部分文本
     terminology_context = adapter.extract_terminology_context(entries)
 
-    for i,text_chunk in enumerate(text_chunks):
-        print(f'==={i}===')
-        print(text_chunk)
-        print(f'===terminology_context===')
-        print(terminology_context[i])
     return {
         'original_entries': entries,
         'entry_chunks': entry_chunks,

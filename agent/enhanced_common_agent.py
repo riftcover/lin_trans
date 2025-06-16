@@ -3,12 +3,13 @@ import concurrent.futures
 from typing import List
 from difflib import SequenceMatcher
 
+
 from nice_ui.configure.signal import data_bridge
 from utils import logger
 from utils.agent_dict import agent_msg, AgentConfig
 
 from .srt_translator_adapter import create_trans_compatible_data
-from .videolingo_translator import VideoLingoTranslator, search_things_to_note_in_prompt
+from .translator import Translator, search_things_to_note_in_prompt
 from .terminology_manager import TerminologyManager
 
 
@@ -17,14 +18,14 @@ def similar(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-def translate_document_videolingo(unid: str, in_document: str, out_document: str,
-                                  agent_name: str,
-                                  chunk_size: int = 600, max_entries: int = 10,
-                                  sleep_time: int = 1, max_workers: int = 3,
-                                  target_language: str = "中文",
-                                  source_language: str = "English"):
+def translate_document(unid: str, in_document: str, out_document: str,
+                       agent_name: str,
+                       chunk_size: int = 600, max_entries: int = 10,
+                       sleep_time: int = 1, max_workers: int = 3,
+                       target_language: str = "中文",
+                       source_language: str = "English"):
     """
-    使用VideoLingo高级翻译逻辑翻译SRT文件
+    翻译SRT文件
     
     Args:
         unid: 任务ID
@@ -45,7 +46,7 @@ def translate_document_videolingo(unid: str, in_document: str, out_document: str
     with open(in_document, 'r', encoding='utf-8') as file:
         srt_content = file.read()
 
-    # 使用适配器处理SRT内容
+    # 使用适配器处理SRT内容，配置从config文件读取
     compat_data = create_trans_compatible_data(srt_content, chunk_size, max_entries)
     original_entries = compat_data['original_entries']
     entry_chunks = compat_data['entry_chunks']
@@ -54,28 +55,27 @@ def translate_document_videolingo(unid: str, in_document: str, out_document: str
     adapter = compat_data['adapter']
 
     # 创建术语管理器并生成terminology
-    terminology_manager = TerminologyManager(f"custom_terms_{unid}.xlsx")
+    terminology_manager = TerminologyManager()
+    
 
     # 使用AI生成主题和术语
     terminology_data = terminology_manager.generate_summary_and_terminology(
         terminology_context, agent_name, target_language
     )
+
+    
     theme_prompt = terminology_data.get("theme", "General subtitle content")
 
-    # 保存术语数据
-    terminology_file = f"terminology_{unid}.json"
-    terminology_manager.save_terminology(terminology_file)
-
     # 创建翻译器
-    translator = VideoLingoTranslator(agent, target_language, source_language)
+    translator = Translator(agent, target_language, source_language)
 
     # 将术语管理器传递给翻译器（用于术语搜索）
     translator.terminology_manager = terminology_manager
 
     duration = len(text_chunks)
     logger.info(f"共{duration}个翻译块，开始翻译...")
-
-    # 使用并发翻译
+    #
+    # # 使用并发翻译
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
@@ -148,7 +148,7 @@ def translate_document_videolingo(unid: str, in_document: str, out_document: str
     logger.info("翻译完成")
 
 
-def translate_chunk_enhanced(translator: VideoLingoTranslator, chunk_text: str,
+def translate_chunk_enhanced(translator: Translator, chunk_text: str,
                              previous_context: List[str], after_context: List[str],
                              theme_prompt: str, chunk_index: int) -> tuple:
     """增强版块翻译函数"""
@@ -160,7 +160,7 @@ def translate_chunk_enhanced(translator: VideoLingoTranslator, chunk_text: str,
                 things_to_note_prompt = "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style."
         else:
             # 回退到原始方法
-            things_to_note_prompt = search_things_to_note_in_prompt(chunk_text)
+            things_to_note_prompt = search_things_to_note_in_prompt()
 
         translation, original = translator.translate_lines(
             chunk_text,
