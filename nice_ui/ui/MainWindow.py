@@ -117,7 +117,13 @@ class Window(FluentWindow):
         get_setting_cache(self.settings)
         all_keys = (
             self.settings.allKeys()
-        )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
+        )
+        # self.settings.clear()
+        # for key in all_keys:
+        #     value = self.settings.value(key)
+        #     config.logger.info(f"Key: {key}, Value: {value}")
+
+        # logger.info(config.params)
 
     def load_proxy_settings(self):
         if self.settings.value("use_proxy", False, type=bool):

@@ -30,6 +30,7 @@ funasr_model_path = models_path / "funasr" / "iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
 
 
+
 # 修改为函数，方便动态更新
 def update_funasr_path():
     global funasr_model_path
@@ -50,8 +51,8 @@ homepath = Path.home() / "Videos/lapped"
 homepath.mkdir(parents=True, exist_ok=True)
 homedir = homepath.as_posix()
 
-1# home tmp
-TEMP_HOME = homedir + "/tmp"
+
+TEMP_HOME = f"{homedir}/tmp"
 Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"

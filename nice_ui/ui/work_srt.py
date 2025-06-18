@@ -281,10 +281,10 @@ class LTableWindow:
         if file_character_count:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
-            logger.info(f"file_name type: {type(file_name)}")
-            logger.info(f"file_name: {file_name}")
-            logger.info(f"file_character_count: {file_character_count}")
-            logger.info(f"file_path: {file_path}")
+            # logger.info(f"file_name type: {type(file_name)}")
+            # logger.info(f"file_name: {file_name}")
+            # logger.info(f"file_character_count: {file_character_count}")
+            # logger.info(f"file_path: {file_path}")
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数
