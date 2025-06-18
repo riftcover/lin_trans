@@ -122,17 +122,6 @@ class TranslationTaskProcessor(TaskProcessor):
         logger.trace(
             f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
-        # 执行翻译
-        # translate_document(
-        #     task.unid,
-        #     task.raw_name,
-        #     final_name,
-        #     agent_type,
-        #     config.params['prompt_text'],
-        #     config.settings['trans_row'],
-        #     config.settings['trans_sleep']
-        # )
-
         translate_document(
             unid=task.unid,
             in_document=task.raw_name,
@@ -187,21 +176,25 @@ class ASRTransTaskProcessor(TaskProcessor):
             1,
             new_task.model_dump_json()
         )
-
+        chunk_size_int = get_chunk_size()
+        max_entries_int = get_max_entries()  # 推荐值：8-12
+        sleep_time_int = get_sleep_time()  # API调用间隔
+        logger.trace(f'准备翻译任务:{final_name}')
         logger.trace(
-            f'任务参数:{new_task.unid}, {new_task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
+            f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
         # 执行翻译
         translate_document(
-            new_task.unid,
-            new_task.raw_name,
-            final_name,
-            agent_type,
-            config.params['prompt_text'],
-            config.settings['trans_row'],
-            config.settings['trans_sleep']
+            unid=task.unid,
+            in_document=task.raw_name,
+            out_document=final_name,
+            agent_name=agent_type,
+            chunk_size=chunk_size_int,  # 推荐值：600-800
+            max_entries=max_entries_int,  # 推荐值：8-12
+            sleep_time=sleep_time_int,  # API调用间隔
+            target_language=config.params["target_language"],  # 目标语言
+            source_language=config.params["source_language"]  # 源语言
         )
-
         logger.debug('ASR_TRANS 任务全部完成')
 
 

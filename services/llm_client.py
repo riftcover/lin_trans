@@ -76,6 +76,7 @@ def ask_gpt(model_api, prompt: str, resp_type: Optional[str] = None,
     Returns:
         响应内容，如果resp_type='json'则返回解析后的dict，否则返回字符串
     """
+    # logger.trace(f'model_api:{model_api}')
     client = create_openai_client(api_key=model_api.key, base_url=model_api.base_url)
 
     # 设置响应格式
