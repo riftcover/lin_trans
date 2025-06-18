@@ -72,7 +72,7 @@ class TerminologyManager:
             if 'theme' not in response_data:
                 return {"status": "error", "message": "Missing 'theme' key in response"}
             for term in response_data['terms']:
-                if not all(key in term for key in required_keys):
+                if any(key not in term for key in required_keys):
                     return {"status": "error", "message": f"Missing required keys in term: {required_keys}"}
             return {"status": "success", "message": "Summary completed"}
 

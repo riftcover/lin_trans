@@ -1,8 +1,6 @@
 import time
-import concurrent.futures
 from typing import List
 from difflib import SequenceMatcher
-
 
 from nice_ui.configure.signal import data_bridge
 from utils import logger
@@ -56,14 +54,12 @@ def translate_document(unid: str, in_document: str, out_document: str,
 
     # 创建术语管理器并生成terminology
     terminology_manager = TerminologyManager()
-    
 
     # 使用AI生成主题和术语
     terminology_data = terminology_manager.generate_summary_and_terminology(
         terminology_context, agent_name, target_language
     )
 
-    
     theme_prompt = terminology_data.get("theme", "General subtitle content")
 
     # 创建翻译器
@@ -74,40 +70,31 @@ def translate_document(unid: str, in_document: str, out_document: str,
 
     duration = len(text_chunks)
     logger.info(f"共{duration}个翻译块，开始翻译...")
-    #
-    # # 使用并发翻译
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = []
 
-        for i, chunk_text in enumerate(text_chunks):
+    # 使用顺序翻译
+    results = []
+    for i, chunk_text in enumerate(text_chunks):
+        try:
             # 获取上下文
             previous_context, after_context = adapter.get_context_for_chunk(entry_chunks, i)
 
-            # 创建翻译任务
-            future = executor.submit(
-                translate_chunk_enhanced,
+            # 直接调用翻译函数
+            result = translate_chunk(
                 translator, chunk_text, previous_context, after_context,
                 theme_prompt, i
             )
-            futures.append(future)
+            results.append(result)
 
-        # 收集结果
-        for i, future in enumerate(concurrent.futures.as_completed(futures)):
-            try:
-                result = future.result()
-                results.append(result)
+            progress_now = int((i + 1) / duration * 100)
+            data_bridge.emit_whisper_working(unid, progress_now)
+            logger.info(f"翻译进度: {i + 1}/{duration}")
 
-                progress_now = int((i + 1) / duration * 100)
-                data_bridge.emit_whisper_working(unid, progress_now)
-                logger.info(f"翻译进度: {i + 1}/{duration}")
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-
-            except Exception as e:
-                logger.error(f"Translation task failed: {e}")
-                raise e
+        except Exception as e:
+            logger.error(f"Translation task failed: {e}")
+            raise e
 
     # 按原始顺序排序结果
     results.sort(key=lambda x: x[0])
@@ -148,16 +135,14 @@ def translate_document(unid: str, in_document: str, out_document: str,
     logger.info("翻译完成")
 
 
-def translate_chunk_enhanced(translator: Translator, chunk_text: str,
-                             previous_context: List[str], after_context: List[str],
-                             theme_prompt: str, chunk_index: int) -> tuple:
+def translate_chunk(translator: Translator, chunk_text: str,
+                    previous_context: List[str], after_context: List[str],
+                    theme_prompt: str, chunk_index: int) -> tuple:
     """增强版块翻译函数"""
     try:
         # 使用术语管理器搜索相关术语
         if hasattr(translator, 'terminology_manager') and translator.terminology_manager:
-            things_to_note_prompt = translator.terminology_manager.search_terms_in_sentence(chunk_text)
-            if not things_to_note_prompt:
-                things_to_note_prompt = "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style."
+            things_to_note_prompt = translator.terminology_manager.search_terms_in_sentence(chunk_text) or "Please pay attention to technical terms, proper nouns, and maintain consistency in translation style."
         else:
             # 回退到原始方法
             things_to_note_prompt = search_things_to_note_in_prompt()

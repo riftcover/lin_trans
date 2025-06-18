@@ -1,7 +1,6 @@
 import json
 
 import httpx
-import json_repair
 from openai import OpenAI
 from typing import Any, Optional
 
@@ -103,8 +102,43 @@ def ask_gpt(model_api, prompt: str, resp_type: Optional[str] = None,
 
     # 处理响应内容
     resp_content = resp_raw.choices[0].message.content
+
+    # logger.trace(f"API响应内容 ({log_title}): {repr(resp_content)}")
+
     if resp_type == "json":
-        resp = json.loads(resp_content)
+        if not resp_content or resp_content.strip() == "":
+            error_msg = f"API返回空响应 ({log_title})"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        try:
+            # 处理markdown代码块格式的JSON响应
+            json_content = resp_content.strip()
+
+            # 如果响应包含```json代码块，提取其中的JSON内容
+            if json_content.startswith('```json'):
+                # 找到第一个```json之后的内容
+                start_idx = json_content.find('```json') + 7
+                # 找到结束的```
+                end_idx = json_content.rfind('```')
+                if end_idx > start_idx:
+                    json_content = json_content[start_idx:end_idx].strip()
+                else:
+                    # 如果没有找到结束的```，去掉开头的```json
+                    json_content = json_content[start_idx:].strip()
+
+            # 如果响应以```开头但不是```json，也尝试提取
+            elif json_content.startswith('```'):
+                start_idx = json_content.find('\n') + 1
+                end_idx = json_content.rfind('```')
+                if end_idx > start_idx:
+                    json_content = json_content[start_idx:end_idx].strip()
+
+            resp = json.loads(json_content)
+        except json.JSONDecodeError as e:
+            error_msg = f"JSON解析失败 ({log_title}): {e}. 响应内容: {repr(resp_content[:500])}"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from e
     else:
         resp = resp_content
 
@@ -118,4 +152,4 @@ def ask_gpt(model_api, prompt: str, resp_type: Optional[str] = None,
             raise ValueError(f"API response error: {valid_resp['message']}")
 
     logger.info(f"GPT调用成功 ({log_title})")
-    return resp 
+    return resp

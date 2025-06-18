@@ -148,7 +148,7 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
     def valid_translate_result(self, result: dict, required_keys: list, required_sub_keys: list) -> Dict[str, str]:
         """验证翻译结果"""
         # 检查所需键
-        if not all(key in result for key in required_keys):
+        if any(key not in result for key in required_keys):
             return {"status": "error", "message": f"Missing required key(s): {', '.join(set(required_keys) - set(result.keys()))}"}
 
         # 检查所有项目中的所需子键
@@ -167,41 +167,41 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
         """翻译文本行"""
         shared_prompt = self.generate_shared_prompt(previous_content_prompt, after_content_prompt, summary_prompt, things_to_note_prompt)
 
-        # 重试翻译函数
-        def retry_translation(prompt: str, length: int, step_name: str):
+        # 翻译函数
+        def translate_with_validation(prompt: str, length: int, step_name: str):
             def valid_faith(response_data):
                 return self.valid_translate_result(response_data, [str(i) for i in range(1, length + 1)], ['direct'])
 
             def valid_express(response_data):
                 return self.valid_translate_result(response_data, [str(i) for i in range(1, length + 1)], ['free'])
 
-            for retry in range(3):
-                try:
-                    # 使用utils中的ask_gpt函数
-                    result = ask_gpt(
-                        model_api=self.agent,
-                        prompt=prompt + retry * " ",
-                        resp_type='json',
-                        valid_def=valid_faith if step_name == 'faithfulness' else valid_express,
-                        log_title=f'translate_{step_name}_{index}'
-                    )
+            try:
+                # 使用ask_gpt函数，它自带重试机制
+                result = ask_gpt(
+                    model_api=self.agent,
+                    prompt=prompt,
+                    resp_type='json',
+                    valid_def=valid_faith if step_name == 'faithfulness' else valid_express,
+                    log_title=f'translate_{step_name}_{index}'
+                )
 
-                    if len(lines.split('\n')) == len(result):
-                        return result
+                # 验证结果长度
+                if len(lines.split('\n')) != len(result):
+                    error_msg = f'{step_name.capitalize()} translation length mismatch: expected {len(lines.split("\\n"))}, got {len(result)}'
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
 
-                    if retry != 2:
-                        logger.warning(f'{step_name.capitalize()} translation of block {index} failed, Retry...')
+                return result
 
-                except Exception as e:
-                    logger.error(f'{step_name.capitalize()} translation error: {e}')
-                    if retry == 2:
-                        raise e
+            except Exception as e:
+                logger.error(f'Block {index} {step_name} translation failed: {e}')
+                raise e
 
-            raise ValueError(f'{step_name.capitalize()} translation of block {index} failed after 3 retries.')
-
-        ## 第一步：忠实翻译
+        # 第一步：忠实翻译
         prompt1 = self.get_prompt_faithfulness(lines, shared_prompt)
-        faith_result = retry_translation(prompt1, len(lines.split('\n')), 'faithfulness')
+        faith_result = translate_with_validation(prompt1, len(lines.split('\n')), 'faithfulness')
+        logger.trace(f"Block {index} - Using faithfulness")
+        logger.trace(faith_result)
 
         for i in faith_result:
             faith_result[i]["direct"] = faith_result[i]["direct"].replace('\n', ' ')
@@ -212,9 +212,11 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
             logger.info(f"Block {index} - Using direct translation only")
             return translate_result, lines
 
-        ## 第二步：表达优化
+        # 第二步：表达优化
         prompt2 = self.get_prompt_expressiveness(faith_result, lines, shared_prompt)
-        express_result = retry_translation(prompt2, len(lines.split('\n')), 'expressiveness')
+        express_result = translate_with_validation(prompt2, len(lines.split('\n')), 'expressiveness')
+        logger.trace(f"Block {index} - Using expressiveness")
+        logger.trace(express_result)
 
         translate_result = "\n".join([express_result[i]["free"].replace('\n', ' ').strip() for i in express_result])
 
