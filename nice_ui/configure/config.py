@@ -247,7 +247,7 @@ def get_cloud_config():
         crypto_utils.initialize()
 
         # 获取凭证文件路径
-        credentials_file = crypto_utils.get_credentials_file_path()
+        credentials_file = crypto_utils.get_credentials_file_path(root_path)
 
         # 如果凭证文件存在，从文件中加载
         if credentials_file.exists():
@@ -257,27 +257,6 @@ def get_cloud_config():
                     return CloudConfig(**credentials)
             except Exception as e:
                 logger.error(f"从加密文件加载凭证失败: {str(e)}")
-
-        # 如果从文件加载失败，尝试从环境变量加载
-        aki = os.environ.get('ALIYUN_AKI', '')
-        aks = os.environ.get('ALIYUN_AKS', '')
-        region = os.environ.get('ALIYUN_REGION', 'cn-beijing')
-        bucket = os.environ.get('ALIYUN_BUCKET', 'asr-file-tth')
-        asr_api_key = os.environ.get('ALIYUN_ASR_API_KEY', '')
-        asr_model = os.environ.get('ALIYUN_ASR_MODEL', 'paraformer-v2')
-
-        # 如果环境变量中有值，使用环境变量的值
-        if aki and aks:
-            return CloudConfig(
-                ppl_sdk=PplSdkConfig(
-                    aki=aki,
-                    aks=aks,
-                    region=region,
-                    bucket=bucket,
-                    asr_api_key=asr_api_key,
-                    asr_model=asr_model
-                )
-            )
     except Exception as e:
         logger.error(f"获取云服务配置失败: {str(e)}")
 

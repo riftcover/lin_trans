@@ -91,12 +91,9 @@ class CryptoUtils:
         
         return self.decrypt(encrypted_data)
     
-    def get_credentials_file_path(self):
-        """获取凭证文件路径"""
-        from nice_ui.configure import config
-        
+    def get_credentials_file_path(self,root_path):
         # 在项目根目录下创建一个隐藏的凭证文件
-        credentials_dir = Path(config.root_path) / '.credentials'
+        credentials_dir = Path(root_path) / '.credentials'
         credentials_dir.mkdir(exist_ok=True)
         
         return credentials_dir / 'aliyun_credentials.enc'
