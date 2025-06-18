@@ -149,7 +149,7 @@ class LLMKeySet(QWidget):
         key_name = translate_api_name.get(api_key)
         title_layout = QHBoxLayout()
         title_label = BodyLabel(key_name)
-        tutorial_link = HyperlinkLabel("设置教程")
+        tutorial_link = HyperlinkLabel("获取密钥")
         tutorial_link.setUrl(url)
         # tutorial_link.setIcon(FluentIcon.QUESTION)
 

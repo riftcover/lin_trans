@@ -492,9 +492,9 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
         cards_layout.setSpacing(0)
 
-        kimi_card = LLMKeySet("kimi", "hurl", self)
-        zhipu_card = LLMKeySet("zhipu", "zhipu", self)
-        qwen_card = LLMKeySet("qwen", "qwen", self)
+        kimi_card = LLMKeySet("kimi", "https://platform.moonshot.cn/console/api-keys", self)
+        zhipu_card = LLMKeySet("zhipu", "https://open.bigmodel.cn/usercenter/apikeys", self)
+        qwen_card = LLMKeySet("qwen", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
 
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
@@ -506,66 +506,67 @@ class LLMConfigPage(QWidget):
         api_key_layout.addLayout(api_key_content_layout)
         main_layout.addWidget(api_key_card)
 
-        # Prompts Section
-        prompts_card = CardWidget(self)
-        prompts_layout = QVBoxLayout(prompts_card)
-        # prompts_layout.setSpacing(10)
-
-        prompts_header = QHBoxLayout()
-        prompts_header.addWidget(SubtitleLabel("提示词"))
-        prompts_header.addStretch()
-        refresh_btn = ToolButton(FluentIcon.ROTATE)
-        refresh_btn.setToolTip("刷新提示词")
-        refresh_btn.clicked.connect(self.refresh_table_data)
-
-        add_btn = ToolButton(FluentIcon.CHAT)
-        add_btn.setToolTip("新增提示词")
-        add_btn.clicked.connect(self._add_prompt)
-        prompts_header.addWidget(add_btn, alignment=Qt.AlignRight)
-        prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
-        prompts_layout.addLayout(prompts_header)
-
-        # 创建一个水平布局来容纳表格和左右间距
-
-        self.prompts_table = TableWidget(self)
-        # 设置表格为交替行颜色
-        self.prompts_table.setAlternatingRowColors(True)
-        self.prompts_table.verticalHeader().setDefaultSectionSize(
-            40
-        )  # 设置默认行高为 40
-        self.prompts_table.verticalHeader().setSectionResizeMode(
-            QHeaderView.Fixed
-        )  # 固定行高
-
-        # 不显示表头
-        self.prompts_table.horizontalHeader().setVisible(False)
-
-        self.prompts_table.setColumnCount(4)
-        self.prompts_table.setHorizontalHeaderLabels(
-            ["主键id", "提示词名称", "提示词内容", "操作"]
-        )
-        self.prompts_table.verticalHeader().setVisible(False)
-        self.prompts_table.setColumnWidth(0, 50)
-        self.prompts_table.setColumnWidth(1, 150)
-        self.prompts_table.setColumnWidth(3, 70)
-        self.prompts_table.setColumnHidden(0, True)
-
-        # 让第三列（索引为2）占据剩余空间
-        self.prompts_table.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.Stretch
-        )
-
-        # 其他列保持固定宽度
-        self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
-        self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
-
-        self.prompts_table.setEditTriggers(
-            QAbstractItemView.NoEditTriggers
-        )  # 设置表格为不可编辑
-
-        prompts_layout.addWidget(self.prompts_table)
-
-        main_layout.addWidget(prompts_card)
+        # # Prompts Section
+        # prompts_card = CardWidget(self)
+        # prompts_layout = QVBoxLayout(prompts_card)
+        # # prompts_layout.setSpacing(10)
+        #
+        # prompts_header = QHBoxLayout()
+        # prompts_header.addWidget(SubtitleLabel("提示词"))
+        # prompts_header.addStretch()
+        # refresh_btn = ToolButton(FluentIcon.ROTATE)
+        # refresh_btn.setToolTip("刷新提示词")
+        # refresh_btn.clicked.connect(self.refresh_table_data)
+        #
+        # add_btn = ToolButton(FluentIcon.CHAT)
+        # add_btn.setToolTip("新增提示词")
+        # add_btn.clicked.connect(self._add_prompt)
+        # prompts_header.addWidget(add_btn, alignment=Qt.AlignRight)
+        # prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
+        # prompts_layout.addLayout(prompts_header)
+        #
+        # # 创建一个水平布局来容纳表格和左右间距
+        #
+        # self.prompts_table = TableWidget(self)
+        # # 设置表格为交替行颜色
+        # self.prompts_table.setAlternatingRowColors(True)
+        # self.prompts_table.verticalHeader().setDefaultSectionSize(
+        #     40
+        # )  # 设置默认行高为 40
+        # self.prompts_table.verticalHeader().setSectionResizeMode(
+        #     QHeaderView.Fixed
+        # )  # 固定行高
+        #
+        # # 不显示表头
+        # self.prompts_table.horizontalHeader().setVisible(False)
+        #
+        # self.prompts_table.setColumnCount(4)
+        # self.prompts_table.setHorizontalHeaderLabels(
+        #     ["主键id", "提示词名称", "提示词内容", "操作"]
+        # )
+        # self.prompts_table.verticalHeader().setVisible(False)
+        # self.prompts_table.setColumnWidth(0, 50)
+        # self.prompts_table.setColumnWidth(1, 150)
+        # self.prompts_table.setColumnWidth(3, 70)
+        # self.prompts_table.setColumnHidden(0, True)
+        #
+        # # 让第三列（索引为2）占据剩余空间
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(
+        #     2, QHeaderView.Stretch
+        # )
+        #
+        # # 其他列保持固定宽度
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
+        #
+        # self.prompts_table.setEditTriggers(
+        #     QAbstractItemView.NoEditTriggers
+        # )  # 设置表格为不可编辑
+        #
+        # prompts_layout.addWidget(self.prompts_table)
+        #
+        # main_layout.addWidget(prompts_card)
+        main_layout.addStretch(1)
 
     def _init_table(self):
         all_prompts = self.prompts_orm.get_data_with_id_than_one()
