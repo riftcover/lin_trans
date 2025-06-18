@@ -495,10 +495,12 @@ class LLMConfigPage(QWidget):
         kimi_card = LLMKeySet("kimi", "https://platform.moonshot.cn/console/api-keys", self)
         zhipu_card = LLMKeySet("zhipu", "https://open.bigmodel.cn/usercenter/apikeys", self)
         qwen_card = LLMKeySet("qwen", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
+        deepseek_card = LLMKeySet("deepseek", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
 
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
         cards_layout.addWidget(qwen_card)
+        cards_layout.addWidget(deepseek_card)
 
         api_key_content_layout.addLayout(cards_layout, 1)
         api_key_content_layout.addStretch(1)  # 添加水平伸缩

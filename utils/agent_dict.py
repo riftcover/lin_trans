@@ -1,8 +1,7 @@
-from typing import Dict, Optional, ClassVar, TypedDict, Union
+from typing import Dict, Optional, ClassVar
 from pydantic import BaseModel, Field
 
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication
 
 from app.cloud_asr import aliyun_sdk
 from nice_ui.ui import SettingsManager
@@ -40,6 +39,9 @@ class AgentRegistry(BaseModel):
     ZHIPU_BASE_URL: ClassVar[str] = "https://open.bigmodel.cn/api/paas/v4"
     ZHIPU_MODEL: ClassVar[str] = "glm-4"
 
+    DEEPSEEK_URL: ClassVar[str] = "https://api.deepseek.com/v1"
+    DEEPSEEK_MODEL: ClassVar[str] = "deepseek-chat"
+
     # 存储所有代理配置
     agents: Dict[str, AgentConfig] = Field(default_factory=dict, description="所有AI代理的配置字典")
 
@@ -51,7 +53,8 @@ class AgentRegistry(BaseModel):
             "qwen_cloud": AgentConfig(base_url=self.QWEN_CLOUD_BASE_URL, model=self.QWEN_CCLOUD_MODEL, key=self.QWEN_CCLOUD_KEY),
             "qwen": AgentConfig(base_url=self.QWEN_BASE_URL, model=self.QWEN_MODEL,key =None),
             "kimi": AgentConfig(base_url=self.KIMI_BASE_URL, model=self.KIMI_MODEL,key =None),
-            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL,key =None)
+            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL,key =None),
+            "deepseek": AgentConfig(base_url=self.DEEPSEEK_URL, model=self.DEEPSEEK_MODEL,key =None)
         }
 
     def load_keys_from_settings(self, settings: Optional[QSettings] = None) -> None:

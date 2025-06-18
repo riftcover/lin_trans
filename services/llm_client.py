@@ -4,6 +4,7 @@ import httpx
 from openai import OpenAI
 from typing import Any, Optional
 
+from utils.agent_dict import AgentConfig
 from .decorators import except_handler
 from utils import logger
 
@@ -61,7 +62,7 @@ def create_openai_client(api_key: str, base_url: str) -> OpenAI:
 
 
 @except_handler("GPT request failed", retry=5, delay=1)
-def ask_gpt(model_api, prompt: str, resp_type: Optional[str] = None, 
+def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
            valid_def: Optional[callable] = None, log_title: str = "default") -> Any:
     """
     通用的GPT API调用函数
