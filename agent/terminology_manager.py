@@ -8,7 +8,7 @@ from utils.agent_dict import agent_msg, AgentConfig
 
 
 class TerminologyManager:
-    """术语管理器 - 实现VideoLingo的terminology功能"""
+    """术语管理器"""
 
     def __init__(self, custom_terms_path: str = "custom_terms.xlsx"):
         # 当前未使用自定义术语功能，后期添加后打开
@@ -52,7 +52,7 @@ class TerminologyManager:
                                          target_language: str = "中文") -> Dict[str, Any]:
         """生成内容总结和术语提取"""
 
-        # 限制内容长度（模拟VideoLingo的summary_length）
+        # 限制内容长度
         content = content[:2000]
 
         # 加载自定义术语
@@ -64,7 +64,7 @@ class TerminologyManager:
         # 调用AI生成总结
         agent_config: AgentConfig = agent_msg[agent_name]
 
-        # 定义验证函数（模拟VideoLingo的valid_summary）
+        # 定义验证函数
         def valid_summary(response_data):
             required_keys = {'src', 'tgt', 'note'}
             if 'terms' not in response_data:
@@ -77,7 +77,7 @@ class TerminologyManager:
             return {"status": "success", "message": "Summary completed"}
 
         try:
-            # 使用VideoLingo风格的ask_gpt调用
+            # ask_gpt调用
             summary_data = ask_gpt(
                 agent_config,
                 summary_prompt,
