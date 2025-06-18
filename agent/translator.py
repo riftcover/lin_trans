@@ -186,8 +186,9 @@ Note: Start you answer with ```json and end with ```, do not add any other text.
                 )
 
                 # 验证结果长度
-                if len(lines.split('\n')) != len(result):
-                    error_msg = f'{step_name.capitalize()} translation length mismatch: expected {len(lines.split("\\n"))}, got {len(result)}'
+                expected_length = len(lines.split('\n'))
+                if expected_length != len(result):
+                    error_msg = f'{step_name.capitalize()} translation length mismatch: expected {expected_length}, got {len(result)}'
                     logger.error(error_msg)
                     raise ValueError(error_msg)
 

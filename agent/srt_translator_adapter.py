@@ -32,7 +32,7 @@ class SRTTranslatorAdapter:
             start_time = match[1]
             end_time = match[2]
             text = match[3].strip()
-            original_header = f"{index}\n{start_time} --> {end_time}\n"
+            original_header = f"{index}\n{start_time} --> {end_time}"
 
             entries.append(SRTEntry(
                 index=index,

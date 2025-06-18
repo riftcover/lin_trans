@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 配置管理模块
-
 负责加载和管理应用程序配置
 """
 
@@ -352,6 +351,23 @@ class ConfigManager:
         translator_config = self.get_translator_config()
         return translator_config.get('min_trim_duration', 3.5)
 
+    def get_chunk_size(self):
+        """获取每个块的字符数限制"""
+        translator_config = self.get_translator_config()
+        return translator_config.get('chunk_size', 600)
+
+    def get_max_entries(self):
+        """获取每个块的最大条目数"""
+        translator_config = self.get_translator_config()
+        return translator_config.get('max_entries', 10)
+    
+    def get_sleep_time(self):
+        """翻译API调用间隔"""
+        translator_config = self.get_translator_config()
+        return translator_config.get('sleep_time', 1)
+        
+
+
 
 # 创建全局配置管理器实例
 config_manager = ConfigManager()
@@ -427,3 +443,22 @@ def get_min_trim_duration() -> float:
 def get_translator_config() -> Dict[str, Any]:
     """获取高级翻译相关配置"""
     return config_manager.get_translator_config()
+
+
+def get_chunk_size() -> int:
+    """获取每个块的字符数限制"""
+    return config_manager.get_chunk_size()
+
+
+def get_max_entries() -> int:
+    """获取每个块的最大条目数"""
+    return config_manager.get_max_entries()
+
+def get_sleep_time() -> int:
+    """翻译API调用间隔"""
+    return config_manager.get_sleep_time()
+
+if __name__ == '__main__':
+    print(get_chunk_size())
+    print(get_max_entries())
+    print(get_sleep_time())
