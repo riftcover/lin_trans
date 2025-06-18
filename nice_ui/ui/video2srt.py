@@ -68,7 +68,6 @@ class Video2SRT(QWidget):
         # 设置self.source_language宽度
         self.source_language.setFixedWidth(98)
         self.source_language.addItems(config.langnamelist)
-        logger.error(config.params["source_language"])
         self.source_language.setCurrentText(config.params["source_language"])
 
 
