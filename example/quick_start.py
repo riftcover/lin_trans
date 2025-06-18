@@ -24,7 +24,6 @@ def quick_translation_example():
         chunk_size=600,                            # 推荐值：600-800
         max_entries=10,                            # 推荐值：8-12
         sleep_time=1,                              # API调用间隔
-        max_workers=3,                             # 并发线程数
         target_language="中文",                    # 目标语言
         source_language="English"                  # 源语言
     )
@@ -42,7 +41,6 @@ def custom_translation_example():
         chunk_size=800,          # 增大以获得更好上下文
         max_entries=8,           # 减少以提高质量
         sleep_time=2,            # 增加间隔避免限流
-        max_workers=2,           # 减少并发提高稳定性
         target_language="中文（简体）",
         source_language="English"
     )
