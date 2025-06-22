@@ -93,7 +93,7 @@ class Window(FluentWindow):
         self.navigationInterface.addWidget(
             routeKey=self.loginInterface.objectName(),
             widget=self.avatarWidget,
-            onClick=lambda: self.showLoginInterface(switch_to_profile=True),
+            onClick=lambda: self.showLoginInterface(switch_to_profile=False),
             position=NavigationItemPosition.BOTTOM
         )
 
@@ -266,9 +266,9 @@ class Window(FluentWindow):
             if not self.login_window:
                 from nice_ui.ui.login import LoginWindow
                 self.login_window = LoginWindow(self, self.settings)
-                # 将switch_to_profile参数传递给handleLoginSuccess方法
+                # 登录成功后不自动跳转到个人中心页面
                 self.login_window.loginSuccessful.connect(
-                    lambda user_info: self.handleLoginSuccess(user_info, switch_to_profile)
+                    lambda user_info: self.handleLoginSuccess(user_info, False)
                 )
 
             # 计算登录窗口在主窗口中的居中位置
@@ -277,7 +277,8 @@ class Window(FluentWindow):
             self.login_window.move(login_x, login_y)
 
             self.login_window.show()
-        elif switch_to_profile:
+        else:
+            # 如果已登录，直接切换到个人中心页面
             self.switchTo(self.loginInterface)
 
     def handleLoginSuccess(self, user_info, switch_to_profile=False):

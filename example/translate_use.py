@@ -17,9 +17,9 @@ def quick_translation_example():
 
     # 基本参数配置
     translate_document(
-        unid="f92f54737832bee014ec51e4a8b523cb",  # 任务ID
-        in_document=r"D:\dcode\lin_trans\result\f92f54737832bee014ec51e4a8b523cb\44.srt",  # 输入文件路径
-        out_document=r"D:\dcode\lin_trans\result\f92f54737832bee014ec51e4a8b523cb\44_cn.srt",  # 输出文件路径
+        unid="b65aee2e115fb8294476826e53cfa883",  # 任务ID
+        in_document=r"D:\dcode\lin_trans\result\b65aee2e115fb8294476826e53cfa883\ta.srt",  # 输入文件路径
+        out_document=r"D:\dcode\lin_trans\result\b65aee2e115fb8294476826e53cfa883\ta_cn.srt",  # 输出文件路径
         agent_name="qwen_cloud",  # AI模型（确保在agent_dict中已配置）
         chunk_size=600,  # 推荐值：600-800
         max_entries=10,  # 推荐值：8-12
