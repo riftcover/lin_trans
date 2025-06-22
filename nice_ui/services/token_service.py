@@ -95,7 +95,7 @@ class TokenService(TokenServiceInterface):
         # 从配置中获取默认系数值
         # todo: 当前没有登录时，使用云任务代币消耗会为0，所以先写死默认值。等以后重构登录状态管理器再调整
         self.asr_qps = 4
-        self.trans_qps = 0.004
+        self.trans_qps = 16
 
         self._initialized = True
 
@@ -184,33 +184,17 @@ class TokenService(TokenServiceInterface):
         return int(video_duration * self.asr_qps) if video_duration else 0
 
 
-    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) ->int:
+    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) -> int:
         """
 
         Args:
-            word_counts: 翻译文本长度
+            word_counts: 翻译文本长度/1000
             translate_engine:翻译模型
 
         Returns:
             int: 所需代币数量
         """
-        # 根据不同的翻译引擎设置不同的算力消耗系数
-        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
-            # AI大模型翻译，消耗更多算力
-            qps_count = 3
-        elif translate_engine in ["DeepL", "DeepLx"]:
-            # DeepL系列翻译，消耗中等算力
-            qps_count = 2.5
-        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
-            # 传统翻译API，消耗标准算力
-            qps_count = 2
-        else:
-            # 其他翻译引擎，默认算力消耗
-            qps_count = 1.5
-
-
-
-        return int(word_counts * self.trans_qps) if word_counts else 0
+        return round(word_counts * self.trans_qps/1000) if word_counts else 0
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """

@@ -96,11 +96,14 @@ def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
     params = dict(
         model=model_api.model,
         messages=messages,
-        # response_format=response_format,  # 暂时注释掉，避免某些模型不支持
-        timeout=300
+        response_format=response_format,  # 暂时注释掉，避免某些模型不支持
+        timeout=120
     )
 
     resp_raw = client.chat.completions.create(**params)
+
+    # 统计token消耗
+    # logger.info(f"token uesd:{resp_raw.usage}")
 
     # 处理响应内容
     resp_content = resp_raw.choices[0].message.content
@@ -137,6 +140,7 @@ def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
                     json_content = json_content[start_idx:end_idx].strip()
 
             resp = json.loads(json_content)
+            # resp = repair_json.loads(json_content)
         except json.JSONDecodeError as e:
             error_msg = f"JSON解析失败 ({log_title}): {e}. 响应内容: {repr(resp_content[:500])}"
             logger.error(error_msg)
