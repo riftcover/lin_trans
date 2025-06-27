@@ -96,7 +96,7 @@ def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
     params = dict(
         model=model_api.model,
         messages=messages,
-        response_format=response_format,  # 暂时注释掉，避免某些模型不支持
+        # response_format=response_format,  # 暂时注释掉，避免某些模型不支持
         timeout=120
     )
 
@@ -157,5 +157,5 @@ def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
             logger.error(error_msg)
             raise ValueError(f"API response error: {valid_resp['message']}")
 
-    logger.info(f"GPT调用成功 ({log_title})")
+    # logger.info(f"GPT调用成功 ({log_title})")
     return resp
