@@ -149,21 +149,24 @@ class Video2SRT(QWidget):
         translate_engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(translate_engine_layout)
 
-        # prompt_layout = QHBoxLayout()
-        # prompt_layout.setSpacing(5)
-        # prompt_layout.setAlignment(
-        #     Qt.AlignmentFlag.AlignLeading
-        #     | Qt.AlignmentFlag.AlignLeft
-        #     | Qt.AlignmentFlag.AlignVCenter
-        # )
-        # ai_prompt_name = BodyLabel("提示词")
-        # self.ai_prompt = TransComboBox(self)
-        # self.ai_prompt.setFixedWidth(98)
-        # self.ai_prompt.addItems(self._get_ai_prompt())
-        # self.ai_prompt.setCurrentText(config.params["prompt_name"])
-        # prompt_layout.addWidget(ai_prompt_name)
-        # prompt_layout.addWidget(self.ai_prompt)
-        # main_layout.addLayout(prompt_layout)
+        prompt_layout = QHBoxLayout()
+        prompt_layout.setSpacing(5)
+        prompt_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+        ai_prompt_name = BodyLabel("提示词")
+        self.ai_prompt = TransComboBox(self)
+        self.ai_prompt.setFixedWidth(98)
+        self.ai_prompt.addItems(self._get_ai_prompt())
+        self.ai_prompt.setCurrentText(config.params["prompt_name"])
+        prompt_layout.addWidget(ai_prompt_name)
+        prompt_layout.addWidget(self.ai_prompt)
+        combo_layout.addLayout(prompt_layout)
+
+        ai_prompt_name.hide()
+        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)
