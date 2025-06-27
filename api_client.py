@@ -1,10 +1,10 @@
 import asyncio
+import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from typing import Optional, Dict, Callable
 
 import httpx
-import time
 
 from app.core.security import generate_signature
 from utils import logger
@@ -546,6 +546,60 @@ class APIClient:
             Dict: 包含订单信息的响应数据
         """
         return await self.create_recharge_order(user_id, amount_in_yuan, token_amount)
+
+    async def get_order_status(self, order_id: str) -> Dict:
+        """
+        查询充值订单状态（异步版本）
+
+        Args:
+            order_id: 订单ID
+
+        Returns:
+            Dict: 包含订单状态的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            response = await self.client.get(f"/transactions/recharge/order-status/{order_id}", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Get order status for {order_id} failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                if await self.refresh_session():
+                    logger.info('Token refreshed, retrying request')
+                    try:
+                        response = await self.client.get(f"/transactions/recharge/order-status/{order_id}", headers=self.headers)
+                        response.raise_for_status()
+                        return response.json()
+                    except Exception as retry_error:
+                        logger.error(f'Retry after token refresh failed: {retry_error}')
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
+                else:
+                    logger.warning('Token refresh failed')
+                    raise AuthenticationError("Token已过期，需要重新登录")
+            # 假设404表示订单未找到或尚未处理，这不应被视为致命错误
+            if e.response.status_code == 404:
+                return {"data": {"status": "pending"}}
+            raise ValueError(f"查询订单状态失败: {str(e)}") from e
+        except Exception as e:
+            logger.error(f'Unexpected error in get_order_status: {e}')
+            raise ValueError(f"查询订单状态失败: {str(e)}") from e
+
+    @to_t
+    async def get_order_status_t(self, order_id: str) -> Dict:
+        """
+        查询充值订单状态（同步版本）
+
+        Args:
+            order_id: 订单ID
+
+        Returns:
+            Dict: 包含订单状态的响应数据
+        """
+        return await self.get_order_status(order_id)
 
     async def recharge_packages(self) -> Dict:
         """

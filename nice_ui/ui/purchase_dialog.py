@@ -1,5 +1,5 @@
 # 充值页面
-from PySide6.QtCore import Qt, Signal, QUrl
+from PySide6.QtCore import Qt, Signal, QUrl, QTimer
 from PySide6.QtGui import QPixmap, QColor, QDesktopServices
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                                QFrame, QPushButton, QWidget)
@@ -195,6 +195,13 @@ class PurchaseDialog(MaskDialogBase):
         self.selected_price = 0
         self.recharge_options = []
 
+        # 支付轮询相关
+        self.poll_timer = QTimer(self)
+        self.poll_timer.setInterval(3000)  # 每3秒轮询一次
+        self.current_order_id = None
+        self.poll_count = 0
+        self.max_poll_count = 100  # 最多轮询100次 (5分钟)
+
         # 设置对话框属性
         self.setWindowTitle("购买算力")
         self.widget.setFixedWidth(600)
@@ -217,6 +224,13 @@ class PurchaseDialog(MaskDialogBase):
 
         # 应用样式
         FluentStyleSheet.DIALOG.apply(self)
+
+    def reject(self):
+        """重写拒绝操作，确保计时器停止"""
+        if self.poll_timer.isActive():
+            self.poll_timer.stop()
+            logger.info("Payment polling stopped by user closing dialog.")
+        super().reject()
 
     def _init_ui(self):
         """初始化UI"""
@@ -404,18 +418,19 @@ class PurchaseDialog(MaskDialogBase):
 
                 if order_data and 'data' in order_data:
                     payment_url = order_data['data'].get('payment_url')
-                    if payment_url:
+                    self.current_order_id = order_data['data'].get('order_id')
+
+                    if payment_url and self.current_order_id:
                         # 打开支付链接
                         QDesktopServices.openUrl(QUrl(payment_url))
                         self.paymentActionWidget.setHint(
-                            "支付页面已在浏览器中打开，请完成支付。\n支付成功后余额会自动刷新。"
+                            "支付页面已在浏览器中打开，请完成支付。\n支付成功后此窗口将自动关闭。"
                         )
-                        # 可以在这里启动一个定时器轮询订单状态
-                        createOrderButton.setText("重新生成")
-                        createOrderButton.setEnabled(True)
-                        # self.accept() # 可以选择关闭对话框
+                        # 启动轮询
+                        self._start_polling()
+                        createOrderButton.setVisible(False) # 隐藏按钮，防止重复点击
                     else:
-                        raise Exception("API返回数据中未包含支付链接 (payment_url)")
+                        raise Exception("API返回数据不完整，缺少 payment_url 或 order_id")
                 else:
                     raise Exception("创建订单失败，API返回数据格式不正确")
 
@@ -428,6 +443,64 @@ class PurchaseDialog(MaskDialogBase):
         createOrderButton.clicked.connect(on_button_clicked)
         self.paymentActionWidget.addButton(createOrderButton)
 
+    def _start_polling(self):
+        """开始轮询支付状态"""
+        if self.poll_timer.isActive():
+            self.poll_timer.stop()
+
+        self.poll_count = 0
+        # 使用 lambda 来确保每次连接都是新的，避免重复连接同一个旧槽
+        try:
+            self.poll_timer.timeout.disconnect()
+        except RuntimeError:
+            pass  # 信号从未连接过
+        self.poll_timer.timeout.connect(self._check_payment_status)
+        self.poll_timer.start()
+        logger.info(f"Started polling for order_id: {self.current_order_id}")
+
+    def _check_payment_status(self):
+        """检查支付状态的回调函数"""
+        if not self.current_order_id:
+            self.poll_timer.stop()
+            return
+
+        self.poll_count += 1
+        logger.trace(f"Polling attempt #{self.poll_count} for order {self.current_order_id}")
+
+        if self.poll_count > self.max_poll_count:
+            self.poll_timer.stop()
+            logger.warning(f"Polling timed out for order {self.current_order_id}")
+            self.paymentActionWidget.setHint("支付状态查询超时，请稍后手动查询余额。")
+            return
+
+        try:
+            status_data = api_client.get_order_status_t(self.current_order_id)
+            if status_data and 'data' in status_data:
+                status = status_data['data'].get('status')
+                logger.info(f"Order {self.current_order_id} status: {status}")
+
+                if status == 'COMPLETED':
+                    self.poll_timer.stop()
+                    logger.info(f"Order {self.current_order_id} completed successfully.")
+                    self.paymentActionWidget.setHint("支付成功")
+
+                    # 触发购买完成信号 (可以传递需要的数据)
+                    self.purchaseCompleted.emit(status_data['data'])
+
+                    # 延迟一小会，然后关闭窗口
+                    QTimer.singleShot(1500, self.accept)
+
+                elif status == 'FAILED':
+                    self.poll_timer.stop()
+                    logger.warning(f"Order {self.current_order_id} has status: {status}")
+                    self.paymentActionWidget.setHint(f"支付失败或订单已过期。")
+                # else status is 'pending', do nothing and wait for next poll
+        except Exception as e:
+            logger.error(f"Error while polling for payment status: {e}")
+            # 可以在几次失败后停止轮询
+            if self.poll_count > 5: # 如果连续失败5次
+                self.poll_timer.stop()
+                self.paymentActionWidget.setHint("查询支付状态时发生网络错误。")
 
 # 如果直接运行该文件，则打开充值对话框进行测试
 if __name__ == "__main__":
