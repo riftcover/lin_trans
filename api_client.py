@@ -473,6 +473,80 @@ class APIClient:
         """
         return await self.recharge_tokens(us_id, amount)
 
+    async def create_recharge_order(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
+        """
+        创建充值订单（异步版本）
+
+        Args:
+            user_id: 用户ID
+            amount_in_yuan: 充值金额，单位为元
+            token_amount: 充值代币数量
+
+        Returns:
+            Dict: 包含订单信息的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            timestamp = int(time.time())
+            # 签名金额应为整数
+            amount_for_signing = int(amount_in_yuan)
+            feature_key = "recharge"
+
+            sign = generate_signature(
+                user_id=user_id,
+                amount=amount_for_signing,
+                feature_key=feature_key,
+                timestamp=timestamp
+            )
+
+            payload = {
+                "amount": amount_in_yuan,
+                "balance": token_amount,
+                "timestamp": timestamp,
+                "sign": sign
+            }
+
+            response = await self.client.post("/transactions/recharge/create-order", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Create recharge order failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                if await self.refresh_session():
+                    logger.info('Token refreshed, retrying request')
+                    try:
+                        response = await self.client.post("/transactions/recharge/create-order", json=payload, headers=self.headers)
+                        response.raise_for_status()
+                        return response.json()
+                    except Exception as retry_error:
+                        logger.error(f'Retry after token refresh failed: {retry_error}')
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
+                else:
+                    logger.warning('Token refresh failed')
+                    raise AuthenticationError("Token已过期，需要重新登录")
+            raise ValueError(f"创建充值订单失败: {str(e)}") from e
+        except Exception as e:
+            logger.error(f'Unexpected error in create_recharge_order: {e}')
+            raise ValueError(f"创建充值订单失败: {str(e)}") from e
+
+    @to_t
+    async def create_recharge_order_t(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
+        """
+        创建充值订单（同步版本）
+
+        Args:
+            user_id: 用户ID
+            amount_in_yuan: 充值金额，单位为元
+            token_amount: 充值代币数量
+
+        Returns:
+            Dict: 包含订单信息的响应数据
+        """
+        return await self.create_recharge_order(user_id, amount_in_yuan, token_amount)
+
     async def recharge_packages(self) -> Dict:
         """
         充值套餐（异步版本）
