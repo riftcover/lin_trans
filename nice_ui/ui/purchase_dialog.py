@@ -1,6 +1,6 @@
 # 充值页面
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QColor
+from PySide6.QtCore import Qt, Signal, QUrl
+from PySide6.QtGui import QPixmap, QColor, QDesktopServices
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                                QFrame, QPushButton, QWidget)
 
@@ -101,62 +101,55 @@ class RechargeCard(QFrame):
         self.clicked.emit(self.amount)
 
 
-class QRCodeWidget(QFrame):
-    """二维码显示组件"""
+class PaymentActionWidget(QFrame):
+    """支付操作组件"""
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setObjectName("qrCodeFrame")
+        self.setObjectName("paymentActionFrame")
         self.setStyleSheet("""
-            #qrCodeFrame {
-                background-color: white;
-                border-radius: 8px;
-                border: 1px solid #e0e0e0;
-                padding: 10px 10px 15px 10px;  /* 增加底部填充 */
+            #paymentActionFrame {
+                background-color: #fafafa;
+                border-radius: 10px;
+                border: 1px solid #e8e8e8;
+                padding: 15px;
             }
         """)
 
         # 创建布局
         self.vBoxLayout = QVBoxLayout(self)
-        self.vBoxLayout.setContentsMargins(10, 8, 10, 12)  # 增加底部边距
-        self.vBoxLayout.setSpacing(6)
+        self.vBoxLayout.setContentsMargins(5, 5, 5, 5)
+        self.vBoxLayout.setSpacing(12)
 
-        # 添加标题
-        self.titleLabel = SubtitleLabel("扫码支付", self)
-        self.titleLabel.setAlignment(Qt.AlignCenter)
+        # --- 头部布局 ---
+        self.headerLayout = QHBoxLayout()
+        self.headerLayout.setSpacing(10)
 
-        # 添加二维码图像容器
-        self.qrCodeContainer = QFrame(self)
-        self.qrCodeContainer.setObjectName("qrCodeContainer")
-        self.qrCodeContainer.setFixedSize(180, 180)  # 设置为正方形
-        self.qrCodeContainer.setStyleSheet("""
-            #qrCodeContainer {
-                background: white;
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
-                margin-bottom: 15px;
-            }
-        """)
+        # 支付宝图标
+        self.alipayIconLabel = QLabel(self)
+        self.alipayIconLabel.setPixmap(QPixmap(":icon/assets/alipay.png").scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.alipayIconLabel.setFixedSize(28, 28)
 
-        # 二维码容器布局
-        qrContainerLayout = QVBoxLayout(self.qrCodeContainer)
-        qrContainerLayout.setContentsMargins(10, 10, 10, 10)  # 设置内边距
-        qrContainerLayout.setSpacing(0)  # 无间距
-        qrContainerLayout.setAlignment(Qt.AlignCenter)  # 居中对齐
+        # 标题
+        self.titleLabel = SubtitleLabel("支付宝", self)
 
-        # 添加二维码图像
-        self.qrCodeLabel = QLabel()
-        self.qrCodeLabel.setAlignment(Qt.AlignCenter)
-        self.qrCodeLabel.setFixedSize(160, 160)  # 调整为正方形
-        self.qrCodeLabel.setStyleSheet("""
-            background-color: white;
-            border-radius: 4px;
-        """)
+        self.headerLayout.addWidget(self.alipayIconLabel)
+        self.headerLayout.addWidget(self.titleLabel)
+        self.headerLayout.addStretch()
 
-        # 添加到容器布局
-        qrContainerLayout.addWidget(self.qrCodeLabel, 0, Qt.AlignCenter)
+        # 添加分隔线
+        self.separator = QFrame(self)
+        self.separator.setFrameShape(QFrame.HLine)
+        self.separator.setFrameShadow(QFrame.Sunken)
+        self.separator.setStyleSheet("background-color: #e0e0e0;")
 
-        # 添加模拟支付按钮的容器（初始为空）
+        # 添加提示文本
+        self.hintLabel = BodyLabel("选择充值套餐后，将跳转至支付宝完成支付", self)
+        self.hintLabel.setAlignment(Qt.AlignCenter)
+        self.hintLabel.setWordWrap(True)
+        self.hintLabel.setStyleSheet("font-size: 13px; color: #606060;")
+
+        # 添加按钮容器
         self.buttonContainer = QWidget(self)
         self.buttonLayout = QHBoxLayout(self.buttonContainer)
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
@@ -164,37 +157,15 @@ class QRCodeWidget(QFrame):
         self.buttonLayout.setAlignment(Qt.AlignCenter)
 
         # 添加到布局
-        self.vBoxLayout.addWidget(self.titleLabel)
-        self.vBoxLayout.addWidget(self.qrCodeContainer, 0, Qt.AlignCenter)
-
-        # 在二维码容器下方添加更多空间
-        self.vBoxLayout.addSpacing(25)  # 增加二维码容器与下方组件的间距
-
-        # 添加提示文本
-        self.hintLabel = BodyLabel("扫描二维码完成支付", self)
-        self.hintLabel.setAlignment(Qt.AlignCenter)
-        self.hintLabel.setWordWrap(True)  # 允许文本换行
-        self.hintLabel.setStyleSheet("font-size: 12px; margin: 0px; padding: 0px;")
-        self.vBoxLayout.addSpacing(10)
+        self.vBoxLayout.addLayout(self.headerLayout)
+        self.vBoxLayout.addWidget(self.separator)
+        self.vBoxLayout.addStretch(1)
         self.vBoxLayout.addWidget(self.hintLabel)
-
-        # 添加模拟支付按钮的容器
-        self.buttonContainer = QWidget(self)
-        self.buttonLayout = QHBoxLayout(self.buttonContainer)
-        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
-        self.buttonLayout.setSpacing(5)
-        self.buttonLayout.setAlignment(Qt.AlignCenter)
-        self.vBoxLayout.addSpacing(15)  # 增加提示文本与按钮之间的间距
         self.vBoxLayout.addWidget(self.buttonContainer)
-        self.vBoxLayout.addSpacing(10)  # 在按钮下方添加额外的空间
-
-        # 设置默认二维码
-        self.setQRCode("请先选择充值金额")
-
+        self.vBoxLayout.addStretch(1)
 
     def clearButtons(self):
         """清除所有按钮"""
-        # 清除按钮容器中的所有内容
         while self.buttonLayout.count():
             item = self.buttonLayout.takeAt(0)
             if item.widget():
@@ -207,28 +178,6 @@ class QRCodeWidget(QFrame):
     def setHint(self, text):
         """设置提示文本"""
         self.hintLabel.setText(text)
-
-    def setQRCode(self, text_or_image_path):
-        """设置二维码图像或提示文本"""
-        if text_or_image_path.startswith("http") or text_or_image_path.endswith((".png", ".jpg", ".jpeg")):
-            # 显示二维码图像
-            pixmap = QPixmap(text_or_image_path)
-            if not pixmap.isNull():
-                self.qrCodeLabel.setPixmap(pixmap.scaled(160, 160, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            else:
-                # 如果加载失败，显示提示文本
-                self.qrCodeLabel.setText("二维码加载失败")
-                self.qrCodeLabel.setStyleSheet("""
-                    background-color: #f5f5f5;
-                    border: 1px dashed #cccccc;
-                    border-radius: 4px;
-                    width: 160px;
-                    height: 160px;
-                """)
-        else:
-            # 显示提示文本
-            self.qrCodeLabel.setText(text_or_image_path)
-            self.qrCodeLabel.setStyleSheet("background-color: #f5f5f5; border: 1px dashed #cccccc; width: 160px; height: 160px;")
 
 
 class PurchaseDialog(MaskDialogBase):
@@ -243,6 +192,8 @@ class PurchaseDialog(MaskDialogBase):
 
         # 当前选择的充值金额
         self.selected_amount = 0
+        self.selected_price = 0
+        self.recharge_options = []
 
         # 设置对话框属性
         self.setWindowTitle("购买算力")
@@ -310,8 +261,8 @@ class PurchaseDialog(MaskDialogBase):
         # 添加充值卡片网格
         self._init_recharge_cards()
 
-        # 添加二维码区域
-        self._init_qrcode_section()
+        # 添加支付方式区域
+        self._init_payment_action_section()
 
     def _init_balance_section(self):
         """初始化余额显示部分"""
@@ -352,6 +303,9 @@ class PurchaseDialog(MaskDialogBase):
         # 获取并更新当前余额
         self._update_balance()
 
+        # 添加小间距以区分卡片和二维码区域
+        self.mainLayout.addSpacing(5)
+
     def _init_recharge_cards(self):
         """初始化充值卡片网格"""
         # 创建网格布局
@@ -363,11 +317,11 @@ class PurchaseDialog(MaskDialogBase):
         # 定义充值选项 (点数, 价格)
         service_provider = ServiceProvider()
         token_service = service_provider.get_token_service()
-        recharge_options = token_service.get_recharge_packages()
+        self.recharge_options = token_service.get_recharge_packages()
 
         # 创建充值卡片
         self.rechargeCards = []
-        for i, j in enumerate(recharge_options):
+        for i, j in enumerate(self.recharge_options):
             row = i // 3
             col = i % 3
             amount = j.get('token_amount')
@@ -380,15 +334,10 @@ class PurchaseDialog(MaskDialogBase):
         # 添加到主布局
         self.mainLayout.addWidget(self.cardsFrame)
 
-        # 添加小间距以区分卡片和二维码区域
-        self.mainLayout.addSpacing(5)
-
-    def _init_qrcode_section(self):
-        """初始化二维码部分"""
-        self.qrCodeWidget = QRCodeWidget(self.widget)
-        self.mainLayout.addWidget(self.qrCodeWidget)
-
-
+    def _init_payment_action_section(self):
+        """初始化支付操作部分"""
+        self.paymentActionWidget = PaymentActionWidget(self.widget)
+        self.mainLayout.addWidget(self.paymentActionWidget)
 
     def _connect_signals(self):
         """连接信号和槽"""
@@ -411,123 +360,114 @@ class PurchaseDialog(MaskDialogBase):
         """处理充值卡片选择事件"""
         self.selected_amount = amount
 
+        # 从充值选项中找到对应的价格
+        selected_option = next((opt for opt in self.recharge_options if opt.get('token_amount') == amount), None)
+        if not selected_option:
+            logger.error(f"Selected amount {amount} not found in recharge options.")
+            self.paymentActionWidget.setHint("无效的充值选项")
+            self.paymentActionWidget.clearButtons()
+            return
+        self.selected_price = selected_option.get('price', 0)
+
         # 更新卡片选中状态
         for card in self.rechargeCards:
             card.setSelected(card.amount == amount)
 
-        # 更新二维码
-        # 在实际应用中，这里应该根据选择的金额生成对应的支付二维码
-        qr_code_text = f"请扫码支付 {amount} 点数"
-        self.qrCodeWidget.setQRCode(qr_code_text)
+        # 更新支付区域的提示
+        self.paymentActionWidget.setHint(f"您将使用支付宝支付 {self.selected_price} 元，购买 {self.selected_amount} 点数")
 
-        # 显示支付提示
-        self.qrCodeWidget.setHint("请使用微信或支付宝扫码支付，支付完成后将自动关闭窗口")
+        # 添加创建订单按钮
+        self._add_create_order_button()
 
-        # 在实际应用中，这里应该启动一个轮询过程检查支付状态
-        # 当支付成功后再调用process_purchase方法
-        # 在演示中，我们可以添加一个模拟支付成功的按钮
-        self._add_payment_simulation_button()
-
-    def _add_payment_simulation_button(self):
-        """添加模拟支付成功的按钮，并调用充值接口"""
-
+    def _add_create_order_button(self):
+        """添加创建订单按钮"""
         # 清除现有按钮
-        self.qrCodeWidget.clearButtons()
+        self.paymentActionWidget.clearButtons()
 
-        # 创建模拟支付成功按钮
-        simulateButton = PrimaryPushButton("模拟支付成功", self.qrCodeWidget)
-        simulateButton.setFixedHeight(30)  # 设置按钮高度更小
+        # 创建支付按钮
+        createOrderButton = PrimaryPushButton("前往支付宝支付", self.paymentActionWidget)
+        createOrderButton.setFixedHeight(30)
 
-        # 定义点击事件处理函数
         def on_button_clicked():
-            # 更新提示文本
-            self.qrCodeWidget.setHint("正在处理充值请求...")
-
-            # 禁用按钮防止重复点击
-            simulateButton.setEnabled(False)
+            createOrderButton.setEnabled(False)
+            createOrderButton.setText("正在创建订单...")
+            self.paymentActionWidget.setHint("正在创建订单，请稍候...")
 
             try:
-                # 调用充值接口
-                us_id = api_client.get_id()
-                logger.info(f'user_id:{us_id}')
-                result = api_client.recharge_tokens_t(us_id, self.selected_amount)
+                # 获取用户ID
+                user_id = api_client.get_id()
+                if not user_id:
+                    raise Exception("无法获取用户ID，请重新登录")
 
-                # 处理成功响应
-                if result and 'data' in result:
-                    # 从响应中提取交易信息
-                    transaction_data = result['data']
-                    logger.info(f'transaction_data:{transaction_data}')
+                # 调用创建订单接口
+                order_data = api_client.create_recharge_order_t(user_id, self.selected_price, self.selected_amount)
 
-                    # 更新提示文本
-                    self.qrCodeWidget.setHint("支付成功！正在处理...")
-
-                    # 清除模拟按钮
-                    self.qrCodeWidget.clearButtons()
-
-                    # 发送购买完成信号
-                    self.purchaseCompleted.emit(transaction_data)
-
-                    # 更新余额
-                    self._update_balance()
-
-                    # 关闭对话框
-                    self.accept()
+                if order_data and 'data' in order_data:
+                    payment_url = order_data['data'].get('payment_url')
+                    if payment_url:
+                        # 打开支付链接
+                        QDesktopServices.openUrl(QUrl(payment_url))
+                        self.paymentActionWidget.setHint(
+                            "支付页面已在浏览器中打开，请完成支付。\n支付成功后余额会自动刷新。"
+                        )
+                        # 可以在这里启动一个定时器轮询订单状态
+                        createOrderButton.setText("重新生成")
+                        createOrderButton.setEnabled(True)
+                        # self.accept() # 可以选择关闭对话框
+                    else:
+                        raise Exception("API返回数据中未包含支付链接 (payment_url)")
                 else:
-                    # 处理响应中没有数据的情况
-                    raise Exception("充值响应数据不完整")
+                    raise Exception("创建订单失败，API返回数据格式不正确")
 
             except Exception as e:
-                # 处理其他错误
-                logger.error(f"充值失败: {e}")
-                self.qrCodeWidget.setHint(f"支付失败: {e}")
-                # 重新启用按钮
-                simulateButton.setEnabled(True)
+                logger.error(f"创建充值订单失败: {e}")
+                self.paymentActionWidget.setHint(f"创建订单失败: {str(e)}")
+                createOrderButton.setText("重试")
+                createOrderButton.setEnabled(True)
 
-        # 连接点击事件
-        simulateButton.clicked.connect(on_button_clicked)
-
-        # 添加到二维码组件
-        self.qrCodeWidget.addButton(simulateButton)
+        createOrderButton.clicked.connect(on_button_clicked)
+        self.paymentActionWidget.addButton(createOrderButton)
 
 
-# # 如果直接运行该文件，则打开充值对话框进行测试
-# if __name__ == "__main__":
-#     import sys
-#     import traceback
-#
-#     # 创建应用
-#     app = QApplication(sys.argv)
-#
-#     try:
-#         # 创建主窗口（作为充值对话框的父窗口）
-#         mainWindow = QWidget()
-#         mainWindow.setWindowTitle("充值对话框测试")
-#         mainWindow.resize(800, 600)
-#         mainWindow.show()
-#
-#         # 创建并显示充值对话框
-#         dialog = PurchaseDialog(mainWindow)
-#
-#         # 覆盖API调用方法，避免实际调用API导致的错误
-#         def mock_get_balance_sync():
-#             print("模拟获取余额")
-#             return {"data": {"balance": 1000}}
-#
-#         # 替换API调用
-#         dialog._update_balance = lambda: dialog.balanceValue.setText("1000")
-#
-#         # 连接购买完成信号
-#         def on_purchase_completed(transaction):
-#             print(f"购买完成: {transaction}")
-#
-#         dialog.purchaseCompleted.connect(on_purchase_completed)
-#
-#         # 显示对话框
-#         dialog.exec()
-#
-#     except Exception as e:
-#         print(f"错误: {e}")
-#         traceback.print_exc()
-#
-#     # 退出应用
-#     sys.exit(app.exec())
+# 如果直接运行该文件，则打开充值对话框进行测试
+if __name__ == "__main__":
+    import sys
+    import traceback
+    from PySide6.QtWidgets import QApplication
+
+    # 创建应用
+    app = QApplication(sys.argv)
+
+    try:
+        # 创建主窗口（作为充值对话框的父窗口）
+        mainWindow = QWidget()
+        mainWindow.setWindowTitle("充值对话框测试")
+        mainWindow.resize(800, 600)
+        mainWindow.show()
+
+        # 创建并显示充值对话框
+        dialog = PurchaseDialog(mainWindow)
+
+        # 覆盖API调用方法，避免实际调用API导致的错误
+        def mock_get_balance_sync():
+            print("模拟获取余额")
+            return {"data": {"balance": 1000}}
+
+        # 替换API调用
+        dialog._update_balance = lambda: dialog.balanceValue.setText("1000")
+
+        # 连接购买完成信号
+        def on_purchase_completed(transaction):
+            print(f"购买完成: {transaction}")
+
+        dialog.purchaseCompleted.connect(on_purchase_completed)
+
+        # 显示对话框
+        dialog.exec()
+
+    except Exception as e:
+        print(f"错误: {e}")
+        traceback.print_exc()
+
+    # 退出应用
+    sys.exit(app.exec())
