@@ -298,10 +298,10 @@ class SecWindow:
 
         save_setting(self.main.settings)
 
-        logger.debug("====config.settings====")
-        logger.debug(config.settings)
-        logger.debug("====config.params====")
-        logger.debug(config.params)
+        # logger.debug("====config.settings====")
+        # logger.debug(config.settings)
+        # logger.debug("====config.params====")
+        # logger.debug(config.params)
 
     def check_translate(self) -> bool:
         """
