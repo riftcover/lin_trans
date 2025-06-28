@@ -115,7 +115,6 @@ class WorkSrt(QWidget):
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
         translate_name = config.params["translate_channel"]
-        logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
         engine_layout.addWidget(translate_model_name)
