@@ -9,7 +9,7 @@ from nice_ui.configure.signal import data_bridge
 from nice_ui.ui.purchase_dialog import PurchaseDialog
 from utils import logger
 from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
-                                   InfoBarPosition)
+                                   InfoBarPosition, TransparentToolButton)
 
 
 class ProfileInterface(QFrame):
@@ -201,14 +201,12 @@ class ProfileInterface(QFrame):
         self.usageTitleLayout.addWidget(self.usageTitle)
 
         # 添加刷新按钮
-        self.refreshHistoryButton = PushButton(self)
-        self.refreshHistoryButton.setIcon(FIF.SYNC)
+        self.refreshHistoryButton = TransparentToolButton(FIF.SYNC,self)
         self.refreshHistoryButton.setToolTip("刷新")
-        self.refreshHistoryButton.setFlat(True)
         self.refreshHistoryButton.setFixedSize(28, 28)
-        self.usageTitleLayout.addWidget(self.refreshHistoryButton)
-
+        
         self.usageTitleLayout.addStretch()
+        self.usageTitleLayout.addWidget(self.refreshHistoryButton)
 
         self.usageLayout.addLayout(self.usageTitleLayout)
 
