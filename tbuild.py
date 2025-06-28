@@ -7,8 +7,8 @@ def convert_py_to_pyd(script_folder):
     if not os.path.exists(script_folder):
         print(f"错误: 文件夹 '{script_folder}' 不存在。")
         return
-    # path_list = ['agent','app','components','nice_ui','orm','tools','utils','vendor','videotrans']
-    path_list = ['api_client']
+    path_list = ['agent','app','components','nice_ui','orm','services','tools','utils','vendor','videotrans']
+    # path_list = ['api_client']
     # 构建Nuitka命令
     for pp in path_list:
         if pp == 'api_client':

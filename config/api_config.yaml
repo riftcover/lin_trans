@@ -30,16 +30,14 @@ translator:
   max_entries: 10
   # 翻译API调用间隔
   sleep_time: 1
-default: development
+default: test
 development:
   api_base_url: http://127.0.0.1:8000/api
   web_base_url: http://127.0.0.1:3000
 production:
+  api_base_url: https://www.lapped-ai.com/api
+  web_base_url: https://www.lapped-ai.com
+test:
   api_base_url: http://123.57.206.182:8000/api
-  web_base_url: http://www.example.com
-staging:
-  api_base_url: http://staging-api.example.com/api
-  web_base_url: http://staging.example.com
-testing:
-  api_base_url: http://test-api.example.com/api
-  web_base_url: http://test.example.com
+  web_base_url: http://123.57.206.182:3000
+
