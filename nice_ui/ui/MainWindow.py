@@ -186,9 +186,7 @@ class Window(FluentWindow):
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
                     }
-                    # 更新个人中心页面
-                    a = self.loginInterface.updateUserInfo(user_info)
-                    if a:
+                    if a := self.loginInterface.updateUserInfo(user_info):
                         # 更新登录状态
                         self.is_logged_in = True
                         self.avatarWidget.setName(user_info['email'])
@@ -243,6 +241,7 @@ class Window(FluentWindow):
                     else:
                         logger.warning(f"Token验证失败: {e}")
                         # Token无效，清除状态
+                        self.is_logged_in = False
                         self.settings.remove('token')
                         self.settings.remove('refresh_token')
                         self.settings.sync()
