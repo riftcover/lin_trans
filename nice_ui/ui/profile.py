@@ -63,6 +63,7 @@ class ProfileInterface(QFrame):
         """连接信号和槽"""
         self.logoutButton.clicked.connect(self.handleLogout)
         self.buyButton.clicked.connect(self.showPurchaseDialog)
+        self.refreshHistoryButton.clicked.connect(self._handle_refresh_history)
 
         # 连接分页表格的页码改变信号
         self.transactionTable.pageChanged.connect(self.onPageChanged)
@@ -199,6 +200,13 @@ class ProfileInterface(QFrame):
         self.usageTitle = SubtitleLabel('使用记录', self)
         self.usageTitleLayout.addWidget(self.usageTitle)
 
+        # 添加刷新按钮
+        self.refreshHistoryButton = TransparentToolButton(FIF.SYNC, self)
+        self.refreshHistoryButton.setToolTip("刷新")
+        self.refreshHistoryButton.setFixedSize(28, 28)
+
+        self.usageTitleLayout.addStretch()
+        self.usageTitleLayout.addWidget(self.refreshHistoryButton)
 
         self.usageLayout.addLayout(self.usageTitleLayout)
 
@@ -226,6 +234,20 @@ class ProfileInterface(QFrame):
         """
         bar_method = getattr(InfoBar, type_)
         bar_method(title=title, content=content, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=duration, parent=self)
+
+    def _handle_refresh_history(self):
+        """处理刷新使用记录的请求"""
+        logger.info("开始刷新使用记录")
+        try:
+            # 从 API 获取第一页的数据
+            self._fetch_all_transactions(page=1)
+            logger.info("刷新使用记录成功")
+            self._show_info_bar(type_="success", title="成功", content="使用记录已刷新", duration=2000)
+        except AuthenticationError as e:
+            self._handle_auth_error(f"认证错误: {e}")
+        except Exception as e:
+            logger.error(f"刷新交易记录失败: {e}")
+            self._show_info_bar(type_="error", title="错误", content="刷新交易记录失败", duration=2000)
 
     # 业务方法
     def updateUserInfo(self, user_info: dict) -> bool:
@@ -345,6 +367,8 @@ class ProfileInterface(QFrame):
         # 获取交易记录
         transactions = history_data['data'].get('transactions', [])
         total_records = history_data['data'].get('total', 0)
+        logger.trace("交易记录数据:")
+        logger.trace(history_data)
         # 输出分页信息到日志
         logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
 
@@ -444,5 +468,5 @@ class ProfileInterface(QFrame):
         # 通知主窗口退出登录
         if self.parent:
             self.parent.is_logged_in = False
-            self.parent.avatarWidget.setName('未登录')
-            self.parent.avatarWidget.setAvatar(':icon/assets/MdiLightAccount.png')
+            # self.parent.avatarWidget.setName('未登录')  # 头像按钮已隐藏
+            # self.parent.avatarWidget.setAvatar(':icon/assets/MdiLightAccount.png')  # 头像按钮已隐藏

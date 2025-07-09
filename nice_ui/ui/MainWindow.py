@@ -83,19 +83,19 @@ class Window(FluentWindow):
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, "设置", NavigationItemPosition.BOTTOM)
 
-        # 创建头像按钮
-        self.avatarWidget = NavigationAvatarWidget(
-            '未登录',
-            ':icon/assets/MdiLightAccount.png'
-        )
+        # 创建头像按钮 - 已隐藏
+        # self.avatarWidget = NavigationAvatarWidget(
+        #     '未登录',
+        #     ':icon/assets/MdiLightAccount.png'
+        # )
 
-        # 添加个人中心到导航，使用头像作为按钮
-        self.navigationInterface.addWidget(
-            routeKey=self.loginInterface.objectName(),
-            widget=self.avatarWidget,
-            onClick=lambda: self.showLoginInterface(switch_to_profile=False),
-            position=NavigationItemPosition.BOTTOM
-        )
+        # 添加个人中心到导航，使用头像作为按钮 - 已隐藏
+        # self.navigationInterface.addWidget(
+        #     routeKey=self.loginInterface.objectName(),
+        #     widget=self.avatarWidget,
+        #     onClick=lambda: self.showLoginInterface(switch_to_profile=False),
+        #     position=NavigationItemPosition.BOTTOM
+        # )
 
         # 将个人中心页面添加到路由系统
         self.stackedWidget.addWidget(self.loginInterface)
@@ -189,10 +189,10 @@ class Window(FluentWindow):
                     if a := self.loginInterface.updateUserInfo(user_info):
                         # 更新登录状态
                         self.is_logged_in = True
-                        self.avatarWidget.setName(user_info['email'])
+                        # self.avatarWidget.setName(user_info['email'])  # 头像按钮已隐藏
                         # 更新个人中心页面
                         logger.info("自动登录成功")
-                        self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
+                        # self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')  # 头像按钮已隐藏
 
                         # 更新算力消耗系数
                         from nice_ui.services.service_provider import ServiceProvider
@@ -211,7 +211,7 @@ class Window(FluentWindow):
 
                         # 更新登录状态
                         self.is_logged_in = True
-                        self.avatarWidget.setName(user_info['email'])
+                        # self.avatarWidget.setName(user_info['email'])  # 头像按钮已隐藏
 
                         # 更新个人中心页面
                         self.loginInterface.updateUserInfo(user_info)
@@ -289,11 +289,11 @@ class Window(FluentWindow):
             switch_to_profile: 是否切换到个人中心页面，默认为False
         """
         self.is_logged_in = True
-        self.avatarWidget.setName(user_info.get('email', '已登录'))
+        # self.avatarWidget.setName(user_info.get('email', '已登录'))  # 头像按钮已隐藏
 
         # 登录成功后使用设置图标作为头像
         # 直接使用FluentIcon作为头像，确保与导航图标一致
-        self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
+        # self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')  # 头像按钮已隐藏
 
         # 关闭登录窗口
         if self.login_window:
@@ -341,7 +341,7 @@ class Window(FluentWindow):
 
         # 刷新失败，清除登录状态
         self.is_logged_in = False
-        self.avatarWidget.setName('未登录')
+        # self.avatarWidget.setName('未登录')  # 头像按钮已隐藏
 
         # 清除保存的token和refresh_token
         self.settings.remove('token')
