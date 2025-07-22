@@ -23,11 +23,22 @@ from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
-from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
+from vendor.qfluentwidgets import (MessageBox, FluentWindow, MacFluentWindow, FluentBackgroundTheme, setThemeColor, )
 from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
 
 
-class Window(FluentWindow):
+# 智能选择窗口类型
+def _create_smart_window_class():
+    """根据平台智能选择窗口类型"""
+    if sys.platform == "darwin":
+        # macOS使用原生标题栏版本
+        return MacFluentWindow
+    else:
+        # 其他平台使用标准版本
+        return FluentWindow
+
+
+class Window(_create_smart_window_class()):
 
     def __init__(self):
         super().__init__()
@@ -37,8 +48,13 @@ class Window(FluentWindow):
         # 获取当前工作目录
         current_directory = os.path.basename(os.getcwd())
         self.settings = SettingsManager.get_instance()
-        # 设置主题颜色为蓝色
-        setThemeColor(QColor("#0078d4"))
+        # 根据平台设置合适的主题颜色
+        if sys.platform == "darwin":
+            # macOS使用系统蓝色
+            setThemeColor(QColor("#007AFF"))
+        else:
+            # 其他平台使用微软蓝
+            setThemeColor(QColor("#0078d4"))
 
         # 根据操作系统设置字体
         self.set_font()
@@ -52,6 +68,9 @@ class Window(FluentWindow):
         self.auth_service = self.service_provider.get_auth_service()
         self.ui_manager = self.service_provider.get_ui_manager()
 
+        # 平台特定的窗口设置
+        # self._setupPlatformSpecificFeatures()
+
         self.initWindow()
         # create sub interface
         # self.homeInterface = Widget('Search Interface', self)
@@ -64,6 +83,25 @@ class Window(FluentWindow):
         self.initNavigation()
         # 尝试自动登录
         self.tryAutoLogin()
+
+    def _setupPlatformSpecificFeatures(self):
+        """设置平台特定功能"""
+        if sys.platform == "darwin":
+            # macOS特有设置
+            try:
+                # 启用macOS统一标题栏外观
+                if hasattr(self, 'setMacUnifiedTitleAndToolBar'):
+                    self.setMacUnifiedTitleAndToolBar(True)
+                
+                # 设置macOS应用程序图标
+                if hasattr(QApplication.instance(), 'setWindowIcon'):
+                    QApplication.instance().setWindowIcon(QIcon(":icon/assets/lapped.png"))
+                
+                logger.info("已启用macOS原生标题栏和优化")
+            except Exception as e:
+                logger.warning(f"设置macOS特性时出现问题: {e}")
+        else:
+            logger.info(f"当前平台: {platform.system()}，使用标准FluentWindow")
 
     def set_font(self):
         system = platform.system()
