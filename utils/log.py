@@ -1,4 +1,5 @@
 import datetime
+import os
 import sys
 from pathlib import Path
 
@@ -19,12 +20,26 @@ class Logings:
         DATE = datetime.datetime.now().strftime('%Y-%m-%d')
         self.logger = logger
 
+        if sys.platform == "win32":
+            # Windows: 使用LOCALAPPDATA目录
+            user_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')))
+            app_root = user_data_dir / "lappedAI"
+        else:
+            # Linux/macOS: 使用用户主目录下的隐藏文件夹
+            app_root = Path.home() / ".lappedAI"
+
         # 获取应用程序根目录
         if getattr(sys, 'frozen', False):
-            # 如果是打包后的可执行文件
-            app_root = Path(sys.executable).parent
+            # 打包后的可执行文件，使用用户数据目录避免权限问题
+            if sys.platform == "win32":
+                # Windows: 使用LOCALAPPDATA目录
+                user_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')))
+                app_root = user_data_dir / "lappedAI"
+            else:
+                # Linux/macOS: 使用用户主目录下的隐藏文件夹
+                app_root = Path.home() / ".lappedAI"
         else:
-            # 如果是开发环境
+            # 开发环境，使用项目目录
             app_root = Path(__file__).parent.parent
 
         # 创建日志目录
