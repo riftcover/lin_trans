@@ -51,10 +51,10 @@ class AgentRegistry(BaseModel):
         # 初始化默认配置
         self.agents = {
             "qwen_cloud": AgentConfig(base_url=self.QWEN_CLOUD_BASE_URL, model=self.QWEN_CCLOUD_MODEL, key=self.QWEN_CCLOUD_KEY),
-            "qwen": AgentConfig(base_url=self.QWEN_BASE_URL, model=self.QWEN_MODEL,key =None),
-            "kimi": AgentConfig(base_url=self.KIMI_BASE_URL, model=self.KIMI_MODEL,key =None),
-            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL,key =None),
-            "deepseek": AgentConfig(base_url=self.DEEPSEEK_URL, model=self.DEEPSEEK_MODEL,key =None)
+            "qwen": AgentConfig(base_url=self.QWEN_BASE_URL, model=self.QWEN_MODEL, key=None),
+            "kimi": AgentConfig(base_url=self.KIMI_BASE_URL, model=self.KIMI_MODEL, key=None),
+            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL, key=None),
+            "deepseek": AgentConfig(base_url=self.DEEPSEEK_URL, model=self.DEEPSEEK_MODEL, key=None)
         }
 
     def load_keys_from_settings(self, settings: Optional[QSettings] = None) -> None:
@@ -99,6 +99,8 @@ def agent_settings(settings: Optional[QSettings] = None) -> dict[str, AgentConfi
     """
     registry = AgentRegistry()
     return registry.get_all_configs(settings)
+
+
 agent_msg = agent_settings()
 
 if __name__ == '__main__':

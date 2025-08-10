@@ -8,6 +8,7 @@ from app.cloud_trans.task_manager import TransTaskManager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
+from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
@@ -113,28 +114,43 @@ class TranslationTaskProcessor(TaskProcessor):
         """处理翻译任务"""
         logger.debug('处理翻译任务')
 
-        agent_type = config.params['translate_channel']
-        final_name = task.srt_dirname  # 原始文件名_译文.srt
-        chunk_size_int = get_chunk_size()
-        max_entries_int = get_max_entries()  # 推荐值：8-12
-        sleep_time_int = get_sleep_time()  # API调用间隔
-        logger.trace(f'准备翻译任务:{final_name}')
-        logger.trace(
-            f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
+        try:
+            agent_type = config.params['translate_channel']
+            final_name = task.srt_dirname  # 原始文件名_译文.srt
+            chunk_size_int = get_chunk_size()
+            max_entries_int = get_max_entries()  # 推荐值：8-12
+            sleep_time_int = get_sleep_time()  # API调用间隔
+            logger.trace(f'准备翻译任务:{final_name}')
+            logger.trace(
+                f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
-        translate_document(
-            unid=task.unid,
-            in_document=task.raw_name,
-            out_document=final_name,
-            agent_name=agent_type,
-            chunk_size=chunk_size_int,  # 推荐值：600-800
-            max_entries=max_entries_int,  # 推荐值：8-12
-            sleep_time=sleep_time_int,  # API调用间隔
-            target_language=config.params["target_language"],  # 目标语言
-            source_language=config.params["source_language"]  # 源语言
-        )
+            translate_document(
+                unid=task.unid,
+                in_document=task.raw_name,
+                out_document=final_name,
+                agent_name=agent_type,
+                chunk_size=chunk_size_int,  # 推荐值：600-800
+                max_entries=max_entries_int,  # 推荐值：8-12
+                sleep_time=sleep_time_int,  # API调用间隔
+                target_language=config.params["target_language"],  # 目标语言
+                source_language=config.params["source_language"]  # 源语言
+            )
 
-        TransTaskManager().consume_tokens_for_task(task.unid)
+            TransTaskManager().consume_tokens_for_task(task.unid)
+
+        except ValueError as e:
+            # 检查是否是API密钥缺失的错误
+            if "请填写API密钥" in str(e):
+                logger.error(f"翻译任务失败 - API密钥缺失: {task.unid}")
+                data_bridge.emit_task_error(task.unid, "填写key")
+            else:
+                logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+                data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+        except Exception as e:
+            logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+            data_bridge.emit_task_error(task.unid, str(e))
+            raise e
 
 
 class ASRTransTaskProcessor(TaskProcessor):
@@ -184,18 +200,32 @@ class ASRTransTaskProcessor(TaskProcessor):
             f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
         # 执行翻译
-        translate_document(
-            unid=task.unid,
-            in_document=task.raw_name,
-            out_document=final_name,
-            agent_name=agent_type,
-            chunk_size=chunk_size_int,  # 推荐值：600-800
-            max_entries=max_entries_int,  # 推荐值：8-12
-            sleep_time=sleep_time_int,  # API调用间隔
-            target_language=config.params["target_language"],  # 目标语言
-            source_language=config.params["source_language"]  # 源语言
-        )
-        logger.debug('ASR_TRANS 任务全部完成')
+        try:
+            translate_document(
+                unid=task.unid,
+                in_document=task.raw_name,
+                out_document=final_name,
+                agent_name=agent_type,
+                chunk_size=chunk_size_int,  # 推荐值：600-800
+                max_entries=max_entries_int,  # 推荐值：8-12
+                sleep_time=sleep_time_int,  # API调用间隔
+                target_language=config.params["target_language"],  # 目标语言
+                source_language=config.params["source_language"]  # 源语言
+            )
+            logger.debug('ASR_TRANS 任务全部完成')
+        except ValueError as e:
+            # 检查是否是API密钥缺失的错误
+            if "请填写API密钥" in str(e):
+                logger.error(f"ASR+翻译任务失败 - API密钥缺失: {task.unid}")
+                data_bridge.emit_task_error(task.unid, "填写key")
+            else:
+                logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
+                data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+        except Exception as e:
+            logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
+            data_bridge.emit_task_error(task.unid, str(e))
+            raise e
 
 
 class TaskProcessorFactory:

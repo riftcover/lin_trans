@@ -245,7 +245,3 @@ def get_terminolog_file(unid):
 def get_translate_code() ->list:
     # 输出translate_api_name所有value
     return list(translate_api_name.values())
-if __name__ == '__main__':
-    print(get_translate_code())
-    first_key = next(iter(translate_api_name))
-    print(first_key)

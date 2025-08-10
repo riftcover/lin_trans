@@ -50,7 +50,14 @@ class DocumentTranslator:
     def _setup_translator(self):
         """设置翻译器和术语管理器"""
         agent: AgentConfig = agent_msg[self.agent_name]
-        
+        logger.debug(f'agent key:{agent.key}')
+
+        # 检查agent.key是否为None
+        if agent.key is None:
+            error_msg = "请填写API密钥"
+            logger.error(f"翻译任务停止: {error_msg}")
+            raise ValueError(error_msg)
+
         # 创建术语管理器并生成terminology
         terminology_manager = TerminologyManager()
         terminology_data = terminology_manager.generate_summary_and_terminology(

@@ -5,7 +5,7 @@ import platform
 import sys
 
 import httpx
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtCore import QUrl, Qt, Slot
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
@@ -14,6 +14,7 @@ from packaging import version
 from api_client import api_client, AuthenticationError
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
+from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import MAIN_WINDOW_SIZE, SettingsManager
 from nice_ui.ui.my_story import TableApp
@@ -81,6 +82,8 @@ class Window(_create_smart_window_class()):
         self.loginInterface = ProfileInterface("个人中心", self, self.settings)
 
         self.initNavigation()
+        # 连接信号
+        self._connect_signals()
         # 尝试自动登录
         self.tryAutoLogin()
 
@@ -413,6 +416,27 @@ class Window(_create_smart_window_class()):
 
         # 调用父类的closeEvent
         super().closeEvent(event)
+
+    def _connect_signals(self):
+        """连接信号槽"""
+        # 连接任务错误信号
+        data_bridge.task_error.connect(self._on_task_error)
+
+    @Slot(str, str)
+    def _on_task_error(self, task_id: str, error_message: str):
+        """处理任务错误信号"""
+        logger.error(f"任务错误: {task_id} - {error_message}")
+
+        # 显示错误提示
+        InfoBar.error(
+            title="任务失败",
+            content=error_message,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
 
 
 if __name__ == "__main__":
