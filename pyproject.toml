@@ -19,7 +19,7 @@ dependencies = [
     "colorthief==0.2.1",
     "path>=17.0.0",
     "scipy==1.15.2",
-    "nuitka>=2.4.8",
+    "nuitka==2.7.12",
     "numpy==1.24.4",
     "pysidesix-frameless-window==0.4.3",
     "torch==2.4.1",
