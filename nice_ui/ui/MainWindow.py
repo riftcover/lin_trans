@@ -141,7 +141,7 @@ class Window(_create_smart_window_class()):
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
         self.setWindowIcon(QIcon(":icon/assets/lapped.png"))
-        self.setWindowTitle("叠影")
+        self.setWindowTitle("Lapped AI")
 
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()

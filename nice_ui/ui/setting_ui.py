@@ -1128,7 +1128,7 @@ class CommonPage(QWidget):
         about_layout.addWidget(description_label)
 
         # 添加版权信息
-        copyright_label = CaptionLabel("© 2025 叠影. 保留所有权利。", about_card)
+        copyright_label = CaptionLabel("© 2025 Lapped AI. 保留所有权利。", about_card)
         about_layout.addWidget(copyright_label, alignment=Qt.AlignBottom)
 
         # 添加卡片到主布局
