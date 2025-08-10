@@ -281,7 +281,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "detect_language": "en",
     "translate_status": False,
     "target_language": "zh-cn",
-    "translate_channel": "通义千问",
+    "translate_channel": "qwen",
     "subtitle_language": "chi",
     "prompt_name": "默认",
     "prompt_text": "",

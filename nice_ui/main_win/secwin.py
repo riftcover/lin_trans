@@ -323,7 +323,11 @@ class SecWindow:
                 config.transobj["bukedoubucunzai"],
             )
             return is_task
-        is_task = self._check_auth_and_balance()
+        if config.params["translate_channel"] == 'qwen_cloud':
+            is_task = self._check_auth_and_balance()
+        else:
+            is_task = True
+
         # 保存设置
         if is_task:
             self._save_current_settings()
@@ -402,7 +406,7 @@ class SecWindow:
         config.params["target_language"] = translate_language_name
 
         translate_language_channel_name = self.main.translate_model.currentText()
-        translate_language_key = next(
+        translate_channel_key = next(
             (
                 key
                 for key, value in translate_api_name.items()
@@ -410,8 +414,8 @@ class SecWindow:
             ),
             config.params["translate_channel"],
         )
-        logger.debug(f"==========translate_language_name:{translate_language_key}")
-        config.params["translate_channel"] = translate_language_key
+        logger.debug(f"==========translate_channel_key:{translate_channel_key}")
+        config.params["translate_channel"] = translate_channel_key
 
         prompt_name = self.main.ai_prompt.currentText()
         config.params["prompt_name"] = prompt_name
