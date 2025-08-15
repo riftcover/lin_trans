@@ -52,10 +52,10 @@ class Window(_create_smart_window_class()):
         # 根据平台设置合适的主题颜色
         if sys.platform == "darwin":
             # macOS使用系统蓝色
-            setThemeColor(QColor("#A855F7"))
+            setThemeColor(QColor("#7C3AED"))
         else:
             # 其他平台使用微软蓝
-            setThemeColor(QColor("#A855F7"))
+            setThemeColor(QColor("#7C3AED"))
 
         # 根据操作系统设置字体
         self.set_font()
@@ -143,7 +143,7 @@ class Window(_create_smart_window_class()):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        self.setWindowIcon(QIcon(":icon/assets/lapped.png"))
+        self.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
         self.setWindowTitle("Lapped AI")
 
         desktop = QApplication.screens()[0].availableGeometry()
