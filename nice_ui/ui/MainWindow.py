@@ -52,10 +52,10 @@ class Window(_create_smart_window_class()):
         # 根据平台设置合适的主题颜色
         if sys.platform == "darwin":
             # macOS使用系统蓝色
-            setThemeColor(QColor("#007AFF"))
+            setThemeColor(QColor("#A855F7"))
         else:
             # 其他平台使用微软蓝
-            setThemeColor(QColor("#0078d4"))
+            setThemeColor(QColor("#A855F7"))
 
         # 根据操作系统设置字体
         self.set_font()
