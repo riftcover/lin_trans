@@ -262,15 +262,14 @@ class LinQueue:
         """消费队列中的任务"""
         logger.debug('消费线程工作中')
 
-        try:
-            # 从队列获取任务
-            task: VideoFormatInfo = config.lin_queue.get_nowait()
-            logger.debug(f'获取到任务:{task}')
+        # 从队列获取任务
+        task: VideoFormatInfo = config.lin_queue.get_nowait()
+        logger.debug(f'获取到任务:{task}')
 
-            # 使用工厂创建处理器并处理任务
-            processor = TaskProcessorFactory.create_processor(task.work_type)
-            processor.process(task)
+        # 使用工厂创建处理器并处理任务
+        processor = TaskProcessorFactory.create_processor(task.work_type)
+        logger.debug(f'创建处理器: {processor.__class__.__name__}')
+        processor.process(task)
 
-        except Exception as e:
-            logger.error(f"任务处理失败: {str(e)}")
-            # 这里可以添加更多的错误处理逻辑，如通知UI等
+        logger.debug('任务处理完成')
+        # 这里可以添加更多的错误处理逻辑，如通知UI等
