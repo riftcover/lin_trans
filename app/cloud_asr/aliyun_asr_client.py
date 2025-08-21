@@ -358,32 +358,96 @@ class AliyunASRClient:
 
         # 只返回实际使用的部分，避免复制整个数组
         return result[:result_index] if result_index > 0 else []
-    def convert_to_srt(self, parsed_results: List[Dict[str, Any]], output_file: str) -> None:
-        """
-        将解析后的结果转换为SRT格式并保存
 
+    def convert_to_segments_format(self, json_data: dict) -> List[Dict[str, Any]]:
+        """
+        将阿里云ASR原始格式转换为项目内部使用的segments格式
+        
+        将原始的sentence+words格式转换为按标点符号分割的segments格式，
+        每个segment包含text和对应的timestamp数组。
+        
         Args:
-            parsed_results: 解析后的ASR结果
-            output_file: 输出SRT文件路径
+            json_data: 阿里云ASR返回的原始JSON数据
+            
+        Returns:
+            List[Dict[str, Any]]: 转换后的segments列表，格式为:
+            [
+                {
+                    "text": "Picture a winter wonderland,",
+                    "timestamp": [[0, 478], [478, 717], [717, 1196], [1196, 1913]]
+                },
+                ...
+            ]
         """
-        with open(output_file, "w", encoding="utf-8") as f:
-            # 定义多语言标点符号
-            punctuation_marks = [',', '.', '，', '。', '、', '；', ';']
-            for i, item in enumerate(parsed_results, 1):
-                begin_time = item["begin_time"]
-                end_time = item["end_time"]
-                text = item['text']
-
-                # 转换毫秒为SRT格式的时间戳 (HH:MM:SS,mmm)
-                begin_str = self._format_timestamp(begin_time)
-                end_str = self._format_timestamp(end_time)
-                # 处理句子结尾的标点符号
-                while text and text[-1] in punctuation_marks:
-                    text = text[:-1]
-
-                f.write(f"{i}\n")
-                f.write(f"{begin_str} --> {end_str}\n")
-                f.write(f"{text}\n\n")
+        segments = []
+        
+        # 获取转写结果
+        if 'transcripts' not in json_data:
+            logger.warning("JSON数据中没有找到transcripts字段")
+            return segments
+            
+        transcripts = json_data['transcripts']
+        if isinstance(transcripts, list) and transcripts:
+            transcript = transcripts[0]
+        elif isinstance(transcripts, dict):
+            transcript = transcripts
+        else:
+            logger.warning("无效的transcripts格式")
+            return segments
+            
+        if 'sentences' not in transcript:
+            logger.warning("transcript中没有找到sentences字段")
+            return segments
+            
+        sentences = transcript['sentences']
+        
+        # 处理每个句子
+        for sentence in sentences:
+            if 'words' not in sentence or not sentence['words']:
+                continue
+                
+            words = sentence['words']
+            current_text_parts = []
+            current_timestamps = []
+            
+            for word in words:
+                word_text = word.get('text', '')
+                punctuation = word.get('punctuation', '').strip()
+                begin_time = word.get('begin_time', 0)
+                end_time = word.get('end_time', 0)
+                
+                # 添加当前词的文本和时间戳
+                current_text_parts.append(word_text)
+                current_timestamps.append([begin_time, end_time])
+                
+                # 如果有标点符号，表示当前segment结束
+                if punctuation:
+                    # 将标点符号添加到文本末尾
+                    if current_text_parts:
+                        current_text_parts[-1] = current_text_parts[-1].rstrip() + punctuation
+                        
+                    # 创建新的segment
+                    if current_text_parts and current_timestamps:
+                        segment = {
+                            'text': ''.join(current_text_parts).strip(),
+                            'timestamp': current_timestamps.copy()
+                        }
+                        segments.append(segment)
+                        
+                        # 重置当前segment
+                        current_text_parts = []
+                        current_timestamps = []
+            
+            # 处理句子末尾没有标点符号的情况
+            if current_text_parts and current_timestamps:
+                segment = {
+                    'text': ''.join(current_text_parts).strip(),
+                    'timestamp': current_timestamps.copy()
+                }
+                segments.append(segment)
+                
+        logger.info(f"成功转换了{len(segments)}个segments")
+        return segments
 
     @staticmethod
     def _format_timestamp(ms: int) -> str:

@@ -95,11 +95,11 @@ class Window(_create_smart_window_class()):
                 # 启用macOS统一标题栏外观
                 if hasattr(self, 'setMacUnifiedTitleAndToolBar'):
                     self.setMacUnifiedTitleAndToolBar(True)
-                
+
                 # 设置macOS应用程序图标
                 if hasattr(QApplication.instance(), 'setWindowIcon'):
                     QApplication.instance().setWindowIcon(QIcon(":icon/assets/lapped.png"))
-                
+
                 logger.info("已启用macOS原生标题栏和优化")
             except Exception as e:
                 logger.warning(f"设置macOS特性时出现问题: {e}")
