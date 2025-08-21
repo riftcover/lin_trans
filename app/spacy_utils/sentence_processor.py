@@ -1,11 +1,11 @@
-from typing import List,Tuple
+from typing import List
 from app.spacy_utils.smart_split import smart_split_by_boundaries
 from utils.file_utils import split_sentence
 
 
 # 处理句子工具文件
 
-def process_sentence(start_idx: int, end_idx: int, words: List[str], nlp=None) ->Tuple[List[int],bool]:
+def process_sentence(start_idx: int, end_idx: int, words: List[str], nlp=None) -> List[int]:
     """
     处理单个句子，返回分割后的索引列表,英文用
     
@@ -20,8 +20,9 @@ def process_sentence(start_idx: int, end_idx: int, words: List[str], nlp=None) -
         bool: True为中文类字符，False英文类字符
     """
     sentence = ' '.join(words[start_idx:end_idx + 1])
-    split_sentences, split_indices,char_type = smart_split_by_boundaries(sentence, nlp=nlp)
-    return split_indices,char_type
+    split_sentences, split_indices = smart_split_by_boundaries(sentence, nlp=nlp)
+
+    return split_indices
 
 
 def set_nlp(text, nlp) -> tuple[List[str], List[int]]:
