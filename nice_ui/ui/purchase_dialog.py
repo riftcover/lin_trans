@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                                QFrame, QPushButton, QWidget)
 
 from api_client import api_client
+from nice_ui.util.api_helper import ApiHelper
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from vendor.qfluentwidgets import (SubtitleLabel, BodyLabel, PrimaryPushButton, FluentIcon as FIF, StrongBodyLabel)
@@ -359,16 +360,19 @@ class PurchaseDialog(MaskDialogBase):
 
     def _update_balance(self):
         """更新当前余额"""
-        try:
-            balance_data = api_client.get_balance_t()
+        def on_balance_success(balance_data):
             if balance_data and 'data' in balance_data:
                 balance = balance_data['data'].get('balance', 0)
                 self.balanceValue.setText(str(balance))
             else:
                 self.balanceValue.setText("0")
-        except Exception as e:
-            logger.error(f"获取余额失败: {e}")
+
+        def on_balance_error(error):
+            logger.error(f"获取余额失败: {error}")
             self.balanceValue.setText("获取失败")
+
+        # 使用ApiHelper异步获取余额
+        ApiHelper.get_balance(on_balance_success, on_balance_error)
 
     def _on_card_selected(self, amount):
         """处理充值卡片选择事件"""
@@ -407,38 +411,55 @@ class PurchaseDialog(MaskDialogBase):
             createOrderButton.setText("正在创建订单...")
             self.paymentActionWidget.setHint("正在创建订单，请稍候...")
 
-            try:
-                # 获取用户ID
-                user_id = api_client.get_id()
+            # 首先获取用户ID
+            def on_get_id_success(user_id):
                 if not user_id:
-                    raise Exception("无法获取用户ID，请重新登录")
+                    handle_order_error("无法获取用户ID，请重新登录")
+                    return
+
+                # 创建订单
+                def on_order_success(order_data):
+                    if order_data and 'data' in order_data:
+                        payment_url = order_data['data'].get('payment_url')
+                        self.current_order_id = order_data['data'].get('order_id')
+
+                        if payment_url and self.current_order_id:
+                            # 打开支付链接
+                            QDesktopServices.openUrl(QUrl(payment_url))
+                            self.paymentActionWidget.setHint(
+                                "支付页面已在浏览器中打开，请完成支付。\n支付成功后此窗口将自动关闭。"
+                            )
+                            # 启动轮询
+                            self._start_polling()
+                            createOrderButton.setVisible(False) # 隐藏按钮，防止重复点击
+                        else:
+                            handle_order_error("API返回数据不完整，缺少 payment_url 或 order_id")
+                    else:
+                        handle_order_error("创建订单失败，API返回数据格式不正确")
+
+                def on_order_error(error):
+                    handle_order_error(f"创建订单失败: {error}")
 
                 # 调用创建订单接口
-                order_data = api_client.create_recharge_order_t(user_id, self.selected_price, self.selected_amount)
+                ApiHelper.create_recharge_order(
+                    user_id, self.selected_price, self.selected_amount,
+                    on_order_success, on_order_error
+                )
 
-                if order_data and 'data' in order_data:
-                    payment_url = order_data['data'].get('payment_url')
-                    self.current_order_id = order_data['data'].get('order_id')
+            def on_get_id_error(error):
+                handle_order_error(f"获取用户ID失败: {error}")
 
-                    if payment_url and self.current_order_id:
-                        # 打开支付链接
-                        QDesktopServices.openUrl(QUrl(payment_url))
-                        self.paymentActionWidget.setHint(
-                            "支付页面已在浏览器中打开，请完成支付。\n支付成功后此窗口将自动关闭。"
-                        )
-                        # 启动轮询
-                        self._start_polling()
-                        createOrderButton.setVisible(False) # 隐藏按钮，防止重复点击
-                    else:
-                        raise Exception("API返回数据不完整，缺少 payment_url 或 order_id")
-                else:
-                    raise Exception("创建订单失败，API返回数据格式不正确")
+            # 获取用户ID
+            ApiHelper.get_id(on_get_id_success, on_get_id_error)
 
-            except Exception as e:
-                logger.error(f"创建充值订单失败: {e}")
-                self.paymentActionWidget.setHint(f"创建订单失败: {str(e)}")
-                createOrderButton.setText("重试")
-                createOrderButton.setEnabled(True)
+        def handle_order_error(error_msg):
+            """处理订单创建错误"""
+            logger.error(f"创建充值订单失败: {error_msg}")
+            self.paymentActionWidget.setHint(error_msg)
+            createOrderButton.setEnabled(True)
+            createOrderButton.setText("创建订单")
+            createOrderButton.setText("重试")
+            createOrderButton.setEnabled(True)
 
         createOrderButton.clicked.connect(on_button_clicked)
         self.paymentActionWidget.addButton(createOrderButton)
@@ -473,8 +494,7 @@ class PurchaseDialog(MaskDialogBase):
             self.paymentActionWidget.setHint("支付状态查询超时，请稍后手动查询余额。")
             return
 
-        try:
-            status_data = api_client.get_order_status_t(self.current_order_id)
+        def on_status_success(status_data):
             if status_data and 'data' in status_data:
                 status = status_data['data'].get('status')
                 logger.info(f"Order {self.current_order_id} status: {status}")
@@ -489,18 +509,24 @@ class PurchaseDialog(MaskDialogBase):
 
                     # 延迟一小会，然后关闭窗口
                     QTimer.singleShot(1500, self.accept)
-
                 elif status == 'FAILED':
                     self.poll_timer.stop()
                     logger.warning(f"Order {self.current_order_id} has status: {status}")
-                    self.paymentActionWidget.setHint(f"支付失败或订单已过期。")
+                    self.paymentActionWidget.setHint("支付失败或订单已过期。")
                 # else status is 'pending', do nothing and wait for next poll
-        except Exception as e:
-            logger.error(f"Error while polling for payment status: {e}")
-            # 可以在几次失败后停止轮询
-            if self.poll_count > 5: # 如果连续失败5次
-                self.poll_timer.stop()
-                self.paymentActionWidget.setHint("查询支付状态时发生网络错误。")
+
+        def on_status_error(error):
+            logger.error(f"查询订单状态失败: {error}")
+            # 继续轮询，不停止
+
+        # 使用ApiHelper异步查询订单状态
+        ApiHelper.call_async(
+            api_client.get_order_status,
+            on_status_success,
+            on_status_error,
+            None,
+            self.current_order_id
+        )
 
 # 如果直接运行该文件，则打开充值对话框进行测试
 if __name__ == "__main__":

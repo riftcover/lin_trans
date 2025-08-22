@@ -15,30 +15,8 @@ class AuthenticationError(Exception):
     pass
 
 
-def to_t(func: Callable):
-    """将异步方法转换为同步方法的装饰器"""
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        return _run_async(func(self, *args, **kwargs))
-
-    return wrapper
-
-
-def _get_event_loop():
-    """获取或创建事件循环"""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop
-
-
-def _run_async(coro):
-    """在线程池中运行异步代码"""
-    loop = _get_event_loop()
-    return loop.run_until_complete(coro)
+# 移除了@to_t装饰器和相关的同步转换函数
+# APIClient现在只提供异步接口，UI层应该使用QThread来调用
 
 
 class APIClient:
@@ -56,7 +34,7 @@ class APIClient:
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout_value)
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
-        self._executor = ThreadPoolExecutor(max_workers=1)
+        # 移除ThreadPoolExecutor，不再需要同步转换
 
     def load_token_from_settings(self, settings) -> bool:
         """
@@ -163,15 +141,7 @@ class APIClient:
             logger.error(f'Failed to refresh session: {e}')
             return False
 
-    @to_t
-    async def refresh_session_t(self) -> bool:
-        """刷新会话token（同步版本）"""
-        return await self.refresh_session()
 
-    @to_t
-    async def login_t(self, email: str, password: str) -> Dict:
-        """用户登录（同步版本）"""
-        return await self.login(email, password)
 
     async def get_balance(self) -> Dict:
         """
@@ -208,12 +178,7 @@ class APIClient:
                     raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取余额失败: {str(e)}")
 
-    @to_t
-    async def get_balance_t(self) -> Dict:
-        """
-        获取用户余额（同步版本）
-        """
-        return await self.get_balance()
+
 
     async def reset_password(self, email: str) -> Dict:
         """
@@ -232,12 +197,7 @@ class APIClient:
         except httpx.HTTPError as e:
             raise Exception(f"重置密码请求失败: {str(e)}") from e
 
-    @to_t
-    async def reset_password_t(self, email: str) -> Dict:
-        """
-        请求重置密码（同步版本）
-        """
-        return await self.reset_password(email)
+
 
     async def get_history(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
                           start_date: Optional[str] = None, end_date: Optional[str] = None):
@@ -299,32 +259,11 @@ class APIClient:
             logger.error(f'Unexpected error in get_history: {e}')
             raise ValueError(f"获取交易历史失败: {str(e)}")
 
-    @to_t
-    async def get_history_t(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
-                            start_date: Optional[str] = None, end_date: Optional[str] = None):
-        """
-        获取交易历史记录（同步版本）
 
-        Args:
-            page: 页码，默认为1
-            page_size: 每页记录数，默认为10
-            transaction_type: 交易类型，可选
-            start_date: 开始日期，可选
-            end_date: 结束日期，可选
 
-        Returns:
-            Dict: 包含交易历史记录的响应数据
+    async def get_id(self) -> str:
         """
-        try:
-            return await self.get_history(page, page_size, transaction_type, start_date, end_date)
-        except Exception as e:
-            logger.error(f'Error in get_history_sync: {e}')
-            # 返回空数据而不是抛出异常
-            return {'data': {'transactions': [], 'total': 0, 'page': page, 'page_size': page_size}}
-
-    def get_id(self) -> str:
-        """
-        获取当前登录用户的ID（纯同步版本）
+        获取当前登录用户的ID（异步版本）
 
         Returns:
             str: 用户ID
@@ -334,34 +273,32 @@ class APIClient:
             Exception: 当获取用户ID失败时抛出
         """
         try:
-            with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
-                # 发送请求
-                response = client.get("/users/profile", headers=self.headers)
-                response.raise_for_status()
-                data = response.json()
+            # 使用异步客户端发送请求
+            response = await self.client.get("/users/profile", headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
 
-                if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
-                    return data["data"]["user"]["id"]
-                logger.error(f"User ID not found in response: {data}")
-                raise ValueError("无法获取用户ID：响应数据格式不正确")
+            if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
+                return data["data"]["user"]["id"]
+            logger.error(f"User ID not found in response: {data}")
+            raise ValueError("无法获取用户ID：响应数据格式不正确")
         except httpx.HTTPStatusError as e:
             logger.error(f"Get user ID failed: {e}")
             if e.response.status_code == 401:
                 logger.warning("Authentication failed (401), attempting to refresh token")
                 # 尝试刷新token
-                if self.refresh_session_t():
+                if await self.refresh_session():
                     # 刷新成功，重试请求
                     logger.info('Token refreshed, retrying request')
                     try:
-                        with httpx.Client(base_url=self.base_url, timeout=15.0) as retry_client:
-                            response = retry_client.get("/users/profile", headers=self.headers)
-                            response.raise_for_status()
-                            data = response.json()
+                        response = await self.client.get("/users/profile", headers=self.headers)
+                        response.raise_for_status()
+                        data = response.json()
 
-                            if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
-                                return data["data"]["user"]["id"]
-                            logger.error(f"User ID not found in response: {data}")
-                            raise ValueError("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
+                        if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
+                            return data["data"]["user"]["id"]
+                        logger.error(f"User ID not found in response: {data}")
+                        raise ValueError("无法获取用户ID：响应数据格式不正确")
                     except Exception as retry_error:
                         logger.error(f'Retry after token refresh failed: {retry_error}')
                         raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
@@ -371,7 +308,7 @@ class APIClient:
                     raise AuthenticationError("Token已过期，需要重新登录")
             raise ValueError(f"获取用户ID失败: {str(e)}")
         except Exception as e:
-            logger.error(f"Unexpected error in get_id_sync: {e}")
+            logger.error(f"Unexpected error in get_id: {e}")
             raise ValueError(f"获取用户ID失败: {str(e)}")
 
     async def recharge_tokens(self, user_id: str, amount: int) -> Dict:
@@ -459,19 +396,7 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_tokens: {e}')
             raise ValueError(f"充值失败: {str(e)}") from e
 
-    @to_t
-    async def recharge_tokens_t(self, us_id: str, amount: int) -> Dict:
-        """
-        充值代币（同步版本）
 
-        Args:
-            us_id: 用户id
-            amount: 充值金额
-
-        Returns:
-            Dict: 包含充值结果的响应数据
-        """
-        return await self.recharge_tokens(us_id, amount)
 
     async def create_recharge_order(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
         """
@@ -532,20 +457,7 @@ class APIClient:
             logger.error(f'Unexpected error in create_recharge_order: {e}')
             raise ValueError(f"创建充值订单失败: {str(e)}") from e
 
-    @to_t
-    async def create_recharge_order_t(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
-        """
-        创建充值订单（同步版本）
 
-        Args:
-            user_id: 用户ID
-            amount_in_yuan: 充值金额，单位为元
-            token_amount: 充值代币数量
-
-        Returns:
-            Dict: 包含订单信息的响应数据
-        """
-        return await self.create_recharge_order(user_id, amount_in_yuan, token_amount)
 
     async def get_order_status(self, order_id: str) -> Dict:
         """
@@ -588,18 +500,7 @@ class APIClient:
             logger.error(f'Unexpected error in get_order_status: {e}')
             raise ValueError(f"查询订单状态失败: {str(e)}") from e
 
-    @to_t
-    async def get_order_status_t(self, order_id: str) -> Dict:
-        """
-        查询充值订单状态（同步版本）
 
-        Args:
-            order_id: 订单ID
-
-        Returns:
-            Dict: 包含订单状态的响应数据
-        """
-        return await self.get_order_status(order_id)
 
     async def recharge_packages(self) -> Dict:
         """
@@ -620,14 +521,7 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_packages: {e}')
             raise ValueError(f"充值套餐失败: {str(e)}") from e
 
-    @to_t
-    async def recharge_packages_t(self) -> Dict:
-        """
-        充值套餐（同步版本）
-        Returns:
 
-        """
-        return await self.recharge_packages()
 
     async def consume_tokens(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
         """
@@ -685,20 +579,7 @@ class APIClient:
             logger.error(f'消费代币时发生错误: {e}')
             raise ValueError(f"消费代币失败: {str(e)}") from e
 
-    @to_t
-    async def consume_tokens_t(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
-        """
-        消费代币（同步版本）
 
-        Args:
-            token_amount: 消费的代币数量
-            feature_key: 功能标识符，默认为"asr"
-            user_id: 用户ID，如果为None，则使用当前登录用户
-
-        Returns:
-            Dict: API响应结果
-        """
-        return await self.consume_tokens(token_amount, feature_key, user_id)
 
     async def get_token_coefficients(self) -> Dict:
         """
@@ -718,12 +599,7 @@ class APIClient:
             logger.error(f'Get token coefficients failed: {e}')
             raise Exception(f"获取代币消耗系数失败: {str(e)}")
 
-    @to_t
-    async def get_token_coefficients_t(self) -> Dict:
-        """
-        获取代币消耗系数（同步版本）
-        """
-        return await self.get_token_coefficients()
+
 
     async def check_version(self, platform: str, current_version: str):
         """
@@ -749,9 +625,7 @@ class APIClient:
                 logger.error(f'Check version failed: {e}')
                 raise Exception(f"检查版本失败: {str(e)}") from e
 
-    @to_t
-    async def check_version_t(self, platform: str, current_version: str):
-        return await self.check_version(platform, current_version)
+
 
     async def get_profile(self):
         """异步获取用户资料"""
@@ -766,12 +640,7 @@ class APIClient:
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
-        self._executor.shutdown(wait=True)
-
-    @to_t
-    async def close_t(self):
-        """关闭HTTP客户端（同步版本）"""
-        await self.close()
+        # 移除了ThreadPoolExecutor，不再需要关闭
 
 
 # 创建全局API客户端实例
@@ -779,4 +648,10 @@ class APIClient:
 api_client = APIClient()
 
 if __name__ == '__main__':
-    user_login = api_client.login_t("tiaodanwusha@gmail.com", "1234567")
+    # 测试代码需要使用异步方式
+    import asyncio
+    async def test():
+        user_login = await api_client.login("tiaodanwusha@gmail.com", "1234567")
+        print(user_login)
+
+    asyncio.run(test())

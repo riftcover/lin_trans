@@ -5,6 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
 
 from api_client import api_client
+from nice_ui.util.api_helper import ApiHelper
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
                                    CheckBox)
 
@@ -225,41 +226,60 @@ class LoginWindow(QFrame):
             )
             return
 
-        try:
-            user_login = api_client.login_t(email, password)
-            # 保存邮箱账号和登录状态
-            if user_login:
-                self.save_email(email)
-                if 'session' in user_login:
-                    access_token = user_login['session'].get('access_token')
-                    refresh_token = user_login['session'].get('refresh_token')
+        # 禁用登录按钮，防止重复点击
+        self.loginButton.setEnabled(False)
+        self.loginButton.setText("登录中...")
 
-                    if access_token:
-                        self.save_login_state(access_token, refresh_token)
-                user_info = {'email': user_login['user']['email']}
-                # 发送登录成功信号
-                self.loginSuccessful.emit(user_info)
+        def on_login_success(user_login):
+            """登录成功回调"""
+            try:
+                # 保存邮箱账号和登录状态
+                if user_login:
+                    self.save_email(email)
+                    if 'session' in user_login:
+                        access_token = user_login['session'].get('access_token')
+                        refresh_token = user_login['session'].get('refresh_token')
 
-                # 显示登录成功提示
-                InfoBar.success(
-                    title='成功',
-                    content='登录成功',
+                        if access_token:
+                            self.save_login_state(access_token, refresh_token)
+                    user_info = {'email': user_login['user']['email']}
+                    # 发送登录成功信号
+                    self.loginSuccessful.emit(user_info)
+
+                    # 显示登录成功提示
+                    InfoBar.success(
+                        title='成功',
+                        content='登录成功',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=2000,
+                        parent=self
+                    )
+            finally:
+                # 恢复登录按钮状态
+                self.loginButton.setEnabled(True)
+                self.loginButton.setText("登录")
+
+        def on_login_error(error):
+            """登录失败回调"""
+            try:
+                InfoBar.error(
+                    title='错误',
+                    content=str(error),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
-                    duration=2000,
+                    duration=3000,
                     parent=self
                 )
-        except Exception as e:
-            InfoBar.error(
-                title='错误',
-                content=str(e),
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
+            finally:
+                # 恢复登录按钮状态
+                self.loginButton.setEnabled(True)
+                self.loginButton.setText("登录")
+
+        # 使用ApiHelper进行异步登录
+        ApiHelper.login(email, password, on_login_success, on_login_error)
 
     def handle_forgot_password(self):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面

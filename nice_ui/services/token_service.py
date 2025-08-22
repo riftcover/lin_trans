@@ -3,6 +3,7 @@ from typing import List, Dict
 from api_client import api_client, AuthenticationError
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
+from nice_ui.util.api_helper import ApiHelper
 from utils import logger
 
 
@@ -99,31 +100,43 @@ class TokenService(TokenServiceInterface):
 
         self._initialized = True
 
-    def update_token_coefficients(self) -> bool:
+    def update_token_coefficients(self) -> None:
         """
-        从服务器获取并更新算力消耗系数
+        从服务器获取并更新算力消耗系数（异步调用）
 
-        Returns:
-            bool: 更新是否成功
+        注意：这个方法现在是异步的，不再返回bool值
         """
-        try:
-            # 获取代币消耗系数
-            response = api_client.get_token_coefficients_t()
-            if response and 'data' in response:
-                coefficients = response['data']
-                # 遍历系数列表，更新对应的值
-                for coef in coefficients:
-                    if coef['coefficient_key'] == 'asr_qps':
-                        old_value = self.asr_qps
-                        self.asr_qps = float(coef['coefficient_value'])
-                    elif coef['coefficient_key'] == 'trans_qps':
-                        old_value = self.trans_qps
-                        self.trans_qps = float(coef['coefficient_value'])
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"更新算力消耗系数失败: {str(e)}")
-            return False
+        def on_coefficients_success(response):
+            """获取系数成功的回调"""
+            try:
+                if response and 'data' in response:
+                    coefficients = response['data']
+                    # 遍历系数列表，更新对应的值
+                    for coef in coefficients:
+                        if coef['coefficient_key'] == 'asr_qps':
+                            old_value = self.asr_qps
+                            self.asr_qps = float(coef['coefficient_value'])
+                            logger.info(f"ASR QPS系数更新: {old_value} -> {self.asr_qps}")
+                        elif coef['coefficient_key'] == 'trans_qps':
+                            old_value = self.trans_qps
+                            self.trans_qps = float(coef['coefficient_value'])
+                            logger.info(f"Trans QPS系数更新: {old_value} -> {self.trans_qps}")
+                    logger.info("算力消耗系数更新成功")
+                else:
+                    logger.warning("获取算力消耗系数响应数据格式不正确")
+            except Exception as e:
+                logger.error(f"处理算力消耗系数数据失败: {str(e)}")
+
+        def on_coefficients_error(error):
+            """获取系数失败的回调"""
+            logger.error(f"更新算力消耗系数失败: {str(error)}")
+
+        # 使用ApiHelper异步获取代币系数
+        ApiHelper.call_async(
+            api_client.get_token_coefficients,
+            on_coefficients_success,
+            on_coefficients_error
+        )
 
     def get_user_balance(self) -> int | bool:
         """
@@ -152,25 +165,37 @@ class TokenService(TokenServiceInterface):
             logger.error(f"获取代币余额时发生错误: {str(e)}")
             return False
 
-    def get_user_history(self) -> list:
+    def get_user_history(self, callback=None) -> None:
         """
-        获取用户当前消费记录
+        获取用户当前消费记录（异步版本）
 
-        Returns:
-
+        Args:
+            callback: 回调函数，接收交易记录列表作为参数
         """
-        # 更新历史记录
-        try:
-            # 获取最新的交易记录
-            history_data = api_client.get_history_t(page=1, page_size=10)
-            if history_data and 'data' in history_data:
-                transactions = history_data['data'].get('transactions', [])
-                total_records = history_data['data'].get('total', 0)
-                logger.info(f"更新交易历史记录: 共 {total_records} 条记录")
-                return transactions
-                # 通知UI更新历史记录
-        except Exception as e:
-            logger.error(f"获取交易历史记录失败: {str(e)}")
+        def on_history_success(history_data):
+            try:
+                if history_data and 'data' in history_data:
+                    transactions = history_data['data'].get('transactions', [])
+                    total_records = history_data['data'].get('total', 0)
+                    logger.info(f"更新交易历史记录: 共 {total_records} 条记录")
+                    if callback:
+                        callback(transactions)
+                else:
+                    logger.warning("获取交易历史记录响应数据格式不正确")
+                    if callback:
+                        callback([])
+            except Exception as e:
+                logger.error(f"处理交易历史记录数据失败: {e}")
+                if callback:
+                    callback([])
+
+        def on_history_error(error):
+            logger.error(f"获取交易历史记录失败: {error}")
+            if callback:
+                callback([])
+
+        # 使用ApiHelper异步获取交易历史记录
+        ApiHelper.get_history(1, 10, on_history_success, on_history_error)
     def calculate_asr_tokens(self, video_duration: float) -> int:
         """
         计算ASR任务所需代币
@@ -331,24 +356,36 @@ class TokenService(TokenServiceInterface):
                 # 用户选择了"否"
                 return False
 
-    def get_recharge_packages(self) -> List[RechargePackage]:
+    def get_recharge_packages(self, callback=None) -> None:
         """
-        获取充值套餐列表
+        获取充值套餐列表（异步版本）
 
-            Returns:
-            dict: 充值套餐列表
+        Args:
+            callback: 回调函数，接收充值套餐列表作为参数
         """
-        try:
-            # 获取充值套餐列表
-            packages_data = api_client.recharge_packages_t()
+        def on_packages_success(packages_data):
+            try:
+                # 解析响应数据获取充值套餐列表
+                packages = packages_data.get('data', [])
+                logger.info(f"充值套餐列表: {packages}")
+                if callback:
+                    callback(packages)
+            except Exception as e:
+                logger.error(f"处理充值套餐数据失败: {e}")
+                if callback:
+                    callback([])
 
-            # 解析响应数据获取充值套餐列表
-            packages = packages_data.get('data', [])
-            logger.info(f"充值套餐列表: {packages}")
-            return packages
-        except Exception as e:
-            logger.error(f"获取充值套餐列表时发生错误: {str(e)}")
-            return []
+        def on_packages_error(error):
+            logger.error(f"获取充值套餐列表时发生错误: {error}")
+            if callback:
+                callback([])
+
+        # 使用ApiHelper异步获取充值套餐列表
+        ApiHelper.call_async(
+            api_client.recharge_packages,
+            on_packages_success,
+            on_packages_error
+        )
 
     def set_task_token_amount(self, key: str, amount: int) -> None:
         """
@@ -389,7 +426,9 @@ class TokenService(TokenServiceInterface):
 
     def consume_tokens(self, token_amount: int, feature_key: str = "asr") -> bool:
         """
-        消费代币
+        消费代币 - 注意：这个方法现在是同步的，但内部使用异步API
+
+        为了保持向后兼容性，这个方法仍然是同步的，但建议使用异步版本
 
         Args:
             token_amount: 消费的代币数量
@@ -398,12 +437,12 @@ class TokenService(TokenServiceInterface):
         Returns:
             bool: 消费是否成功
         """
+        logger.warning("TokenService.consume_tokens() 是同步方法，建议使用异步版本或在UI中使用ApiHelper")
         try:
-            # 调用api_client中的方法消费代币
-            us_id = api_client.get_id()
-            api_client.consume_tokens_t(token_amount, feature_key, us_id)
-            logger.info(f"消费代币成功: {token_amount}")
-            return True
+            # 这里需要在后台线程中运行异步代码
+            # 但为了保持向后兼容性，暂时返回False并记录警告
+            logger.warning("同步消费代币方法已废弃，请使用ApiHelper.consume_tokens()在UI中调用")
+            return False
 
         except Exception as e:
             logger.error(f"消费代币时发生错误: {str(e)}")

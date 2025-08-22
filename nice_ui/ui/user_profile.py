@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 
 from api_client import api_client, AuthenticationError
+from nice_ui.util.api_helper import ApiHelper
 # 导入自定义组件
 from components.widget.transaction_table import TransactionTableWidget
 from nice_ui.configure.signal import data_bridge
@@ -258,14 +259,22 @@ class ProfileInterface(QFrame):
     def _update_balance(self):
         """更新算力余额"""
         logger.info("个人中心接收到更新余额信号，开始更新余额")
-        balance_data = api_client.get_balance_t()
-        if balance_data and 'data' in balance_data:
-            balance = balance_data['data'].get('balance', 0)
-            self.quotaValue.setText(str(balance))
-            logger.info(f"余额更新成功: {balance}")
-        else:
+
+        def on_balance_success(balance_data):
+            if balance_data and 'data' in balance_data:
+                balance = balance_data['data'].get('balance', 0)
+                self.quotaValue.setText(str(balance))
+                logger.info(f"余额更新成功: {balance}")
+            else:
+                self.quotaValue.setText('0')
+                logger.warning("获取余额失败或余额为0")
+
+        def on_balance_error(error):
+            logger.error(f"获取余额出错: {error}")
             self.quotaValue.setText('0')
-            logger.warning("获取余额失败或余额为0")
+            logger.warning("获取余额失败")
+
+        ApiHelper.get_balance(on_balance_success, on_balance_error)
 
     def set_balance(self, balance: int):
         """
@@ -333,26 +342,38 @@ class ProfileInterface(QFrame):
         if page is not None:
             self.current_page = page
 
+        def on_history_success(history_data):
+            if not history_data or 'data' not in history_data:
+                return
+
+            # 获取交易记录
+            transactions = history_data['data'].get('transactions', [])
+            total_records = history_data['data'].get('total', 0)
+            # 输出分页信息到日志
+            logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
+
+            # 使用新方法更新表格和分页状态
+            self.transactionTable.update_with_data(
+                items=transactions,
+                current_page=self.current_page,
+                total_records=total_records
+            )
+
+        def on_history_error(error):
+            logger.error(f"获取交易记录出错: {error}")
+            # 显示空数据
+            self.transactionTable.update_with_data(
+                items=[],
+                current_page=self.current_page,
+                total_records=0
+            )
+
         # 调用API获取指定页的交易记录
-        history_data = api_client.get_history_t(
+        ApiHelper.get_history(
             page=self.current_page,
-            page_size=self.page_size
-        )
-
-        if not history_data or 'data' not in history_data:
-            return
-
-        # 获取交易记录
-        transactions = history_data['data'].get('transactions', [])
-        total_records = history_data['data'].get('total', 0)
-        # 输出分页信息到日志
-        logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
-
-        # 使用新方法更新表格和分页状态
-        self.transactionTable.update_with_data(
-            items=transactions,
-            current_page=self.current_page,
-            total_records=total_records
+            page_size=self.page_size,
+            success_callback=on_history_success,
+            error_callback=on_history_error
         )
 
     def showPurchaseDialog(self):

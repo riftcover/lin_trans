@@ -86,18 +86,17 @@ class SrtWriter:
         logger.info('使用中文模型')
 
         try:
-            # # 1. 初始化ASR模型
-            # model = self._init_asr_model(model_name)
-            #
-            # # 2. 执行ASR识别
-            # segments = self._run_asr_recognition(model)
+            # 1. 初始化ASR模型
+            model = self._init_asr_model(model_name)
+
+            # 2. 执行ASR识别
+            segments = self._run_asr_recognition(model)
 
             # 3. 生成segment_data文件并上传OSS（失败不影响主流程）
             segment_data_path = None
             oss_url = None
             try:
-                # segment_data_path = self._create_segment_data_file(segments)
-                segment_data_path = '/Users/locodol/Movies/test_zh_segment_data.json'
+                segment_data_path = self._create_segment_data_file(segments)
                 oss_url = self._upload_segment_data_to_oss(segment_data_path)
             except Exception as e:
                 logger.warning(f"segment_data处理失败，跳过线上NLP: {str(e)}")
@@ -109,9 +108,9 @@ class SrtWriter:
                 logger.warning(f"线上NLP任务提交失败: {str(e)}")
 
             # 5. 生成本地SRT文件（必须成功，否则用户无法获得结果）
-            # srt_success = self._generate_local_srt(segments)
-            # if not srt_success:
-            #     logger.error("所有SRT生成方案都失败，用户将无法获得识别结果")
+            srt_success = self._generate_local_srt(segments)
+            if not srt_success:
+                logger.error("所有SRT生成方案都失败，用户将无法获得识别结果")
                 # 即使失败也要通知完成，避免UI卡死
 
 
@@ -271,9 +270,7 @@ class SrtWriter:
             # 直接使用原始segments生成SRT，不进行句子分割
             basic_segments = []
             for segment in segments:
-                # 确保每个segment都有必要的字段
-                timestamp = segment.get('timestamp', [])
-                if timestamp:
+                if timestamp := segment.get('timestamp', []):
                     basic_segments.append({
                         'text': segment.get('text', ''),
                         'start': timestamp[0][0] if timestamp[0] else 0,
