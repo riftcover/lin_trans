@@ -30,3 +30,10 @@ models目录为项目同级目录
 ```bash
 pip install --no-index --find-links wheels -r requirements.txt
 ```
+
+
+
+
+asr任务`funasr_zn_model`调整nlp功能由本地调整为线上：
+1. 创建一个数据格式用来存储segments,生成的文件segment_data上传oss供线上nlp使用
+2. 线上nlp功能与本地基本一致,唯一区别本地nlp功能在asr任务过程中执行,使用数据`segments`,线上nlp功能使用数据`segment_data`

@@ -49,6 +49,36 @@ def funasr_write_txt_file(segments, txt_file_path):
         txt_file.write(segments)
 
 
+def write_segment_data_file(segments, segment_data_file_path):
+    """
+    将 segments 数据写入 segment_data 文件，用于 NLP 任务
+
+    Args:
+        segments: FunASR 输出的句子信息列表
+        segment_data_file_path: segment_data 文件路径
+    """
+    import json
+
+    # 确保数据格式适合 NLP 处理
+    segment_data = []
+    for segment in segments:
+        # 提取必要的字段
+        data_item = {
+            'text': segment.get('text', ''),
+            'timestamp': segment.get('timestamp', []),
+            'start': segment.get('start'),
+            'end': segment.get('end'),
+            'spk': segment.get('spk', 0)
+        }
+        segment_data.append(data_item)
+
+    # 写入 JSON 格式的文件
+    with open(segment_data_file_path, "w", encoding="utf-8") as f:
+        json.dump(segment_data, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"已写入 segment_data 文件: {segment_data_file_path}, 包含 {len(segment_data)} 个片段")
+
+
 def funasr_format_time(seconds):
     """将秒数转换为SRT格式的时间字符串"""
     td = timedelta(seconds=seconds)

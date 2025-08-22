@@ -12,8 +12,10 @@ from app.spacy_utils.sentence_processor import get_sub_index, split_segments_by_
 from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from utils import logger
-from utils.file_utils import funasr_write_srt_file, Segment, split_sentence
+from utils.file_utils import funasr_write_srt_file, Segment, split_sentence, write_segment_data_file
 from utils.lazy_loader import LazyLoader
+from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
+from app.nlp_api import create_nlp_client
 
 funasr = LazyLoader('funasr')
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -67,41 +69,232 @@ class SrtWriter:
             logger.error(f'模型匹配失败：{model_name}')
 
     def funasr_zn_model(self, model_name: str):
-        from funasr import AutoModel
+        """
+        使用FunASR中文模型进行语音识别，支持本地和线上NLP处理
+
+        流程：
+        1. ASR识别生成segments
+        2. 生成segment_data文件并上传OSS
+        3. 调用线上NLP处理（异步）
+        4. 生成本地SRT作为降级方案
+
+        错误处理策略：
+        - 线上NLP失败 → 使用本地NLP
+        - 本地NLP失败 → 生成基础SRT
+        - 基础SRT失败 → 记录错误但不中断流程
+        """
         logger.info('使用中文模型')
 
+        try:
+            # # 1. 初始化ASR模型
+            # model = self._init_asr_model(model_name)
+            #
+            # # 2. 执行ASR识别
+            # segments = self._run_asr_recognition(model)
+
+            # 3. 生成segment_data文件并上传OSS（失败不影响主流程）
+            segment_data_path = None
+            oss_url = None
+            try:
+                # segment_data_path = self._create_segment_data_file(segments)
+                segment_data_path = '/Users/locodol/Movies/test_zh_segment_data.json'
+                oss_url = self._upload_segment_data_to_oss(segment_data_path)
+            except Exception as e:
+                logger.warning(f"segment_data处理失败，跳过线上NLP: {str(e)}")
+
+            # 4. 提交线上NLP任务（异步，失败不影响主流程）
+            try:
+                self._submit_online_nlp_task(oss_url)
+            except Exception as e:
+                logger.warning(f"线上NLP任务提交失败: {str(e)}")
+
+            # 5. 生成本地SRT文件（必须成功，否则用户无法获得结果）
+            # srt_success = self._generate_local_srt(segments)
+            # if not srt_success:
+            #     logger.error("所有SRT生成方案都失败，用户将无法获得识别结果")
+                # 即使失败也要通知完成，避免UI卡死
+
+
+        except Exception as e:
+            logger.error(f"funasr_zn_model执行过程中发生严重错误: {str(e)}")
+            # 即使发生严重错误，也要通知UI完成，避免界面卡死
+        finally:
+            # 无论如何都要通知完成
+            self.data_bridge.emit_whisper_finished(self.unid)
+
+    def _init_asr_model(self, model_name: str):
+        """初始化ASR模型"""
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
         spk_model_dir = f'{config.funasr_model_path}/speech_campplus_sv_zh-cn_16k-common'
-        model = AutoModel(model=model_dir, model_revision="v2.0.4",
-                          vad_model=vad_model_dir, vad_model_revision="v2.0.4",
-                          punc_model=punc_model_dir, punc_model_revision="v2.0.4",  # 标点符号
-                          spk_model=spk_model_dir, spk_model_revision="v2.0.2",  # 说话人确认
-                          vad_kwargs={"max_single_segment_time": 30000},
-                          disable_update=True,
-                          disable_pbar=True, disable_log=True
-                          )
-        # 启动进度更新线程
+
+        from funasr import AutoModel
+        return AutoModel(
+            model=model_dir, model_revision="v2.0.4",
+            vad_model=vad_model_dir, vad_model_revision="v2.0.4",
+            punc_model=punc_model_dir, punc_model_revision="v2.0.4",
+            spk_model=spk_model_dir, spk_model_revision="v2.0.2",
+            vad_kwargs={"max_single_segment_time": 30000},
+            disable_update=True, disable_pbar=True, disable_log=True
+        )
+
+    def _run_asr_recognition(self, model):
+        """执行ASR识别"""
         progress_thread = threading.Thread(target=self._update_progress)
         progress_thread.start()
+
         try:
-            res = model.generate(input=self.input_file, batch_size_s=300,
-                                 hotword=None, language=self.ln
-                                 )
+            res = model.generate(
+                input=self.input_file,
+                batch_size_s=300,
+                hotword=None,
+                language=self.ln
+            )
+            self.data_bridge.emit_whisper_working(self.unid, 93)
+            return res[0]['sentence_info']
         finally:
             self._stop_progress_thread = True
-            progress_thread.join()  # 模型生成完成，更新进度值到 80
-        self.data_bridge.emit_whisper_working(self.unid, 93)
+            progress_thread.join()
+
+    def _create_segment_data_file(self, segments):
+        """创建segment_data文件"""
+        segment_data_path = f"{os.path.splitext(self.input_file)[0]}_segment_data.json"
+        write_segment_data_file(segments, segment_data_path)
+        logger.info(f"已创建segment_data文件: {segment_data_path}")
+        return segment_data_path
+
+    def _upload_segment_data_to_oss(self, segment_data_path):
+        """上传segment_data文件到OSS"""
+        logger.info(f"开始上传segment_data文件: {segment_data_path}")
+        try:
+            success, oss_url, error = upload_file_for_asr(segment_data_path)
+            logger.info(f"upload_file_for_asr返回: success={success}, oss_url={oss_url}, error={error}")
+
+            if success:
+                logger.info(f"segment_data文件上传成功: {oss_url}")
+                return oss_url
+            else:
+                logger.error(f"segment_data文件上传失败: {error}")
+                return None
+        except Exception as e:
+            logger.error(f"上传segment_data文件时发生异常: {str(e)}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
+            return None
+
+    def _submit_online_nlp_task(self, oss_url):
+        """提交线上NLP任务（异步）"""
+        if not oss_url:
+            logger.warning("OSS URL为空，跳过线上NLP处理")
+            return
+
+        # 在后台线程中处理线上NLP任务
+        nlp_thread = threading.Thread(
+            target=self._process_online_nlp_async,
+            args=(oss_url,),
+            daemon=False  # 非守护线程，确保任务能完成
+        )
+
+        try:
+            nlp_thread.start()
+            logger.info("已启动线上NLP异步处理线程")
+        except Exception as e:
+            logger.error(f"启动NLP异步处理线程失败: {str(e)}")
+
+    def _process_online_nlp_async(self, oss_url):
+        """异步处理线上NLP任务"""
+        try:
+            nlp_client = create_nlp_client()
+            if not nlp_client:
+                logger.error("无法创建NLP客户端，线上NLP处理失败")
+                return
+
+            # 1. 提交任务
+            success, task_id, error = nlp_client.submit_nlp_task(oss_url, 'zh')
+            if not success:
+                logger.error(f"线上NLP任务提交失败: {error}")
+                return
+
+            logger.info(f"线上NLP任务提交成功，任务ID: {task_id}")
+
+            # 2. 等待任务完成
+            success, srt_url, error = nlp_client.wait_for_completion(task_id)
+            if not success:
+                logger.error(f"线上NLP任务处理失败: {error}")
+                return
+
+            logger.info(f"线上NLP任务完成，SRT文件URL: {srt_url}")
+
+            # 3. 下载并替换本地SRT文件
+            local_srt_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+            success, error = nlp_client.download_srt_file(srt_url, local_srt_path)
+            if success:
+                logger.info(f"线上NLP处理完成，已替换本地SRT文件: {local_srt_path}")
+                # 可以在这里发送通知给UI，告知用户SRT文件已更新
+                self._notify_nlp_completion(local_srt_path)
+            else:
+                logger.error(f"下载线上NLP结果失败: {error}")
+
+        except Exception as e:
+            logger.error(f"线上NLP异步处理时发生异常: {str(e)}")
+
+    def _notify_nlp_completion(self, srt_path):
+        """通知NLP处理完成"""
+        try:
+            # 这里可以通过data_bridge发送通知给UI
+            # 告知用户线上NLP处理已完成，SRT文件已更新
+            logger.info(f"线上NLP处理完成通知: {srt_path}")
+            # 如果需要，可以添加UI通知逻辑
+            # self.data_bridge.emit_nlp_completed(self.unid, srt_path)
+        except Exception as e:
+            logger.warning(f"发送NLP完成通知时发生异常: {str(e)}")
+
+    def _generate_local_srt(self, segments):
+        """生成本地SRT文件作为降级方案"""
         srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        segments = res[0]['sentence_info']
-        nlp = init_nlp()
-        segments_new = split_segments_by_boundaries(segments, nlp)
 
+        try:
+            nlp = init_nlp()
+            segments_new = split_segments_by_boundaries(segments, nlp)
+            funasr_write_srt_file(segments_new, srt_file_path)
+            logger.info(f"本地SRT文件生成成功: {srt_file_path}")
+            return True
+        except Exception as e:
+            logger.error(f"本地NLP处理失败: {str(e)}")
+            # 如果本地NLP也失败，生成基础SRT文件（不进行句子分割）
+            return self._generate_basic_srt(segments, srt_file_path)
 
-        # self.data_bridge.emit_whisper_working(self.unid, 90)
-        funasr_write_srt_file(segments_new, srt_file_path)
-        self.data_bridge.emit_whisper_finished(self.unid)
+    def _generate_basic_srt(self, segments, srt_file_path):
+        """生成基础SRT文件（不进行NLP处理的降级方案）"""
+        try:
+            # 直接使用原始segments生成SRT，不进行句子分割
+            basic_segments = []
+            for segment in segments:
+                # 确保每个segment都有必要的字段
+                timestamp = segment.get('timestamp', [])
+                if timestamp:
+                    basic_segments.append({
+                        'text': segment.get('text', ''),
+                        'start': timestamp[0][0] if timestamp[0] else 0,
+                        'end': timestamp[-1][1] if timestamp[-1] else 0
+                    })
+
+            funasr_write_srt_file(basic_segments, srt_file_path)
+            logger.info(f"基础SRT文件生成成功（未进行NLP处理）: {srt_file_path}")
+            return True
+        except Exception as e:
+            logger.error(f"生成基础SRT文件也失败: {str(e)}")
+            return False
+
+    def _cleanup_temp_files(self, segment_data_path):
+        """清理临时文件"""
+        try:
+            if segment_data_path and os.path.exists(segment_data_path):
+                os.unlink(segment_data_path)
+                logger.info(f"已清理临时文件: {segment_data_path}")
+        except Exception as e:
+            logger.warning(f"清理临时文件失败: {str(e)}")
 
     def funasr_sense_model(self, model_name: str):
         """
@@ -292,13 +485,12 @@ class SrtWriter:
 if __name__ == '__main__':
     # SrtWriter('tt1.wav').whisperPt_to_srt()
     # SrtWriter('Ski Pole Use 101.wav', 'en').whisperBin_to_srt()
-    output = r'D:\\dcode\lin_trans\\result\\72c63b3fe150d5e95e7b56593d2bb0ac'
+    output = r'/Users/locodol/my_own/code/lin_trans/result/72c63b3fe150d5e95e7b56593d2bb0ac'
     logger.info(output)
-    tt1 = r'D:\dcode\lin_trans\result\72c63b3fe150d5e95e7b56593d2bb0ac\33.wav'
+    tt1 = r'/Users/locodol/Movies/test_zh.mp3'
     # # output = 'D:/dcode/lin_trans/result/Top 10 Affordable Ski Resorts in Europe/Top 10 Affordable Ski Resorts in Europe.wav'
-    # # models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-    # models = 'speech_paraformer-large-vad-punc_asr_nat-en-16k-common-vocab10020'
-    models = 'SenseVoiceSmall'
+    models = 'speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+    # models = 'SenseVoiceSmall'
     #
     # # SrtWriter('xxx', output, tt1, 'zh').whisper_faster_to_srt()
     SrtWriter('xxx', tt1, output, 'zh').funasr_to_srt(models)

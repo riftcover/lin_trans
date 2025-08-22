@@ -34,7 +34,11 @@ default: production
 development:
   api_base_url: http://127.0.0.1:8000/api
   web_base_url: http://127.0.0.1:3000
+  nlp_api_url: http://localhost:8000
+  nlp_api_key: ""
 production:
   api_base_url: https://www.lapped-ai.com/api
   web_base_url: https://www.lapped-ai.com
+  nlp_api_url: http://localhost:8000
+  nlp_api_key: ""
 

@@ -18,6 +18,7 @@ def init_nlp(ln= None):
 
 
     model = get_spacy_model(language)
+    print(model)
 
     try:
         nlp = spacy.load(model)
