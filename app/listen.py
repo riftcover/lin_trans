@@ -70,18 +70,14 @@ class SrtWriter:
 
     def funasr_zn_model(self, model_name: str):
         """
-        使用FunASR中文模型进行语音识别，支持本地和线上NLP处理
+        使用FunASR中文模型进行语音识别
 
         流程：
         1. ASR识别生成segments
-        2. 生成segment_data文件并上传OSS
-        3. 调用线上NLP处理（异步）
-        4. 生成本地SRT作为降级方案
+        2. 生成本地SRT文件（基础版本）
+        3. 生成segment_data文件（供后续智能分句使用）
 
-        错误处理策略：
-        - 线上NLP失败 → 使用本地NLP
-        - 本地NLP失败 → 生成基础SRT
-        - 基础SRT失败 → 记录错误但不中断流程
+        智能分句功能将在用户手动触发时执行
         """
         logger.info('使用中文模型')
 
@@ -92,27 +88,18 @@ class SrtWriter:
             # 2. 执行ASR识别
             segments = self._run_asr_recognition(model)
 
-            # 3. 生成segment_data文件并上传OSS（失败不影响主流程）
-            segment_data_path = None
-            oss_url = None
-            try:
-                segment_data_path = self._create_segment_data_file(segments)
-                oss_url = self._upload_segment_data_to_oss(segment_data_path)
-            except Exception as e:
-                logger.warning(f"segment_data处理失败，跳过线上NLP: {str(e)}")
-
-            # 4. 提交线上NLP任务（异步，失败不影响主流程）
-            try:
-                self._submit_online_nlp_task(oss_url)
-            except Exception as e:
-                logger.warning(f"线上NLP任务提交失败: {str(e)}")
-
-            # 5. 生成本地SRT文件（必须成功，否则用户无法获得结果）
+            # 3. 生成本地SRT文件（基础版本，使用本地NLP）
             srt_success = self._generate_local_srt(segments)
             if not srt_success:
-                logger.error("所有SRT生成方案都失败，用户将无法获得识别结果")
-                # 即使失败也要通知完成，避免UI卡死
+                logger.error("SRT文件生成失败，用户将无法获得识别结果")
 
+            # 4. 生成segment_data文件（供智能分句功能使用）
+            try:
+                segment_data_path = self._create_segment_data_file(segments)
+                # 保存segment_data路径信息到工作对象中，供UI使用
+                self._save_segment_data_path(segment_data_path)
+            except Exception as e:
+                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
 
         except Exception as e:
             logger.error(f"funasr_zn_model执行过程中发生严重错误: {str(e)}")
@@ -163,91 +150,26 @@ class SrtWriter:
         logger.info(f"已创建segment_data文件: {segment_data_path}")
         return segment_data_path
 
-    def _upload_segment_data_to_oss(self, segment_data_path):
-        """上传segment_data文件到OSS"""
-        logger.info(f"开始上传segment_data文件: {segment_data_path}")
+    def _save_segment_data_path(self, segment_data_path):
+        """保存segment_data路径信息，供UI智能分句功能使用"""
         try:
-            success, oss_url, error = upload_file_for_asr(segment_data_path)
-            logger.info(f"upload_file_for_asr返回: success={success}, oss_url={oss_url}, error={error}")
+            # 创建一个元数据文件来保存segment_data路径
+            metadata_path = f"{os.path.splitext(self.input_file)[0]}_metadata.json"
+            metadata = {
+                'segment_data_path': segment_data_path,
+                'created_time': time.time(),
+                'audio_file': self.input_file
+            }
 
-            if success:
-                logger.info(f"segment_data文件上传成功: {oss_url}")
-                return oss_url
-            else:
-                logger.error(f"segment_data文件上传失败: {error}")
-                return None
+            import json
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"已保存segment_data路径信息: {metadata_path}")
         except Exception as e:
-            logger.error(f"上传segment_data文件时发生异常: {str(e)}")
-            import traceback
-            logger.error(f"详细错误信息: {traceback.format_exc()}")
-            return None
+            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
-    def _submit_online_nlp_task(self, oss_url):
-        """提交线上NLP任务（异步）"""
-        if not oss_url:
-            logger.warning("OSS URL为空，跳过线上NLP处理")
-            return
 
-        # 在后台线程中处理线上NLP任务
-        nlp_thread = threading.Thread(
-            target=self._process_online_nlp_async,
-            args=(oss_url,),
-            daemon=False  # 非守护线程，确保任务能完成
-        )
-
-        try:
-            nlp_thread.start()
-            logger.info("已启动线上NLP异步处理线程")
-        except Exception as e:
-            logger.error(f"启动NLP异步处理线程失败: {str(e)}")
-
-    def _process_online_nlp_async(self, oss_url):
-        """异步处理线上NLP任务"""
-        try:
-            nlp_client = create_nlp_client()
-            if not nlp_client:
-                logger.error("无法创建NLP客户端，线上NLP处理失败")
-                return
-
-            # 1. 提交任务
-            success, task_id, error = nlp_client.submit_nlp_task(oss_url, 'zh')
-            if not success:
-                logger.error(f"线上NLP任务提交失败: {error}")
-                return
-
-            logger.info(f"线上NLP任务提交成功，任务ID: {task_id}")
-
-            # 2. 等待任务完成
-            success, srt_url, error = nlp_client.wait_for_completion(task_id)
-            if not success:
-                logger.error(f"线上NLP任务处理失败: {error}")
-                return
-
-            logger.info(f"线上NLP任务完成，SRT文件URL: {srt_url}")
-
-            # 3. 下载并替换本地SRT文件
-            local_srt_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-            success, error = nlp_client.download_srt_file(srt_url, local_srt_path)
-            if success:
-                logger.info(f"线上NLP处理完成，已替换本地SRT文件: {local_srt_path}")
-                # 可以在这里发送通知给UI，告知用户SRT文件已更新
-                self._notify_nlp_completion(local_srt_path)
-            else:
-                logger.error(f"下载线上NLP结果失败: {error}")
-
-        except Exception as e:
-            logger.error(f"线上NLP异步处理时发生异常: {str(e)}")
-
-    def _notify_nlp_completion(self, srt_path):
-        """通知NLP处理完成"""
-        try:
-            # 这里可以通过data_bridge发送通知给UI
-            # 告知用户线上NLP处理已完成，SRT文件已更新
-            logger.info(f"线上NLP处理完成通知: {srt_path}")
-            # 如果需要，可以添加UI通知逻辑
-            # self.data_bridge.emit_nlp_completed(self.unid, srt_path)
-        except Exception as e:
-            logger.warning(f"发送NLP完成通知时发生异常: {str(e)}")
 
     def _generate_local_srt(self, segments):
         """生成本地SRT文件作为降级方案"""

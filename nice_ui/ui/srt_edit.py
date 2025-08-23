@@ -1,15 +1,34 @@
 import os
 import shutil
 
-from PySide6.QtCore import QUrl, Qt, QSize, QSettings
+from PySide6.QtCore import QUrl, Qt, QSize, QSettings, QThread, Signal
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QWidget, QLineEdit, QPushButton, QRadioButton, QFileDialog,
-                               QDialog, QLabel, )
+                               QDialog, QLabel, QProgressDialog, )
 
 from components.widget.custom_splitter import CustomSplitter
 from nice_ui.util.tools import get_default_documents_path
 from utils import logger
 from vendor.qfluentwidgets import (CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition, )
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
+from app.smart_sentence_processor import check_smart_sentence_available, process_smart_sentence
+
+
+class SmartSentenceWorker(QThread):
+    """智能分句处理工作线程"""
+    progress_updated = Signal(int, str)  # 进度和消息
+    finished = Signal(bool, str)  # 是否成功和消息
+
+    def __init__(self, srt_file_path: str):
+        super().__init__()
+        self.srt_file_path = srt_file_path
+
+    def run(self):
+        """执行智能分句处理"""
+        def progress_callback(progress: int, message: str):
+            self.progress_updated.emit(progress, message)
+
+        success, message = process_smart_sentence(self.srt_file_path, progress_callback)
+        self.finished.emit(success, message)
 
 
 class AspectRatioWidget(QWidget):
@@ -54,6 +73,10 @@ class SubtitleEditPage(QWidget):
 
         self.subtitle_table.model.subtitleUpdated.connect(self.update_video_subtitle) #字幕更新信号
 
+        # 智能分句相关
+        self.smart_sentence_worker = None
+        self.progress_dialog = None
+
         self.initUI()
 
     def initUI(self):
@@ -73,6 +96,195 @@ class SubtitleEditPage(QWidget):
         # 设置分割器比例
         splitter.setStretchFactor(0, 2)  # 左侧部件占2
         splitter.setStretchFactor(1, 1)  # 右侧部件占1
+
+    def smart_sentence_process(self):
+        """智能分句处理"""
+        try:
+            # 检查是否支持智能分句
+            if not check_smart_sentence_available(self.patt):
+                InfoBar.warning(
+                    title="提示",
+                    content="当前字幕文件不支持智能分句功能",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self,
+                )
+                return
+
+            # 确保清理之前的资源
+            if self.progress_dialog:
+                self.progress_dialog.close()
+                self.progress_dialog = None
+            if self.smart_sentence_worker:
+                self.smart_sentence_worker.deleteLater()
+                self.smart_sentence_worker = None
+
+            # 创建进度对话框
+            self.progress_dialog = QProgressDialog("正在进行智能分句处理...", "取消", 0, 100, self)
+            self.progress_dialog.setWindowTitle("智能分句")
+            self.progress_dialog.setWindowModality(Qt.WindowModal)
+            self.progress_dialog.setMinimumDuration(500)  # 延迟500ms显示，避免闪烁
+            self.progress_dialog.setValue(0)
+            self.progress_dialog.setAutoClose(False)  # 禁止自动关闭
+            self.progress_dialog.setAutoReset(False)  # 禁止自动重置
+
+            # 创建工作线程
+            self.smart_sentence_worker = SmartSentenceWorker(self.patt)
+            self.smart_sentence_worker.progress_updated.connect(self._on_smart_sentence_progress)
+            self.smart_sentence_worker.finished.connect(self._on_smart_sentence_finished)
+
+            # 连接取消按钮 - 在显示前连接
+            self.progress_dialog.canceled.connect(self._cancel_smart_sentence)
+
+            # 启动处理
+            self.smart_sentence_worker.start()
+
+            # 显示进度对话框
+            self.progress_dialog.show()
+
+            logger.info("智能分句处理已启动")
+
+        except Exception as e:
+            logger.error(f"启动智能分句处理时发生错误: {str(e)}")
+            InfoBar.error(
+                title="错误",
+                content=f"启动智能分句处理失败: {str(e)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self,
+            )
+
+    def _on_smart_sentence_progress(self, progress: int, message: str):
+        """智能分句进度更新"""
+        try:
+            if (self.progress_dialog is not None and
+                hasattr(self.progress_dialog, 'setValue') and
+                hasattr(self.progress_dialog, 'setLabelText') and
+                not self.progress_dialog.wasCanceled()):
+
+                self.progress_dialog.setValue(progress)
+                self.progress_dialog.setLabelText(message)
+                logger.debug(f"进度更新: {progress}% - {message}")
+            else:
+                logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
+        except Exception as e:
+            logger.warning(f"更新进度时发生错误: {str(e)}")
+
+    def _on_smart_sentence_finished(self, success: bool, message: str):
+        """智能分句处理完成"""
+        try:
+            logger.info(f"智能分句处理完成: success={success}, message={message}")
+
+            # 断开信号连接，避免重复触发
+            if self.progress_dialog:
+                try:
+                    self.progress_dialog.canceled.disconnect()
+                except Exception as e:
+                    logger.debug(f"断开进度对话框信号时发生错误: {str(e)}")
+                self.progress_dialog.close()
+                self.progress_dialog = None
+
+            # 清理工作线程
+            if self.smart_sentence_worker:
+                self.smart_sentence_worker.deleteLater()
+                self.smart_sentence_worker = None
+
+            if success:
+                # 成功时重新加载字幕表格
+                try:
+                    logger.info("开始刷新字幕表格...")
+
+                    # 1. 重新加载模型数据
+                    self.subtitle_table.model.beginResetModel()
+                    self.subtitle_table.model.sub_data = self.subtitle_table.model.load_subtitle()
+                    self.subtitle_table.model.endResetModel()
+
+                    # 2. 更新字幕表格的内部字幕数据
+                    self.subtitle_table.subtitles = self.subtitle_table.model.load_subtitle()
+
+                    # 3. 重新处理字幕数据用于播放器
+                    self.subtitle_table.process_subtitles()
+
+                    # 4. 更新可见的编辑器
+                    self.subtitle_table.update_editors()
+
+                    logger.info(f"字幕表格已成功刷新，新的行数: {self.subtitle_table.model.rowCount()}")
+                except Exception as e:
+                    logger.error(f"刷新字幕表格时发生错误: {str(e)}")
+                    import traceback
+                    logger.error(f"详细错误信息: {traceback.format_exc()}")
+
+                InfoBar.success(
+                    title="成功",
+                    content="智能分句处理完成，字幕已更新",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self,
+                )
+            else:
+                InfoBar.error(
+                    title="失败",
+                    content=f"智能分句处理失败: {message}",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self,
+                )
+
+        except Exception as e:
+            logger.error(f"处理智能分句完成回调时发生错误: {str(e)}")
+
+    def _cancel_smart_sentence(self):
+        """取消智能分句处理"""
+        try:
+            logger.info("_cancel_smart_sentence被调用")
+
+            # 检查是否真的需要取消
+            if not self.smart_sentence_worker:
+                logger.warning("没有运行中的智能分句任务，可能是误触发")
+                return
+
+            if self.smart_sentence_worker and self.smart_sentence_worker.isRunning():
+                logger.info("正在终止智能分句工作线程")
+                self.smart_sentence_worker.terminate()
+                self.smart_sentence_worker.wait(3000)  # 最多等待3秒
+
+            # 清理工作线程
+            if self.smart_sentence_worker:
+                self.smart_sentence_worker.deleteLater()
+                self.smart_sentence_worker = None
+
+            # 关闭进度对话框
+            if self.progress_dialog:
+                try:
+                    self.progress_dialog.canceled.disconnect()
+                except Exception:
+                    pass  # 忽略断开连接的错误
+                self.progress_dialog.close()
+                self.progress_dialog = None
+
+            logger.info("用户取消了智能分句处理")
+
+            # 显示取消提示
+            InfoBar.warning(
+                title="已取消",
+                content="智能分句处理已取消",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
+
+        except Exception as e:
+            logger.error(f"取消智能分句处理时发生错误: {str(e)}")
 
     def create_left_widget(self):
         left_widget = QWidget()
@@ -130,6 +342,20 @@ class SubtitleEditPage(QWidget):
                 )
             )
             top_layout.addWidget(button)
+
+        # 智能分句按钮（根据可用性决定是否添加）
+        if check_smart_sentence_available(self.patt):
+            smart_sentence_btn = TransparentToolButton(FluentIcon.ROBOT)
+            smart_sentence_btn.setIconSize(QSize(20, 20))
+            smart_sentence_btn.setFixedSize(QSize(30, 30))
+            smart_sentence_btn.clicked.connect(self.smart_sentence_process)
+            smart_sentence_btn.setToolTip("使用AI智能优化断句")
+            smart_sentence_btn.installEventFilter(
+                ToolTipFilter(
+                    smart_sentence_btn, showDelay=300, position=ToolTipPosition.BOTTOM_RIGHT
+                )
+            )
+            top_layout.addWidget(smart_sentence_btn)
 
         return top_card
 
@@ -389,3 +615,5 @@ class ExportSubtitleDialog(QDialog):
             # 写入第二行字幕（如果存在），每行都换行
             if second_line_subtitles:
                 dest_file.write("\n".join(second_line_subtitles) + "\n")
+
+

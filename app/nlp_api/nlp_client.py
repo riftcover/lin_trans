@@ -121,6 +121,57 @@ class NLPAPIClient:
             logger.error(error_msg)
             return False, "", error_msg
 
+    def check_task_status(self, task_id: str) -> Tuple[bool, dict, str]:
+        """
+        检查任务状态
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            Tuple[bool, dict, str]: (是否成功, 任务状态数据, 错误信息)
+        """
+        try:
+            url = f"{self.api_base_url}/nlp/status/{task_id}"
+            response = self.client.get(url)
+            response.raise_for_status()
+
+            result = response.json()
+            task_data = result.get('data', {})
+            status = task_data.get('status')
+
+            if status == 'completed':
+                # 获取结果URL
+                result_url = f"{self.api_base_url}/nlp/result/{task_id}"
+                result_response = self.client.get(result_url)
+                result_response.raise_for_status()
+                result_data = result_response.json()
+                srt_file_url = result_data.get('data', {}).get('result_url', '')
+
+                return True, {
+                    'status': 'completed',
+                    'result_url': srt_file_url
+                }, ""
+            elif status == 'failed':
+                error_msg = task_data.get('error_message', '任务处理失败')
+                return True, {
+                    'status': 'failed',
+                    'error': error_msg
+                }, ""
+            elif status in ['pending', 'processing']:
+                return True, {
+                    'status': status
+                }, ""
+            else:
+                return True, {
+                    'status': status or 'unknown'
+                }, ""
+
+        except Exception as e:
+            error_msg = f"查询任务状态时发生错误: {str(e)}"
+            logger.error(error_msg)
+            return False, {}, error_msg
+
     def wait_for_completion(self, task_id: str, max_wait_time: int = 300, poll_interval: int = 5) -> Tuple[bool, str, str]:
         """
         等待任务完成
