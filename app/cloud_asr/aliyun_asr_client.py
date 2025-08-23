@@ -428,21 +428,35 @@ class AliyunASRClient:
                         
                     # 创建新的segment
                     if current_text_parts and current_timestamps:
+                        # 计算segment的开始和结束时间
+                        start_time = current_timestamps[0][0] if current_timestamps else 0
+                        end_time = current_timestamps[-1][1] if current_timestamps else 0
+
                         segment = {
                             'text': ''.join(current_text_parts).strip(),
-                            'timestamp': current_timestamps.copy()
+                            'timestamp': current_timestamps.copy(),
+                            'start': start_time,
+                            'end': end_time,
+                            'spk': 0  # 阿里云ASR默认单说话人
                         }
                         segments.append(segment)
-                        
+
                         # 重置当前segment
                         current_text_parts = []
                         current_timestamps = []
-            
+
             # 处理句子末尾没有标点符号的情况
             if current_text_parts and current_timestamps:
+                # 计算segment的开始和结束时间
+                start_time = current_timestamps[0][0] if current_timestamps else 0
+                end_time = current_timestamps[-1][1] if current_timestamps else 0
+
                 segment = {
                     'text': ''.join(current_text_parts).strip(),
-                    'timestamp': current_timestamps.copy()
+                    'timestamp': current_timestamps.copy(),
+                    'start': start_time,
+                    'end': end_time,
+                    'spk': 0  # 阿里云ASR默认单说话人
                 }
                 segments.append(segment)
                 

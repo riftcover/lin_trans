@@ -11,8 +11,6 @@ from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
-from app.spacy_utils.load_nlp_model import init_nlp
-from app.spacy_utils.sentence_processor import split_segments_by_boundaries
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
@@ -165,7 +163,6 @@ class ASRTaskManager:
         self.stop_polling = threading.Event()
         self.task_state_file = Path(config.root_path) / "tmp" / "asr_tasks.json"
         self._load_tasks()
-        self.nlp = init_nlp()
 
     def _load_tasks(self) -> None:
         """从文件加载任务状态，使用Pydantic模型进行验证和转换"""
@@ -520,19 +517,27 @@ class ASRTaskManager:
                             self.update_task(task.task_id, progress=95)
                             self._notify_task_progress(task.task_id, 95)
 
-                            # 使用split_segments_by_boundaries分解句子
-                            logger.info("开始使用NLP模型分解句子...")
-                            segments_new = split_segments_by_boundaries(segments, self.nlp)
-                            logger.info(f"分解完成，得到 {len(segments_new)} 个分解后的segments")
+                            # 生成本地SRT文件（基础版本，不使用NLP分句）
+                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            logger.info(f'生成本地SRT文件: {srt_file_path}')
+                            funasr_write_srt_file(segments, srt_file_path)
 
                             # 更新进度
-                            self.update_task(task.task_id, progress=98)
-                            self._notify_task_progress(task.task_id, 98)
+                            self.update_task(task.task_id, progress=97)
+                            self._notify_task_progress(task.task_id, 97)
 
-                            # 生成SRT文件
-                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-                            logger.info(f'生成SRT文件: {srt_file_path}')
-                            funasr_write_srt_file(segments_new, srt_file_path)
+                            # 生成segment_data文件（供智能分句功能使用）
+                            try:
+                                segment_data_path = self._create_segment_data_file(segments, task.audio_file)
+                                # 保存segment_data路径信息到工作对象中，供UI使用
+                                self._save_segment_data_path(segment_data_path, task.audio_file, task.language)
+                                logger.info(f"已生成segment_data文件，智能分句功能可用")
+                            except Exception as e:
+                                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=99)
+                            self._notify_task_progress(task.task_id, 99)
 
                             # 更新任务状态为完成
                             self.update_task(
@@ -666,6 +671,37 @@ class ASRTaskManager:
         if self.polling_thread and self.polling_thread.is_alive():
             self.polling_thread.join(timeout=2)
         self._save_tasks()
+
+    def _create_segment_data_file(self, segments, audio_file):
+        """创建segment_data文件"""
+        from utils.file_utils import write_segment_data_file
+
+        segment_data_path = f"{os.path.splitext(audio_file)[0]}_segment_data.json"
+        write_segment_data_file(segments, segment_data_path)
+        logger.info(f"已创建segment_data文件: {segment_data_path}")
+        return segment_data_path
+
+    def _save_segment_data_path(self, segment_data_path, audio_file, language):
+        """保存segment_data路径信息，供UI智能分句功能使用"""
+        try:
+            import json
+            import time
+
+            # 创建一个元数据文件来保存segment_data路径
+            metadata_path = f"{os.path.splitext(audio_file)[0]}_metadata.json"
+            metadata = {
+                'segment_data_path': segment_data_path,
+                'created_time': time.time(),
+                'audio_file': audio_file,
+                'language': language  # 添加语言信息
+            }
+
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
+        except Exception as e:
+            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
 
 # 单例模式
