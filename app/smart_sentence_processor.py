@@ -48,7 +48,49 @@ class SmartSentenceProcessor:
         except Exception as e:
             logger.error(f"检查segment_data可用性时发生错误: {str(e)}")
             return False, f"检查失败: {str(e)}"
-    
+
+    def _detect_language_from_metadata(self, srt_file_path: str) -> str:
+        """
+        从metadata文件或配置中检测语言
+
+        Args:
+            srt_file_path: SRT文件路径
+
+        Returns:
+            str: 语言代码，默认为'zh'
+        """
+        try:
+            # 1. 尝试从metadata文件获取语言信息
+            base_path = os.path.splitext(srt_file_path)[0]
+            metadata_path = f"{base_path}_metadata.json"
+
+            if os.path.exists(metadata_path):
+                with open(metadata_path, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+
+                # 检查metadata中是否有语言信息
+                language = metadata.get('language')
+                if language:
+                    logger.info(f"从metadata文件检测到语言: {language}")
+                    return language
+
+            # 2. 尝试从全局配置获取语言
+            try:
+                from nice_ui.configure import config
+                source_language_code = config.params.get('source_language_code', 'zh')
+                logger.info(f"从全局配置检测到语言: {source_language_code}")
+                return source_language_code
+            except Exception as e:
+                logger.warning(f"无法从配置获取语言: {str(e)}")
+
+            # 3. 默认返回中文
+            logger.info("使用默认语言: zh")
+            return 'zh'
+
+        except Exception as e:
+            logger.warning(f"检测语言时发生错误: {str(e)}，使用默认语言: zh")
+            return 'zh'
+
     def process_smart_sentence(self, srt_file_path: str, progress_callback=None) -> Tuple[bool, str]:
         """
         执行智能分句处理
@@ -61,27 +103,34 @@ class SmartSentenceProcessor:
             Tuple[bool, str]: (是否成功, 错误信息)
         """
         try:
-            # 1. 检查segment_data文件
+            # 1. 检测语言
+            if progress_callback:
+                progress_callback(5, "检测语言...")
+
+            language = self._detect_language_from_metadata(srt_file_path)
+            logger.info(f"智能分句将使用语言: {language}")
+
+            # 2. 检查segment_data文件
             if progress_callback:
                 progress_callback(10, "检查元数据文件...")
-            
+
             available, segment_data_path = self.check_segment_data_available(srt_file_path)
             if not available:
                 return False, segment_data_path
-            
-            # 2. 上传segment_data到OSS
+
+            # 3. 上传segment_data到OSS
             if progress_callback:
                 progress_callback(20, "上传文件...")
-            
+
             success, oss_url, error = self._upload_segment_data(segment_data_path)
             if not success:
                 return False, f"上传失败: {error}"
-            
-            # 3. 提交NLP任务
+
+            # 4. 提交NLP任务（使用检测到的语言）
             if progress_callback:
                 progress_callback(40, "提交任务...")
-            
-            success, task_id, error = self._submit_nlp_task(oss_url)
+
+            success, task_id, error = self._submit_nlp_task(oss_url, language)
             if not success:
                 return False, f"任务提交失败: {error}"
             
@@ -124,22 +173,22 @@ class SmartSentenceProcessor:
             logger.error(f"上传segment_data文件时发生异常: {str(e)}")
             return False, "", str(e)
     
-    def _submit_nlp_task(self, oss_url: str) -> Tuple[bool, str, str]:
+    def _submit_nlp_task(self, oss_url: str, language: str = 'zh') -> Tuple[bool, str, str]:
         """提交NLP处理任务"""
         try:
             if not self.nlp_client:
                 self.nlp_client = create_nlp_client()
                 if not self.nlp_client:
                     return False, "", "无法创建NLP客户端"
-            
-            success, task_id, error = self.nlp_client.submit_nlp_task(oss_url, 'zh')
+
+            success, task_id, error = self.nlp_client.submit_nlp_task(oss_url, language)
             if success:
-                logger.info(f"NLP任务提交成功，任务ID: {task_id}")
+                logger.info(f"NLP任务提交成功，任务ID: {task_id}，语言: {language}")
                 return True, task_id, ""
             else:
                 logger.error(f"NLP任务提交失败: {error}")
                 return False, "", error
-                
+
         except Exception as e:
             logger.error(f"提交NLP任务时发生异常: {str(e)}")
             return False, "", str(e)

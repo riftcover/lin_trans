@@ -158,14 +158,15 @@ class SrtWriter:
             metadata = {
                 'segment_data_path': segment_data_path,
                 'created_time': time.time(),
-                'audio_file': self.input_file
+                'audio_file': self.input_file,
+                'language': self.ln  # 添加语言信息
             }
 
             import json
             with open(metadata_path, 'w', encoding='utf-8') as f:
                 json.dump(metadata, f, ensure_ascii=False, indent=2)
 
-            logger.info(f"已保存segment_data路径信息: {metadata_path}")
+            logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {self.ln}")
         except Exception as e:
             logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
@@ -221,22 +222,47 @@ class SrtWriter:
         """
         使用SenseVoiceSmall模型进行语音识别，将音频分割为多个片段处理
 
-        Args:
-            model_name: 模型名称
+        流程：
+        1. 使用VAD模型分割音频（保留原有逻辑）
+        2. 处理每个音频片段（保留原有复杂处理）
+        3. 生成本地SRT文件（基础版本）
+        4. 生成segment_data文件（供后续智能分句使用）
+
+        智能分句功能将在用户手动触发时执行
         """
         logger.info('使用SenseVoiceSmall')
 
-        # 1. 初始化所有需要的模型
-        models = self._init_models(model_name)
+        try:
+            # 1. 初始化所有需要的模型
+            models = self._init_models(model_name)
 
-        # 2. 使用VAD模型分割音频
-        segments = self._split_audio_by_vad(models['vad'])
+            # 2. 使用VAD模型分割音频
+            segments = self._split_audio_by_vad(models['vad'])
 
-        # 3. 处理每个音频片段
-        results = self._process_audio_segments(segments, models)
+            # 3. 处理每个音频片段
+            results = self._process_audio_segments(segments, models)
 
-        # 4. 生成SRT文件
-        self._generate_srt_file(results)
+            # 4. 生成本地SRT文件（基础版本）
+            srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+            funasr_write_srt_file(results, srt_file_path)
+            logger.info(f"本地SRT文件生成成功: {srt_file_path}")
+
+            # 5. 生成segment_data文件（供智能分句功能使用）
+            try:
+                # 将results转换为segment_data格式
+                segments_for_data = self._convert_results_to_segments(results)
+                segment_data_path = self._create_segment_data_file(segments_for_data)
+                # 保存segment_data路径信息到工作对象中，供UI使用
+                self._save_segment_data_path(segment_data_path)
+            except Exception as e:
+                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"funasr_sense_model执行过程中发生严重错误: {str(e)}")
+            # 即使发生严重错误，也要通知UI完成，避免界面卡死
+        finally:
+            # 无论如何都要通知完成
+            self.data_bridge.emit_whisper_finished(self.unid)
 
     def _init_models(self, model_name: str) -> dict:
         """初始化所有需要的模型"""
@@ -356,17 +382,65 @@ class SrtWriter:
 
         return msg.create_segmented_transcript(start_time, split_list)
 
-    def _generate_srt_file(self, results: list):
-        """生成SRT文件"""
-        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
-        funasr_write_srt_file(results, srt_file_path)
-        self.data_bridge.emit_whisper_finished(self.unid)
+
 
     @staticmethod
     def crop_audio(audio_data, start_time, end_time, sample_rate):
         start_sample = int(start_time * sample_rate / 1000)  # 转换为样本数
         end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
         return audio_data[start_sample:end_sample]
+
+    def _convert_results_to_segments(self, results: list) -> list:
+        """
+        将SenseVoice的处理结果转换为segment_data格式
+
+        Args:
+            results: SenseVoice处理结果，格式如：
+                [{'start': 230, 'end': 1230, 'text': 'When you go out there,'},
+                 {'start': 1230, 'end': 4590, 'text': 'i really encourage you to try and sense your body more'}]
+
+        Returns:
+            segments: 统一的segment_data格式
+        """
+        segments = []
+        for result in results:
+            segment = {
+                'text': result.get('text', ''),
+                'timestamp': [[result.get('start', 0), result.get('end', 0)]],
+                'start': result.get('start', 0),
+                'end': result.get('end', 0),
+                'spk': 0  # SenseVoice默认单说话人
+            }
+            segments.append(segment)
+
+        logger.info(f"已转换{len(segments)}个segments用于segment_data文件")
+        return segments
+
+    def _create_segment_data_file(self, segments):
+        """创建segment_data文件"""
+        segment_data_path = f"{os.path.splitext(self.input_file)[0]}_segment_data.json"
+        write_segment_data_file(segments, segment_data_path)
+        logger.info(f"已创建segment_data文件: {segment_data_path}")
+        return segment_data_path
+
+    def _save_segment_data_path(self, segment_data_path):
+        """保存segment_data路径信息，供UI智能分句功能使用"""
+        try:
+            # 创建一个元数据文件来保存segment_data路径
+            metadata_path = f"{os.path.splitext(self.input_file)[0]}_metadata.json"
+            metadata = {
+                'segment_data_path': segment_data_path,
+                'created_time': time.time(),
+                'audio_file': self.input_file
+            }
+
+            import json
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"已保存segment_data路径信息: {metadata_path}")
+        except Exception as e:
+            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
     def custom_rich_transcription_postprocess(self, s):
         """
