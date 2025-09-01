@@ -7,8 +7,7 @@ from pathlib import Path
 
 import soundfile as sf  # 用于读取和裁剪音频文件
 
-from app.spacy_utils.load_nlp_model import init_nlp
-from app.spacy_utils.sentence_processor import get_sub_index, split_segments_by_boundaries
+
 from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
 from utils import logger
@@ -88,7 +87,7 @@ class SrtWriter:
             # 2. 执行ASR识别
             segments = self._run_asr_recognition(model)
 
-            # 3. 生成本地SRT文件（基础版本，使用本地NLP）
+            # 3. 生成本地SRT文件（基础版本）
             srt_success = self._generate_local_srt(segments)
             if not srt_success:
                 logger.error("SRT文件生成失败，用户将无法获得识别结果")
@@ -172,42 +171,8 @@ class SrtWriter:
 
 
 
-    def _generate_local_srt(self, segments):
-        """生成本地SRT文件作为降级方案"""
-        srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
 
-        try:
-            nlp = init_nlp()
-            segments_new = split_segments_by_boundaries(segments, nlp)
-            funasr_write_srt_file(segments_new, srt_file_path)
-            logger.info(f"本地SRT文件生成成功: {srt_file_path}")
-            return True
-        except Exception as e:
-            logger.error(f"本地NLP处理失败: {str(e)}")
-            # 如果本地NLP也失败，生成基础SRT文件（不进行句子分割）
-            return self._generate_basic_srt(segments, srt_file_path)
 
-    def _generate_basic_srt(self, segments, srt_file_path):
-        """生成基础SRT文件（不进行NLP处理的降级方案）"""
-        try:
-            # 直接使用原始segments生成SRT，不进行句子分割
-            basic_segments = []
-            for segment in segments:
-                # 确保每个segment都有必要的字段
-                timestamp = segment.get('timestamp', [])
-                if timestamp:
-                    basic_segments.append({
-                        'text': segment.get('text', ''),
-                        'start': timestamp[0][0] if timestamp[0] else 0,
-                        'end': timestamp[-1][1] if timestamp[-1] else 0
-                    })
-
-            funasr_write_srt_file(basic_segments, srt_file_path)
-            logger.info(f"基础SRT文件生成成功（未进行NLP处理）: {srt_file_path}")
-            return True
-        except Exception as e:
-            logger.error(f"生成基础SRT文件也失败: {str(e)}")
-            return False
 
     def _cleanup_temp_files(self, segment_data_path):
         """清理临时文件"""
@@ -277,7 +242,6 @@ class SrtWriter:
             'asr': load_model(model_dir),
             'time': load_model(fa_zh_dir),
             'punc': load_model(punc_model_dir),
-            'nlp': init_nlp()
         }
 
     def _split_audio_by_vad(self, vad_model) -> list:
@@ -341,13 +305,8 @@ class SrtWriter:
             if not punctuation_res:
                 return []
 
-            # 4. 分割句子
-            return self._split_and_align_sentences(
-                punctuation_res,
-                time_res,
-                start_time,
-                models['nlp']
-            )
+            # 4. 创建基础segment（不进行复杂分句，智能分句将在用户手动触发时执行）
+            return self._create_basic_segment(punctuation_res, time_res, start_time)
 
     def _recognize_text(self, audio_file: str, model) -> str:
         """识别音频文件中的文本"""
@@ -369,20 +328,36 @@ class SrtWriter:
             logger.error(f"标点符号处理失败: {e}")
             return []
 
-    def _split_and_align_sentences(self, punctuation_res: list, time_res: list, start_time: int, nlp) -> list:
-        """分割句子并对齐时间戳,返回按照短句切割的list"""
-        msg = Segment(punctuation_res, time_res)
-        punc_list = msg.get_segmented_index()
-
-        if not msg.ask_res_len():
-            msg.fix_wrong_index()
-
-        words = split_sentence(punctuation_res[0].get('text'))
-        split_list = get_sub_index(punc_list, words, nlp)
-
-        return msg.create_segmented_transcript(start_time, split_list)
 
 
+
+
+    def _create_basic_segment(self, punctuation_res: list, time_res: list, start_time: int) -> list:
+        """创建基础segment，不进行复杂的本地分句处理"""
+        try:
+            if not punctuation_res or not time_res:
+                return []
+
+            # 获取文本和时间戳信息
+            text = punctuation_res[0].get('text', '') if punctuation_res else ''
+            timestamps = time_res[0].get('timestamp', []) if time_res else []
+
+            if not text or not timestamps:
+                return []
+
+            # 创建一个基础的segment
+            segment = {
+                'text': text,
+                'start': timestamps[0][0] + start_time if timestamps else start_time,
+                'end': timestamps[-1][1] + start_time if timestamps else start_time,
+                'timestamp': [[ts[0] + start_time, ts[1] + start_time] for ts in timestamps]
+            }
+
+            return [segment]
+
+        except Exception as e:
+            logger.error(f"创建基础segment失败: {str(e)}")
+            return []
 
     @staticmethod
     def crop_audio(audio_data, start_time, end_time, sample_rate):
