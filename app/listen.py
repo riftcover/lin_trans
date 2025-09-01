@@ -270,12 +270,12 @@ class SrtWriter:
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         # 标点恢复
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
+        fa_zh_dir = f'{config.funasr_model_path}/speech_timestamp_prediction-v1-16k-offline'
 
         return {
             'vad': load_model(vad_model_dir),
             'asr': load_model(model_dir),
-            # todo： 目前没有下载到本地：speech_timestamp_prediction-v1-16k-offline
-            'time': load_model("fa-zh"),
+            'time': load_model(fa_zh_dir),
             'punc': load_model(punc_model_dir),
             'nlp': init_nlp()
         }

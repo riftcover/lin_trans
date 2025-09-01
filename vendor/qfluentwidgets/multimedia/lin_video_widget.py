@@ -67,7 +67,6 @@ class LinVideoWidget(QWidget):
         self.videoItem = QGraphicsVideoItem()
         self.graphicsScene = QGraphicsScene(self)
         self.playBar = LinMediaPlayBar(self)
-        logger.trace(f'self.playBar.size()={self.playBar.size()}')
 
         # 将图形视图与图形场景关联，添加视频项到场景中，并设置滚动条策略和渲染提示。
         self.graphicsView.setScene(self.graphicsScene)
