@@ -240,12 +240,12 @@ class SrtWriter:
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
         punc_model_dir = f'{config.funasr_model_path}/punc_ct-transformer_cn-en-common-vocab471067-large'
-
+        fa_zh_dir = f'{config.funasr_model_path}/speech_timestamp_prediction-v1-16k-offline'
         # 加载模型
         vad_model = load_model(vad_model_dir)
         model = load_model(model_dir)
         # todo： fa-zh模型还是online的
-        time_model = load_model("fa-zh")
+        time_model = load_model(fa_zh_dir),
         punctuation_model = load_model(punc_model_dir)
 
         # 使用VAD模型处理音频文件

@@ -25,6 +25,7 @@ def download_model(model_name: str, progress_callback=None):
     vad_model_path = os.path.join(config.funasr_model_path, 'speech_fsmn_vad_zh-cn-16k-common-pytorch')
     punc_model_path = os.path.join(config.funasr_model_path, 'punc_ct-transformer_cn-en-common-vocab471067-large')
     spk_model_path = os.path.join(config.funasr_model_path, 'speech_campplus_sv_zh-cn_16k-common')
+    fa_zh_path = f'{config.funasr_model_path}/speech_timestamp_prediction-v1-16k-offline'
     if os.path.exists(vad_model_path):
         logger.info("vad模型已下载，跳过")
     else:
@@ -45,6 +46,13 @@ def download_model(model_name: str, progress_callback=None):
         logger.info("开始下载说话人模型")
         snapshot_download('iic/speech_campplus_sv_zh-cn_16k-common', cache_dir=model_dir)
         logger.info("说话人模型下载完成")
+
+    if os.path.exists(fa_zh_path):
+        logger.info("fa_zh模型已下载，跳过")
+    else:
+        logger.info("开始下载fa_zh模型")
+        snapshot_download('iic/speech_timestamp_prediction-v1-16k-offline', cache_dir=model_dir)
+        logger.info("fa_zh模型下载完成")
 
     start_time = time.time()
     #todo： 这里是多语言模型大小，其他两种没他大，并且相差不大就不改了
