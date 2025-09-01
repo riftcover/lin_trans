@@ -2,7 +2,7 @@ import os
 
 import av
 from PySide6.QtCore import Qt, Slot, QSize
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette, QIcon
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
 
 from agent import get_translate_code, translate_api_name
@@ -66,9 +66,24 @@ class Video2SRT(QWidget):
         source_language_label = BodyLabel("原始语种")
 
         self.source_language = TransComboBox()
-        # 设置self.source_language宽度
-        self.source_language.setFixedWidth(98)
-        self.source_language.addItems(config.langnamelist)
+
+        # 添加语言项目，为法语添加云图标
+        for lang_name in config.langnamelist:
+            if lang_name in ["法语", "French","俄语"]:
+                # 使用专业云服务图标
+                self.source_language.addItem(f'{lang_name} (云)')
+            else:
+                self.source_language.addItem(lang_name,)
+
+        # 动态计算并设置最适合的宽度
+        max_width = 0
+        for lang_name in config.langnamelist:
+            text_width = self.source_language.fontMetrics().boundingRect(lang_name).width()
+            max_width = max(max_width, text_width)
+
+        # 设置合适的宽度（文本宽度 + 图标 + 箭头 + 边距）
+        self.source_language.setFixedWidth(max_width + 60)
+
         self.source_language.setCurrentText(config.params["source_language"])
 
 
