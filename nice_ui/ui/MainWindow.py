@@ -263,6 +263,11 @@ class Window(_create_smart_window_class()):
                         self.settings.remove('refresh_token')
                         self.settings.sync()
                         api_client.clear_token()
+
+                        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+                        if self.login_window:
+                            self.login_window.close()
+                            self.login_window = None
                 except Exception as e:
                     # 检查是否是网络连接错误
                     if "All connection attempts failed" in str(e):
@@ -287,6 +292,11 @@ class Window(_create_smart_window_class()):
                         self.settings.remove('refresh_token')
                         self.settings.sync()
                         api_client.clear_token()
+
+                        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+                        if self.login_window:
+                            self.login_window.close()
+                            self.login_window = None
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
@@ -389,6 +399,11 @@ class Window(_create_smart_window_class()):
         self.settings.remove('refresh_token')
         self.settings.sync()
         api_client.clear_token()
+
+        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+        if self.login_window:
+            self.login_window.close()
+            self.login_window = None
 
         # 显示错误提示
         InfoBar.error(

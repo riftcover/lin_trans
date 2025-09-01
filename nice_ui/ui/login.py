@@ -168,6 +168,9 @@ class LoginWindow(QFrame):
         self.forgotPasswordButton.clicked.connect(self.handle_forgot_password)
         self.registerButton.clicked.connect(self.handle_register)
 
+        # 确保登录按钮始终可用 - 修复Token过期时按钮无法点击的问题
+        self.loginButton.setEnabled(True)
+
     def setup_animation(self):
         # 窗口打开时的动画效果
         self.opacity = 0
@@ -177,6 +180,14 @@ class LoginWindow(QFrame):
         self.animation.setEndValue(1)
         self.animation.setEasingCurve(QEasingCurve.InOutCubic)
         self.animation.start()
+
+    def showEvent(self, event):
+        """窗口显示时的事件处理 - 确保登录按钮可用"""
+        super().showEvent(event)
+        # 重置按钮状态，修复Token过期时按钮无法点击的问题
+        if hasattr(self, 'loginButton'):
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
 
     def load_saved_email(self):
         """加载保存的邮箱账号"""
@@ -225,6 +236,10 @@ class LoginWindow(QFrame):
             )
             return
 
+        # 临时禁用按钮防止重复点击，但确保在完成后重新启用
+        self.loginButton.setEnabled(False)
+        self.loginButton.setText('登录中...')
+
         try:
             user_login = api_client.login_t(email, password)
             # 保存邮箱账号和登录状态
@@ -260,6 +275,10 @@ class LoginWindow(QFrame):
                 duration=3000,
                 parent=self
             )
+        finally:
+            # 确保按钮始终重新启用 - 修复Token过期时按钮无法点击的问题
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
 
     def handle_forgot_password(self):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
