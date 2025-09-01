@@ -203,8 +203,8 @@ class SubtitleEditPage(QWidget):
                     self.subtitle_table.model.sub_data = self.subtitle_table.model.load_subtitle()
                     self.subtitle_table.model.endResetModel()
 
-                    # 2. 更新字幕表格的内部字幕数据
-                    self.subtitle_table.subtitles = self.subtitle_table.model.load_subtitle()
+                    # 2. 更新字幕表格的内部字幕数据 - 使用get_subtitles方法获取数据副本
+                    self.subtitle_table.subtitles = self.subtitle_table.model.get_subtitles().copy()
 
                     # 3. 重新处理字幕数据用于播放器
                     self.subtitle_table.process_subtitles()

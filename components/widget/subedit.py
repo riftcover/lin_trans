@@ -683,8 +683,8 @@ class SubtitleTable(QTableView):
         self.setModel(self.model)
         self.setItemDelegate(self.delegate)
 
-        # 预处理字幕数据
-        self.subtitles = self.model.load_subtitle()
+        # 预处理字幕数据 - 使用get_subtitles方法获取数据副本，避免引用问题
+        self.subtitles = self.model.get_subtitles().copy()
         # Load subtitles from model
         # todo：不懂为什用get_subtitles就无法创建编辑器
         # self.subtitles = self.model.get_subtitles()  # Load subtitles from model
