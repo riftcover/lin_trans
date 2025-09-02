@@ -176,8 +176,9 @@ class ASRTransTaskProcessor(TaskProcessor):
         new_task = change_job_format(task)
 
         agent_type = config.params['translate_channel']
-        final_name = new_task.srt_dirname
-        logger.trace(f'准备翻译任务:{final_name}')
+        srt_name = new_task.srt_dirname
+
+        logger.trace(f'准备翻译任务:{srt_name}')
 
         # 添加翻译任务到数据库
         trans_orm = ToTranslationOrm()
@@ -195,16 +196,15 @@ class ASRTransTaskProcessor(TaskProcessor):
         chunk_size_int = get_chunk_size()
         max_entries_int = get_max_entries()  # 推荐值：8-12
         sleep_time_int = get_sleep_time()  # API调用间隔
-        logger.trace(f'准备翻译任务:{final_name}')
         logger.trace(
-            f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
+            f'任务参数:{task.unid}, {srt_name}, {srt_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
         # 执行翻译
         try:
             translate_document(
                 unid=task.unid,
-                in_document=task.raw_name,
-                out_document=final_name,
+                in_document=srt_name,
+                out_document=srt_name,
                 agent_name=agent_type,
                 chunk_size=chunk_size_int,  # 推荐值：600-800
                 max_entries=max_entries_int,  # 推荐值：8-12
