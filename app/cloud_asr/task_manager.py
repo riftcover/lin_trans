@@ -15,6 +15,7 @@ from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
+from utils.file_utils import funasr_write_srt_file
 
 
 class ASRTaskStatus:
@@ -501,8 +502,7 @@ class ASRTaskManager:
                             parsed_results = client.parse_transcription(json_data)
                             # # 从结果中提取字幕信息并生成SRT文件
                             srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-                            logger.info(f'srt_file_path:{srt_file_path}')
-                            client.convert_to_srt(parsed_results, srt_file_path)
+                            funasr_write_srt_file(parsed_results, srt_file_path)
 
                             # 更新任务状态
                             self.update_task(

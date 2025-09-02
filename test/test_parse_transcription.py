@@ -9,6 +9,8 @@ import sys
 import json
 import time
 
+from utils.file_utils import funasr_write_srt_file
+
 # 添加项目根目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -25,7 +27,7 @@ def test_parse_transcription():
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 构建JSON文件路径
-    json_file_path = os.path.join(current_dir, 'ta_asr_result.json')
+    json_file_path = r'D:\dcode\lin_trans\result\9ab3de95796efe9c3f1cc049c682d3a3\测试句末符号_asr_result.json'
 
     # 读取JSON文件
     try:
@@ -60,7 +62,7 @@ def test_parse_transcription():
 
     # 转换为SRT文件
     output_srt_path = os.path.join(current_dir, 'ta_asr_result.srt')
-    client.convert_to_srt(parsed_results, output_srt_path)
+    funasr_write_srt_file(parsed_results, output_srt_path)
 
     # 计算耗时
     end_time = time.time()

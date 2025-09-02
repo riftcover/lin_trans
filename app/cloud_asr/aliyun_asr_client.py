@@ -358,48 +358,6 @@ class AliyunASRClient:
 
         # 只返回实际使用的部分，避免复制整个数组
         return result[:result_index] if result_index > 0 else []
-    def convert_to_srt(self, parsed_results: List[Dict[str, Any]], output_file: str) -> None:
-        """
-        将解析后的结果转换为SRT格式并保存
-
-        Args:
-            parsed_results: 解析后的ASR结果
-            output_file: 输出SRT文件路径
-        """
-        with open(output_file, "w", encoding="utf-8") as f:
-            # 定义多语言标点符号
-            punctuation_marks = [',', '.', '，', '。', '、', '；', ';']
-            for i, item in enumerate(parsed_results, 1):
-                begin_time = item["begin_time"]
-                end_time = item["end_time"]
-                text = item['text']
-
-                # 转换毫秒为SRT格式的时间戳 (HH:MM:SS,mmm)
-                begin_str = self._format_timestamp(begin_time)
-                end_str = self._format_timestamp(end_time)
-                # 处理句子结尾的标点符号
-                while text and text[-1] in punctuation_marks:
-                    text = text[:-1]
-
-                f.write(f"{i}\n")
-                f.write(f"{begin_str} --> {end_str}\n")
-                f.write(f"{text}\n\n")
-
-    @staticmethod
-    def _format_timestamp(ms: int) -> str:
-        """
-        将毫秒转换为SRT格式的时间戳
-
-        Args:
-            ms: 毫秒时间戳
-
-        Returns            str: SRT格式的时间戳 (HH:MM:SS,mmm)
-        """
-        seconds, ms = divmod(ms, 1000)
-        minutes, seconds = divmod(seconds, 60)
-        hours, minutes = divmod(minutes, 60)
-
-        return f"{hours:02d}:{minutes:02d}:{seconds:02d},{ms:03d}"
 
 
 # 创建客户端实例的工厂函数
