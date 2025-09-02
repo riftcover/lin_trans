@@ -39,6 +39,7 @@ class DocumentTranslator:
     
     def _load_srt_content(self, in_document: str) -> str:
         """加载SRT文件内容"""
+        logger.trace('加载SRT文件内容')
         with open(in_document, 'r', encoding='utf-8') as file:
             return file.read()
     
@@ -50,7 +51,6 @@ class DocumentTranslator:
     def _setup_translator(self):
         """设置翻译器和术语管理器"""
         agent: AgentConfig = agent_msg[self.agent_name]
-        logger.debug(f'agent key:{agent.key}')
 
         # 检查agent.key是否为None
         if agent.key is None:
