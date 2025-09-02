@@ -54,7 +54,7 @@ class SrtWriter:
             progress += 1
             if progress >= 93:
                 break
-            time.sleep(3)
+            time.sleep(1)
 
     def funasr_to_srt(self, model_name: str):
         logger.info("使用FunASR开始识别")

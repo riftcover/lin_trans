@@ -29,7 +29,7 @@ def test_parse_transcription():
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 构建JSON文件路径
-    json_file_path = os.path.join(current_dir, 'ta_asr_result.json')
+    json_file_path = r'D:\dcode\lin_trans\result\9ab3de95796efe9c3f1cc049c682d3a3\测试句末符号_asr_result.json'
 
     # 读取JSON文件
     try:

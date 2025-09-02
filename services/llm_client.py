@@ -61,7 +61,7 @@ def create_openai_client(api_key: str, base_url: str) -> OpenAI:
     )
 
 
-@except_handler("GPT request failed", retry=5, delay=1)
+# @except_handler("GPT request failed", retry=5, delay=1)
 def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
            valid_def: Optional[callable] = None, log_title: str = "default") -> Any:
     """

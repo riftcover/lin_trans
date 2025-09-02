@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 import unicodedata
 
@@ -8,41 +8,47 @@ from utils.log import Logings
 logger = Logings().logger
 
 
-def write_srt_file(segment, srt_file_path):
-    with open(srt_file_path, 'a', encoding='utf-8') as srt_file:
-        start_time = segment.start
-        end_time = segment.end
-        text = segment.text
-        srt_file.write(f"{segment.id}\n")
-        srt_file.write(f"{format_time(start_time)} --> {format_time(end_time)}\n")
-        srt_file.write(f"{text.strip()}\n\n")
+def format_time(ms: int) -> str:
+    """
+    将毫秒转换为SRT格式的时间戳
 
+    Args:
+        ms: 毫秒时间戳
 
-def format_time(seconds):
-    milliseconds = int((seconds % 1) * 1000)
-    seconds = int(seconds)
+    Returns            str: SRT格式的时间戳 (HH:MM:SS,mmm)
+    """
+    seconds, ms = divmod(ms, 1000)
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{ms:03d}"
 
 
-def funasr_write_srt_file(segments, srt_file_path):
+def funasr_write_srt_file(segments: List[Dict[str, Any]], srt_file_path: str) -> None:
+    """写SRT文件 - 消除了愚蠢的model参数"""
+
+    def _clean_text(text: str) -> str:
+        """移除末尾标点符号 - 单一职责"""
+        punctuation_marks = {',', '.', '，', '。', '、', '；', ';'}
+        return text.strip().rstrip(''.join(punctuation_marks))
+
+    def _normalize_segment(segment: Dict[str, Any]) -> tuple[str, str, str]:
+        """标准化segment数据 - 消除数据结构不一致"""
+        # 统一字段名映射
+        start_key = 'start' if 'start' in segment else 'begin_time'
+        end_key = 'end' if 'end' in segment else 'end_time'
+
+        start_time = format_time(segment[start_key])
+        end_time = format_time(segment[end_key])
+        text = _clean_text(segment['text'])
+
+        return start_time, end_time, text
+
     with open(srt_file_path, "w", encoding="utf-8") as srt_file:
-        # 定义多语言标点符号
-        punctuation_marks = [',', '.', '，', '。', '、', '；', ';']
-        
         for i, segment in enumerate(segments, 1):
-            start_time = format_time(segment['start'] / 1000)  # Convert milliseconds to seconds
-            end_time = format_time(segment['end'] / 1000)  # Convert milliseconds to seconds
-            text = segment['text'].strip()
-            
-            # 处理句子结尾的标点符号
-            while text and text[-1] in punctuation_marks:
-                text = text[:-1]
+            start_time, end_time, text = _normalize_segment(segment)
+            srt_file.write(f"{i}\n{start_time} --> {end_time}\n{text}\n\n")
 
-            srt_file.write(f"{i}\n")
-            srt_file.write(f"{start_time} --> {end_time}\n")
-            srt_file.write(f"{text}\n\n")
 
 def funasr_write_txt_file(segments, txt_file_path):
     with open(txt_file_path, "w", encoding="utf-8") as txt_file:
@@ -153,9 +159,6 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
         segments_list.append(current_segment)
 
     return segments_list
-
-
-
 
 
 class Segment:

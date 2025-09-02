@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Any
 
 from services.llm_client import ask_gpt
 from utils import logger
-from utils.agent_dict import agent_msg, AgentConfig
+from utils.agent_dict import agent_settings, AgentConfig
 
 
 class TerminologyManager:
@@ -61,8 +61,9 @@ class TerminologyManager:
         # 生成总结和术语提取的提示
         summary_prompt = self._get_summary_prompt(content, custom_terms, target_language)
 
-        # 调用AI生成总结
-        agent_config: AgentConfig = agent_msg[agent_name]
+        # 调用AI生成总结 - 动态获取最新配置
+        current_agent_configs = agent_settings()
+        agent_config: AgentConfig = current_agent_configs[agent_name]
 
         # 定义验证函数
         def valid_summary(response_data):

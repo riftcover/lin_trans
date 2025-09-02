@@ -1,8 +1,10 @@
 QTimeEdit {
     border: 1px solid #d0d0d0;
     border-radius: 4px;
-    padding: 2px 4px;
+    padding: 2px 6px;
     color: #333333;
+    min-width: 130px;
+    font-size: 12px;
 }
 
 QTimeEdit:focus {
