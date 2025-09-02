@@ -4,7 +4,7 @@ from difflib import SequenceMatcher
 
 from nice_ui.configure.signal import data_bridge
 from utils import logger
-from utils.agent_dict import agent_msg, AgentConfig
+from utils.agent_dict import agent_settings, AgentConfig
 
 from .srt_translator_adapter import create_trans_compatible_data
 from .translator import Translator, search_things_to_note_in_prompt
@@ -50,7 +50,9 @@ class DocumentTranslator:
     
     def _setup_translator(self):
         """设置翻译器和术语管理器"""
-        agent: AgentConfig = agent_msg[self.agent_name]
+        # 动态获取最新的agent配置，确保能获取到用户刚保存的key
+        current_agent_configs = agent_settings()
+        agent: AgentConfig = current_agent_configs[self.agent_name]
 
         # 检查agent.key是否为None
         if agent.key is None:

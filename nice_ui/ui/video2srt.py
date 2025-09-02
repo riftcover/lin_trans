@@ -14,7 +14,7 @@ from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
-from utils.agent_dict import agent_msg
+from utils.agent_dict import agent_settings
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
 
 
@@ -343,13 +343,10 @@ class Video2SRT(QWidget):
             logger.debug(f"未知的翻译引擎: {translate_engine}，跳过密钥检查")
             return True
 
-        # 检查agent是否存在且有密钥
-        if agent_name in agent_msg:
-            # 重新加载密钥以确保获取最新配置
-            from utils.agent_dict import AgentRegistry
-            registry = AgentRegistry()
-            registry.load_keys_from_settings(self.settings)
-            agent = registry.agents[agent_name]
+        # 检查agent是否存在且有密钥 - 动态获取最新配置
+        current_agent_configs = agent_settings()
+        if agent_name in current_agent_configs:
+            agent = current_agent_configs[agent_name]
 
             if agent.key is None:
                 # 显示错误提示
