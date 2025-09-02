@@ -323,6 +323,51 @@ class Video2SRT(QWidget):
                 self.media_table.item(row, 2).setText(ds_count)
 
 
+    def _check_api_key(self) -> bool:
+        """检查当前选择的翻译引擎是否配置了API密钥"""
+        # 获取当前选择的翻译引擎
+        translate_engine = self.translate_model.currentText()
+        logger.debug(f"检查翻译引擎: {translate_engine}")
+
+        # 使用现有的逻辑：通过translate_api_name映射获取agent名称
+        agent_name = next(
+            (
+                key
+                for key, value in translate_api_name.items()
+                if value == translate_engine
+            ),
+            None,
+        )
+        if not agent_name:
+            # 如果不是我们管理的AI代理，可能是其他翻译服务，暂时允许通过
+            logger.debug(f"未知的翻译引擎: {translate_engine}，跳过密钥检查")
+            return True
+
+        # 检查agent是否存在且有密钥
+        if agent_name in agent_msg:
+            # 重新加载密钥以确保获取最新配置
+            from utils.agent_dict import AgentRegistry
+            registry = AgentRegistry()
+            registry.load_keys_from_settings(self.settings)
+            agent = registry.agents[agent_name]
+
+            if agent.key is None:
+                # 显示错误提示
+                InfoBar.error(
+                    title="配置错误",
+                    content="填写key",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self,
+                )
+                logger.error(f"翻译引擎 {translate_engine} ({agent_name}) 未配置API密钥")
+                return False
+
+        return True
+
+
 class TableWindow:
     def __init__(self, main, settings):
         self.duration_seconds = None #视频时长，秒
@@ -461,49 +506,7 @@ class TableWindow:
 
         return amount
 
-    def _check_api_key(self) -> bool:
-        """检查当前选择的翻译引擎是否配置了API密钥"""
-        # 获取当前选择的翻译引擎
-        translate_engine = self.translate_model.currentText()
-        logger.debug(f"检查翻译引擎: {translate_engine}")
 
-        # 使用现有的逻辑：通过translate_api_name映射获取agent名称
-        agent_name = next(
-            (
-                key
-                for key, value in translate_api_name.items()
-                if value == translate_engine
-            ),
-            None,
-        )
-        if not agent_name:
-            # 如果不是我们管理的AI代理，可能是其他翻译服务，暂时允许通过
-            logger.debug(f"未知的翻译引擎: {translate_engine}，跳过密钥检查")
-            return True
-
-        # 检查agent是否存在且有密钥
-        if agent_name in agent_msg:
-            # 重新加载密钥以确保获取最新配置
-            from utils.agent_dict import AgentRegistry
-            registry = AgentRegistry()
-            registry.load_keys_from_settings(self.settings)
-            agent = registry.agents[agent_name]
-
-            if agent.key is None:
-                # 显示错误提示
-                InfoBar.error(
-                    title="配置错误",
-                    content="填写key",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=5000,
-                    parent=self,
-                )
-                logger.error(f"翻译引擎 {translate_engine} ({agent_name}) 未配置API密钥")
-                return False
-
-        return True
 
 
 if __name__ == "__main__":
