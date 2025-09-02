@@ -495,7 +495,7 @@ class LLMConfigPage(QWidget):
         kimi_card = LLMKeySet("kimi", "https://platform.moonshot.cn/console/api-keys", self)
         zhipu_card = LLMKeySet("zhipu", "https://open.bigmodel.cn/usercenter/apikeys", self)
         qwen_card = LLMKeySet("qwen", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
-        deepseek_card = LLMKeySet("deepseek", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
+        deepseek_card = LLMKeySet("deepseek", "https://platform.deepseek.com/api_keys", self)
 
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
