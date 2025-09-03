@@ -7,14 +7,11 @@ from pathlib import Path
 
 import soundfile as sf  # 用于读取和裁剪音频文件
 
-
-from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
+from nice_ui.configure.signal import data_bridge
 from utils import logger
-from utils.file_utils import funasr_write_srt_file, Segment, split_sentence, write_segment_data_file
+from utils.file_utils import funasr_write_srt_file, write_segment_data_file
 from utils.lazy_loader import LazyLoader
-from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
-from app.nlp_api import create_nlp_client
 
 funasr = LazyLoader('funasr')
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -168,11 +165,6 @@ class SrtWriter:
             logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {self.ln}")
         except Exception as e:
             logger.warning(f"保存segment_data路径信息失败: {str(e)}")
-
-
-
-
-
 
     def _cleanup_temp_files(self, segment_data_path):
         """清理临时文件"""
@@ -328,10 +320,7 @@ class SrtWriter:
             logger.error(f"标点符号处理失败: {e}")
             return []
 
-
-
-
-
+    @staticmethod
     def _create_basic_segment(self, punctuation_res: list, time_res: list, start_time: int) -> list:
         """创建基础segment，不进行复杂的本地分句处理"""
         try:
@@ -365,6 +354,7 @@ class SrtWriter:
         end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
         return audio_data[start_sample:end_sample]
 
+    @staticmethod
     def _convert_results_to_segments(self, results: list) -> list:
         """
         将SenseVoice的处理结果转换为segment_data格式
@@ -391,32 +381,7 @@ class SrtWriter:
         logger.info(f"已转换{len(segments)}个segments用于segment_data文件")
         return segments
 
-    def _create_segment_data_file(self, segments):
-        """创建segment_data文件"""
-        segment_data_path = f"{os.path.splitext(self.input_file)[0]}_segment_data.json"
-        write_segment_data_file(segments, segment_data_path)
-        logger.info(f"已创建segment_data文件: {segment_data_path}")
-        return segment_data_path
-
-    def _save_segment_data_path(self, segment_data_path):
-        """保存segment_data路径信息，供UI智能分句功能使用"""
-        try:
-            # 创建一个元数据文件来保存segment_data路径
-            metadata_path = f"{os.path.splitext(self.input_file)[0]}_metadata.json"
-            metadata = {
-                'segment_data_path': segment_data_path,
-                'created_time': time.time(),
-                'audio_file': self.input_file
-            }
-
-            import json
-            with open(metadata_path, 'w', encoding='utf-8') as f:
-                json.dump(metadata, f, ensure_ascii=False, indent=2)
-
-            logger.info(f"已保存segment_data路径信息: {metadata_path}")
-        except Exception as e:
-            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
-
+    @staticmethod
     def custom_rich_transcription_postprocess(self, s):
         """
         自定义的后处理函数，取消emoji
