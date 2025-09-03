@@ -10,7 +10,7 @@ import soundfile as sf  # 用于读取和裁剪音频文件
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from utils import logger
-from utils.file_utils import funasr_write_srt_file, write_segment_data_file
+from utils.file_utils import funasr_write_srt_file, write_segment_data_file, Segment
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
@@ -221,7 +221,8 @@ class SrtWriter:
             # 无论如何都要通知完成
             self.data_bridge.emit_whisper_finished(self.unid)
 
-    def _init_models(self, model_name: str) -> dict:
+    @staticmethod
+    def _init_models(model_name: str) -> dict:
         """初始化所有需要的模型"""
         model_dir = f'{config.funasr_model_path}/{model_name}'
         vad_model_dir = f'{config.funasr_model_path}/speech_fsmn_vad_zh-cn-16k-common-pytorch'
@@ -278,6 +279,7 @@ class SrtWriter:
 
     def _process_single_segment(self, audio_data, sample_rate, start_time, models: dict) -> list:
         """处理单个音频片段"""
+        results = []
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
             sf.write(temp_file.name, audio_data, sample_rate)
 
@@ -298,7 +300,15 @@ class SrtWriter:
                 return []
 
             # 4. 创建基础segment（不进行复杂分句，智能分句将在用户手动触发时执行）
-            return self._create_basic_segment(punctuation_res, time_res, start_time)
+            msg = Segment(punctuation_res, time_res)
+            work_list = msg.get_segmented_index()
+            if not msg.ask_res_len():
+                msg.fix_wrong_index()
+            rrl = msg.create_segmented_transcript(start_time, work_list)
+            logger.info('rrl====')
+            logger.info(rrl)
+            results.extend(rrl)
+            return results
 
     def _recognize_text(self, audio_file: str, model) -> str:
         """识别音频文件中的文本"""
@@ -318,34 +328,6 @@ class SrtWriter:
             return model.generate(input=text)
         except RuntimeError as e:
             logger.error(f"标点符号处理失败: {e}")
-            return []
-
-    @staticmethod
-    def _create_basic_segment(self, punctuation_res: list, time_res: list, start_time: int) -> list:
-        """创建基础segment，不进行复杂的本地分句处理"""
-        try:
-            if not punctuation_res or not time_res:
-                return []
-
-            # 获取文本和时间戳信息
-            text = punctuation_res[0].get('text', '') if punctuation_res else ''
-            timestamps = time_res[0].get('timestamp', []) if time_res else []
-
-            if not text or not timestamps:
-                return []
-
-            # 创建一个基础的segment
-            segment = {
-                'text': text,
-                'start': timestamps[0][0] + start_time if timestamps else start_time,
-                'end': timestamps[-1][1] + start_time if timestamps else start_time,
-                'timestamp': [[ts[0] + start_time, ts[1] + start_time] for ts in timestamps]
-            }
-
-            return [segment]
-
-        except Exception as e:
-            logger.error(f"创建基础segment失败: {str(e)}")
             return []
 
     @staticmethod
