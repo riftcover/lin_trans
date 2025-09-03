@@ -355,7 +355,7 @@ class SrtWriter:
         return audio_data[start_sample:end_sample]
 
     @staticmethod
-    def _convert_results_to_segments(self, results: list) -> list:
+    def _convert_results_to_segments(results: list) -> list:
         """
         将SenseVoice的处理结果转换为segment_data格式
 
@@ -382,7 +382,7 @@ class SrtWriter:
         return segments
 
     @staticmethod
-    def custom_rich_transcription_postprocess(self, s):
+    def custom_rich_transcription_postprocess(s):
         """
         自定义的后处理函数，取消emoji
         基于FunASR的rich_transcription_postprocess函数修改
