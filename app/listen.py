@@ -85,9 +85,8 @@ class SrtWriter:
             segments = self._run_asr_recognition(model)
 
             # 3. 生成本地SRT文件（基础版本）
-            srt_success = self._generate_local_srt(segments)
-            if not srt_success:
-                logger.error("SRT文件生成失败，用户将无法获得识别结果")
+            srt_file_path = f"{os.path.splitext(self.input_file)[0]}.srt"
+            funasr_write_srt_file(segments, srt_file_path)
 
             # 4. 生成segment_data文件（供智能分句功能使用）
             try:
@@ -121,7 +120,7 @@ class SrtWriter:
             disable_update=True, disable_pbar=True, disable_log=True
         )
 
-    def _run_asr_recognition(self, model):
+    def _run_asr_recognition(self, model) -> list:
         """执行ASR识别"""
         progress_thread = threading.Thread(target=self._update_progress)
         progress_thread.start()
