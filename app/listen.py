@@ -206,18 +206,10 @@ class SrtWriter:
             logger.info(f"本地SRT文件生成成功: {srt_file_path}")
 
             # 5. 生成segment_data文件（供智能分句功能使用）
-            try:
-                # 将results转换为segment_data格式
-                segments_for_data = self._convert_results_to_segments(results)
-                logger.trace('segments_for_data')
-                logger.trace(segments_for_data)
-                logger.trace('results====')
-                logger.trace(results)
-                segment_data_path = self._create_segment_data_file(results)
-                # 保存segment_data路径信息到工作对象中，供UI使用
-                self._save_segment_data_path(segment_data_path)
-            except Exception as e:
-                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+            segment_data_path = self._create_segment_data_file(results)
+            # 保存segment_data路径信息到工作对象中，供UI使用
+            self._save_segment_data_path(segment_data_path)
+
 
         except Exception as e:
             logger.error(f"funasr_sense_model执行过程中发生严重错误: {str(e)}")
@@ -307,8 +299,6 @@ class SrtWriter:
             # 4. 创建基础segment（不进行复杂分句，智能分句将在用户手动触发时执行）
             rrl = self._split_and_align_sentences(punctuation_res, time_res, start_time)
             results.extend(rrl)
-            logger.info('rrl====')
-            logger.info(rrl)
             return results
 
     def _split_and_align_sentences(self, punctuation_res: list, time_res: list, start_time: int) -> list:
@@ -349,32 +339,7 @@ class SrtWriter:
         end_sample = int(end_time * sample_rate / 1000)  # 转换为样本数
         return audio_data[start_sample:end_sample]
 
-    @staticmethod
-    def _convert_results_to_segments(results: list) -> list:
-        """
-        将SenseVoice的处理结果转换为segment_data格式
 
-        Args:
-            results: SenseVoice处理结果，格式如：
-                [{'start': 230, 'end': 1230, 'text': 'When you go out there,'},
-                 {'start': 1230, 'end': 4590, 'text': 'i really encourage you to try and sense your body more'}]
-
-        Returns:
-            segments: 统一的segment_data格式
-        """
-        segments = []
-        for result in results:
-            segment = {
-                'text': result.get('text', ''),
-                'timestamp': [[result.get('start', 0), result.get('end', 0)]],
-                'start': result.get('start', 0),
-                'end': result.get('end', 0),
-                'spk': 0  # SenseVoice默认单说话人
-            }
-            segments.append(segment)
-
-        logger.info(f"已转换{len(segments)}个segments用于segment_data文件")
-        return segments
 
     @staticmethod
     def custom_rich_transcription_postprocess(s):
