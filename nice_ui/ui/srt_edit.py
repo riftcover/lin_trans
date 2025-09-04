@@ -24,6 +24,7 @@ class SmartSentenceWorker(QThread):
 
     def run(self):
         """执行智能分句处理"""
+
         def progress_callback(progress: int, message: str):
             self.progress_updated.emit(progress, message)
 
@@ -71,7 +72,7 @@ class SubtitleEditPage(QWidget):
         self.subtitle_table.play_from_time_signal.connect(self.play_video_from_time)
         self.subtitle_table.seek_to_time_signal.connect(self.seek_video_to_time)  # 新增连接
 
-        self.subtitle_table.model.subtitleUpdated.connect(self.update_video_subtitle) #字幕更新信号
+        self.subtitle_table.model.subtitleUpdated.connect(self.update_video_subtitle)  #字幕更新信号
 
         # 智能分句相关
         self.smart_sentence_worker = None
@@ -160,19 +161,19 @@ class SubtitleEditPage(QWidget):
 
     def _on_smart_sentence_progress(self, progress: int, message: str):
         """智能分句进度更新"""
-        try:
-            if (self.progress_dialog is not None and
-                hasattr(self.progress_dialog, 'setValue') and
-                hasattr(self.progress_dialog, 'setLabelText') and
-                not self.progress_dialog.wasCanceled()):
 
-                self.progress_dialog.setValue(progress)
-                self.progress_dialog.setLabelText(message)
-                logger.debug(f"进度更新: {progress}% - {message}")
-            else:
-                logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
-        except Exception as e:
-            logger.warning(f"更新进度时发生错误: {str(e)}")
+        # 保存引用，避免 TOCTOU 问题
+        dialog = self.progress_dialog
+        if (dialog is not None and
+                hasattr(dialog, 'setValue') and
+                hasattr(dialog, 'setLabelText') and
+                not dialog.wasCanceled()):
+
+            dialog.setValue(progress)
+            dialog.setLabelText(message)
+            logger.debug(f"进度更新: {progress}% - {message}")
+        else:
+            logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
 
     def _on_smart_sentence_finished(self, success: bool, message: str):
         """智能分句处理完成"""
@@ -433,7 +434,7 @@ class SubtitleEditPage(QWidget):
         """
         if hasattr(self, 'videoWidget'):
             time_ms = self.convert_time_to_ms(start_time)
-            self.videoWidget.player.setPosition(time_ms+1)
+            self.videoWidget.player.setPosition(time_ms + 1)
             # 不调用 play() 方法，所以视频不会开始播放
 
     @staticmethod
@@ -615,5 +616,3 @@ class ExportSubtitleDialog(QDialog):
             # 写入第二行字幕（如果存在），每行都换行
             if second_line_subtitles:
                 dest_file.write("\n".join(second_line_subtitles) + "\n")
-
-
