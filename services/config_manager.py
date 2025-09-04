@@ -218,6 +218,15 @@ class ConfigManager:
         """
         api_config = self.get_api_config()
         return api_config.get('api_base_url')
+    
+    def get_nlp_api_url(self) -> str:
+        """获取NLP API URL
+
+        Returns:
+            str: NLP API URL
+        """
+        api_config = self.get_api_config()
+        return api_config.get('nlp_api_url')
 
     def get_api_timeout(self) -> float:
         """获取API超时时间

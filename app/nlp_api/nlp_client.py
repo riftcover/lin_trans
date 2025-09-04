@@ -4,6 +4,8 @@ NLP API 客户端，用于调用服务端的 spacy 分句处理服务
 import time
 from typing import Optional, Tuple
 import httpx
+
+from services.config_manager import ConfigManager
 from utils import logger
 
 
@@ -20,13 +22,13 @@ class NLPAPIClient:
             timeout: 请求超时时间（秒）
         """
         self.api_base_url = api_base_url.rstrip('/')
-        self.api_key = api_key
+        #todo token 未添加
         self.timeout = timeout
 
         # 创建 HTTP 客户端
         headers = {}
         if api_key:
-            headers['Authorization'] = f'Bearer {api_key}'
+            headers['Authorization'] = f'Bearer'
 
         self.client = httpx.Client(
             timeout=timeout,
@@ -305,7 +307,7 @@ def create_nlp_client() -> Optional[NLPAPIClient]:
         # 从配置中获取 NLP API 设置
         from nice_ui.configure import config
 
-        api_base_url = config.params.get('nlp_api_url')
+        api_base_url = ConfigManager().get_api_base_url()
         api_key = config.params.get('nlp_api_key')
 
         if not api_base_url:
