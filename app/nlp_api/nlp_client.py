@@ -12,7 +12,7 @@ from utils import logger
 class NLPAPIClient:
     """NLP API 客户端"""
 
-    def __init__(self, api_base_url: str, api_key: Optional[str] = None, timeout: int = 300):
+    def __init__(self, api_base_url: str, timeout: int = 300):
         """
         初始化 NLP API 客户端
         
@@ -27,8 +27,8 @@ class NLPAPIClient:
 
         # 创建 HTTP 客户端
         headers = {}
-        if api_key:
-            headers['Authorization'] = f'Bearer'
+        # if api_key:
+        #     headers['Authorization'] = f'Bearer'
 
         self.client = httpx.Client(
             timeout=timeout,
@@ -62,8 +62,8 @@ class NLPAPIClient:
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
-            if self.api_key:
-                request_headers['Authorization'] = f'Bearer {self.api_key}'
+            # if self.api_key:
+            #     request_headers['Authorization'] = f'Bearer {self.api_key}'
 
             response = self.client.post(url, json=data, headers=request_headers)
             response.raise_for_status()
@@ -308,13 +308,12 @@ def create_nlp_client() -> Optional[NLPAPIClient]:
         from nice_ui.configure import config
 
         api_base_url = ConfigManager().get_api_base_url()
-        api_key = config.params.get('nlp_api_key')
 
         if not api_base_url:
             logger.error("NLP API URL 未配置")
             return None
 
-        return NLPAPIClient(api_base_url, api_key)
+        return NLPAPIClient(api_base_url)
 
     except Exception as e:
         logger.error(f"创建 NLP API 客户端失败: {str(e)}")
