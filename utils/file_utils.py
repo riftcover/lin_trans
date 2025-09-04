@@ -268,12 +268,21 @@ class Segment:
             current_segment = {
                 "start": self.time_timestamp[begin][0] + segment_start_time,
                 "end": self.time_timestamp[end][1] + segment_start_time,
-                "text": ""
+                "text": "",
+                "timestamp": []
             }
             # if i == 0:
             #     # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
             #     current_segment["text"] = key_text + " "
-            for word in words[begin:end + 1]:
+            for j, word in enumerate(words[begin:end + 1]):
+                # 获取当前字的时间戳索引
+                timestamp_index = begin + j
+                # 添加字级时间戳到列表中
+                current_segment["timestamp"].append([
+                    self.time_timestamp[timestamp_index][0] + segment_start_time,
+                    self.time_timestamp[timestamp_index][1] + segment_start_time
+                ])
+
                 if is_cjk(word[0]):
                     current_segment["text"] += word
                 else:

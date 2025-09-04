@@ -10,7 +10,7 @@ import soundfile as sf  # 用于读取和裁剪音频文件
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from utils import logger
-from utils.file_utils import funasr_write_srt_file, write_segment_data_file, Segment
+from utils.file_utils import funasr_write_srt_file, write_segment_data_file, Segment, split_sentence
 from utils.lazy_loader import LazyLoader
 
 funasr = LazyLoader('funasr')
@@ -90,6 +90,8 @@ class SrtWriter:
 
             # 4. 生成segment_data文件（供智能分句功能使用）
             try:
+                logger.trace('segments')
+                logger.trace(segments)
                 segment_data_path = self._create_segment_data_file(segments)
                 # 保存segment_data路径信息到工作对象中，供UI使用
                 self._save_segment_data_path(segment_data_path)
@@ -207,7 +209,11 @@ class SrtWriter:
             try:
                 # 将results转换为segment_data格式
                 segments_for_data = self._convert_results_to_segments(results)
-                segment_data_path = self._create_segment_data_file(segments_for_data)
+                logger.trace('segments_for_data')
+                logger.trace(segments_for_data)
+                logger.trace('results====')
+                logger.trace(results)
+                segment_data_path = self._create_segment_data_file(results)
                 # 保存segment_data路径信息到工作对象中，供UI使用
                 self._save_segment_data_path(segment_data_path)
             except Exception as e:
@@ -299,15 +305,23 @@ class SrtWriter:
                 return []
 
             # 4. 创建基础segment（不进行复杂分句，智能分句将在用户手动触发时执行）
-            msg = Segment(punctuation_res, time_res)
-            work_list = msg.get_segmented_index()
-            if not msg.ask_res_len():
-                msg.fix_wrong_index()
-            rrl = msg.create_segmented_transcript(start_time, work_list)
+            rrl = self._split_and_align_sentences(punctuation_res, time_res, start_time)
+            results.extend(rrl)
             logger.info('rrl====')
             logger.info(rrl)
-            results.extend(rrl)
             return results
+
+    def _split_and_align_sentences(self, punctuation_res: list, time_res: list, start_time: int) -> list:
+        """分割句子并对齐时间戳,返回按照标点切割的list"""
+        msg = Segment(punctuation_res, time_res)
+        punc_list = msg.get_segmented_index()
+
+        if not msg.ask_res_len():
+            msg.fix_wrong_index()
+
+        words = split_sentence(punctuation_res[0].get('text'))
+
+        return msg.create_segmented_transcript(start_time, punc_list)
 
     def _recognize_text(self, audio_file: str, model) -> str:
         """识别音频文件中的文本"""
