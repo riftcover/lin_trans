@@ -11,6 +11,7 @@ from utils import logger
 from vendor.qfluentwidgets import (CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition, )
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
 from app.smart_sentence_processor import check_smart_sentence_available, process_smart_sentence
+from components.widget import SubtitleTable
 
 
 class SmartSentenceWorker(QThread):
@@ -54,7 +55,6 @@ class SubtitleEditPage(QWidget):
     def __init__(
             self, patt: str, med_path: str, settings: QSettings = None, parent=None
     ):
-        from components.widget import SubtitleTable
 
         """
 
@@ -77,6 +77,9 @@ class SubtitleEditPage(QWidget):
         # 智能分句相关
         self.smart_sentence_worker = None
         self.progress_dialog = None
+
+        # 视频组件 - 在构造函数中初始化，确保生命周期明确
+        self.videoWidget = None
 
         self.initUI()
 
@@ -114,13 +117,8 @@ class SubtitleEditPage(QWidget):
                 )
                 return
 
-            # 确保清理之前的资源
-            if self.progress_dialog:
-                self.progress_dialog.close()
-                self.progress_dialog = None
-            if self.smart_sentence_worker:
-                self.smart_sentence_worker.deleteLater()
-                self.smart_sentence_worker = None
+            # 确保清理之前的资源 - 使用统一的清理方法
+            self._cleanup_smart_sentence_resources()
 
             # 创建进度对话框
             self.progress_dialog = QProgressDialog("正在进行智能分句处理...", "取消", 0, 100, self)
@@ -162,15 +160,12 @@ class SubtitleEditPage(QWidget):
     def _on_smart_sentence_progress(self, progress: int, message: str):
         """智能分句进度更新"""
 
-        # 保存引用，避免 TOCTOU 问题
-        dialog = self.progress_dialog
-        if (dialog is not None and
-                hasattr(dialog, 'setValue') and
-                hasattr(dialog, 'setLabelText') and
-                not dialog.wasCanceled()):
+        # 简单直接的检查 - 如果对话框存在且未被取消，就更新
+        if (self.progress_dialog is not None and
+                not self.progress_dialog.wasCanceled()):
 
-            dialog.setValue(progress)
-            dialog.setLabelText(message)
+            self.progress_dialog.setValue(progress)
+            self.progress_dialog.setLabelText(message)
             logger.debug(f"进度更新: {progress}% - {message}")
         else:
             logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
@@ -180,19 +175,8 @@ class SubtitleEditPage(QWidget):
         try:
             logger.info(f"智能分句处理完成: success={success}, message={message}")
 
-            # 断开信号连接，避免重复触发
-            if self.progress_dialog:
-                try:
-                    self.progress_dialog.canceled.disconnect()
-                except Exception as e:
-                    logger.debug(f"断开进度对话框信号时发生错误: {str(e)}")
-                self.progress_dialog.close()
-                self.progress_dialog = None
-
-            # 清理工作线程
-            if self.smart_sentence_worker:
-                self.smart_sentence_worker.deleteLater()
-                self.smart_sentence_worker = None
+            # 使用统一的清理方法
+            self._cleanup_smart_sentence_resources()
 
             if success:
                 # 成功时重新加载字幕表格
@@ -252,24 +236,8 @@ class SubtitleEditPage(QWidget):
                 logger.warning("没有运行中的智能分句任务，可能是误触发")
                 return
 
-            if self.smart_sentence_worker and self.smart_sentence_worker.isRunning():
-                logger.info("正在终止智能分句工作线程")
-                self.smart_sentence_worker.terminate()
-                self.smart_sentence_worker.wait(3000)  # 最多等待3秒
-
-            # 清理工作线程
-            if self.smart_sentence_worker:
-                self.smart_sentence_worker.deleteLater()
-                self.smart_sentence_worker = None
-
-            # 关闭进度对话框
-            if self.progress_dialog:
-                try:
-                    self.progress_dialog.canceled.disconnect()
-                except Exception:
-                    pass  # 忽略断开连接的错误
-                self.progress_dialog.close()
-                self.progress_dialog = None
+            # 使用统一的清理方法
+            self._cleanup_smart_sentence_resources()
 
             logger.info("用户取消了智能分句处理")
 
@@ -395,7 +363,7 @@ class SubtitleEditPage(QWidget):
         """
         当字幕内容更新时，更新视频播放器中的字幕显示
         """
-        if hasattr(self, 'videoWidget'):
+        if self.videoWidget is not None:
             current_position = self.videoWidget.player.position()
             self.videoWidget.update_subtitle_at_position(current_position)
 
@@ -417,7 +385,7 @@ class SubtitleEditPage(QWidget):
         Args:
             start_time (str): 开始播放的时间，格式为 "HH:MM:SS,mmm"
         """
-        if hasattr(self, 'videoWidget'):
+        if self.videoWidget is not None:
             time_ms = self.convert_time_to_ms(start_time)
             self.videoWidget.player.setPosition(time_ms)
             self.videoWidget.play()
@@ -432,7 +400,7 @@ class SubtitleEditPage(QWidget):
         Args:
             start_time (str): 跳转的目标时间，格式为 "HH:MM:SS,mmm"
         """
-        if hasattr(self, 'videoWidget'):
+        if self.videoWidget is not None:
             time_ms = self.convert_time_to_ms(start_time)
             self.videoWidget.player.setPosition(time_ms + 1)
             # 不调用 play() 方法，所以视频不会开始播放
@@ -466,12 +434,52 @@ class SubtitleEditPage(QWidget):
 
     def stop_video(self):
         """停止视频播放"""
-        if hasattr(self, 'videoWidget'):
+        if self.videoWidget is not None:
             self.videoWidget.stop()
 
+    def _cleanup_smart_sentence_resources(self):
+        """统一清理智能分句相关资源 - Linus式：一个地方处理所有清理"""
+        logger.debug("开始清理智能分句资源")
+
+        # 1. 清理工作线程
+        if self.smart_sentence_worker:
+            if self.smart_sentence_worker.isRunning():
+                logger.debug("终止运行中的智能分句线程")
+                self.smart_sentence_worker.terminate()
+                self.smart_sentence_worker.wait(3000)  # 最多等待3秒
+            self.smart_sentence_worker.deleteLater()
+            self.smart_sentence_worker = None
+
+        # 2. 清理进度对话框
+        if self.progress_dialog:
+            try:
+                # 断开所有信号连接
+                self.progress_dialog.canceled.disconnect()
+            except Exception:
+                pass  # 信号可能已经断开，忽略错误
+
+            self.progress_dialog.close()
+            self.progress_dialog = None
+
+        logger.debug("智能分句资源清理完成")
+
+    def _cleanup_video_resources(self):
+        """清理视频相关资源"""
+        if self.videoWidget is not None:
+            logger.debug("清理视频组件")
+            self.videoWidget.stop()
+            self.videoWidget = None
+
     def closeEvent(self, event):
-        """在窗口关闭时停止视频播放"""
-        self.stop_video()
+        """在窗口关闭时清理所有资源"""
+        logger.debug("窗口正在关闭，清理资源")
+
+        # 清理智能分句相关资源
+        self._cleanup_smart_sentence_resources()
+
+        # 清理视频相关资源
+        self._cleanup_video_resources()
+
         super().closeEvent(event)
 
 
