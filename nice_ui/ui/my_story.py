@@ -361,9 +361,15 @@ class TableApp(CardWidget):
     def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1, created_at=None):
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
+
+        # 如果没有传入创建时间，使用当前时间（新建任务的情况）
+        if created_at is None:
+            from datetime import datetime
+            created_at = datetime.now()
+
         filename = obj_format.raw_noextname
         unid = obj_format.unid
-        row_position = self.table.rowCount()
+        row_position = 0  # 插入到第一行
         self.table.insertRow(row_position)
         chk, file_status = self._add_common_widgets(
             row_position, filename, unid, job_status, obj_format, created_at
