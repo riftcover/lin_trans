@@ -73,13 +73,14 @@ class Window(_create_smart_window_class()):
         # self._setupPlatformSpecificFeatures()
 
         self.initWindow()
+        # self.load_proxy_settings()  # 加载代理设置
+        # todo 更新检查更改地址
+        # QTimer.singleShot(0, self.check_for_updates)  # 在主窗口初始化后检查更新
         # create sub interface
-        # self.homeInterface = Widget('Search Interface', self)
-        self.vide2srt = Video2SRT("音视频转字幕", self, self.settings)
-        self.translate_srt = WorkSrt("字幕翻译", self, self.settings)
-        self.my_story = TableApp("我的创作", self, self.settings)
-        self.settingInterface = SettingInterface("设置", self, self.settings)
-        self.loginInterface = ProfileInterface("个人中心", self, self.settings)
+        self.vide2srt = Video2SRT("音视频转字幕", self.settings)
+        self.translate_srt = WorkSrt("字幕翻译", self.settings)
+        self.my_story = TableApp("我的创作", self.settings)
+        self.settingInterface = SettingInterface("设置", self.settings)
 
         self.initNavigation()
         # 连接信号
