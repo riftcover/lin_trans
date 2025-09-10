@@ -183,13 +183,14 @@ class TableApp(CardWidget):
         srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
+        # 合并两个数据源并按创建时间倒序排列
+        all_data = list(srt_data) + list(trans_data)
+        all_data.sort(key=lambda x: x.created_at, reverse=True)
+
         processed_unids = set()
 
-        for item in trans_data:
-            self._process_item(item, processed_unids)
-
-        for item in srt_data:
-            if item not in processed_unids:
+        for item in all_data:
+            if item.unid not in processed_unids:
                 self._process_item(item, processed_unids)
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
