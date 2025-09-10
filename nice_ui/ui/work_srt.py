@@ -18,14 +18,14 @@ from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar,
 
 
 class WorkSrt(QWidget):
-    def __init__(self, title: str, settings=None):
-        super().__init__()
+    def __init__(self, text: str, parent=None, settings=None):
+        super().__init__(parent=parent)
         self.settings = settings
         self.prompts_orm = PromptsOrm()
         self.table = LTableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
-        self.setObjectName(title)
+        self.setObjectName(text.replace(" ", "-"))
         self.setup_ui()
         self.bind_action()
 
