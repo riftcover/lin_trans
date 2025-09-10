@@ -33,7 +33,7 @@ class Video2SRT(QWidget):
         self.table = TableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(text)
         self.setupUi()
         self.bind_action()
 

@@ -51,7 +51,7 @@ class TableApp(CardWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace("", "-"))
+        self.setObjectName(text)
         self.setupUi()
         self.data_bridge = data_bridge
         self._connect_signals()

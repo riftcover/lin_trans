@@ -1331,7 +1331,7 @@ class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(text)
         self.initUI()
 
     def initUI(self):
