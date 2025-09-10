@@ -140,7 +140,12 @@ class TableApp(CardWidget):
         """
         self.table = TableWidget()
         self.table.setColumnCount(8)
-        self.table.horizontalHeader().setVisible(False)
+
+        # 设置表格标题
+        headers = ["", "文件名", "任务类型", "创建时间", "状态", "操作", "", ""]
+        self.table.setHorizontalHeaderLabels(headers)
+
+        self.table.horizontalHeader().setVisible(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self.table.setAlternatingRowColors(True)
