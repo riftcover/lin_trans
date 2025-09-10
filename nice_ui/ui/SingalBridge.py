@@ -1,7 +1,5 @@
 from PySide6.QtCore import Signal, QObject
 
-from utils import logger
-
 
 class DataBridge(QObject):
     # 定义信号
@@ -12,6 +10,7 @@ class DataBridge(QObject):
     asr_trans_job_asr_finished = Signal(str)
     update_balance = Signal(int)  # 更新余额信号
     update_history = Signal(list)  # 更新历史记录信号
+    task_error = Signal(str, str)  # 任务错误信号：(任务ID, 错误信息)
 
     def __init__(self):
         super().__init__()
@@ -47,7 +46,6 @@ class DataBridge(QObject):
         Args:
             status: unid
         """
-        logger.info("emit_asr_finished 触发了")
         self.asr_trans_job_asr_finished.emit(status)
 
     def emit_update_balance(self, balance: int):
@@ -65,3 +63,12 @@ class DataBridge(QObject):
             transactions: 新的交易记录列表
         """
         self.update_history.emit(transactions)
+
+    def emit_task_error(self, task_id: str, error_message: str):
+        """
+        发出任务错误信号
+        Args:
+            task_id: 任务ID
+            error_message: 错误信息
+        """
+        self.task_error.emit(task_id, error_message)

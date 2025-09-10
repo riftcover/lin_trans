@@ -8,16 +8,41 @@ common:
     privacy: /privacy
     register: /register
     terms: /terms
-default: development
+# 高级翻译配置
+translator:
+  # 术语上下文最大长度，用于主题和术语分析
+  summary_length: 8000
+  # 最大分割长度，控制翻译块大小
+  max_split_length: 20
+  # 是否启用二次优化翻译（表达流畅性优化）
+  reflect_translate: true
+  # 字幕行最大长度
+  subtitle_max_length: 75
+  # 目标语言文本长度乘数
+  target_multiplier: 1.2
+  # 最小字幕持续时间（秒）
+  min_subtitle_duration: 2.5
+  # 最小修剪持续时间（秒）
+  min_trim_duration: 3.5
+  # 翻译块字数
+  chunk_size: 600
+  # 翻译块句子行数
+  max_entries: 10
+  # 翻译API调用间隔
+  sleep_time: 1
+default: test
 development:
   api_base_url: http://127.0.0.1:8000/api
-  web_base_url: http://127.0.0.1:4000
+  web_base_url: http://127.0.0.1:3000
+  nlp_api_url: http://localhost:8000
+
+test:
+  api_base_url: http://20.196.66.218:8000/api
+  web_base_url: http://20.196.66.218:3000
+  nlp_api_url: http://20.196.66.218:8000
+
 production:
-  api_base_url: http://123.57.206.182:8000/api
-  web_base_url: http://www.example.com
-staging:
-  api_base_url: http://staging-api.example.com/api
-  web_base_url: http://staging.example.com
-testing:
-  api_base_url: http://test-api.example.com/api
-  web_base_url: http://test.example.com
+  api_base_url: https://www.lapped-ai.com/api
+  web_base_url: https://www.lapped-ai.com
+  nlp_api_url: https://www.lapped-ai.com
+

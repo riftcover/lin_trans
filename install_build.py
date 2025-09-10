@@ -7,6 +7,7 @@ import argparse
 import site
 import time
 import pkgutil
+import fnmatch
 from nice_ui.ui import __version__
 
 # ... (保留现有的 import 语句和函数定义) ...
@@ -39,13 +40,29 @@ ensure_dir(RESULT_DIR)
 ensure_dir(LOGS_DIR)
 ensure_dir(MODELS_DIR)
 
+# 定义要排除的文件和目录
+# 排除文档和测试文件
+exclude_patterns = [
+    "docs", "xff", ".github", "test", "tests", "examples", "sample", "samples",
+    "__pycache__", "*.dist-info", "*.egg-info",
+    # 特定库的排除
+    "torch/test", "torch/testing", "torch/optim", "torch/distributed", "torch/utils/data", "torch/onnx", "torch/profiler",
+    "modelscope/examples", "modelscope/metrics", "modelscope/trainers", "modelscope/utils/test_utils",
+    "funasr/bin", "funasr/datasets", "funasr/train",
+    "scipy/optimize", "scipy/spatial", "scipy/stats", "scipy/cluster", "scipy/fft", "scipy/integrate",
+    "scipy/interpolate", "scipy/io", "scipy/linalg", "scipy/misc", "scipy/ndimage", "scipy/odr",
+    "scipy/signal", "scipy/sparse", "scipy/special",
+    "numpy/distutils", "numpy/doc", "numpy/f2py", "numpy/testing", "numpy/typing"
+]
+
 # PyInstaller 打包命令
 cmd = [
     sys.executable,
     "-m", "PyInstaller",
-    "--name=LinLin",
+    "--name=Lapped",
     "--onedir",
-    "--console",
+    "--noconsole",
+    "--windowed",   # 添加 --windowed 参数，使用 GUI 模式
     f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     f"--add-data=models{os.pathsep}models",
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
@@ -53,7 +70,14 @@ cmd = [
     f"--add-data=result{os.pathsep}result",
     f"--add-data=tmp{os.pathsep}tmp",
     f"--add-data=.credentials{os.pathsep}.credentials",
+    f"--add-data=config{os.pathsep}config",
+    "--noconfirm",  # 不询问确认
+    "--clean",      # 清理临时文件
 ]
+
+# 添加所有排除模式
+for pattern in exclude_patterns:
+    cmd.append(f"--exclude={pattern}")
 
 # todo: 打包前重新生成orm/linlin.db文件
 #todo: console不输出内容
@@ -70,13 +94,9 @@ if args.debug:
 
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
-    cmd.extend([
-        "--icon={}".format(os.path.join("components", "assets", "linlin.ico")),
-    ])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.ico")}'])
 elif platform.system() == "Darwin":  # macOS
-    cmd.extend([
-        "--icon={}".format(os.path.join("components", "assets", "linlin.icns"))
-    ])
+    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.icns")}'])
     if platform.machine() == "arm64":
         cmd.append("--target-architecture=arm64")
     else:
@@ -127,34 +147,81 @@ subprocess.run(cmd, check=True)
 print("打包完成!")
 
 
-# 复制 funasr 库到 _internal 目录
+# 复制模型库到 _internal 目录，并排除不必要的文件
 def copy_models():
+    # 要排除的目录和文件模式
+    exclude_dirs = [
+        'docs', 'test', 'tests', 'examples', 'sample', 'samples',
+        '.git', '.github', '__pycache__', 'egg-info', 'dist-info',
+        'bin', 'datasets', 'train'
+    ]
+    exclude_files = [
+        '*.pyc', '*.pyo', '*.pyd', '*.so', '*.a', '*.lib',
+        '*.md', '*.rst', '*.txt', '*.html', '*.pdf'
+    ]
 
-    model_lists = ['modelscope','funasr']
+    # 特定库的排除目录
+    specific_excludes = {
+        'torch': ['test', 'testing', 'optim', 'distributed', 'utils/data', 'onnx', 'profiler'],
+        'modelscope': ['examples', 'metrics', 'trainers', 'utils/test_utils'],
+        'funasr': ['bin', 'datasets', 'train'],
+        'scipy': ['optimize', 'spatial', 'stats', 'cluster', 'fft', 'integrate', 'interpolate', 'io', 'linalg', 'misc', 'ndimage', 'odr', 'signal', 'sparse', 'special'],
+        'numpy': ['distutils', 'doc', 'f2py', 'testing', 'typing']
+    }
+
+    model_lists = ['modelscope', 'funasr']
     for model in model_lists:
-        # 获取 funasr 库的路径
-        funasr_path = pkgutil.get_loader(model).path
-        if not funasr_path:
-            print("无法找到 funasr 库路径")
-            return
+        # 获取库的路径
+        model_path = pkgutil.get_loader(model).path
+        if not model_path:
+            print(f"无法找到 {model} 库路径")
+            continue
         try:
-            # 获取 funasr 包的根目录
-            funasr_root = os.path.dirname(funasr_path)
-            print(funasr_root)
+            # 获取包的根目录
+            model_root = os.path.dirname(model_path)
+            print(f"{model} 库路径: {model_root}")
 
             # 目标路径 (_internal 目录)
-            target_path = os.path.join("dist", "LinLin", "_internal", model)
+            target_path = os.path.join("dist", "Lapped", "_internal", model)
 
             # 确保目标目录存在
             os.makedirs(target_path, exist_ok=True)
 
-            # 复制整个 funasr 目录
-            shutil.copytree(funasr_root, target_path, dirs_exist_ok=True)
+            # 复制库目录，排除不必要的文件
+            def custom_ignore(src, names):
+                ignored_names = []
 
-            print(f"{model} 库已复制到: {target_path}")
+                # 检查是否在排除目录列表中
+                for name in names:
+                    full_path = os.path.join(src, name)
+                    # 排除目录
+                    if os.path.isdir(full_path):
+                        if any(exclude in name for exclude in exclude_dirs):
+                            ignored_names.append(name)
+                            continue
+
+                        # 检查特定库的排除目录
+                        for lib, excludes in specific_excludes.items():
+                            if lib in src:
+                                rel_path = os.path.relpath(full_path, model_root)
+                                for exclude in excludes:
+                                    if exclude in rel_path:
+                                        ignored_names.append(name)
+                                        break
+                    # 排除文件
+                    elif os.path.isfile(full_path):
+                        if any(fnmatch.fnmatch(name, pattern) for pattern in exclude_files):
+                            ignored_names.append(name)
+
+                return ignored_names
+
+            # 使用自定义忽略函数复制文件
+            shutil.copytree(model_root, target_path, ignore=custom_ignore, dirs_exist_ok=True)
+
+            print(f"{model} 库已复制到: {target_path} (排除了不必要的文件)")
 
         except Exception as e:
-            print(f"复制 funasr 库时出错: {e}")
+            print(f"复制 {model} 库时出错: {e}")
 
 
 # 复制 funasr 库

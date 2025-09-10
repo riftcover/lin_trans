@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 import unicodedata
 
@@ -8,38 +8,81 @@ from utils.log import Logings
 logger = Logings().logger
 
 
-def write_srt_file(segment, srt_file_path):
-    with open(srt_file_path, 'a', encoding='utf-8') as srt_file:
-        start_time = segment.start
-        end_time = segment.end
-        text = segment.text
-        srt_file.write(f"{segment.id}\n")
-        srt_file.write(f"{format_time(start_time)} --> {format_time(end_time)}\n")
-        srt_file.write(f"{text.strip()}\n\n")
+def format_time(ms: int) -> str:
+    """
+    将毫秒转换为SRT格式的时间戳
 
+    Args:
+        ms: 毫秒时间戳
 
-def format_time(seconds):
-    milliseconds = int((seconds % 1) * 1000)
-    seconds = int(seconds)
+    Returns            str: SRT格式的时间戳 (HH:MM:SS,mmm)
+    """
+    seconds, ms = divmod(ms, 1000)
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{ms:03d}"
 
 
-def funasr_write_srt_file(segments, srt_file_path):
+def funasr_write_srt_file(segments: List[Dict[str, Any]], srt_file_path: str) -> None:
+    """写SRT文件 - 消除了愚蠢的model参数"""
+
+    def _clean_text(text: str) -> str:
+        """移除末尾标点符号 - 单一职责"""
+        punctuation_marks = {',', '.', '，', '。', '、', '；', ';'}
+        return text.strip().rstrip(''.join(punctuation_marks))
+
+    def _normalize_segment(segment: Dict[str, Any]) -> tuple[str, str, str]:
+        """标准化segment数据 - 消除数据结构不一致"""
+        # 统一字段名映射
+        start_key = 'start' if 'start' in segment else 'begin_time'
+        end_key = 'end' if 'end' in segment else 'end_time'
+
+        start_time = format_time(segment[start_key])
+        end_time = format_time(segment[end_key])
+        text = _clean_text(segment['text'])
+
+        return start_time, end_time, text
+
     with open(srt_file_path, "w", encoding="utf-8") as srt_file:
         for i, segment in enumerate(segments, 1):
-            start_time = format_time(segment['start'] / 1000)  # Convert milliseconds to seconds
-            end_time = format_time(segment['end'] / 1000)  # Convert milliseconds to seconds
-            text = segment['text'].strip()
+            start_time, end_time, text = _normalize_segment(segment)
+            srt_file.write(f"{i}\n{start_time} --> {end_time}\n{text}\n\n")
 
-            srt_file.write(f"{i}\n")
-            srt_file.write(f"{start_time} --> {end_time}\n")
-            srt_file.write(f"{text}\n\n")
 
 def funasr_write_txt_file(segments, txt_file_path):
     with open(txt_file_path, "w", encoding="utf-8") as txt_file:
         txt_file.write(segments)
+
+
+def write_segment_data_file(segments, segment_data_file_path):
+    """
+    将 segments 数据写入 segment_data 文件，用于 NLP 任务
+
+    Args:
+        segments: FunASR 输出的句子信息列表
+        segment_data_file_path: segment_data 文件路径
+    """
+    import json
+
+    # 确保数据格式适合 NLP 处理
+    segment_data = []
+    for segment in segments:
+        # 提取必要的字段
+        data_item = {
+            'text': segment.get('text', ''),
+            'timestamp': segment.get('timestamp', []),
+            'start': segment.get('start'),
+            'end': segment.get('end'),
+            'spk': segment.get('spk', 0)
+        }
+        segment_data.append(data_item)
+
+    # 写入 JSON 格式的文件
+    with open(segment_data_file_path, "w", encoding="utf-8") as f:
+        json.dump(segment_data, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"已写入 segment_data 文件: {segment_data_file_path}, 包含 {len(segment_data)} 个片段")
 
 
 def funasr_format_time(seconds):
@@ -118,15 +161,13 @@ def get_segment_timestamps(result: list, time_threshold: float = 0.2):
     return segments_list
 
 
-
-
-
 class Segment:
     """
-    用于SenseVoiceSmall模型处理时间戳
+    在使用SenseVoiceSmall模型时调用
+    功能：处理时间戳
     """
 
-    def __init__(self, punctuation_res:list, time_res:list):
+    def __init__(self, punctuation_res: list, time_res: list):
         """
 
         Args:
@@ -181,15 +222,16 @@ class Segment:
 
         """
         ll = len(self.punc_text)
-        turns = len(self.punc_array)-len(self.time_timestamp)
+        turns = len(self.punc_array) - len(self.time_timestamp)
         i = 0
         logger.info(f"fix turns: {turns}")
+
         for _ in range(turns):
             while i < ll:
                 if self.punc_text[i].lower() != self.time_text[i].lower() and self.punc_text[i].lower()[:-1] != self.time_text[i].lower():
                     self.time_text.insert(i, '')  # 添加一组空数据
-                    self.time_timestamp.insert(i, self.time_timestamp[i])  # 添加一组时间
-                    logger.error(f"wrong text: {self.punc_text[i-5:i]}:{self.time_text[i-5:i]}")
+                    self.time_timestamp.insert(i, self.time_timestamp[i])  # 添加一组i的重复时间
+                    logger.error(f"wrong text: {self.punc_text[i - 3:i + 2]}:{self.time_text[i - 3:i + 2]}")
                     i += 1  # 移动到下一个位置
                     break
                 i += 1
@@ -199,13 +241,11 @@ class Segment:
 
     def create_segmented_transcript(self, segment_start_time: int, split_index: List[int]) -> List[Dict[str, Union[int, str]]]:
         """
-        使用SenseVoiceSmall模型时调用。因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
-        将字级时间戳，拼接成句子时间戳
+        将字级时间戳，拼接成句子时间戳。
+        使用SenseVoiceSmall模型时调用。
+        因为SenseVoiceSmall模型输出不带time_stamps,需要额外调用"fa-zh"模型生成
         Args:
             segment_start_time: vad切割音频后，每段的开始时间
-            time_stamps: "fa-zh"模型输出的字级时间戳,timestamp字段
-            text: 标点预测模型输出的文本text字段
-            key_text: 标点预测模型输出的文本key字段
             split_index: 标点预测模型输出的punc_array大于1的列表
         Examples:
             a = "today's podcast is about modifying ski bootss and you're going to hear from my guest lou rosenfeld who owned a successful ski shop in calgary for many years"
@@ -228,18 +268,27 @@ class Segment:
             current_segment = {
                 "start": self.time_timestamp[begin][0] + segment_start_time,
                 "end": self.time_timestamp[end][1] + segment_start_time,
-                "text": ""
+                "text": "",
+                "timestamp": []
             }
             # if i == 0:
             #     # 由于模型输出的文本第一个子在key字段中，所以需要额外处理
             #     current_segment["text"] = key_text + " "
+            for j, word in enumerate(words[begin:end + 1]):
+                # 获取当前字的时间戳索引
+                timestamp_index = begin + j
+                # 添加字级时间戳到列表中
+                current_segment["timestamp"].append([
+                    self.time_timestamp[timestamp_index][0] + segment_start_time,
+                    self.time_timestamp[timestamp_index][1] + segment_start_time
+                ])
 
-            for word in words[begin:end+1]:
                 if is_cjk(word[0]):
                     current_segment["text"] += word
                 else:
                     current_segment["text"] += word + ' '
             current_segment["text"] = current_segment["text"].strip()
+
 
             sentence_info.append(current_segment)
             begin = end + 1

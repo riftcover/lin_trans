@@ -1,11 +1,12 @@
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal, QSettings
+import asyncio
+
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
-import asyncio
-from functools import partial
 
-from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton, CheckBox)
 from api_client import api_client
+from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
+                                   CheckBox)
 
 
 class LoginWindow(QFrame):
@@ -167,6 +168,9 @@ class LoginWindow(QFrame):
         self.forgotPasswordButton.clicked.connect(self.handle_forgot_password)
         self.registerButton.clicked.connect(self.handle_register)
 
+        # 确保登录按钮始终可用 - 修复Token过期时按钮无法点击的问题
+        self.loginButton.setEnabled(True)
+
     def setup_animation(self):
         # 窗口打开时的动画效果
         self.opacity = 0
@@ -176,6 +180,14 @@ class LoginWindow(QFrame):
         self.animation.setEndValue(1)
         self.animation.setEasingCurve(QEasingCurve.InOutCubic)
         self.animation.start()
+
+    def showEvent(self, event):
+        """窗口显示时的事件处理 - 确保登录按钮可用"""
+        super().showEvent(event)
+        # 重置按钮状态，修复Token过期时按钮无法点击的问题
+        if hasattr(self, 'loginButton'):
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
 
     def load_saved_email(self):
         """加载保存的邮箱账号"""
@@ -224,8 +236,12 @@ class LoginWindow(QFrame):
             )
             return
 
+        # 临时禁用按钮防止重复点击，但确保在完成后重新启用
+        self.loginButton.setEnabled(False)
+        self.loginButton.setText('登录中...')
+
         try:
-            user_login = api_client.login_sync(email, password)
+            user_login = api_client.login_t(email, password)
             # 保存邮箱账号和登录状态
             if user_login:
                 self.save_email(email)
@@ -259,12 +275,16 @@ class LoginWindow(QFrame):
                 duration=3000,
                 parent=self
             )
+        finally:
+            # 确保按钮始终重新启用 - 修复Token过期时按钮无法点击的问题
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
 
     def handle_forgot_password(self):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
         from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
-        from utils.config_manager import get_web_url
+        from services.config_manager import get_web_url
 
         # 尝试获取邮箱地址，如果有的话可以作为参数传递
         email = self.emailInput.text()
@@ -290,7 +310,7 @@ class LoginWindow(QFrame):
         # 使用QDesktopServices打开浏览器并跳转到注册页面
         from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
-        from utils.config_manager import get_web_url
+        from services.config_manager import get_web_url
 
         # 从配置中获取注册页面的URL
         register_url = get_web_url('register')

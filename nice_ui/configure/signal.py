@@ -1,5 +1,6 @@
 from nice_ui.ui.SingalBridge import DataBridge
 
+
 class SingletonDataBridge:
     _instance = None
 
@@ -8,5 +9,6 @@ class SingletonDataBridge:
         if cls._instance is None:
             cls._instance = DataBridge()
         return cls._instance
+
 
 data_bridge = SingletonDataBridge.get_instance()

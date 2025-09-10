@@ -1,20 +1,20 @@
 import os
-import sys
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal,Qt, QUrl, QSize, QTimer
+from PySide6.QtCore import QThread, Signal, Qt, QUrl, QSize, QTimer, Slot
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
-from nice_ui.ui import __version__
+
 from nice_ui.configure import config
+from nice_ui.task.api_thread import ApiWorker
+from nice_ui.ui import __version__
 from nice_ui.ui.style import LLMKeySet, TranslateKeySet
 from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, BodyLabel, CaptionLabel, HyperlinkLabel, SubtitleLabel, ToolButton, RadioButton, LineEdit, PushButton, InfoBar,
                                    InfoBarPosition, FluentIcon, PrimaryPushButton, CardWidget, StrongBodyLabel, TransparentToolButton, SpinBox, MessageBox,
-                                   CompactDoubleSpinBox,
                                    )
 
 
@@ -492,13 +492,15 @@ class LLMConfigPage(QWidget):
         cards_layout = QVBoxLayout()
         cards_layout.setSpacing(0)
 
-        kimi_card = LLMKeySet("kimi", "hurl", self)
-        zhipu_card = LLMKeySet("zhipu", "zhipu", self)
-        qwen_card = LLMKeySet("qwen", "qwen", self)
+        kimi_card = LLMKeySet("kimi", "https://platform.moonshot.cn/console/api-keys", self)
+        zhipu_card = LLMKeySet("zhipu", "https://open.bigmodel.cn/usercenter/apikeys", self)
+        qwen_card = LLMKeySet("qwen", "https://bailian.console.aliyun.com/?tab=model#/api-key", self)
+        deepseek_card = LLMKeySet("deepseek", "https://platform.deepseek.com/api_keys", self)
 
         cards_layout.addWidget(kimi_card)
         cards_layout.addWidget(zhipu_card)
         cards_layout.addWidget(qwen_card)
+        cards_layout.addWidget(deepseek_card)
 
         api_key_content_layout.addLayout(cards_layout, 1)
         api_key_content_layout.addStretch(1)  # 添加水平伸缩
@@ -506,66 +508,67 @@ class LLMConfigPage(QWidget):
         api_key_layout.addLayout(api_key_content_layout)
         main_layout.addWidget(api_key_card)
 
-        # Prompts Section
-        prompts_card = CardWidget(self)
-        prompts_layout = QVBoxLayout(prompts_card)
-        # prompts_layout.setSpacing(10)
-
-        prompts_header = QHBoxLayout()
-        prompts_header.addWidget(SubtitleLabel("提示词"))
-        prompts_header.addStretch()
-        refresh_btn = ToolButton(FluentIcon.ROTATE)
-        refresh_btn.setToolTip("刷新提示词")
-        refresh_btn.clicked.connect(self.refresh_table_data)
-
-        add_btn = ToolButton(FluentIcon.CHAT)
-        add_btn.setToolTip("新增提示词")
-        add_btn.clicked.connect(self._add_prompt)
-        prompts_header.addWidget(add_btn, alignment=Qt.AlignRight)
-        prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
-        prompts_layout.addLayout(prompts_header)
-
-        # 创建一个水平布局来容纳表格和左右间距
-
-        self.prompts_table = TableWidget(self)
-        # 设置表格为交替行颜色
-        self.prompts_table.setAlternatingRowColors(True)
-        self.prompts_table.verticalHeader().setDefaultSectionSize(
-            40
-        )  # 设置默认行高为 40
-        self.prompts_table.verticalHeader().setSectionResizeMode(
-            QHeaderView.Fixed
-        )  # 固定行高
-
-        # 不显示表头
-        self.prompts_table.horizontalHeader().setVisible(False)
-
-        self.prompts_table.setColumnCount(4)
-        self.prompts_table.setHorizontalHeaderLabels(
-            ["主键id", "提示词名称", "提示词内容", "操作"]
-        )
-        self.prompts_table.verticalHeader().setVisible(False)
-        self.prompts_table.setColumnWidth(0, 50)
-        self.prompts_table.setColumnWidth(1, 150)
-        self.prompts_table.setColumnWidth(3, 70)
-        self.prompts_table.setColumnHidden(0, True)
-
-        # 让第三列（索引为2）占据剩余空间
-        self.prompts_table.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.Stretch
-        )
-
-        # 其他列保持固定宽度
-        self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
-        self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
-
-        self.prompts_table.setEditTriggers(
-            QAbstractItemView.NoEditTriggers
-        )  # 设置表格为不可编辑
-
-        prompts_layout.addWidget(self.prompts_table)
-
-        main_layout.addWidget(prompts_card)
+        # # Prompts Section
+        # prompts_card = CardWidget(self)
+        # prompts_layout = QVBoxLayout(prompts_card)
+        # # prompts_layout.setSpacing(10)
+        #
+        # prompts_header = QHBoxLayout()
+        # prompts_header.addWidget(SubtitleLabel("提示词"))
+        # prompts_header.addStretch()
+        # refresh_btn = ToolButton(FluentIcon.ROTATE)
+        # refresh_btn.setToolTip("刷新提示词")
+        # refresh_btn.clicked.connect(self.refresh_table_data)
+        #
+        # add_btn = ToolButton(FluentIcon.CHAT)
+        # add_btn.setToolTip("新增提示词")
+        # add_btn.clicked.connect(self._add_prompt)
+        # prompts_header.addWidget(add_btn, alignment=Qt.AlignRight)
+        # prompts_header.addWidget(refresh_btn, alignment=Qt.AlignRight)
+        # prompts_layout.addLayout(prompts_header)
+        #
+        # # 创建一个水平布局来容纳表格和左右间距
+        #
+        # self.prompts_table = TableWidget(self)
+        # # 设置表格为交替行颜色
+        # self.prompts_table.setAlternatingRowColors(True)
+        # self.prompts_table.verticalHeader().setDefaultSectionSize(
+        #     40
+        # )  # 设置默认行高为 40
+        # self.prompts_table.verticalHeader().setSectionResizeMode(
+        #     QHeaderView.Fixed
+        # )  # 固定行高
+        #
+        # # 不显示表头
+        # self.prompts_table.horizontalHeader().setVisible(False)
+        #
+        # self.prompts_table.setColumnCount(4)
+        # self.prompts_table.setHorizontalHeaderLabels(
+        #     ["主键id", "提示词名称", "提示词内容", "操作"]
+        # )
+        # self.prompts_table.verticalHeader().setVisible(False)
+        # self.prompts_table.setColumnWidth(0, 50)
+        # self.prompts_table.setColumnWidth(1, 150)
+        # self.prompts_table.setColumnWidth(3, 70)
+        # self.prompts_table.setColumnHidden(0, True)
+        #
+        # # 让第三列（索引为2）占据剩余空间
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(
+        #     2, QHeaderView.Stretch
+        # )
+        #
+        # # 其他列保持固定宽度
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        # self.prompts_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
+        #
+        # self.prompts_table.setEditTriggers(
+        #     QAbstractItemView.NoEditTriggers
+        # )  # 设置表格为不可编辑
+        #
+        # prompts_layout.addWidget(self.prompts_table)
+        #
+        # main_layout.addWidget(prompts_card)
+        main_layout.addStretch(1)
 
     def _init_table(self):
         all_prompts = self.prompts_orm.get_data_with_id_than_one()
@@ -1069,6 +1072,7 @@ class CommonPage(QWidget):
         self.settings = settings
         self.setup_ui()
         self.bind_actions()
+        self._setup_api_worker()
 
     def setup_ui(self):
         # 创建主布局
@@ -1109,7 +1113,7 @@ class CommonPage(QWidget):
         website_layout = QHBoxLayout()
         website_label = BodyLabel("官方网站:", about_card)
         self.website_link = HyperlinkLabel("访问官网", about_card)
-        self.website_link.setUrl("https://github.com/")  # 设置为实际的官网地址
+        self.website_link.setUrl("https://www.lapped-ai.com/")  # 设置为实际的官网地址
         website_layout.addWidget(website_label)
         website_layout.addWidget(self.website_link)
         website_layout.addStretch(1)
@@ -1117,15 +1121,14 @@ class CommonPage(QWidget):
 
         # 添加描述文本
         description_label = BodyLabel(
-            "LinLin Trans是一款功能强大的字幕翻译工具，支持多种语言的字幕识别、翻译和编辑功能。"
-            "我们致力于提供高质量的翻译服务，帮助用户轻松处理视频字幕。",
+            "一款为内容创作者而生的字幕助手",
             about_card
         )
         description_label.setWordWrap(True)
         about_layout.addWidget(description_label)
 
         # 添加版权信息
-        copyright_label = CaptionLabel("© 2024 LinLin Trans. 保留所有权利。", about_card)
+        copyright_label = CaptionLabel("© 2025 Lapped AI. 保留所有权利。", about_card)
         about_layout.addWidget(copyright_label, alignment=Qt.AlignBottom)
 
         # 添加卡片到主布局
@@ -1137,10 +1140,28 @@ class CommonPage(QWidget):
         self.check_update_button.clicked.connect(self.check_for_updates)
 
     def check_for_updates(self):
-        """检查更新"""
+        """检查更新 - 异步方式"""
         try:
-            # 这里实现检查更新的逻辑
-            # 显示正在检查更新的提示
+            # 禁用检查更新按钮，直到检查完成
+            self.check_update_button.setEnabled(False)
+            
+            # 获取当前版本
+            current_version = self.version_value.text()
+            
+            # 清空之前的任务
+            self.api_worker.clear_tasks()
+            
+            # 添加版本检查任务
+            self.api_worker.add_task(
+                "version",
+                self.api_worker.client.check_version,
+                'windows',
+                current_version
+            )
+            
+            # 启动工作线程
+            self.api_worker.start()
+            
             InfoBar.info(
                 title="检查更新",
                 content="正在检查更新，请稍候...",
@@ -1151,8 +1172,6 @@ class CommonPage(QWidget):
                 parent=self,
             )
 
-            # 模拟检查更新过程
-            QTimer.singleShot(1500, self.show_update_result)
         except Exception as e:
             logger.error(f"检查更新失败: {str(e)}")
             InfoBar.error(
@@ -1164,13 +1183,53 @@ class CommonPage(QWidget):
                 duration=3000,
                 parent=self,
             )
+            self.check_update_button.setEnabled(True)
 
-    def show_update_result(self):
-        """显示更新结果"""
-        # 这里可以根据实际情况修改，目前是模拟已经是最新版本
+    def handle_version_check_result(self, result):
+        """处理版本检查结果"""
+        try:
+            logger.info(f"版本检查结果: {result}")
+
+            # 解析API返回的结果
+            if result.get("code") == 200 and result.get("message") == "success":
+                data = result.get("data", {})
+
+                if data.get("need_update", False):
+                    # 需要更新
+                    self.show_update_available(data)
+                else:
+                    # 已是最新版本
+                    self.show_latest_version()
+            else:
+                # API返回错误
+                data = result.get("data", {})
+                if isinstance(data, dict) and "detail" in data:
+                    error_msg = data.get("detail")
+                else:
+                    error_msg = result.get("message", "未知错误")
+
+                self.handle_version_check_error(error_msg)
+
+        except Exception as e:
+            logger.error(f"处理版本检查结果出错: {str(e)}")
+            self.handle_version_check_error(str(e))
+
+    def handle_version_check_error(self, error_msg):
+        """处理版本检查错误"""
+        logger.error(f"版本检查错误: {error_msg}")
+        InfoBar.error(
+            title="检查更新失败",
+            content=f"错误: {error_msg}",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
+
+    def show_latest_version(self):
+        """显示已是最新版本的对话框"""
         current_version = self.version_value.text()
-
-        # 创建对话框
         dialog = MessageBox(
             "检查更新",
             f"当前版本 {current_version} 已经是最新版本。",
@@ -1180,6 +1239,90 @@ class CommonPage(QWidget):
         dialog.cancelButton.setVisible(False)  # 隐藏取消按钮
         dialog.exec()
 
+    def show_update_available(self, data):
+        """显示有新版本可用的对话框"""
+        latest_version = data.get("latest_version", "")
+        release_notes = data.get("release_notes", "无发行说明")
+        update_url = data.get("update_url", "")
+
+        message = f"发现新版本: {latest_version}\n\n更新内容:\n{release_notes}"
+
+        dialog = MessageBox(
+            "发现新版本",
+            message,
+            self
+        )
+        dialog.yesButton.setText("前往下载")
+        dialog.cancelButton.setText("稍后再说")
+
+        if dialog.exec():
+            # 用户点击了"前往下载"
+            import webbrowser
+            webbrowser.open(update_url)
+
+    def on_version_check_finished(self):
+        """版本检查完成时调用"""
+        # 重新启用检查更新按钮
+        self.check_update_button.setEnabled(True)
+
+    def _setup_api_worker(self):
+        """设置API工作线程"""
+        self.api_worker = ApiWorker()
+        self.api_worker.signals.data_received.connect(self._on_data_received)
+        self.api_worker.signals.error_occurred.connect(self._on_error_occurred)
+        self.api_worker.signals.all_completed.connect(self._on_all_completed)
+
+    @Slot(str, str)
+    def _on_error_occurred(self, endpoint_name: str, error_msg: str):
+        """发生错误"""
+        logger.error(f"API错误: {endpoint_name} - {error_msg}")
+        InfoBar.error(
+            title="错误",
+            content=f"检查更新失败: {error_msg}",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self,
+        )
+        self.check_update_button.setEnabled(True)
+
+    @Slot()
+    def _on_all_completed(self):
+        """所有请求完成"""
+        self.check_update_button.setEnabled(True)
+
+    @Slot(str, dict)
+    def _on_data_received(self, endpoint_name: str, result: dict):
+        """接收到数据"""
+        if endpoint_name == "version":
+            """处理版本检查结果"""
+            try:
+                logger.info(f"版本检查结果: {result}")
+
+                # 解析API返回的结果
+                if result.get("code") == 200 and result.get("message") == "success":
+                    data = result.get("data", {})
+
+                    if data.get("need_update", False):
+                        # 需要更新
+                        self.show_update_available(data)
+                    else:
+                        # 已是最新版本
+                        self.show_latest_version()
+                else:
+                    # API返回错误
+                    data = result.get("data", {})
+                    if isinstance(data, dict) and "detail" in data:
+                        error_msg = data.get("detail")
+                    else:
+                        error_msg = result.get("message", "未知错误")
+
+                    self.handle_version_check_error(error_msg)
+
+            except Exception as e:
+                logger.error(f"处理版本检查结果出错: {str(e)}")
+                self.handle_version_check_error(str(e))
 
 class SettingInterface(QWidget):
     def __init__(self, title: str, settings=None):

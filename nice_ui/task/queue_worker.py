@@ -1,4 +1,8 @@
-from agent.common_agent import translate_document
+import time
+from abc import ABC, abstractmethod
+
+from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
+from agent.enhanced_common_agent import translate_document
 from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
 from app.cloud_trans.task_manager import TransTaskManager
 from app.listen import SrtWriter
@@ -10,9 +14,6 @@ from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
 from orm.queries import ToTranslationOrm, ToSrtOrm
 from utils import logger
-import os
-import time
-from abc import ABC, abstractmethod
 
 
 class TaskProcessor(ABC):
@@ -113,23 +114,43 @@ class TranslationTaskProcessor(TaskProcessor):
         """处理翻译任务"""
         logger.debug('处理翻译任务')
 
-        agent_type = config.params['translate_channel']
-        final_name = task.srt_dirname  # 原始文件名_译文.srt
+        try:
+            agent_type = config.params['translate_channel']
+            final_name = task.srt_dirname  # 原始文件名_译文.srt
+            chunk_size_int = get_chunk_size()
+            max_entries_int = get_max_entries()  # 推荐值：8-12
+            sleep_time_int = get_sleep_time()  # API调用间隔
+            logger.trace(f'准备翻译任务:{final_name}')
+            logger.trace(
+                f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
-        logger.trace(f'准备翻译任务:{final_name}')
-        logger.trace(f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
+            translate_document(
+                unid=task.unid,
+                in_document=task.raw_name,
+                out_document=final_name,
+                agent_name=agent_type,
+                chunk_size=chunk_size_int,  # 推荐值：600-800
+                max_entries=max_entries_int,  # 推荐值：8-12
+                sleep_time=sleep_time_int,  # API调用间隔
+                target_language=config.params["target_language"],  # 目标语言
+                source_language=config.params["source_language"]  # 源语言
+            )
 
-        # 执行翻译
-        translate_document(
-            task.unid,
-            task.raw_name,
-            final_name,
-            agent_type,
-            config.params['prompt_text'],
-            config.settings['trans_row'],
-            config.settings['trans_sleep']
-        )
-        TransTaskManager().consume_tokens_for_task(task.unid)
+            TransTaskManager().consume_tokens_for_task(task.unid)
+
+        except ValueError as e:
+            # 检查是否是API密钥缺失的错误
+            if "请填写API密钥" in str(e):
+                logger.error(f"翻译任务失败 - API密钥缺失: {task.unid}")
+                data_bridge.emit_task_error(task.unid, "填写key")
+            else:
+                logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+                data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+        except Exception as e:
+            logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+            data_bridge.emit_task_error(task.unid, str(e))
+            raise e
 
 
 class ASRTransTaskProcessor(TaskProcessor):
@@ -155,8 +176,9 @@ class ASRTransTaskProcessor(TaskProcessor):
         new_task = change_job_format(task)
 
         agent_type = config.params['translate_channel']
-        final_name = new_task.srt_dirname
-        logger.trace(f'准备翻译任务:{final_name}')
+        srt_name = new_task.srt_dirname
+
+        logger.trace(f'准备翻译任务:{srt_name}')
 
         # 添加翻译任务到数据库
         trans_orm = ToTranslationOrm()
@@ -171,21 +193,39 @@ class ASRTransTaskProcessor(TaskProcessor):
             1,
             new_task.model_dump_json()
         )
-
-        logger.trace(f'任务参数:{new_task.unid}, {new_task.raw_name}, {final_name}, {agent_type}, {config.params["prompt_text"]}, {config.settings["trans_row"]}, {config.settings["trans_sleep"]}')
+        chunk_size_int = get_chunk_size()
+        max_entries_int = get_max_entries()  # 推荐值：8-12
+        sleep_time_int = get_sleep_time()  # API调用间隔
+        logger.trace(
+            f'任务参数:{task.unid}, {srt_name}, {srt_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
         # 执行翻译
-        translate_document(
-            new_task.unid,
-            new_task.raw_name,
-            final_name,
-            agent_type,
-            config.params['prompt_text'],
-            config.settings['trans_row'],
-            config.settings['trans_sleep']
-        )
-
-        logger.debug('ASR_TRANS 任务全部完成')
+        try:
+            translate_document(
+                unid=task.unid,
+                in_document=srt_name,
+                out_document=srt_name,
+                agent_name=agent_type,
+                chunk_size=chunk_size_int,  # 推荐值：600-800
+                max_entries=max_entries_int,  # 推荐值：8-12
+                sleep_time=sleep_time_int,  # API调用间隔
+                target_language=config.params["target_language"],  # 目标语言
+                source_language=config.params["source_language"]  # 源语言
+            )
+            logger.debug('ASR_TRANS 任务全部完成')
+        except ValueError as e:
+            # 检查是否是API密钥缺失的错误
+            if "请填写API密钥" in str(e):
+                logger.error(f"ASR+翻译任务失败 - API密钥缺失: {task.unid}")
+                data_bridge.emit_task_error(task.unid, "填写key")
+            else:
+                logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
+                data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+        except Exception as e:
+            logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
+            data_bridge.emit_task_error(task.unid, str(e))
+            raise e
 
 
 class TaskProcessorFactory:
@@ -222,15 +262,13 @@ class LinQueue:
         """消费队列中的任务"""
         logger.debug('消费线程工作中')
 
-        try:
-            # 从队列获取任务
-            task: VideoFormatInfo = config.lin_queue.get_nowait()
-            logger.debug(f'获取到任务:{task}')
+        # 从队列获取任务
+        task: VideoFormatInfo = config.lin_queue.get_nowait()
+        logger.debug(f'获取到任务:{task}')
 
-            # 使用工厂创建处理器并处理任务
-            processor = TaskProcessorFactory.create_processor(task.work_type)
-            processor.process(task)
+        # 使用工厂创建处理器并处理任务
+        processor = TaskProcessorFactory.create_processor(task.work_type)
+        logger.debug(f'创建处理器: {processor.__class__.__name__}')
 
-        except Exception as e:
-            logger.error(f"任务处理失败: {str(e)}")
-            # 这里可以添加更多的错误处理逻辑，如通知UI等
+        processor.process(task)
+        logger.debug('任务处理完成')

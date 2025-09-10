@@ -15,6 +15,7 @@ from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
+from utils.file_utils import funasr_write_srt_file
 
 
 class ASRTaskStatus:
@@ -23,6 +24,7 @@ class ASRTaskStatus:
     UPLOADING = "UPLOADING"  # 上传中
     SUBMITTED = "SUBMITTED"  # 已提交
     RUNNING = "RUNNING"  # 运行中
+    SPLITING = "SPLITING" # 分词中
     COMPLETED = "COMPLETED"  # 已完成
     FAILED = "FAILED"  # 失败
 
@@ -47,6 +49,7 @@ class ASRTaskModel(BaseModel):
             ASRTaskStatus.UPLOADING,
             ASRTaskStatus.SUBMITTED,
             ASRTaskStatus.RUNNING,
+            ASRTaskStatus.SPLITING,
             ASRTaskStatus.COMPLETED,
             ASRTaskStatus.FAILED
         ]
@@ -489,22 +492,54 @@ class ASRTaskManager:
                             json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
                             saved_path = client.download_file(transcription_url, json_file_path)
 
-                            # 读取下载的JSON文件
+                            # 更新任务状态为分词中
+                            self.update_task(
+                                task.task_id,
+                                status=ASRTaskStatus.SPLITING,
+                                progress=92
+                            )
+                            self._notify_task_progress(task.task_id, 92)
 
+                            # 读取下载的JSON文件
                             try:
                                 with open(saved_path, 'r', encoding='utf-8') as f:
                                     json_data = json.load(f)
                             except Exception as e:
                                 logger.error(f"读取ASR结果文件失败: {str(e)}")
                                 raise
-                            # 解析JSON数据
-                            parsed_results = client.parse_transcription(json_data)
-                            # # 从结果中提取字幕信息并生成SRT文件
-                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
-                            logger.info(f'srt_file_path:{srt_file_path}')
-                            client.convert_to_srt(parsed_results, srt_file_path)
 
-                            # 更新任务状态
+                            # 使用convert_to_segments_format转换格式
+                            logger.info("开始转换ASR结果格式...")
+                            segments = client.convert_to_segments_format(json_data)
+                            logger.info(f"转换完成，得到 {len(segments)} 个segments")
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=95)
+                            self._notify_task_progress(task.task_id, 95)
+
+                            # 生成本地SRT文件（基础版本，不使用NLP分句）
+                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            logger.info(f'生成本地SRT文件: {srt_file_path}')
+                            funasr_write_srt_file(segments, srt_file_path)
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=97)
+                            self._notify_task_progress(task.task_id, 97)
+
+                            # 生成segment_data文件（供智能分句功能使用）
+                            try:
+                                segment_data_path = self._create_segment_data_file(segments, task.audio_file)
+                                # 保存segment_data路径信息到工作对象中，供UI使用
+                                self._save_segment_data_path(segment_data_path, task.audio_file, task.language)
+                                logger.info(f"已生成segment_data文件，智能分句功能可用")
+                            except Exception as e:
+                                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+
+                            # 更新进度
+                            self.update_task(task.task_id, progress=99)
+                            self._notify_task_progress(task.task_id, 99)
+
+                            # 更新任务状态为完成
                             self.update_task(
                                 task.task_id,
                                 response=response,
@@ -636,6 +671,37 @@ class ASRTaskManager:
         if self.polling_thread and self.polling_thread.is_alive():
             self.polling_thread.join(timeout=2)
         self._save_tasks()
+
+    def _create_segment_data_file(self, segments, audio_file):
+        """创建segment_data文件"""
+        from utils.file_utils import write_segment_data_file
+
+        segment_data_path = f"{os.path.splitext(audio_file)[0]}_segment_data.json"
+        write_segment_data_file(segments, segment_data_path)
+        logger.info(f"已创建segment_data文件: {segment_data_path}")
+        return segment_data_path
+
+    def _save_segment_data_path(self, segment_data_path, audio_file, language):
+        """保存segment_data路径信息，供UI智能分句功能使用"""
+        try:
+            import json
+            import time
+
+            # 创建一个元数据文件来保存segment_data路径
+            metadata_path = f"{os.path.splitext(audio_file)[0]}_metadata.json"
+            metadata = {
+                'segment_data_path': segment_data_path,
+                'created_time': time.time(),
+                'audio_file': audio_file,
+                'language': language  # 添加语言信息
+            }
+
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
+        except Exception as e:
+            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
 
 # 单例模式

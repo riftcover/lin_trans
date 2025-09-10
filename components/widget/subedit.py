@@ -164,10 +164,19 @@ class CustomItemDelegate(QStyledItemDelegate):
     def create_time_widget(self, parent) -> QWidget:
         widget = QWidget(parent)
         layout = QVBoxLayout(widget)
-        start_time = LTimeEdit(parent)
+        layout.setContentsMargins(2, 2, 2, 2)  # 减少边距
+        layout.setSpacing(1)  # 减少组件间距
+
+        start_time = LTimeEdit("00:00:00,000", parent)
         start_time.setObjectName("start_time")
-        end_time = LTimeEdit(parent)
+        start_time.setMinimumWidth(140)  # 设置最小宽度确保时间显示完整
+        start_time.setFixedHeight(22)  # 设置固定高度
+
+        end_time = LTimeEdit("00:00:00,000", parent)
         end_time.setObjectName("end_time")
+        end_time.setMinimumWidth(140)  # 设置最小宽度确保时间显示完整
+        end_time.setFixedHeight(22)  # 设置固定高度
+
         layout.addWidget(start_time)
         layout.addWidget(end_time)
         return widget
@@ -683,8 +692,8 @@ class SubtitleTable(QTableView):
         self.setModel(self.model)
         self.setItemDelegate(self.delegate)
 
-        # 预处理字幕数据
-        self.subtitles = self.model.load_subtitle()
+        # 预处理字幕数据 - 使用get_subtitles方法获取数据副本，避免引用问题
+        self.subtitles = self.model.get_subtitles().copy()
         # Load subtitles from model
         # todo：不懂为什用get_subtitles就无法创建编辑器
         # self.subtitles = self.model.get_subtitles()  # Load subtitles from model
@@ -777,7 +786,7 @@ class SubtitleTable(QTableView):
         header.setFixedHeight(30)
 
         # 设置固定宽度的列
-        fixed_widths = [40, 40, 40, 140, 0, 0, 40]  # 0 表示自适应宽度
+        fixed_widths = [40, 40, 40, 150, 0, 0, 40]  # 0 表示自适应宽度
         stretch_ratios = [0, 0, 0, 0, 4, 6, 0]  # 原文和译文列的伸缩比例
 
         # 先设置所有列的固定宽度

@@ -6,10 +6,7 @@ from pathlib import Path
 from queue import Queue
 
 from nice_ui.configure import ModelDict
-
 from utils import logger
-
-
 
 
 def get_executable_path():
@@ -33,6 +30,7 @@ funasr_model_path = models_path / "funasr" / "iic"
 funasr_model_path.mkdir(parents=True, exist_ok=True)
 
 
+
 # 修改为函数，方便动态更新
 def update_funasr_path():
     global funasr_model_path
@@ -49,12 +47,12 @@ temp_path.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = temp_path.as_posix()
 
 # home
-homepath = Path.home() / "Videos/linlin"
+homepath = Path.home() / "Videos/lapped"
 homepath.mkdir(parents=True, exist_ok=True)
 homedir = homepath.as_posix()
 
-# home tmp
-TEMP_HOME = homedir + "/tmp"
+
+TEMP_HOME = f"{homedir}/tmp"
 Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 result_path = root_path / "result"
@@ -201,7 +199,7 @@ box_lang = obj["toolbox_lang"]
 #     os.environ["PATH"] = f"{root_path}/whisper.cpp:" + os.environ["PATH"]
 
 os.environ["QT_API"] = "pyside6"
-os.environ["SOFT_NAME"] = "linlintrans"
+os.environ["SOFT_NAME"] = "Lapped AI"
 # spwin主窗口
 queue_logs = Queue(1000)
 # box窗口
@@ -249,7 +247,7 @@ def get_cloud_config():
         crypto_utils.initialize()
 
         # 获取凭证文件路径
-        credentials_file = crypto_utils.get_credentials_file_path()
+        credentials_file = crypto_utils.get_credentials_file_path(root_path)
 
         # 如果凭证文件存在，从文件中加载
         if credentials_file.exists():
@@ -259,27 +257,6 @@ def get_cloud_config():
                     return CloudConfig(**credentials)
             except Exception as e:
                 logger.error(f"从加密文件加载凭证失败: {str(e)}")
-
-        # 如果从文件加载失败，尝试从环境变量加载
-        aki = os.environ.get('ALIYUN_AKI', '')
-        aks = os.environ.get('ALIYUN_AKS', '')
-        region = os.environ.get('ALIYUN_REGION', 'cn-beijing')
-        bucket = os.environ.get('ALIYUN_BUCKET', 'asr-file-tth')
-        asr_api_key = os.environ.get('ALIYUN_ASR_API_KEY', '')
-        asr_model = os.environ.get('ALIYUN_ASR_MODEL', 'paraformer-v2')
-
-        # 如果环境变量中有值，使用环境变量的值
-        if aki and aks:
-            return CloudConfig(
-                ppl_sdk=PplSdkConfig(
-                    aki=aki,
-                    aks=aks,
-                    region=region,
-                    bucket=bucket,
-                    asr_api_key=asr_api_key,
-                    asr_model=asr_model
-                )
-            )
     except Exception as e:
         logger.error(f"获取云服务配置失败: {str(e)}")
 
@@ -304,7 +281,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "detect_language": "en",
     "translate_status": False,
     "target_language": "zh-cn",
-    "translate_channel": "通义千问",
+    "translate_channel": "qwen",
     "subtitle_language": "chi",
     "prompt_name": "默认",
     "prompt_text": "",
@@ -372,7 +349,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_extra": "linlin",
 
     # 阿里云ASR配置
-    "aliyun_asr_api_key": "",
+    "aliyun_asr_api_key": ""
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"

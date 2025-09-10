@@ -1,4 +1,4 @@
-## 变更tmp下资源文件
+## 变更pyside静态资源文件
 1. lin_resource.qrc中添加相关路径
 2. 生成二进制文件
 ```bash
@@ -6,52 +6,34 @@ pyside6-rcc components/lin_resource.qrc -o components/lin_resource_rc.py
 ```
 3. resource_manager.py中_load_all_styles添加对应映射
 
+## 杀掉进程
+```bash
+ps -ef | grep lapped | awk '{print $2}' | xargs kill -9
+```
 
-ps -ef | grep linlin | awk '{print $2}' | xargs kill -9
-
-
+## 打包注意事项
+### 目录结构
 ffmpeg目录(plugin)为项目同级目录
 models目录为项目同级目录
 
-# funasr 变更
-from funasr.utils.postprocess_utils import rich_transcription_postprocess
-```angular2html
-def rich_transcription_postprocess(s):
-    def get_emo(s):
-        return s[-1] if s[-1] in emo_set else None
+## 依赖下载安装
 
-    def get_event(s):
-        return s[0] if s[0] in event_set else None
+```
+### 1.下载离线安装包
 
-
-    s = s.replace("<|nospeech|><|Event_UNK|>", "❓")
-
-    for lang in lang_dict:
-        s = s.replace(lang, "<|lang|>")
-    s_list = [format_str_v2(s_i).strip(" ") for s_i in s.split("<|lang|>")]
-    new_s = " " + s_list[0]
-    cur_ent_event = get_event(new_s)
-    for i in range(1, len(s_list)):
-        if len(s_list[i]) == 0:
-            continue
-        if get_event(s_list[i]) == cur_ent_event and get_event(s_list[i]) != None:
-            s_list[i] = s_list[i][1:]
-        # else:
-        cur_ent_event = get_event(s_list[i])
-        if get_emo(s_list[i]) != None and get_emo(s_list[i]) == get_emo(new_s):
-            new_s = new_s[:-1]
-        new_s += s_list[i].strip().lstrip()
-    new_s = new_s.replace("The.", " ")
-    for emoji in emo_set.union(event_set):
-        new_s = new_s.replace(emoji, " ")
-    return new_s.strip()
+```json lines
+ pip download --prefer-binary --dest wheels -r requirements.txt     
 ```
 
-for emoji in emo_set.union(event_set):
-    new_s = new_s.replace(emoji, " ")
-是新添加的,为了取消输出文本中的emoji
+
+### 2. 离线环境部署
+```bash
+pip install --no-index --find-links wheels -r requirements.txt
+```
 
 
-## 打包注意事项
-1. tmp/asr_tasks.json 是asr云任务持久化文件，需要在打包时包含进去一个空列表[]
-2. .credentials/aliyun_credentials.enc 是阿里云相关key，需要打包进去
+
+
+asr任务`funasr_zn_model`调整nlp功能由本地调整为线上：
+1. 创建一个数据格式用来存储segments,生成的文件segment_data上传oss供线上nlp使用
+2. 线上nlp功能与本地基本一致,唯一区别本地nlp功能在asr任务过程中执行,使用数据`segments`,线上nlp功能使用数据`segment_data`

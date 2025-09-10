@@ -2,19 +2,21 @@ import os
 
 import av
 from PySide6.QtCore import Qt, Slot, QSize
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette, QIcon
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
 
-from agent import get_translate_code
+from agent import get_translate_code, translate_api_name
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.util.code_tools import language_code
+from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
 from utils import logger
+from utils.agent_dict import agent_settings
 from vendor.qfluentwidgets import (PushButton, FluentIcon, TableWidget, CheckBox, BodyLabel, CardWidget, TableItemDelegate, InfoBar, InfoBarPosition, )
-from nice_ui.util.tools import start_tools
+
 
 class CustomTableItemDelegate(TableItemDelegate):
     def paint(self, painter, option, index):
@@ -24,14 +26,14 @@ class CustomTableItemDelegate(TableItemDelegate):
 
 
 class Video2SRT(QWidget):
-    def __init__(self, title: str,settings=None):
-        super().__init__()
+    def __init__(self, text: str, parent=None, settings=None):
+        super().__init__(parent=parent)
         self.prompts_orm = PromptsOrm()
         self.settings = settings
         self.table = TableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
-        self.setObjectName(title)
+        self.setObjectName(text.replace(" ", "-"))
         self.setupUi()
         self.bind_action()
 
@@ -64,10 +66,24 @@ class Video2SRT(QWidget):
         source_language_label = BodyLabel("原始语种")
 
         self.source_language = TransComboBox()
-        # 设置self.source_language宽度
-        self.source_language.setFixedWidth(98)
-        self.source_language.addItems(config.langnamelist)
-        logger.error(config.params["source_language"])
+
+        # 添加语言项目，为法语添加云图标
+        for lang_name in config.langnamelist:
+            if lang_name in ["法语", "French","俄语"]:
+                # 使用专业云服务图标
+                self.source_language.addItem(f'{lang_name} (云)')
+            else:
+                self.source_language.addItem(lang_name,)
+
+        # 动态计算并设置最适合的宽度
+        max_width = 0
+        for lang_name in config.langnamelist:
+            text_width = self.source_language.fontMetrics().boundingRect(lang_name).width()
+            max_width = max(max_width, text_width)
+
+        # 设置合适的宽度（文本宽度 + 图标 + 箭头 + 边距）
+        self.source_language.setFixedWidth(max_width + 60)
+
         self.source_language.setCurrentText(config.params["source_language"])
 
 
@@ -142,7 +158,6 @@ class Video2SRT(QWidget):
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
         translate_name = config.params["translate_channel"]
-        logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
         translate_engine_layout.addWidget(translate_model_name)
@@ -163,7 +178,10 @@ class Video2SRT(QWidget):
         self.ai_prompt.setCurrentText(config.params["prompt_name"])
         prompt_layout.addWidget(ai_prompt_name)
         prompt_layout.addWidget(self.ai_prompt)
-        main_layout.addLayout(prompt_layout)
+        combo_layout.addLayout(prompt_layout)
+
+        ai_prompt_name.hide()
+        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)
@@ -243,6 +261,10 @@ class Video2SRT(QWidget):
             )
             return
 
+        # 如果勾选了翻译，检查API密钥
+        if self.check_fanyi.isChecked() and not self._check_api_key():
+            return
+
         # 显示成功提示
         InfoBar.success(
             title="成功",
@@ -314,6 +336,48 @@ class Video2SRT(QWidget):
 
                 # 更新表格中的算力消耗
                 self.media_table.item(row, 2).setText(ds_count)
+
+
+    def _check_api_key(self) -> bool:
+        """检查当前选择的翻译引擎是否配置了API密钥"""
+        # 获取当前选择的翻译引擎
+        translate_engine = self.translate_model.currentText()
+        logger.debug(f"检查翻译引擎: {translate_engine}")
+
+        # 使用现有的逻辑：通过translate_api_name映射获取agent名称
+        agent_name = next(
+            (
+                key
+                for key, value in translate_api_name.items()
+                if value == translate_engine
+            ),
+            None,
+        )
+        if not agent_name:
+            # 如果不是我们管理的AI代理，可能是其他翻译服务，暂时允许通过
+            logger.debug(f"未知的翻译引擎: {translate_engine}，跳过密钥检查")
+            return True
+
+        # 检查agent是否存在且有密钥 - 动态获取最新配置
+        current_agent_configs = agent_settings()
+        if agent_name in current_agent_configs:
+            agent = current_agent_configs[agent_name]
+
+            if agent.key is None:
+                # 显示错误提示
+                InfoBar.error(
+                    title="配置错误",
+                    content="填写key",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self,
+                )
+                logger.error(f"翻译引擎 {translate_engine} ({agent_name}) 未配置API密钥")
+                return False
+
+        return True
 
 
 class TableWindow:
@@ -398,15 +462,15 @@ class TableWindow:
 
     def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
-            try:
-                with av.open(file) as container:
-                    self.duration_seconds = float(container.duration) / av.time_base  # 转换为秒
-                    hours, remainder = divmod(self.duration_seconds, 3600)
-                    minutes, seconds = divmod(remainder, 60)
-                    return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
-            except Exception as e:
-                logger.error(f"获取视频时长失败: {str(e)}")
-                return None
+        try:
+            with av.open(file) as container:
+                self.duration_seconds = float(container.duration) / av.time_base  # 转换为秒
+                hours, remainder = divmod(self.duration_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+        except Exception as e:
+            logger.error(f"获取视频时长失败: {str(e)}")
+            return None
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入
@@ -418,7 +482,7 @@ class TableWindow:
     def drop_event(self, ui_table: QTableWidget, event: QDropEvent):
         # 拖出
         file_urls = event.mimeData().urls()
-        logger.info(f"file_urls: {file_urls}")
+        # logger.info(f"file_urls: {file_urls}")
         if file_urls:
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
@@ -455,12 +519,14 @@ class TableWindow:
         return amount
 
 
-# if __name__ == "__main__":
-#     import sys
-#     from PySide6.QtWidgets import QApplication
-#     from PySide6.QtCore import QSettings
-#
-#     app = QApplication(sys.argv)
-#     window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
-#     window.show()
-#     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings
+
+    app = QApplication(sys.argv)
+    window = Video2SRT("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window.show()
+    sys.exit(app.exec())

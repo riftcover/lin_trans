@@ -1,4 +1,4 @@
-name: Build LinLin Application
+name: Build Lapped Application
 
 on:
   push:
@@ -66,25 +66,25 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         cd dist
-        7z a -tzip LinLin-windows.zip LinLin/
+        7z a -tzip Lapped-windows.zip Lapped/
         
     - name: Package macOS artifacts
       if: matrix.os == 'macos-latest'
       run: |
         cd dist
-        zip -r LinLin-macos.zip LinLin/
+        zip -r Lapped-macos.zip Lapped/
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: LinLin-${{ matrix.os }}
-        path: dist/LinLin-${{ runner.os }}.zip
+        name: Lapped-${{ matrix.os }}
+        path: dist/Lapped-${{ runner.os }}.zip
         
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/LinLin-${{ runner.os }}.zip
+          dist/Lapped-${{ runner.os }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

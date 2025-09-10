@@ -16,7 +16,7 @@ def generate_secret_key():
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "LinLin Trans API"
+    PROJECT_NAME: str = "Lapped AI API"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
 

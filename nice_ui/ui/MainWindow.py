@@ -2,10 +2,10 @@
 import asyncio
 import os
 import platform
+import sys
 
 import httpx
-import sys
-from PySide6.QtCore import QUrl, QSettings, Qt
+from PySide6.QtCore import QUrl, Qt, Slot
 from PySide6.QtGui import QIcon, QDesktopServices, QColor, QFont
 from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
@@ -14,6 +14,7 @@ from packaging import version
 from api_client import api_client, AuthenticationError
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
+from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import MAIN_WINDOW_SIZE, SettingsManager
 from nice_ui.ui.my_story import TableApp
@@ -23,11 +24,22 @@ from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
-from vendor.qfluentwidgets import (MessageBox, FluentWindow, FluentBackgroundTheme, setThemeColor, )
+from vendor.qfluentwidgets import (MessageBox, FluentWindow, MacFluentWindow, FluentBackgroundTheme, setThemeColor, )
 from vendor.qfluentwidgets import NavigationAvatarWidget, InfoBar, InfoBarPosition
 
 
-class Window(FluentWindow):
+# 智能选择窗口类型
+def _create_smart_window_class():
+    """根据平台智能选择窗口类型"""
+    if sys.platform == "darwin":
+        # macOS使用原生标题栏版本
+        return MacFluentWindow
+    else:
+        # 其他平台使用标准版本
+        return FluentWindow
+
+
+class Window(_create_smart_window_class()):
 
     def __init__(self):
         super().__init__()
@@ -37,8 +49,13 @@ class Window(FluentWindow):
         # 获取当前工作目录
         current_directory = os.path.basename(os.getcwd())
         self.settings = SettingsManager.get_instance()
-        # 设置主题颜色为蓝色
-        setThemeColor(QColor("#0078d4"))
+        # 根据平台设置合适的主题颜色
+        if sys.platform == "darwin":
+            # macOS使用系统蓝色
+            setThemeColor(QColor("#7C3AED"))
+        else:
+            # 其他平台使用微软蓝
+            setThemeColor(QColor("#7C3AED"))
 
         # 根据操作系统设置字体
         self.set_font()
@@ -52,6 +69,9 @@ class Window(FluentWindow):
         self.auth_service = self.service_provider.get_auth_service()
         self.ui_manager = self.service_provider.get_ui_manager()
 
+        # 平台特定的窗口设置
+        # self._setupPlatformSpecificFeatures()
+
         self.initWindow()
         # self.load_proxy_settings()  # 加载代理设置
         # todo 更新检查更改地址
@@ -63,8 +83,29 @@ class Window(FluentWindow):
         self.settingInterface = SettingInterface("设置", self.settings)
 
         self.initNavigation()
+        # 连接信号
+        self._connect_signals()
         # 尝试自动登录
         self.tryAutoLogin()
+
+    def _setupPlatformSpecificFeatures(self):
+        """设置平台特定功能"""
+        if sys.platform == "darwin":
+            # macOS特有设置
+            try:
+                # 启用macOS统一标题栏外观
+                if hasattr(self, 'setMacUnifiedTitleAndToolBar'):
+                    self.setMacUnifiedTitleAndToolBar(True)
+
+                # 设置macOS应用程序图标
+                if hasattr(QApplication.instance(), 'setWindowIcon'):
+                    QApplication.instance().setWindowIcon(QIcon(":icon/assets/lapped.png"))
+
+                logger.info("已启用macOS原生标题栏和优化")
+            except Exception as e:
+                logger.warning(f"设置macOS特性时出现问题: {e}")
+        else:
+            logger.info(f"当前平台: {platform.system()}，使用标准FluentWindow")
 
     def set_font(self):
         system = platform.system()
@@ -94,7 +135,7 @@ class Window(FluentWindow):
         self.navigationInterface.addWidget(
             routeKey=self.loginInterface.objectName(),
             widget=self.avatarWidget,
-            onClick=self.showLoginInterface,
+            onClick=lambda: self.showLoginInterface(switch_to_profile=False),
             position=NavigationItemPosition.BOTTOM
         )
 
@@ -103,8 +144,8 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        self.setWindowIcon(QIcon(":icon/assets/linlin.png"))
-        self.setWindowTitle("林林字幕")
+        self.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
+        self.setWindowTitle("Lapped AI")
 
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
@@ -118,8 +159,13 @@ class Window(FluentWindow):
         get_setting_cache(self.settings)
         all_keys = (
             self.settings.allKeys()
-        )  # self.settings.clear()  # for key in all_keys:  #     value = self.settings.value(key)  #     config.logger.info(f"Key: {key}, Value: {value}")
+        )
+        # self.settings.clear()
+        # for key in all_keys:
+        #     value = self.settings.value(key)
+        #     config.logger.info(f"Key: {key}, Value: {value}")
 
+        # logger.info(config.params)
 
     def load_proxy_settings(self):
         if self.settings.value("use_proxy", False, type=bool):
@@ -182,9 +228,7 @@ class Window(FluentWindow):
                     user_info = {
                         'email': self.settings.value('email', '已登录'),
                     }
-                    # 更新个人中心页面
-                    a = self.loginInterface.updateUserInfo(user_info)
-                    if a:
+                    if a := self.loginInterface.updateUserInfo(user_info):
                         # 更新登录状态
                         self.is_logged_in = True
                         self.avatarWidget.setName(user_info['email'])
@@ -199,7 +243,7 @@ class Window(FluentWindow):
                 except AuthenticationError as e:
                     logger.warning(f"Token验证失败，尝试刷新: {e}")
                     # 尝试刷新token
-                    if api_client.refresh_session_sync():
+                    if api_client.refresh_session_t():
                         logger.info("Token刷新成功，重新尝试自动登录")
                         # 刷新成功，更新设置中的token
                         self.settings.setValue('token', api_client._token)
@@ -220,6 +264,11 @@ class Window(FluentWindow):
                         self.settings.remove('refresh_token')
                         self.settings.sync()
                         api_client.clear_token()
+
+                        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+                        if self.login_window:
+                            self.login_window.close()
+                            self.login_window = None
                 except Exception as e:
                     # 检查是否是网络连接错误
                     if "All connection attempts failed" in str(e):
@@ -239,21 +288,27 @@ class Window(FluentWindow):
                     else:
                         logger.warning(f"Token验证失败: {e}")
                         # Token无效，清除状态
+                        self.is_logged_in = False
                         self.settings.remove('token')
                         self.settings.remove('refresh_token')
                         self.settings.sync()
                         api_client.clear_token()
+
+                        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+                        if self.login_window:
+                            self.login_window.close()
+                            self.login_window = None
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
             logger.error(f"自动登录过程出错: {e}")
 
-    def showLoginInterface(self, switch_to_profile=True):
+    def showLoginInterface(self, switch_to_profile=False):
         """
         显示登录界面
 
         Args:
-            switch_to_profile: 是否在登录后切换到个人中心页面，默认为True
+            switch_to_profile: 是否在登录后切换到个人中心页面，默认为False
                               当用户主动点击个人中心按钮时为True
                               当系统自动调用登录界面时为False
         """
@@ -262,9 +317,9 @@ class Window(FluentWindow):
             if not self.login_window:
                 from nice_ui.ui.login import LoginWindow
                 self.login_window = LoginWindow(self, self.settings)
-                # 将switch_to_profile参数传递给handleLoginSuccess方法
+                # 登录成功后不自动跳转到个人中心页面
                 self.login_window.loginSuccessful.connect(
-                    lambda user_info: self.handleLoginSuccess(user_info, switch_to_profile)
+                    lambda user_info: self.handleLoginSuccess(user_info, False)
                 )
 
             # 计算登录窗口在主窗口中的居中位置
@@ -274,9 +329,8 @@ class Window(FluentWindow):
 
             self.login_window.show()
         else:
-            # 如果已登录且是用户主动点击，则切换到个人中心页面
-            if switch_to_profile:
-                self.switchTo(self.loginInterface)
+            # 如果已登录，直接切换到个人中心页面
+            self.switchTo(self.loginInterface)
 
     def handleLoginSuccess(self, user_info, switch_to_profile=False):
         """
@@ -292,7 +346,10 @@ class Window(FluentWindow):
         # 登录成功后使用设置图标作为头像
         # 直接使用FluentIcon作为头像，确保与导航图标一致
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
-        # self.login_window.hide()
+
+        # 关闭登录窗口
+        if self.login_window:
+            self.login_window.hide()
 
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
@@ -309,7 +366,7 @@ class Window(FluentWindow):
     def handleAuthError(self):
         """处理认证错误（401）"""
         # 尝试刷新token
-        if api_client.refresh_session_sync():
+        if api_client.refresh_session_t():
             logger.info("Token刷新成功")
             # 刷新成功，更新设置中的token
             self.settings.setValue('token', api_client._token)
@@ -344,6 +401,11 @@ class Window(FluentWindow):
         self.settings.sync()
         api_client.clear_token()
 
+        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+        if self.login_window:
+            self.login_window.close()
+            self.login_window = None
+
         # 显示错误提示
         InfoBar.error(
             title='登录过期',
@@ -363,13 +425,34 @@ class Window(FluentWindow):
         try:
             # 清理API客户端资源
             if hasattr(self, 'is_logged_in') and self.is_logged_in:
-                api_client.close_sync()
+                api_client.close_t()
                 logger.info("API client resources cleaned up")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 
         # 调用父类的closeEvent
         super().closeEvent(event)
+
+    def _connect_signals(self):
+        """连接信号槽"""
+        # 连接任务错误信号
+        data_bridge.task_error.connect(self._on_task_error)
+
+    @Slot(str, str)
+    def _on_task_error(self, task_id: str, error_message: str):
+        """处理任务错误信号"""
+        logger.error(f"任务错误: {task_id} - {error_message}")
+
+        # 显示错误提示
+        InfoBar.error(
+            title="任务失败",
+            content=error_message,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
 
 
 if __name__ == "__main__":
@@ -379,4 +462,6 @@ if __name__ == "__main__":
         window = Window()
         window.show()
         sys.exit(app.exec())
+
+
     main()

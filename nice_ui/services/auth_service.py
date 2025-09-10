@@ -1,12 +1,12 @@
-import time
 from typing import Optional, Dict, Any, Callable
 
+from PySide6.QtCore import QSettings
+
+from api_client import api_client
 from nice_ui.interfaces.auth import AuthInterface
 from nice_ui.interfaces.ui_manager import UIManagerInterface
-from nice_ui.configure import config
+from nice_ui.ui import SettingsManager
 from utils import logger
-from api_client import api_client, AuthenticationError
-from PySide6.QtCore import QSettings
 
 
 class AuthService(AuthInterface):
@@ -43,13 +43,10 @@ class AuthService(AuthInterface):
             QSettings: 设置对象
         """
         if self._settings is None:
-            # 获取当前工作目录
-            import os
-            current_directory = os.path.basename(os.getcwd())
-            self._settings = QSettings("Locoweed3", f"LinLInTrans_{current_directory}")
+            self._settings = SettingsManager.get_instance()
         return self._settings
 
-    def check_login_status(self) -> (bool,int):
+    def check_login_status(self) -> (bool, int):
         """
         检查用户是否已登录
 
@@ -64,12 +61,12 @@ class AuthService(AuthInterface):
             if not settings.value('token'):
                 logger.info("未找到token，需要登录")
                 self.show_login_dialog()
-                return False
+                return False, None
 
             # 尝试进行一个简单的API调用来验证token是否有效
             try:
                 # 获取用户余额信息来验证token
-                balance_data = api_client.get_balance_sync()
+                balance_data = api_client.get_balance_t()
                 if 'data' in balance_data and 'balance' in balance_data['data']:
                     user_balance = int(balance_data['data']['balance'])
                     logger.info(f"用户当前代币余额: {user_balance}")
@@ -78,16 +75,16 @@ class AuthService(AuthInterface):
                     return True, user_balance
                 else:
                     logger.warning(f"响应数据格式不正确: {balance_data}")
-                    return False,None
+                    return False, None
             except Exception as e:
                 logger.info(f"Token验证失败，需要重新登录 {str(e)}")
                 self.show_login_dialog()
-                return False,None
+                return False, None
 
         except Exception as e:
             logger.error(f"检查登录状态时发生错误: {str(e)}")
             self.show_login_dialog()
-            return False
+            return False, None
 
     def show_login_dialog(self, callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
         """

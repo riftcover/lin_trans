@@ -1,5 +1,5 @@
-from nice_ui.services.auth_service import AuthService
 from nice_ui.managers.ui_manager import MainUIManager
+from nice_ui.services.auth_service import AuthService
 from nice_ui.services.token_service import TokenService
 
 

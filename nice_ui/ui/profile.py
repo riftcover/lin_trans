@@ -1,14 +1,15 @@
-from PySide6.QtCore import Qt,QTimer
+# 个人中心
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
-from api_client import api_client, AuthenticationError
-from nice_ui.configure.signal import data_bridge
-from utils import logger
-from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
-                                   InfoBarPosition)
 
+from api_client import api_client, AuthenticationError
 # 导入自定义组件
 from components.widget.transaction_table import TransactionTableWidget
+from nice_ui.configure.signal import data_bridge
 from nice_ui.ui.purchase_dialog import PurchaseDialog
+from utils import logger
+from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as FIF, IconWidget, SubtitleLabel, BodyLabel, PrimaryPushButton, InfoBar,
+                                   InfoBarPosition, TransparentToolButton)
 
 
 class ProfileInterface(QFrame):
@@ -197,7 +198,7 @@ class ProfileInterface(QFrame):
         self.usageTitleLayout = QHBoxLayout()
         self.usageTitle = SubtitleLabel('使用记录', self)
         self.usageTitleLayout.addWidget(self.usageTitle)
-        self.usageTitleLayout.addStretch()
+
 
         self.usageLayout.addLayout(self.usageTitleLayout)
 
@@ -227,7 +228,7 @@ class ProfileInterface(QFrame):
         bar_method(title=title, content=content, orient=Qt.Horizontal, isClosable=True, position=InfoBarPosition.TOP, duration=duration, parent=self)
 
     # 业务方法
-    def updateUserInfo(self, user_info: dict) ->bool:
+    def updateUserInfo(self, user_info: dict) -> bool:
         """更新用户信息
 
         Args:
@@ -257,7 +258,7 @@ class ProfileInterface(QFrame):
     def _update_balance(self):
         """更新算力余额"""
         logger.info("个人中心接收到更新余额信号，开始更新余额")
-        balance_data = api_client.get_balance_sync()
+        balance_data = api_client.get_balance_t()
         if balance_data and 'data' in balance_data:
             balance = balance_data['data'].get('balance', 0)
             self.quotaValue.setText(str(balance))
@@ -275,12 +276,11 @@ class ProfileInterface(QFrame):
         Returns:
 
         """
-        if isinstance(balance,int):
+        if isinstance(balance, int):
             self.quotaValue.setText(str(balance))
             logger.info(f"余额更新成功: {balance}")
         else:
             logger.error(f"余额更新失败，{balance}")
-
 
     def updateUsageHistory(self, new_transactions=None):
         """更新使用记录表格
@@ -310,9 +310,9 @@ class ProfileInterface(QFrame):
         except Exception as e:
             logger.error(f"更新使用记录失败: {e}")
 
-    def set_history(self,new_transactions):
+    def set_history(self, new_transactions):
         # 添加新交易记录到列表中
-        if isinstance(new_transactions,list):
+        if isinstance(new_transactions, list):
             total_records = self.transactionTable.total_records + len(new_transactions)
             # 更新表格和分页状态
             self.transactionTable.update_with_data(
@@ -322,7 +322,6 @@ class ProfileInterface(QFrame):
             )
         else:
             logger.error(f"更新使用记录失败，{new_transactions}")
-
 
     def _fetch_all_transactions(self, page=None):
         """从API获取交易记录，支持分页
@@ -335,7 +334,7 @@ class ProfileInterface(QFrame):
             self.current_page = page
 
         # 调用API获取指定页的交易记录
-        history_data = api_client.get_history_sync(
+        history_data = api_client.get_history_t(
             page=self.current_page,
             page_size=self.page_size
         )
@@ -346,10 +345,8 @@ class ProfileInterface(QFrame):
         # 获取交易记录
         transactions = history_data['data'].get('transactions', [])
         total_records = history_data['data'].get('total', 0)
-
         # 输出分页信息到日志
         logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
-
 
         # 使用新方法更新表格和分页状态
         self.transactionTable.update_with_data(
@@ -370,24 +367,19 @@ class ProfileInterface(QFrame):
         dialog.purchaseCompleted.connect(self.onPurchaseCompleted)
         dialog.exec()
 
-    def onPurchaseCompleted(self, transaction):
-        """处理购买完成事件
-
-        Args:
-            transaction: 交易信息字典
+    def onPurchaseCompleted(self):
+        """
+        购买完成刷新余额和交易记录
         """
         try:
             # 刷新余额
             self._update_balance()
 
-            # 添加新交易记录到表格
-            if transaction:
-                self._update_transaction_table(transaction)
-            else:
-                logger.error('没有交易记录')
+            # 刷新交易记录
+            self._fetch_all_transactions(page=1)
 
             # 显示购买成功提示
-            self._show_info_bar(type_="success", title="购买成功", content=f"已成功购买 {transaction.get('amount', 0)} 点算力", duration=3000)
+            self._show_info_bar(type_="success", title="购买成功", content="", duration=3000)
         except AuthenticationError as e:
             self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
@@ -415,28 +407,6 @@ class ProfileInterface(QFrame):
             except Exception as e:
                 logger.error(f"获取交易记录失败: {e}")
                 self._show_info_bar(type_="error", title="错误", content="获取交易记录失败", duration=2000)
-
-    def _update_transaction_table(self, transaction):
-        """更新交易记录表格
-
-        Args:
-            transaction: 新的交易记录
-        """
-        # 如果表格为空，需要重新获取所有记录
-        if not self.transactionTable.all_items:
-            self._fetch_all_transactions(page=1)  # 重置到第一页
-        else:
-            # 将新交易添加到现有记录中
-            self.transactionTable.all_items.insert(0, transaction)
-            # 增加总记录数
-            self.transactionTable.total_records += 1
-            total_records = self.transactionTable.total_records
-
-            # 重置到第一页
-            self.current_page = 1
-
-            # 重新获取第一页数据
-            self._fetch_all_transactions(page=1)
 
     def handleLogout(self):
         """处理退出登录"""

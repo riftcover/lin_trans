@@ -1,20 +1,19 @@
 import copy
 import os
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QMessageBox
 
-from nice_ui.configure.signal import data_bridge
 from agent import translate_api_name
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import save_setting
+from nice_ui.configure.signal import data_bridge
+from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import QueueConsumer, Worker
 from nice_ui.util import tools
-from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
-from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from videotrans import translator
 
@@ -299,10 +298,10 @@ class SecWindow:
 
         save_setting(self.main.settings)
 
-        logger.debug("====config.settings====")
-        logger.debug(config.settings)
-        logger.debug("====config.params====")
-        logger.debug(config.params)
+        # logger.debug("====config.settings====")
+        # logger.debug(config.settings)
+        # logger.debug("====config.params====")
+        # logger.debug(config.params)
 
     def check_translate(self) -> bool:
         """
@@ -324,7 +323,11 @@ class SecWindow:
                 config.transobj["bukedoubucunzai"],
             )
             return is_task
-        is_task = self._check_auth_and_balance()
+        if config.params["translate_channel"] == 'qwen_cloud':
+            is_task = self._check_auth_and_balance()
+        else:
+            is_task = True
+
         # 保存设置
         if is_task:
             self._save_current_settings()
@@ -347,6 +350,9 @@ class SecWindow:
         is_task = self._check_auth_and_balance()
 
         if is_task:
+            # 保持模型信息
+            self._save_soure_model_info()
+
             # 保存设置
             self._save_current_settings()
             # 创建工作队列并启动处理
@@ -400,7 +406,7 @@ class SecWindow:
         config.params["target_language"] = translate_language_name
 
         translate_language_channel_name = self.main.translate_model.currentText()
-        translate_language_key = next(
+        translate_channel_key = next(
             (
                 key
                 for key, value in translate_api_name.items()
@@ -408,8 +414,8 @@ class SecWindow:
             ),
             config.params["translate_channel"],
         )
-        logger.debug(f"==========translate_language_name:{translate_language_key}")
-        config.params["translate_channel"] = translate_language_key
+        logger.debug(f"==========translate_channel_key:{translate_channel_key}")
+        config.params["translate_channel"] = translate_channel_key
 
         prompt_name = self.main.ai_prompt.currentText()
         config.params["prompt_name"] = prompt_name
@@ -458,3 +464,15 @@ class SecWindow:
                 except (ValueError, TypeError) as e:
                     logger.warning(f"解析代币消耗失败: {str(e)}")
         return task_amount
+
+    def _save_soure_model_info(self):
+        source_model_info = self.tools.match_source_model(
+            self.main.source_model.currentText()
+        )
+        logger.debug(f"==========source_model_info:{source_model_info}")
+
+        model_name = source_model_info["model_name"]
+        config.params["source_module_key"] = self.main.source_model.currentText()
+        config.params["source_module_name"] = model_name
+        config.params["source_module_status"] = source_model_info["status"]
+        logger.debug(config.params["source_module_status"])

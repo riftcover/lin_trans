@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-
+from pathlib import Path
 
 SRT_NAME = "srt"
 # 翻译通道
-translate_api_name = {'qwen_cloud':'云翻译','qwen': '通义千问','zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI', }
+translate_api_name = {'qwen_cloud':'云翻译','qwen': '通义千问','zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI','deepseek':'deepseek' }
 
 # translate_api_name = {'qwen': '通义千问','google': '谷歌翻译', 'deepl': 'DeepL翻译', 'deeplx': 'DeepL翻译X', 'tencent': '腾讯翻译', 'baidu': '百度翻译' ,
 #     'zhipu': '智谱', 'kimi': 'Kimi', 'openai': 'OpenAI', }
@@ -231,12 +231,17 @@ LANG_CODE = {
     ],
 }
 
+def get_terminolog_file(unid):
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent
+    result_dir = project_root / "result" / unid
+
+    # 确保result目录存在
+    result_dir.mkdir(parents=True, exist_ok=True)
+    return result_dir
+
 
 # 根据界面显示的语言名称，比如“简体中文、English” 获取语言代码，比如 zh-cn en 等, 如果是cli，则直接是语言代码
 def get_translate_code() ->list:
     # 输出translate_api_name所有value
     return list(translate_api_name.values())
-if __name__ == '__main__':
-    print(get_translate_code())
-    first_key = next(iter(translate_api_name))
-    print(first_key)

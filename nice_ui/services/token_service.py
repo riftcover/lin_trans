@@ -1,10 +1,10 @@
 from typing import List, Dict
 
-from nice_ui.configure import config
+from api_client import api_client, AuthenticationError
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.interfaces.ui_manager import UIManagerInterface
-from api_client import api_client, AuthenticationError
 from utils import logger
+
 
 class TokenAmountManager:
     """代币消费量管理器，负责存储和获取任务的代币消费量"""
@@ -93,9 +93,9 @@ class TokenService(TokenServiceInterface):
         self.token_amount_manager = TokenAmountManager()
 
         # 从配置中获取默认系数值
-        from nice_ui.configure import config
-        self.asr_qps = None
-        self.trans_qps = None
+        # todo: 当前没有登录时，使用云任务代币消耗会为0，所以先写死默认值。等以后重构登录状态管理器再调整
+        self.asr_qps = 4
+        self.trans_qps = 16
 
         self._initialized = True
 
@@ -108,7 +108,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取代币消耗系数
-            response = api_client.get_token_coefficients_sync()
+            response = api_client.get_token_coefficients_t()
             if response and 'data' in response:
                 coefficients = response['data']
                 # 遍历系数列表，更新对应的值
@@ -134,7 +134,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取用户余额
-            balance_data = api_client.get_balance_sync()
+            balance_data = api_client.get_balance_t()
 
             # 解析响应数据获取代币余额
             if 'data' in balance_data and 'balance' in balance_data['data']:
@@ -162,7 +162,7 @@ class TokenService(TokenServiceInterface):
         # 更新历史记录
         try:
             # 获取最新的交易记录
-            history_data = api_client.get_history_sync(page=1, page_size=10)
+            history_data = api_client.get_history_t(page=1, page_size=10)
             if history_data and 'data' in history_data:
                 transactions = history_data['data'].get('transactions', [])
                 total_records = history_data['data'].get('total', 0)
@@ -184,33 +184,17 @@ class TokenService(TokenServiceInterface):
         return int(video_duration * self.asr_qps) if video_duration else 0
 
 
-    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) ->int:
+    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) -> int:
         """
 
         Args:
-            word_counts: 翻译文本长度
+            word_counts: 翻译文本长度/1000
             translate_engine:翻译模型
 
         Returns:
             int: 所需代币数量
         """
-        # 根据不同的翻译引擎设置不同的算力消耗系数
-        if translate_engine in ["chatGPT", "LocalLLM", "AzureGPT", "Gemini"]:
-            # AI大模型翻译，消耗更多算力
-            qps_count = 3
-        elif translate_engine in ["DeepL", "DeepLx"]:
-            # DeepL系列翻译，消耗中等算力
-            qps_count = 2.5
-        elif translate_engine in ["Google", "Microsoft", "Baidu", "Tencent"]:
-            # 传统翻译API，消耗标准算力
-            qps_count = 2
-        else:
-            # 其他翻译引擎，默认算力消耗
-            qps_count = 1.5
-
-
-
-        return int(word_counts * self.trans_qps) if word_counts else 0
+        return round(word_counts * self.trans_qps/1000) if word_counts else 0
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """
@@ -356,7 +340,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 获取充值套餐列表
-            packages_data = api_client.recharge_packages_sync()
+            packages_data = api_client.recharge_packages_t()
 
             # 解析响应数据获取充值套餐列表
             packages = packages_data.get('data', [])
@@ -417,7 +401,7 @@ class TokenService(TokenServiceInterface):
         try:
             # 调用api_client中的方法消费代币
             us_id = api_client.get_id()
-            api_client.consume_tokens_sync(token_amount, feature_key,us_id)
+            api_client.consume_tokens_t(token_amount, feature_key, us_id)
             logger.info(f"消费代币成功: {token_amount}")
             return True
 

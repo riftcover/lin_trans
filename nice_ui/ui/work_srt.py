@@ -6,13 +6,14 @@ from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, )
 
-from agent import get_translate_code
+from agent import get_translate_code, translate_api_name
 from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
-from nice_ui.main_win.secwin import SecWindow, start_tools
+from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import PromptsOrm
 from utils import logger
+from utils.agent_dict import agent_settings
 from vendor.qfluentwidgets import (PushButton, TableWidget, FluentIcon, InfoBar, InfoBarPosition, BodyLabel, CardWidget, )
 
 
@@ -115,14 +116,12 @@ class WorkSrt(QWidget):
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
         translate_name = config.params["translate_channel"]
-        logger.info(f"translate_name: {translate_name}")
         self.translate_model.setCurrentText(translate_name)
 
         engine_layout.addWidget(translate_model_name)
         engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(engine_layout)
 
-        # todo: 只有选择ai时才显示
         prompt_layout = QHBoxLayout()
         prompt_layout.setSpacing(5)
         prompt_layout.setAlignment(
@@ -138,6 +137,9 @@ class WorkSrt(QWidget):
         prompt_layout.addWidget(ai_prompt_name)
         prompt_layout.addWidget(self.ai_prompt)
         main_layout.addLayout(prompt_layout)
+
+        ai_prompt_name.hide()
+        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)
@@ -204,6 +206,10 @@ class WorkSrt(QWidget):
         self.translate_model.currentTextChanged.connect(self.recalculate_computing_power)
 
     def on_start_clicked(self):
+        # 在添加任务前检查API密钥
+        if not self._check_api_key():
+            return
+
         # 显示成功提示
         InfoBar.success(
             title="成功",
@@ -246,6 +252,47 @@ class WorkSrt(QWidget):
                 # 更新表格中的算力消耗
                 self.media_table.item(row, 2).setText(ds_count)
 
+    def _check_api_key(self) -> bool:
+        """检查当前选择的翻译引擎是否配置了API密钥"""
+        # 获取当前选择的翻译引擎
+        translate_engine = self.translate_model.currentText()
+        logger.debug(f"检查翻译引擎: {translate_engine}")
+
+        # 使用现有的逻辑：通过translate_api_name映射获取agent名称
+        agent_name = next(
+            (
+                key
+                for key, value in translate_api_name.items()
+                if value == translate_engine
+            ),
+            None,
+        )
+        if not agent_name:
+            # 如果不是我们管理的AI代理，可能是其他翻译服务，暂时允许通过
+            logger.debug(f"未知的翻译引擎: {translate_engine}，跳过密钥检查")
+            return True
+
+        # 检查agent是否存在且有密钥 - 动态获取最新配置
+        current_agent_configs = agent_settings()
+        if agent_name in current_agent_configs:
+            agent = current_agent_configs[agent_name]
+
+            if agent.key is None:
+                # 显示错误提示
+                InfoBar.error(
+                    title="配置错误",
+                    content="填写key",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self,
+                )
+                logger.error(f"翻译引擎 {translate_engine} 未配置API密钥")
+                return False
+
+        return True
+
 
 class LTableWindow:
     def __init__(self, main, settings):
@@ -281,10 +328,10 @@ class LTableWindow:
         if file_character_count:
             ui_table.insertRow(row_position)
             file_name = os.path.basename(file_path)
-            logger.info(f"file_name type: {type(file_name)}")
-            logger.info(f"file_name: {file_name}")
-            logger.info(f"file_character_count: {file_character_count}")
-            logger.info(f"file_path: {file_path}")
+            # logger.info(f"file_name type: {type(file_name)}")
+            # logger.info(f"file_name: {file_name}")
+            # logger.info(f"file_character_count: {file_character_count}")
+            # logger.info(f"file_path: {file_path}")
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 字符数

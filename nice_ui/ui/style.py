@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QSettings, QSize, QTime, Signal
-from PySide6.QtWidgets import (QWidget, QButtonGroup,QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, )
+from PySide6.QtWidgets import (QWidget, QButtonGroup, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTimeEdit, QTextEdit, QTableWidget, )
 
 from agent import translate_api_name
 from components.resource_manager import StyleManager
@@ -149,7 +149,7 @@ class LLMKeySet(QWidget):
         key_name = translate_api_name.get(api_key)
         title_layout = QHBoxLayout()
         title_label = BodyLabel(key_name)
-        tutorial_link = HyperlinkLabel("设置教程")
+        tutorial_link = HyperlinkLabel("获取密钥")
         tutorial_link.setUrl(url)
         # tutorial_link.setIcon(FluentIcon.QUESTION)
 

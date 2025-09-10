@@ -2,8 +2,8 @@ import torch
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
-from vendor.qfluentwidgets import (InfoBar, InfoBarPosition, PrimaryPushButton, CardWidget, IconWidget, BodyLabel, CaptionLabel)
 from vendor.qfluentwidgets import FluentIcon as FIF
+from vendor.qfluentwidgets import (InfoBar, InfoBarPosition, PrimaryPushButton, CardWidget, IconWidget, BodyLabel, CaptionLabel)
 
 
 class CudaCheckPage(QWidget):

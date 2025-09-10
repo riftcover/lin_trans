@@ -1,0 +1,3439 @@
+{
+    "file_url": "https://asr-file-tth.oss-cn-beijing.aliyuncs.com/audio/1748682701_4fa96f30.wav?x-oss-signature-version=OSS4-HMAC-SHA256&x-oss-date=20250531T091142Z&x-oss-expires=900&x-oss-credential=LTAI5t7eCsZFb4AnqJFX5e3v%2F20250531%2Fcn-beijing%2Foss%2Faliyun_v4_request&x-oss-signature=14770650463e291e0e4f8b5ff7dd7ed2831043f762e7dd95839e7e849c077816",
+    "properties": {
+        "audio_format": "pcm_s16le",
+        "channels": [
+            0,
+            1
+        ],
+        "original_sampling_rate": 16000,
+        "original_duration_in_milliseconds": 196719
+    },
+    "transcripts": [
+        {
+            "channel_id": 0,
+            "content_duration_in_milliseconds": 191680,
+            "text": "Picture a winter wonderland, the thrill of the slopes, the chill of the air. This is skiing in Europe, the continent. Snowy peaks offer an irresistible allure to those seeking adventure. But you don't have to break the bank to experience this. Here are the top ten affordable ski resorts in Europe. Starting at number ten. We have the picturesque boroves in Bulgaria, nestled in the heart of the ria mountains. Four of a's brings together affordability and charm in a winter wonderland setting. Next, at number nine, we head over to Italy to visit Lavinio. Known for its breathtaking views and budget friendly ski passes, lavigno is a must visit for any ski enthusiast. At number eight, we return to the snow covered slopes of Bulgaria with Banco. With a blend of modern facilities in rich history, banansco offers an affordable skiing experience you won't want to miss. Landing at number seven is Vogel in Slovenia. Set in the stunning Triglav National park, Vogel offers a unique and affordable skiing experience that combines natural beauty with excellent ski conditions. Finally, at number six, we have sare Chevalier in France. This resort is known for its vast terrain and affordable accommodations, making it a favorite among many ski lovers. Halfway through our list and the excitement is only building. And now for the top five at number five, we have the charming Yasna in Slovakia, known for its picturesque slopes and affordable ski passes, yaszna provides a skiing experience that's as delightful as it is budget friendly. Moving on to number four. We glide into the beautiful Austrian Alps to find the cozy soul. This resort stands out not only for its reasonable prices, but also for its vibrant night skiing scene, offering a unique blend of fun and value. Next, at number three, we journey to the snow cap peaks of coteray in France. Famed for its impressive snow record and budget friendly accommodations, coteray offers a perfect blend of quality and affordability. At number two, we find ourselves in the charming Bovik and Slovenia. With a stunning landscape and cost effective ski packages, Bovik is a hidden gem for those seeking a skiing adventure without breaking the bank. Finally, at number one, we have the incredibly affordable poana Brasov and Romania. Known for its well maintained slopes and cost effective ski schools, poana Brasov offers not only affordability but also quality, making it the crown jewel of budget friendly ski resorts in Europe. And there you have it, the top ten affordable ski resorts in Europe that promise an unforgettable skiing experience without burning a hole in your pocket. From the snowy peaks of Bulgaria to the beautiful slopes of Romania, we've traversed the best and most affordable ski resorts Europe has to offer. We've swooshed down the picturesque pests of Austria, savored the frosty allure of France and reveled in the charm of Italy's snow clad mountains. Each location, a unique blend of thrill and value, beckons with the promise of unforgettable ski adventures. So pack your skis, bundle up and get ready for the adventure of a lifetime at these affordable European ski resorts. ",
+            "sentences": [
+                {
+                    "begin_time": 0,
+                    "end_time": 5023,
+                    "text": "Picture a winter wonderland, the thrill of the slopes, the chill of the air. ",
+                    "sentence_id": 1,
+                    "words": [
+                        {
+                            "begin_time": 0,
+                            "end_time": 478,
+                            "text": "Picture ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 478,
+                            "end_time": 717,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 717,
+                            "end_time": 1196,
+                            "text": "winter ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 1196,
+                            "end_time": 1913,
+                            "text": "wonderland",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 1913,
+                            "end_time": 2153,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 2153,
+                            "end_time": 2631,
+                            "text": "thrill ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 2631,
+                            "end_time": 2870,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 2870,
+                            "end_time": 3110,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 3110,
+                            "end_time": 3588,
+                            "text": "slopes",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 3588,
+                            "end_time": 3827,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 3827,
+                            "end_time": 4306,
+                            "text": "chill ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 4306,
+                            "end_time": 4545,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 4545,
+                            "end_time": 4784,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 4784,
+                            "end_time": 5023,
+                            "text": "air",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 5023,
+                    "end_time": 7655,
+                    "text": "This is skiing in Europe, the continent. ",
+                    "sentence_id": 2,
+                    "words": [
+                        {
+                            "begin_time": 5023,
+                            "end_time": 5263,
+                            "text": "This ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 5263,
+                            "end_time": 5502,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 5502,
+                            "end_time": 5980,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 5980,
+                            "end_time": 6220,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 6220,
+                            "end_time": 6698,
+                            "text": "Europe",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 6698,
+                            "end_time": 6937,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 6937,
+                            "end_time": 7655,
+                            "text": "continent",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 7655,
+                    "end_time": 11722,
+                    "text": "Snowy peaks offer an irresistible allure to those seeking adventure. ",
+                    "sentence_id": 3,
+                    "words": [
+                        {
+                            "begin_time": 7655,
+                            "end_time": 7894,
+                            "text": "Snowy ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 7894,
+                            "end_time": 8133,
+                            "text": "peaks ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 8133,
+                            "end_time": 8373,
+                            "text": "offer ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 8373,
+                            "end_time": 8612,
+                            "text": "an ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 8612,
+                            "end_time": 9569,
+                            "text": "irresistible ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 9569,
+                            "end_time": 10047,
+                            "text": "allure ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 10047,
+                            "end_time": 10286,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 10286,
+                            "end_time": 10526,
+                            "text": "those ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 10526,
+                            "end_time": 11004,
+                            "text": "seeking ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 11004,
+                            "end_time": 11722,
+                            "text": "adventure",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 11722,
+                    "end_time": 14832,
+                    "text": "But you don't have to break the bank to experience this. ",
+                    "sentence_id": 4,
+                    "words": [
+                        {
+                            "begin_time": 11722,
+                            "end_time": 11961,
+                            "text": "But ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 11961,
+                            "end_time": 12200,
+                            "text": "you ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 12200,
+                            "end_time": 12440,
+                            "text": "don't ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 12440,
+                            "end_time": 12679,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 12679,
+                            "end_time": 12918,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 12918,
+                            "end_time": 13157,
+                            "text": "break ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 13157,
+                            "end_time": 13396,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 13396,
+                            "end_time": 13636,
+                            "text": "bank ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 13636,
+                            "end_time": 13875,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 13875,
+                            "end_time": 14593,
+                            "text": "experience ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 14593,
+                            "end_time": 14832,
+                            "text": "this",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 14832,
+                    "end_time": 18181,
+                    "text": "Here are the top ten affordable ski resorts in Europe. ",
+                    "sentence_id": 5,
+                    "words": [
+                        {
+                            "begin_time": 14832,
+                            "end_time": 15071,
+                            "text": "Here ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 15071,
+                            "end_time": 15310,
+                            "text": "are ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 15310,
+                            "end_time": 15550,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 15550,
+                            "end_time": 15789,
+                            "text": "top ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 15789,
+                            "end_time": 16028,
+                            "text": "ten ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 16028,
+                            "end_time": 16746,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 16746,
+                            "end_time": 16985,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 16985,
+                            "end_time": 17463,
+                            "text": "resorts ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 17463,
+                            "end_time": 17703,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 17703,
+                            "end_time": 18181,
+                            "text": "Europe",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 18181,
+                    "end_time": 19616,
+                    "text": "Starting at number ten. ",
+                    "sentence_id": 6,
+                    "words": [
+                        {
+                            "begin_time": 18181,
+                            "end_time": 18660,
+                            "text": "Starting ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 18660,
+                            "end_time": 18899,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 18899,
+                            "end_time": 19377,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 19377,
+                            "end_time": 19616,
+                            "text": "ten",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 19616,
+                    "end_time": 24880,
+                    "text": "We have the picturesque boroves in Bulgaria, nestled in the heart of the ria mountains. ",
+                    "sentence_id": 7,
+                    "words": [
+                        {
+                            "begin_time": 19616,
+                            "end_time": 19856,
+                            "text": "We ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 19856,
+                            "end_time": 20095,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 20095,
+                            "end_time": 20334,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 20334,
+                            "end_time": 21052,
+                            "text": "picturesque ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 21052,
+                            "end_time": 21530,
+                            "text": "boroves ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 21530,
+                            "end_time": 21770,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 21770,
+                            "end_time": 22248,
+                            "text": "Bulgaria",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 22248,
+                            "end_time": 22726,
+                            "text": "nestled ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 22726,
+                            "end_time": 22966,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 22966,
+                            "end_time": 23205,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 23205,
+                            "end_time": 23444,
+                            "text": "heart ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 23444,
+                            "end_time": 23683,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 23683,
+                            "end_time": 23923,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 23923,
+                            "end_time": 24162,
+                            "text": "ria ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 24162,
+                            "end_time": 24880,
+                            "text": "mountains",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 24880,
+                    "end_time": 30945,
+                    "text": "Four of a's brings together affordability and charm in a winter wonderland setting. ",
+                    "sentence_id": 8,
+                    "words": [
+                        {
+                            "begin_time": 24880,
+                            "end_time": 25132,
+                            "text": "Four ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 25132,
+                            "end_time": 25385,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 25385,
+                            "end_time": 25638,
+                            "text": "a's ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 25638,
+                            "end_time": 26143,
+                            "text": "brings ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 26143,
+                            "end_time": 26901,
+                            "text": "together ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 26901,
+                            "end_time": 27912,
+                            "text": "affordability ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 27912,
+                            "end_time": 28165,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 28165,
+                            "end_time": 28670,
+                            "text": "charm ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 28670,
+                            "end_time": 28923,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 28923,
+                            "end_time": 29176,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 29176,
+                            "end_time": 29681,
+                            "text": "winter ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 29681,
+                            "end_time": 30440,
+                            "text": "wonderland ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 30440,
+                            "end_time": 30945,
+                            "text": "setting",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 30945,
+                    "end_time": 34483,
+                    "text": "Next, at number nine, we head over to Italy to visit Lavinio. ",
+                    "sentence_id": 9,
+                    "words": [
+                        {
+                            "begin_time": 30945,
+                            "end_time": 31198,
+                            "text": "Next",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 31198,
+                            "end_time": 31450,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 31450,
+                            "end_time": 31956,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 31956,
+                            "end_time": 32209,
+                            "text": "nine",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 32209,
+                            "end_time": 32461,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 32461,
+                            "end_time": 32714,
+                            "text": "head ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 32714,
+                            "end_time": 32967,
+                            "text": "over ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 32967,
+                            "end_time": 33220,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 33220,
+                            "end_time": 33472,
+                            "text": "Italy ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 33472,
+                            "end_time": 33725,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 33725,
+                            "end_time": 33978,
+                            "text": "visit ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 33978,
+                            "end_time": 34483,
+                            "text": "Lavinio",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 34483,
+                    "end_time": 41560,
+                    "text": "Known for its breathtaking views and budget friendly ski passes, lavigno is a must visit for any ski enthusiast. ",
+                    "sentence_id": 10,
+                    "words": [
+                        {
+                            "begin_time": 34483,
+                            "end_time": 34736,
+                            "text": "Known ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 34736,
+                            "end_time": 34989,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 34989,
+                            "end_time": 35241,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 35241,
+                            "end_time": 36252,
+                            "text": "breathtaking ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 36252,
+                            "end_time": 36505,
+                            "text": "views ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 36505,
+                            "end_time": 36758,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 36758,
+                            "end_time": 37263,
+                            "text": "budget ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 37263,
+                            "end_time": 37769,
+                            "text": "friendly ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 37769,
+                            "end_time": 38021,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 38021,
+                            "end_time": 38527,
+                            "text": "passes",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 38527,
+                            "end_time": 39032,
+                            "text": "lavigno ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 39032,
+                            "end_time": 39285,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 39285,
+                            "end_time": 39538,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 39538,
+                            "end_time": 39790,
+                            "text": "must ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 39790,
+                            "end_time": 40043,
+                            "text": "visit ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 40043,
+                            "end_time": 40296,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 40296,
+                            "end_time": 40549,
+                            "text": "any ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 40549,
+                            "end_time": 40801,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 40801,
+                            "end_time": 41560,
+                            "text": "enthusiast",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 41560,
+                    "end_time": 46798,
+                    "text": "At number eight, we return to the snow covered slopes of Bulgaria with Banco. ",
+                    "sentence_id": 11,
+                    "words": [
+                        {
+                            "begin_time": 41560,
+                            "end_time": 41798,
+                            "text": "At ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 41798,
+                            "end_time": 42274,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 42274,
+                            "end_time": 42750,
+                            "text": "eight",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 42750,
+                            "end_time": 42988,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 42988,
+                            "end_time": 43464,
+                            "text": "return ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 43464,
+                            "end_time": 43702,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 43702,
+                            "end_time": 43940,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 43940,
+                            "end_time": 44179,
+                            "text": "snow ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 44179,
+                            "end_time": 44655,
+                            "text": "covered ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 44655,
+                            "end_time": 45131,
+                            "text": "slopes ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 45131,
+                            "end_time": 45369,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 45369,
+                            "end_time": 46083,
+                            "text": "Bulgaria ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 46083,
+                            "end_time": 46321,
+                            "text": "with ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 46321,
+                            "end_time": 46798,
+                            "text": "Banco",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 46798,
+                    "end_time": 54417,
+                    "text": "With a blend of modern facilities in rich history, banansco offers an affordable skiing experience you won't want to miss. ",
+                    "sentence_id": 12,
+                    "words": [
+                        {
+                            "begin_time": 46798,
+                            "end_time": 47036,
+                            "text": "With ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 47036,
+                            "end_time": 47274,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 47274,
+                            "end_time": 47750,
+                            "text": "blend ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 47750,
+                            "end_time": 47988,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 47988,
+                            "end_time": 48464,
+                            "text": "modern ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 48464,
+                            "end_time": 49179,
+                            "text": "facilities ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 49179,
+                            "end_time": 49417,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 49417,
+                            "end_time": 49655,
+                            "text": "rich ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 49655,
+                            "end_time": 50131,
+                            "text": "history",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 50131,
+                            "end_time": 50607,
+                            "text": "banansco ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 50607,
+                            "end_time": 51083,
+                            "text": "offers ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 51083,
+                            "end_time": 51321,
+                            "text": "an ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 51321,
+                            "end_time": 52036,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 52036,
+                            "end_time": 52512,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 52512,
+                            "end_time": 53226,
+                            "text": "experience ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 53226,
+                            "end_time": 53464,
+                            "text": "you ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 53464,
+                            "end_time": 53702,
+                            "text": "won't ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 53702,
+                            "end_time": 53940,
+                            "text": "want ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 53940,
+                            "end_time": 54179,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 54179,
+                            "end_time": 54417,
+                            "text": "miss",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 54417,
+                    "end_time": 57036,
+                    "text": "Landing at number seven is Vogel in Slovenia. ",
+                    "sentence_id": 13,
+                    "words": [
+                        {
+                            "begin_time": 54417,
+                            "end_time": 54893,
+                            "text": "Landing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 54893,
+                            "end_time": 55131,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 55131,
+                            "end_time": 55607,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 55607,
+                            "end_time": 55845,
+                            "text": "seven ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 55845,
+                            "end_time": 56083,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 56083,
+                            "end_time": 56321,
+                            "text": "Vogel ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 56321,
+                            "end_time": 56560,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 56560,
+                            "end_time": 57036,
+                            "text": "Slovenia",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 57036,
+                    "end_time": 66560,
+                    "text": "Set in the stunning Triglav National park, Vogel offers a unique and affordable skiing experience that combines natural beauty with excellent ski conditions. ",
+                    "sentence_id": 14,
+                    "words": [
+                        {
+                            "begin_time": 57036,
+                            "end_time": 57274,
+                            "text": "Set ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 57274,
+                            "end_time": 57512,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 57512,
+                            "end_time": 57750,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 57750,
+                            "end_time": 58226,
+                            "text": "stunning ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 58226,
+                            "end_time": 59179,
+                            "text": "Triglav National ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 59179,
+                            "end_time": 59417,
+                            "text": "park",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 59417,
+                            "end_time": 59655,
+                            "text": "Vogel ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 59655,
+                            "end_time": 60131,
+                            "text": "offers ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 60131,
+                            "end_time": 60369,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 60369,
+                            "end_time": 60845,
+                            "text": "unique ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 60845,
+                            "end_time": 61083,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 61083,
+                            "end_time": 61798,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 61798,
+                            "end_time": 62274,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 62274,
+                            "end_time": 62988,
+                            "text": "experience ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 62988,
+                            "end_time": 63226,
+                            "text": "that ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 63226,
+                            "end_time": 63702,
+                            "text": "combines ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 63702,
+                            "end_time": 64179,
+                            "text": "natural ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 64179,
+                            "end_time": 64655,
+                            "text": "beauty ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 64655,
+                            "end_time": 64893,
+                            "text": "with ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 64893,
+                            "end_time": 65607,
+                            "text": "excellent ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 65607,
+                            "end_time": 65845,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 65845,
+                            "end_time": 66560,
+                            "text": "conditions",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 66560,
+                    "end_time": 70054,
+                    "text": "Finally, at number six, we have sare Chevalier in France. ",
+                    "sentence_id": 15,
+                    "words": [
+                        {
+                            "begin_time": 66560,
+                            "end_time": 67025,
+                            "text": "Finally",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 67025,
+                            "end_time": 67258,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 67258,
+                            "end_time": 67724,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 67724,
+                            "end_time": 67957,
+                            "text": "six",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 67957,
+                            "end_time": 68190,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 68190,
+                            "end_time": 68423,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 68423,
+                            "end_time": 68656,
+                            "text": "sare ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 68656,
+                            "end_time": 69355,
+                            "text": "Chevalier ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 69355,
+                            "end_time": 69588,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 69588,
+                            "end_time": 70054,
+                            "text": "France",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 70054,
+                    "end_time": 77044,
+                    "text": "This resort is known for its vast terrain and affordable accommodations, making it a favorite among many ski lovers. ",
+                    "sentence_id": 16,
+                    "words": [
+                        {
+                            "begin_time": 70054,
+                            "end_time": 70287,
+                            "text": "This ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 70287,
+                            "end_time": 70753,
+                            "text": "resort ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 70753,
+                            "end_time": 70986,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 70986,
+                            "end_time": 71452,
+                            "text": "known ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 71452,
+                            "end_time": 71685,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 71685,
+                            "end_time": 71918,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 71918,
+                            "end_time": 72151,
+                            "text": "vast ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 72151,
+                            "end_time": 72617,
+                            "text": "terrain ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 72617,
+                            "end_time": 72850,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 72850,
+                            "end_time": 73549,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 73549,
+                            "end_time": 74481,
+                            "text": "accommodations",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 74481,
+                            "end_time": 74947,
+                            "text": "making ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 74947,
+                            "end_time": 75180,
+                            "text": "it ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 75180,
+                            "end_time": 75413,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 75413,
+                            "end_time": 75879,
+                            "text": "favorite ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 75879,
+                            "end_time": 76112,
+                            "text": "among ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 76112,
+                            "end_time": 76345,
+                            "text": "many ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 76345,
+                            "end_time": 76578,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 76578,
+                            "end_time": 77044,
+                            "text": "lovers",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 77044,
+                    "end_time": 80539,
+                    "text": "Halfway through our list and the excitement is only building. ",
+                    "sentence_id": 17,
+                    "words": [
+                        {
+                            "begin_time": 77044,
+                            "end_time": 77510,
+                            "text": "Halfway ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 77510,
+                            "end_time": 77976,
+                            "text": "through ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 77976,
+                            "end_time": 78209,
+                            "text": "our ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 78209,
+                            "end_time": 78442,
+                            "text": "list ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 78442,
+                            "end_time": 78675,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 78675,
+                            "end_time": 78908,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 78908,
+                            "end_time": 79607,
+                            "text": "excitement ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 79607,
+                            "end_time": 79840,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 79840,
+                            "end_time": 80073,
+                            "text": "only ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 80073,
+                            "end_time": 80539,
+                            "text": "building",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 80539,
+                    "end_time": 93820,
+                    "text": "And now for the top five at number five, we have the charming Yasna in Slovakia, known for its picturesque slopes and affordable ski passes, yaszna provides a skiing experience that's as delightful as it is budget friendly. ",
+                    "sentence_id": 18,
+                    "words": [
+                        {
+                            "begin_time": 80539,
+                            "end_time": 80772,
+                            "text": "And ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 80772,
+                            "end_time": 81005,
+                            "text": "now ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 81005,
+                            "end_time": 81238,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 81238,
+                            "end_time": 81471,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 81471,
+                            "end_time": 81704,
+                            "text": "top ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 81704,
+                            "end_time": 81937,
+                            "text": "five ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 81937,
+                            "end_time": 82170,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 82170,
+                            "end_time": 82636,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 82636,
+                            "end_time": 82869,
+                            "text": "five",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 82869,
+                            "end_time": 83102,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 83102,
+                            "end_time": 83335,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 83335,
+                            "end_time": 83568,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 83568,
+                            "end_time": 84034,
+                            "text": "charming ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 84034,
+                            "end_time": 84267,
+                            "text": "Yasna ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 84267,
+                            "end_time": 84500,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 84500,
+                            "end_time": 84966,
+                            "text": "Slovakia",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 84966,
+                            "end_time": 85199,
+                            "text": "known ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 85199,
+                            "end_time": 85432,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 85432,
+                            "end_time": 85665,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 85665,
+                            "end_time": 86364,
+                            "text": "picturesque ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 86364,
+                            "end_time": 86830,
+                            "text": "slopes ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 86830,
+                            "end_time": 87063,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 87063,
+                            "end_time": 87762,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 87762,
+                            "end_time": 87995,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 87995,
+                            "end_time": 88461,
+                            "text": "passes",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 88461,
+                            "end_time": 88927,
+                            "text": "yaszna ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 88927,
+                            "end_time": 89393,
+                            "text": "provides ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 89393,
+                            "end_time": 89626,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 89626,
+                            "end_time": 90092,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 90092,
+                            "end_time": 90791,
+                            "text": "experience ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 90791,
+                            "end_time": 91257,
+                            "text": "that's ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 91257,
+                            "end_time": 91490,
+                            "text": "as ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 91490,
+                            "end_time": 92189,
+                            "text": "delightful ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 92189,
+                            "end_time": 92422,
+                            "text": "as ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 92422,
+                            "end_time": 92655,
+                            "text": "it ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 92655,
+                            "end_time": 92888,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 92888,
+                            "end_time": 93354,
+                            "text": "budget ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 93354,
+                            "end_time": 93820,
+                            "text": "friendly",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 93820,
+                    "end_time": 95476,
+                    "text": "Moving on to number four. ",
+                    "sentence_id": 19,
+                    "words": [
+                        {
+                            "begin_time": 93820,
+                            "end_time": 94293,
+                            "text": "Moving ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 94293,
+                            "end_time": 94529,
+                            "text": "on ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 94529,
+                            "end_time": 94766,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 94766,
+                            "end_time": 95239,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 95239,
+                            "end_time": 95476,
+                            "text": "four",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 95476,
+                    "end_time": 99498,
+                    "text": "We glide into the beautiful Austrian Alps to find the cozy soul. ",
+                    "sentence_id": 20,
+                    "words": [
+                        {
+                            "begin_time": 95476,
+                            "end_time": 95712,
+                            "text": "We ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 95712,
+                            "end_time": 96186,
+                            "text": "glide ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 96186,
+                            "end_time": 96422,
+                            "text": "into ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 96422,
+                            "end_time": 96659,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 96659,
+                            "end_time": 97369,
+                            "text": "beautiful ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 97369,
+                            "end_time": 98078,
+                            "text": "Austrian ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 98078,
+                            "end_time": 98315,
+                            "text": "Alps ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 98315,
+                            "end_time": 98552,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 98552,
+                            "end_time": 98788,
+                            "text": "find ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 98788,
+                            "end_time": 99025,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 99025,
+                            "end_time": 99261,
+                            "text": "cozy ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 99261,
+                            "end_time": 99498,
+                            "text": "soul",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 99498,
+                    "end_time": 107779,
+                    "text": "This resort stands out not only for its reasonable prices, but also for its vibrant night skiing scene, offering a unique blend of fun and value. ",
+                    "sentence_id": 21,
+                    "words": [
+                        {
+                            "begin_time": 99498,
+                            "end_time": 99735,
+                            "text": "This ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 99735,
+                            "end_time": 100208,
+                            "text": "resort ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 100208,
+                            "end_time": 100681,
+                            "text": "stands ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 100681,
+                            "end_time": 100918,
+                            "text": "out ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 100918,
+                            "end_time": 101154,
+                            "text": "not ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 101154,
+                            "end_time": 101391,
+                            "text": "only ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 101391,
+                            "end_time": 101628,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 101628,
+                            "end_time": 101864,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 101864,
+                            "end_time": 102574,
+                            "text": "reasonable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 102574,
+                            "end_time": 103047,
+                            "text": "prices",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 103047,
+                            "end_time": 103284,
+                            "text": "but ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 103284,
+                            "end_time": 103520,
+                            "text": "also ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 103520,
+                            "end_time": 103757,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 103757,
+                            "end_time": 103994,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 103994,
+                            "end_time": 104467,
+                            "text": "vibrant ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 104467,
+                            "end_time": 104703,
+                            "text": "night ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 104703,
+                            "end_time": 105177,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 105177,
+                            "end_time": 105413,
+                            "text": "scene",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 105413,
+                            "end_time": 105886,
+                            "text": "offering ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 105886,
+                            "end_time": 106123,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 106123,
+                            "end_time": 106596,
+                            "text": "unique ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 106596,
+                            "end_time": 106833,
+                            "text": "blend ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 106833,
+                            "end_time": 107070,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 107070,
+                            "end_time": 107306,
+                            "text": "fun ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 107306,
+                            "end_time": 107543,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 107543,
+                            "end_time": 107779,
+                            "text": "value",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 107779,
+                    "end_time": 112275,
+                    "text": "Next, at number three, we journey to the snow cap peaks of coteray in France. ",
+                    "sentence_id": 22,
+                    "words": [
+                        {
+                            "begin_time": 107779,
+                            "end_time": 108016,
+                            "text": "Next",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 108016,
+                            "end_time": 108253,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 108253,
+                            "end_time": 108726,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 108726,
+                            "end_time": 108962,
+                            "text": "three",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 108962,
+                            "end_time": 109199,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 109199,
+                            "end_time": 109672,
+                            "text": "journey ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 109672,
+                            "end_time": 109909,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 109909,
+                            "end_time": 110145,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 110145,
+                            "end_time": 110382,
+                            "text": "snow ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 110382,
+                            "end_time": 110619,
+                            "text": "cap ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 110619,
+                            "end_time": 110855,
+                            "text": "peaks ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 110855,
+                            "end_time": 111092,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 111092,
+                            "end_time": 111565,
+                            "text": "coteray ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 111565,
+                            "end_time": 111802,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 111802,
+                            "end_time": 112275,
+                            "text": "France",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 112275,
+                    "end_time": 120320,
+                    "text": "Famed for its impressive snow record and budget friendly accommodations, coteray offers a perfect blend of quality and affordability. ",
+                    "sentence_id": 23,
+                    "words": [
+                        {
+                            "begin_time": 112275,
+                            "end_time": 112511,
+                            "text": "Famed ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 112511,
+                            "end_time": 112748,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 112748,
+                            "end_time": 112985,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 112985,
+                            "end_time": 113695,
+                            "text": "impressive ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 113695,
+                            "end_time": 113931,
+                            "text": "snow ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 113931,
+                            "end_time": 114404,
+                            "text": "record ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 114404,
+                            "end_time": 114641,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 114641,
+                            "end_time": 115114,
+                            "text": "budget ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 115114,
+                            "end_time": 115587,
+                            "text": "friendly ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 115587,
+                            "end_time": 116534,
+                            "text": "accommodations",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 116534,
+                            "end_time": 117007,
+                            "text": "coteray ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 117007,
+                            "end_time": 117480,
+                            "text": "offers ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 117480,
+                            "end_time": 117717,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 117717,
+                            "end_time": 118190,
+                            "text": "perfect ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 118190,
+                            "end_time": 118427,
+                            "text": "blend ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 118427,
+                            "end_time": 118663,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 118663,
+                            "end_time": 119136,
+                            "text": "quality ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 119136,
+                            "end_time": 119373,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 119373,
+                            "end_time": 120320,
+                            "text": "affordability",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 120320,
+                    "end_time": 124933,
+                    "text": "At number two, we find ourselves in the charming Bovik and Slovenia. ",
+                    "sentence_id": 24,
+                    "words": [
+                        {
+                            "begin_time": 120320,
+                            "end_time": 120550,
+                            "text": "At ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 120550,
+                            "end_time": 121012,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 121012,
+                            "end_time": 121242,
+                            "text": "two",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 121242,
+                            "end_time": 121473,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 121473,
+                            "end_time": 121704,
+                            "text": "find ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 121704,
+                            "end_time": 122396,
+                            "text": "ourselves ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 122396,
+                            "end_time": 122626,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 122626,
+                            "end_time": 122857,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 122857,
+                            "end_time": 123549,
+                            "text": "charming ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 123549,
+                            "end_time": 124010,
+                            "text": "Bovik ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 124010,
+                            "end_time": 124241,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 124241,
+                            "end_time": 124933,
+                            "text": "Slovenia",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 124933,
+                    "end_time": 133699,
+                    "text": "With a stunning landscape and cost effective ski packages, Bovik is a hidden gem for those seeking a skiing adventure without breaking the bank. ",
+                    "sentence_id": 25,
+                    "words": [
+                        {
+                            "begin_time": 124933,
+                            "end_time": 125164,
+                            "text": "With ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 125164,
+                            "end_time": 125394,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 125394,
+                            "end_time": 126086,
+                            "text": "stunning ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 126086,
+                            "end_time": 126778,
+                            "text": "landscape ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 126778,
+                            "end_time": 127009,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 127009,
+                            "end_time": 127240,
+                            "text": "cost ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 127240,
+                            "end_time": 127932,
+                            "text": "effective ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 127932,
+                            "end_time": 128163,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 128163,
+                            "end_time": 128624,
+                            "text": "packages",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 128624,
+                            "end_time": 128855,
+                            "text": "Bovik ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 128855,
+                            "end_time": 129085,
+                            "text": "is ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 129085,
+                            "end_time": 129316,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 129316,
+                            "end_time": 129777,
+                            "text": "hidden ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 129777,
+                            "end_time": 130008,
+                            "text": "gem ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 130008,
+                            "end_time": 130239,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 130239,
+                            "end_time": 130469,
+                            "text": "those ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 130469,
+                            "end_time": 130931,
+                            "text": "seeking ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 130931,
+                            "end_time": 131161,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 131161,
+                            "end_time": 131623,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 131623,
+                            "end_time": 132315,
+                            "text": "adventure ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 132315,
+                            "end_time": 132776,
+                            "text": "without ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 132776,
+                            "end_time": 133237,
+                            "text": "breaking ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 133237,
+                            "end_time": 133468,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 133468,
+                            "end_time": 133699,
+                            "text": "bank",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 133699,
+                    "end_time": 138543,
+                    "text": "Finally, at number one, we have the incredibly affordable poana Brasov and Romania. ",
+                    "sentence_id": 26,
+                    "words": [
+                        {
+                            "begin_time": 133699,
+                            "end_time": 134160,
+                            "text": "Finally",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 134160,
+                            "end_time": 134391,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 134391,
+                            "end_time": 134852,
+                            "text": "number ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 134852,
+                            "end_time": 135083,
+                            "text": "one",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 135083,
+                            "end_time": 135313,
+                            "text": "we ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 135313,
+                            "end_time": 135544,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 135544,
+                            "end_time": 135775,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 135775,
+                            "end_time": 136467,
+                            "text": "incredibly ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 136467,
+                            "end_time": 137159,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 137159,
+                            "end_time": 137390,
+                            "text": "poana ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 137390,
+                            "end_time": 137851,
+                            "text": "Brasov ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 137851,
+                            "end_time": 138082,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 138082,
+                            "end_time": 138543,
+                            "text": "Romania",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 138543,
+                    "end_time": 149846,
+                    "text": "Known for its well maintained slopes and cost effective ski schools, poana Brasov offers not only affordability but also quality, making it the crown jewel of budget friendly ski resorts in Europe. ",
+                    "sentence_id": 27,
+                    "words": [
+                        {
+                            "begin_time": 138543,
+                            "end_time": 138774,
+                            "text": "Known ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 138774,
+                            "end_time": 139004,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 139004,
+                            "end_time": 139235,
+                            "text": "its ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 139235,
+                            "end_time": 139466,
+                            "text": "well ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 139466,
+                            "end_time": 140158,
+                            "text": "maintained ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 140158,
+                            "end_time": 140619,
+                            "text": "slopes ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 140619,
+                            "end_time": 140850,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 140850,
+                            "end_time": 141080,
+                            "text": "cost ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 141080,
+                            "end_time": 141772,
+                            "text": "effective ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 141772,
+                            "end_time": 142003,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 142003,
+                            "end_time": 142464,
+                            "text": "schools",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 142464,
+                            "end_time": 142695,
+                            "text": "poana ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 142695,
+                            "end_time": 143156,
+                            "text": "Brasov ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 143156,
+                            "end_time": 143618,
+                            "text": "offers ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 143618,
+                            "end_time": 143849,
+                            "text": "not ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 143849,
+                            "end_time": 144079,
+                            "text": "only ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 144079,
+                            "end_time": 145002,
+                            "text": "affordability ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 145002,
+                            "end_time": 145233,
+                            "text": "but ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 145233,
+                            "end_time": 145463,
+                            "text": "also ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 145463,
+                            "end_time": 145925,
+                            "text": "quality",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 145925,
+                            "end_time": 146386,
+                            "text": "making ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 146386,
+                            "end_time": 146617,
+                            "text": "it ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 146617,
+                            "end_time": 146847,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 146847,
+                            "end_time": 147078,
+                            "text": "crown ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 147078,
+                            "end_time": 147309,
+                            "text": "jewel ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 147309,
+                            "end_time": 147539,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 147539,
+                            "end_time": 148001,
+                            "text": "budget ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 148001,
+                            "end_time": 148462,
+                            "text": "friendly ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 148462,
+                            "end_time": 148693,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 148693,
+                            "end_time": 149154,
+                            "text": "resorts ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 149154,
+                            "end_time": 149385,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 149385,
+                            "end_time": 149846,
+                            "text": "Europe",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 149846,
+                    "end_time": 159400,
+                    "text": "And there you have it, the top ten affordable ski resorts in Europe that promise an unforgettable skiing experience without burning a hole in your pocket. ",
+                    "sentence_id": 28,
+                    "words": [
+                        {
+                            "begin_time": 149846,
+                            "end_time": 150077,
+                            "text": "And ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 150077,
+                            "end_time": 150307,
+                            "text": "there ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 150307,
+                            "end_time": 150538,
+                            "text": "you ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 150538,
+                            "end_time": 150769,
+                            "text": "have ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 150769,
+                            "end_time": 151000,
+                            "text": "it",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 151000,
+                            "end_time": 151240,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 151240,
+                            "end_time": 151480,
+                            "text": "top ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 151480,
+                            "end_time": 151720,
+                            "text": "ten ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 151720,
+                            "end_time": 152440,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 152440,
+                            "end_time": 152680,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 152680,
+                            "end_time": 153160,
+                            "text": "resorts ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 153160,
+                            "end_time": 153400,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 153400,
+                            "end_time": 153880,
+                            "text": "Europe ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 153880,
+                            "end_time": 154120,
+                            "text": "that ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 154120,
+                            "end_time": 154600,
+                            "text": "promise ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 154600,
+                            "end_time": 154840,
+                            "text": "an ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 154840,
+                            "end_time": 155800,
+                            "text": "unforgettable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 155800,
+                            "end_time": 156280,
+                            "text": "skiing ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 156280,
+                            "end_time": 157000,
+                            "text": "experience ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 157000,
+                            "end_time": 157480,
+                            "text": "without ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 157480,
+                            "end_time": 157960,
+                            "text": "burning ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 157960,
+                            "end_time": 158200,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 158200,
+                            "end_time": 158440,
+                            "text": "hole ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 158440,
+                            "end_time": 158680,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 158680,
+                            "end_time": 158920,
+                            "text": "your ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 158920,
+                            "end_time": 159400,
+                            "text": "pocket",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 159400,
+                    "end_time": 168040,
+                    "text": "From the snowy peaks of Bulgaria to the beautiful slopes of Romania, we've traversed the best and most affordable ski resorts Europe has to offer. ",
+                    "sentence_id": 29,
+                    "words": [
+                        {
+                            "begin_time": 159400,
+                            "end_time": 159640,
+                            "text": "From ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 159640,
+                            "end_time": 159880,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 159880,
+                            "end_time": 160120,
+                            "text": "snowy ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 160120,
+                            "end_time": 160360,
+                            "text": "peaks ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 160360,
+                            "end_time": 160600,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 160600,
+                            "end_time": 161080,
+                            "text": "Bulgaria ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 161080,
+                            "end_time": 161320,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 161320,
+                            "end_time": 161560,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 161560,
+                            "end_time": 162280,
+                            "text": "beautiful ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 162280,
+                            "end_time": 162760,
+                            "text": "slopes ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 162760,
+                            "end_time": 163000,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 163000,
+                            "end_time": 163480,
+                            "text": "Romania",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 163480,
+                            "end_time": 163720,
+                            "text": "we've ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 163720,
+                            "end_time": 164440,
+                            "text": "traversed ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 164440,
+                            "end_time": 164680,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 164680,
+                            "end_time": 164920,
+                            "text": "best ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 164920,
+                            "end_time": 165160,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 165160,
+                            "end_time": 165400,
+                            "text": "most ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 165400,
+                            "end_time": 166120,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 166120,
+                            "end_time": 166360,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 166360,
+                            "end_time": 166840,
+                            "text": "resorts ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 166840,
+                            "end_time": 167320,
+                            "text": "Europe ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 167320,
+                            "end_time": 167560,
+                            "text": "has ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 167560,
+                            "end_time": 167800,
+                            "text": "to ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 167800,
+                            "end_time": 168040,
+                            "text": "offer",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 168040,
+                    "end_time": 176680,
+                    "text": "We've swooshed down the picturesque pests of Austria, savored the frosty allure of France and reveled in the charm of Italy's snow clad mountains. ",
+                    "sentence_id": 30,
+                    "words": [
+                        {
+                            "begin_time": 168040,
+                            "end_time": 168280,
+                            "text": "We've ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 168280,
+                            "end_time": 168760,
+                            "text": "swooshed ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 168760,
+                            "end_time": 169000,
+                            "text": "down ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 169000,
+                            "end_time": 169240,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 169240,
+                            "end_time": 169960,
+                            "text": "picturesque ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 169960,
+                            "end_time": 170200,
+                            "text": "pests ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 170200,
+                            "end_time": 170440,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 170440,
+                            "end_time": 170920,
+                            "text": "Austria",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 170920,
+                            "end_time": 171400,
+                            "text": "savored ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 171400,
+                            "end_time": 171640,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 171640,
+                            "end_time": 172120,
+                            "text": "frosty ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 172120,
+                            "end_time": 172600,
+                            "text": "allure ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 172600,
+                            "end_time": 172840,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 172840,
+                            "end_time": 173320,
+                            "text": "France ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 173320,
+                            "end_time": 173560,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 173560,
+                            "end_time": 174040,
+                            "text": "reveled ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 174040,
+                            "end_time": 174280,
+                            "text": "in ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 174280,
+                            "end_time": 174520,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 174520,
+                            "end_time": 174760,
+                            "text": "charm ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 174760,
+                            "end_time": 175000,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 175000,
+                            "end_time": 175480,
+                            "text": "Italy's ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 175480,
+                            "end_time": 175720,
+                            "text": "snow ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 175720,
+                            "end_time": 175960,
+                            "text": "clad ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 175960,
+                            "end_time": 176680,
+                            "text": "mountains",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 176680,
+                    "end_time": 184307,
+                    "text": "Each location, a unique blend of thrill and value, beckons with the promise of unforgettable ski adventures. ",
+                    "sentence_id": 31,
+                    "words": [
+                        {
+                            "begin_time": 176680,
+                            "end_time": 176934,
+                            "text": "Each ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 176934,
+                            "end_time": 177696,
+                            "text": "location",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 177696,
+                            "end_time": 177951,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 177951,
+                            "end_time": 178459,
+                            "text": "unique ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 178459,
+                            "end_time": 178968,
+                            "text": "blend ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 178968,
+                            "end_time": 179222,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 179222,
+                            "end_time": 179730,
+                            "text": "thrill ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 179730,
+                            "end_time": 179985,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 179985,
+                            "end_time": 180493,
+                            "text": "value",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 180493,
+                            "end_time": 181002,
+                            "text": "beckons ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 181002,
+                            "end_time": 181256,
+                            "text": "with ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 181256,
+                            "end_time": 181510,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 181510,
+                            "end_time": 182018,
+                            "text": "promise ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 182018,
+                            "end_time": 182273,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 182273,
+                            "end_time": 183290,
+                            "text": "unforgettable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 183290,
+                            "end_time": 183544,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 183544,
+                            "end_time": 184307,
+                            "text": "adventures",
+                            "punctuation": ". "
+                        }
+                    ]
+                },
+                {
+                    "begin_time": 184307,
+                    "end_time": 191680,
+                    "text": "So pack your skis, bundle up and get ready for the adventure of a lifetime at these affordable European ski resorts. ",
+                    "sentence_id": 32,
+                    "words": [
+                        {
+                            "begin_time": 184307,
+                            "end_time": 184561,
+                            "text": "So ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 184561,
+                            "end_time": 184815,
+                            "text": "pack ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 184815,
+                            "end_time": 185069,
+                            "text": "your ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 185069,
+                            "end_time": 185324,
+                            "text": "skis",
+                            "punctuation": ", "
+                        },
+                        {
+                            "begin_time": 185324,
+                            "end_time": 185832,
+                            "text": "bundle ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 185832,
+                            "end_time": 186086,
+                            "text": "up ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 186086,
+                            "end_time": 186341,
+                            "text": "and ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 186341,
+                            "end_time": 186595,
+                            "text": "get ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 186595,
+                            "end_time": 186849,
+                            "text": "ready ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 186849,
+                            "end_time": 187103,
+                            "text": "for ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 187103,
+                            "end_time": 187357,
+                            "text": "the ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 187357,
+                            "end_time": 188120,
+                            "text": "adventure ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 188120,
+                            "end_time": 188374,
+                            "text": "of ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 188374,
+                            "end_time": 188629,
+                            "text": "a ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 188629,
+                            "end_time": 189137,
+                            "text": "lifetime ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 189137,
+                            "end_time": 189391,
+                            "text": "at ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 189391,
+                            "end_time": 189646,
+                            "text": "these ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 189646,
+                            "end_time": 190408,
+                            "text": "affordable ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 190408,
+                            "end_time": 190917,
+                            "text": "European ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 190917,
+                            "end_time": 191171,
+                            "text": "ski ",
+                            "punctuation": ""
+                        },
+                        {
+                            "begin_time": 191171,
+                            "end_time": 191680,
+                            "text": "resorts",
+                            "punctuation": ". "
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

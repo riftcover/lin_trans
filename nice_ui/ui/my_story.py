@@ -1,20 +1,19 @@
 import json
 import os
 import shutil
-
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
 from PySide6.QtCore import Qt, QThread
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QApplication, )
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QCheckBox, )
 from pydantic import ValidationError
 
-from nice_ui.configure.signal import data_bridge
 from components import LinIcon, GuiSize
 from components.widget import StatusLabel
 from nice_ui.configure import config
-from nice_ui.task.orm_factory import OrmFactory
+from nice_ui.configure.signal import data_bridge
 from nice_ui.task.main_worker import work_queue, QueueConsumer
+from nice_ui.task.orm_factory import OrmFactory
 from nice_ui.ui import SUBTITLE_EDIT_DIALOG_SIZE
 from nice_ui.ui.srt_edit import SubtitleEditPage, ExportSubtitleDialog
 from nice_ui.util.tools import VideoFormatInfo
@@ -509,29 +508,80 @@ class TableApp(CardWidget):
             logger.debug("消费队列正在工作")
 
     def _delete_row(self):
+        """删除单行 - 通过按钮触发"""
         button_row = self._get_row()
-        unid_item = self.table.cellWidget(button_row, TableWidgetColumn.UNID)
-        unid = unid_item.text()
+        if delete_info := self._extract_delete_info(button_row):
+            success = self._execute_delete(delete_info)
+            self._show_delete_result(success, single=True)
 
-        logger.info(f"准备删除文件所在行:{button_row + 1} | unid:{unid}")
-
-        job_obj = self.table.item(button_row, TableWidgetColumn.JOB_OBJ)
-        work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
-
-        # 删除本地文件
-        result_dir = work_obj.output
-        if result_dir and os.path.exists(result_dir):
-            try:
-                shutil.rmtree(result_dir)
-                logger.info(f"删除目录:{result_dir} 成功")
-            except Exception as e:
-                logger.error(f"删除目录:{result_dir} 失败:{e}")
-                return
-
-        # 删除数据库记录
-        success = True
+    def _extract_delete_info(self, row: int) -> Optional[dict]:
+        """提取删除所需的信息"""
         try:
-            orm_result = self._choose_sql_orm(button_row)
+            unid_item = self.table.cellWidget(row, TableWidgetColumn.UNID)
+            if not unid_item:
+                logger.error(f"无法获取行{row}的UNID")
+                return None
+
+            unid = unid_item.text()
+            job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+            if not job_obj:
+                logger.error(f"无法获取行{row}的任务对象")
+                return None
+
+            work_obj = job_obj.data(VideoFormatInfoRole)
+            if not work_obj:
+                logger.error(f"无法获取行{row}的工作对象")
+                return None
+
+            return {
+                'row': row,
+                'unid': unid,
+                'work_obj': work_obj
+            }
+        except Exception as e:
+            logger.error(f"提取删除信息失败: 行{row}, 错误: {e}")
+            return None
+
+    def _execute_delete(self, delete_info: dict) -> bool:
+        """执行删除操作的核心逻辑"""
+        row = delete_info['row']
+        unid = delete_info['unid']
+        work_obj = delete_info['work_obj']
+
+        logger.info(f"准备删除文件所在行:{row + 1} | unid:{unid}")
+
+        # 1. 删除本地文件
+        if not self._delete_local_files(work_obj.output, unid):
+            return False
+
+        # 2. 删除数据库记录
+        if not self._delete_database_records(row, unid):
+            return False
+
+        # 3. 删除表格行和更新缓存
+        self.table.removeRow(row)
+        self.row_cache.pop(unid, None)
+        logger.info(f"已删除 unid:{unid}, row_cache 更新后:{self.row_cache}")
+
+        return True
+
+    def _delete_local_files(self, result_dir: str, unid: str) -> bool:
+        """删除本地文件"""
+        if not result_dir or not os.path.exists(result_dir):
+            return True  # 文件不存在视为删除成功
+
+        try:
+            shutil.rmtree(result_dir)
+            logger.info(f"删除目录:{result_dir} 成功")
+            return True
+        except Exception as e:
+            logger.error(f"删除目录:{result_dir} 失败:{e}")
+            return False
+
+    def _delete_database_records(self, row: int, unid: str) -> bool:
+        """删除数据库记录"""
+        try:
+            orm_result = self._choose_sql_orm(row)
             if isinstance(orm_result, tuple):
                 # ASR_TRANS 任务
                 srt_orm, trans_orm = orm_result
@@ -547,29 +597,39 @@ class TableApp(CardWidget):
                 success = orm_result.delete_table_unid(unid)
                 if not success:
                     logger.error(f"删除数据库记录失败: unid:{unid}")
+            return success
         except Exception as e:
-            success = False
             logger.error(f"删除数据库记录时发生错误: unid:{unid}, 错误: {str(e)}")
+            return False
 
+    def _show_delete_result(self, success: bool, single: bool = True, count: int = 0):
+        """显示删除结果"""
         if success:
-            # 删除表格行
-            self.table.removeRow(button_row)
-            # 清除缓存索引
-            self.row_cache.pop(unid, None)
-            logger.info(f"已删除 unid:{unid}, row_cache 更新后:{self.row_cache}")
-            InfoBar.success(
-                title="成功",
-                content="任务已删除",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self,
-            )
+            if single:
+                InfoBar.success(
+                    title="成功",
+                    content="任务已删除",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
+            else:
+                InfoBar.success(
+                    title="批量删除成功",
+                    content=f"已删除 {count} 个任务",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self,
+                )
         else:
+            error_msg = "删除失败" if single else "没有成功删除任何任务"
             InfoBar.error(
                 title="错误",
-                content="删除数据库记录失败",
+                content=error_msg,
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -583,9 +643,240 @@ class TableApp(CardWidget):
         return self.table.indexAt(button.parent().pos()).row()
 
     def _delete_batch(self):
+        """批量删除 - 函数式方法：先收集要保留的行，再重建表格"""
+        # 收集要保留的行和要删除的项目
+        rows_to_keep, items_to_delete = self._partition_rows_by_selection()
+
+        if not items_to_delete:
+            self._show_no_selection_warning()
+            return
+
+        # 先执行资源清理（文件和数据库）
+        successful_deletes = [
+            item for item in items_to_delete
+            if self._cleanup_item_resources(item)
+        ]
+
+        if successful_deletes:
+            # 重建表格（只保留未删除的行）
+            self._rebuild_table_with_kept_rows(rows_to_keep)
+
+            # 清理缓存
+            self._cleanup_cache_for_deleted_items(successful_deletes)
+
+        # 显示结果
+        self._show_batch_delete_result(len(successful_deletes), len(items_to_delete))
+
+    def _partition_rows_by_selection(self) -> tuple[list, list]:
+        """将表格行分为要保留的和要删除的两部分"""
+        rows_to_keep = []
+        items_to_delete = []
+
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, TableWidgetColumn.CHECKBOX).isChecked():
-                self._delete_row()
+            checkbox_widget = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+
+            if checkbox_widget and checkbox_widget.isChecked():
+                if delete_info := self._extract_delete_info(row):
+                    items_to_delete.append(delete_info)
+            elif keep_info := self._extract_row_data(row):
+                rows_to_keep.append(keep_info)
+
+        return rows_to_keep, items_to_delete
+
+    def _extract_row_data(self, row: int) -> Optional[dict]:
+        """提取行的完整数据，用于重建表格"""
+        try:
+            # 提取所有列的数据
+            row_data = {}
+
+            # 复选框状态
+            checkbox = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+            row_data['checkbox_checked'] = checkbox.isChecked() if checkbox else False
+
+            # 文件名
+            filename_widget = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
+            row_data['filename'] = filename_widget.text() if filename_widget else ""
+
+            # 任务状态
+            status_widget = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+            row_data['job_status'] = status_widget.text() if status_widget else ""
+
+            # UNID
+            unid_widget = self.table.cellWidget(row, TableWidgetColumn.UNID)
+            row_data['unid'] = unid_widget.text() if unid_widget else ""
+
+            # 任务对象
+            job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
+            row_data['work_obj'] = job_obj.data(VideoFormatInfoRole) if job_obj else None
+
+            # 按钮组件（需要重新创建）
+            row_data['original_row'] = row
+
+            return row_data
+        except Exception as e:
+            logger.error(f"提取行数据失败: 行{row}, 错误: {e}")
+            return None
+
+    def _cleanup_item_resources(self, item: dict) -> bool:
+        """清理单个项目的资源（文件和数据库）"""
+        unid = item['unid']
+        work_obj = item['work_obj']
+
+        # 删除本地文件
+        if not self._delete_local_files(work_obj.output, unid):
+            return False
+
+        # 删除数据库记录
+        if not self._delete_database_records(item['row'], unid):
+            return False
+
+        return True
+
+    def _rebuild_table_with_kept_rows(self, rows_to_keep: list):
+        """重建表格，只包含要保留的行"""
+        # 清空表格
+        self.table.setRowCount(0)
+
+        # 重新添加保留的行
+        for i, row_data in enumerate(rows_to_keep):
+            self.table.insertRow(i)
+            self._populate_table_row(i, row_data)
+
+    def _populate_table_row(self, row: int, row_data: dict):
+        """填充表格行数据"""
+        try:
+            # 复选框
+            checkbox = QCheckBox()
+            checkbox.setChecked(row_data['checkbox_checked'])
+            self.table.setCellWidget(row, TableWidgetColumn.CHECKBOX, checkbox)
+
+            # 文件名
+            filename_label = QLabel(row_data['filename'])
+            self.table.setCellWidget(row, TableWidgetColumn.FILENAME, filename_label)
+
+            # 任务状态
+            status_label = QLabel(row_data['job_status'])
+            self.table.setCellWidget(row, TableWidgetColumn.JOB_STATUS, status_label)
+
+            # UNID
+            unid_label = QLabel(row_data['unid'])
+            self.table.setCellWidget(row, TableWidgetColumn.UNID, unid_label)
+
+            # 任务对象
+            job_item = QTableWidgetItem()
+            job_item.setData(VideoFormatInfoRole, row_data['work_obj'])
+            self.table.setItem(row, TableWidgetColumn.JOB_OBJ, job_item)
+
+            # 重新创建按钮组件
+            self._create_row_buttons(row, row_data['work_obj'])
+
+        except Exception as e:
+            logger.error(f"填充表格行失败: 行{row}, 错误: {e}")
+
+    def _cleanup_cache_for_deleted_items(self, deleted_items: list):
+        """清理已删除项目的缓存"""
+        for item in deleted_items:
+            unid = item['unid']
+            self.row_cache.pop(unid, None)
+
+        logger.info(f"已清理 {len(deleted_items)} 个缓存项, 当前缓存: {self.row_cache}")
+
+    def _show_no_selection_warning(self):
+        """显示未选择任何项目的警告"""
+        InfoBar.warning(
+            title="提示",
+            content="请先选择要删除的任务",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self,
+        )
+
+    def _show_batch_delete_result(self, successful_count: int, total_count: int):
+        """显示批量删除结果"""
+        if successful_count == total_count and successful_count > 0:
+            # 全部成功
+            InfoBar.success(
+                title="批量删除成功",
+                content=f"已删除 {successful_count} 个任务",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
+        elif successful_count > 0:
+            # 部分成功
+            InfoBar.warning(
+                title="部分删除成功",
+                content=f"成功删除 {successful_count}/{total_count} 个任务",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+        else:
+            # 全部失败
+            InfoBar.error(
+                title="删除失败",
+                content="没有成功删除任何任务",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self,
+            )
+
+    def _create_row_buttons(self, row: int, work_obj):
+        """为重建的行创建按钮组件"""
+        # 根据任务状态确定按钮类型
+        button_types = [ButtonType.EDIT, ButtonType.EXPORT, ButtonType.DELETE]
+
+        # 创建按钮布局
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(2)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        button_layout.addStretch()
+
+        # 创建按钮
+        for button_type in button_types:
+            if button_type == ButtonType.EXPORT:
+                button = self._create_action_button(
+                    LinIcon.EXPORT(), "导出字幕", self._export_row
+                )
+                button.setIconSize(GuiSize.row_button_icon_size)
+            elif button_type == ButtonType.EDIT:
+                button = self._create_action_button(
+                    FluentIcon.EDIT, "编辑字幕", self._edit_row
+                )
+            elif button_type == ButtonType.DELETE:
+                button = self._create_action_button(
+                    FluentIcon.DELETE, "删除字幕", self._delete_row
+                )
+            else:
+                continue
+
+            button_layout.addWidget(button)
+
+        # 创建按钮容器
+        button_widget = QWidget()
+        button_widget.setLayout(button_layout)
+        self.table.setCellWidget(row, TableWidgetColumn.BUTTON_WIDGET, button_widget)
+
+    def _collect_selected_rows(self) -> list:
+        """收集所有选中的行信息"""
+        rows_to_delete = []
+
+        for row in range(self.table.rowCount()):
+            checkbox_widget = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+            if checkbox_widget and checkbox_widget.isChecked():
+                if delete_info := self._extract_delete_info(row):
+                    rows_to_delete.append(delete_info)
+
+        return rows_to_delete
 
     def searchFiles(self, text: str):
         for row in range(self.table.rowCount()):
@@ -709,22 +1000,6 @@ if __name__ == "__main__":
     def main():
 
         app = QApplication(sys.argv)
-
-        # 为 Mac 系统设置全局字体
-        if sys.platform == 'darwin':
-            font = app.font()
-            font.setFamily("PingFang SC")  # Mac 系统的默认中文字体
-            app.setFont(font)
-
-            # 设置全局样式表
-            app.setStyleSheet("""
-                * {
-                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-                }
-                QWidget {
-                    font-family: "PingFang SC", "Heiti SC", ".AppleSystemUIFont", sans-serif;
-                }
-            """)
 
         window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
         window.show()

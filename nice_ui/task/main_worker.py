@@ -2,8 +2,8 @@ from typing import List
 
 from PySide6.QtCore import QObject, Signal
 
-from nice_ui.configure.signal import data_bridge
 from nice_ui.configure import config
+from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.queue_worker import LinQueue

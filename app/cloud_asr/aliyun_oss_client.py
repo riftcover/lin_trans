@@ -65,7 +65,7 @@ class AliyunOSSClientV2:
         Returns:
             Tuple[bool, str, str]: (是否成功, OSS文件路径, 错误信息)
         """
-        logger.info(f"正在上传文件到OSS: {local_file_path}")
+        logger.trace(f"正在上传文件到OSS: {local_file_path}")
 
         # 检查文件是否存在
         if not os.path.exists(local_file_path):
@@ -111,7 +111,7 @@ class AliyunOSSClientV2:
                     progress_callback(100)  # 上传完成
 
                 if result.status_code == 200:
-                    logger.info(f"文件上传成功: {oss_path}")
+                    logger.trace(f"文件上传成功: {oss_path}")
                     return True, oss_path, ""
                 else:
                     error_msg = f"上传失败，状态码: {result.status_code}"
@@ -173,7 +173,7 @@ class AliyunOSSClientV2:
 
         # 打印预签名请求的详细信息
         logger.info("生成预签名请求成功:")
-        logger.info(f"  - URL: {pre_result.url}")
+        logger.trace(f"  - URL: {pre_result.url}")
 
         return pre_result.url
 
@@ -214,14 +214,14 @@ class AliyunOSSClientV2:
             # 记录文件大小
             file_size = os.path.getsize(local_file_path)
             file_name = os.path.basename(local_file_path)
-            logger.info(f"开始上传文件: {file_name}, 大小: {file_size/1024/1024:.2f}MB")
+            logger.trace(f"开始上传文件: {file_name}, 大小: {file_size/1024/1024:.2f}MB")
 
             # 上传文件
             success, oss_path, error = self.upload_file(local_file_path, oss_path, progress_callback)
             if not success:
                 return False, "", error
 
-            logger.info(f"文件上传成功: {oss_path}")
+            logger.trace(f"文件上传成功: {oss_path}")
 
             try:
                 # 生成访问链接
@@ -281,16 +281,43 @@ def upload_file_for_asr(local_file_path: str, progress_callback: Optional[Callab
     Returns:
         Tuple[bool, str, str]: (是否成功, 访问链接, 错误信息)
     """
-    if client := create_oss_client():
+    try:
+        client = create_oss_client()
+        if not client:
+            error_msg = "创建OSS客户端失败，请检查阿里云OSS配置"
+            logger.error(error_msg)
+            return False, "", error_msg
+
+        # 为segment_data文件生成特定的OSS路径
+        file_name = os.path.basename(local_file_path)
+        timestamp = int(time.time())
+        oss_path = f"nlp_segments/{timestamp}_{file_name}"
+
+        logger.trace(f"开始上传segment_data文件到OSS: {oss_path}")
+
         # 上传文件并生成URL
-        return client.upload_and_generate_url(
+        success, url, error = client.upload_and_generate_url(
             local_file_path=local_file_path,
-            oss_path=None,  # 自动生成路径
+            oss_path=oss_path,
             expires=expires,
             progress_callback=progress_callback
         )
-    else:
-        return False, "", "创建OSS客户端失败，请检查配置"
+
+        if success:
+            logger.trace(f"segment_data文件上传成功: {url}")
+        else:
+            logger.error(f"segment_data文件上传失败: {error}")
+
+        # success = True
+        # url = 'https://asr-file-tth.oss-cn-beijing.aliyuncs.com/nlp_segments/1755866850_test_zh_segment_data.json?x-oss-signature-version=OSS4-HMAC-SHA256&x-oss-date=20250822T124732Z&x-oss-expires=900&x-oss-credential=LTAI5t7eCsZFb4AnqJFX5e3v%2F20250822%2Fcn-beijing%2Foss%2Faliyun_v4_request&x-oss-signature=2d74321fcf22191c5837a8a34be6e13fa1c03dc39093d454808d64632c4d874c'
+        # error =None
+
+        return success, url, error
+
+    except Exception as e:
+        error_msg = f"上传segment_data文件时发生异常: {str(e)}"
+        logger.error(error_msg)
+        return False, "", error_msg
 
 
 if __name__ == "__main__":

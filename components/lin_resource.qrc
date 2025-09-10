@@ -18,12 +18,14 @@
         <file>assets/TeenyiconsUpSolid.svg</file>
         <file>assets/PhExport.svg</file>
         <file>assets/ClarityExportLine.svg</file>
-        <file>assets/linlin.png</file>
+        <file>assets/lapped.png</file>
+        <file>assets/lapped.ico</file>
         <file>assets/MingcuteArrowsLeftLine.svg</file>
         <file>assets/MingcuteArrowsRightLine.svg</file>
         <file>assets/MingcuteLeftLine.svg</file>
         <file>assets/MingcuteRightLine.svg</file>
         <file>assets/MdiAccount.png</file>
         <file>assets/MdiLightAccount.png</file>
+        <file>assets/alipay.png</file>
     </qresource>
 </RCC>

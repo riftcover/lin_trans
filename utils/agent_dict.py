@@ -1,8 +1,7 @@
-from typing import Dict, Optional, ClassVar, TypedDict, Union
+from typing import Dict, Optional, ClassVar
 from pydantic import BaseModel, Field
 
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication
 
 from app.cloud_asr import aliyun_sdk
 from nice_ui.ui import SettingsManager
@@ -24,6 +23,7 @@ class AgentRegistry(BaseModel):
     AI代理注册表
 
     管理所有支持的AI代理配置
+    QWEN_CLOUD为系统自带的，其他的需要用户自己配置
     """
     # 预定义的配置
     QWEN_CLOUD_BASE_URL: ClassVar[str] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
@@ -39,6 +39,9 @@ class AgentRegistry(BaseModel):
     ZHIPU_BASE_URL: ClassVar[str] = "https://open.bigmodel.cn/api/paas/v4"
     ZHIPU_MODEL: ClassVar[str] = "glm-4"
 
+    DEEPSEEK_URL: ClassVar[str] = "https://api.deepseek.com/v1"
+    DEEPSEEK_MODEL: ClassVar[str] = "deepseek-chat"
+
     # 存储所有代理配置
     agents: Dict[str, AgentConfig] = Field(default_factory=dict, description="所有AI代理的配置字典")
 
@@ -48,9 +51,10 @@ class AgentRegistry(BaseModel):
         # 初始化默认配置
         self.agents = {
             "qwen_cloud": AgentConfig(base_url=self.QWEN_CLOUD_BASE_URL, model=self.QWEN_CCLOUD_MODEL, key=self.QWEN_CCLOUD_KEY),
-            "qwen": AgentConfig(base_url=self.QWEN_BASE_URL, model=self.QWEN_MODEL,key =None),
-            "kimi": AgentConfig(base_url=self.KIMI_BASE_URL, model=self.KIMI_MODEL,key =None),
-            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL,key =None)
+            "qwen": AgentConfig(base_url=self.QWEN_BASE_URL, model=self.QWEN_MODEL, key=None),
+            "kimi": AgentConfig(base_url=self.KIMI_BASE_URL, model=self.KIMI_MODEL, key=None),
+            "zhipu": AgentConfig(base_url=self.ZHIPU_BASE_URL, model=self.ZHIPU_MODEL, key=None),
+            "deepseek": AgentConfig(base_url=self.DEEPSEEK_URL, model=self.DEEPSEEK_MODEL, key=None)
         }
 
     def load_keys_from_settings(self, settings: Optional[QSettings] = None) -> None:
@@ -95,6 +99,8 @@ def agent_settings(settings: Optional[QSettings] = None) -> dict[str, AgentConfi
     """
     registry = AgentRegistry()
     return registry.get_all_configs(settings)
+
+
 agent_msg = agent_settings()
 
 if __name__ == '__main__':

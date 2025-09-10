@@ -24,31 +24,13 @@
 
 ```python
 # 导入配置管理器
-from utils.config_manager import get_api_base_url, get_api_timeout
+from services.config_manager import get_api_base_url, get_api_timeout
 
 # 获取API基础URL
 base_url = get_api_base_url()
 
 # 获取API超时时间
 timeout = get_api_timeout()
-```
-
-### 使用配置管理工具
-
-项目提供了一个命令行工具用于管理配置：
-
-```bash
-# 显示当前配置
-python tools/config_tool.py show
-
-# 设置默认环境
-python tools/config_tool.py set-env production
-
-# 设置API基础URL
-python tools/config_tool.py set-url http://api.example.com/api
-
-# 添加新环境
-python tools/config_tool.py add-env staging http://staging-api.example.com/api --timeout 20.0
 ```
 
 ## 配置文件格式

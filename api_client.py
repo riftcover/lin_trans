@@ -1,10 +1,10 @@
 import asyncio
+import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from typing import Optional, Dict, Callable
 
 import httpx
-import time
 
 from app.core.security import generate_signature
 from utils import logger
@@ -15,7 +15,7 @@ class AuthenticationError(Exception):
     pass
 
 
-def to_sync(func: Callable):
+def to_t(func: Callable):
     """将异步方法转换为同步方法的装饰器"""
 
     @wraps(func)
@@ -44,7 +44,7 @@ def _run_async(coro):
 class APIClient:
     def __init__(self, base_url: str = None, timeout: float = None):
         # 从配置管理器获取API配置
-        from utils.config_manager import get_api_base_url, get_api_timeout
+        from services.config_manager import get_api_base_url, get_api_timeout
 
         # 如果没有提供基础URL，从配置中获取
         self.base_url = base_url or get_api_base_url()
@@ -163,13 +163,13 @@ class APIClient:
             logger.error(f'Failed to refresh session: {e}')
             return False
 
-    @to_sync
-    async def refresh_session_sync(self) -> bool:
+    @to_t
+    async def refresh_session_t(self) -> bool:
         """刷新会话token（同步版本）"""
         return await self.refresh_session()
 
-    @to_sync
-    async def login_sync(self, email: str, password: str) -> Dict:
+    @to_t
+    async def login_t(self, email: str, password: str) -> Dict:
         """用户登录（同步版本）"""
         return await self.login(email, password)
 
@@ -208,8 +208,8 @@ class APIClient:
                     raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取余额失败: {str(e)}")
 
-    @to_sync
-    async def get_balance_sync(self) -> Dict:
+    @to_t
+    async def get_balance_t(self) -> Dict:
         """
         获取用户余额（同步版本）
         """
@@ -232,8 +232,8 @@ class APIClient:
         except httpx.HTTPError as e:
             raise Exception(f"重置密码请求失败: {str(e)}") from e
 
-    @to_sync
-    async def reset_password_sync(self, email: str) -> Dict:
+    @to_t
+    async def reset_password_t(self, email: str) -> Dict:
         """
         请求重置密码（同步版本）
         """
@@ -299,9 +299,9 @@ class APIClient:
             logger.error(f'Unexpected error in get_history: {e}')
             raise ValueError(f"获取交易历史失败: {str(e)}")
 
-    @to_sync
-    async def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
-                               start_date: Optional[str] = None, end_date: Optional[str] = None):
+    @to_t
+    async def get_history_t(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
+                            start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
         获取交易历史记录（同步版本）
 
@@ -349,7 +349,7 @@ class APIClient:
             if e.response.status_code == 401:
                 logger.warning("Authentication failed (401), attempting to refresh token")
                 # 尝试刷新token
-                if self.refresh_session_sync():
+                if self.refresh_session_t():
                     # 刷新成功，重试请求
                     logger.info('Token refreshed, retrying request')
                     try:
@@ -459,8 +459,8 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_tokens: {e}')
             raise ValueError(f"充值失败: {str(e)}") from e
 
-    @to_sync
-    async def recharge_tokens_sync(self, us_id: str, amount: int) -> Dict:
+    @to_t
+    async def recharge_tokens_t(self, us_id: str, amount: int) -> Dict:
         """
         充值代币（同步版本）
 
@@ -472,6 +472,134 @@ class APIClient:
             Dict: 包含充值结果的响应数据
         """
         return await self.recharge_tokens(us_id, amount)
+
+    async def create_recharge_order(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
+        """
+        创建充值订单（异步版本）
+
+        Args:
+            user_id: 用户ID
+            amount_in_yuan: 充值金额，单位为元
+            token_amount: 充值代币数量
+
+        Returns:
+            Dict: 包含订单信息的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            timestamp = int(time.time())
+            # 签名金额应为整数
+            amount_for_signing = int(amount_in_yuan)
+            feature_key = "recharge"
+
+            sign = generate_signature(
+                user_id=user_id,
+                amount=amount_for_signing,
+                feature_key=feature_key,
+                timestamp=timestamp
+            )
+
+            payload = {
+                "amount": amount_in_yuan,
+                "balance": token_amount,
+                "timestamp": timestamp,
+                "sign": sign
+            }
+
+            response = await self.client.post("/transactions/recharge/create-order", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Create recharge order failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                if await self.refresh_session():
+                    logger.info('Token refreshed, retrying request')
+                    try:
+                        response = await self.client.post("/transactions/recharge/create-order", json=payload, headers=self.headers)
+                        response.raise_for_status()
+                        return response.json()
+                    except Exception as retry_error:
+                        logger.error(f'Retry after token refresh failed: {retry_error}')
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
+                else:
+                    logger.warning('Token refresh failed')
+                    raise AuthenticationError("Token已过期，需要重新登录")
+            raise ValueError(f"创建充值订单失败: {str(e)}") from e
+        except Exception as e:
+            logger.error(f'Unexpected error in create_recharge_order: {e}')
+            raise ValueError(f"创建充值订单失败: {str(e)}") from e
+
+    @to_t
+    async def create_recharge_order_t(self, user_id: str, amount_in_yuan: float, token_amount: int) -> Dict:
+        """
+        创建充值订单（同步版本）
+
+        Args:
+            user_id: 用户ID
+            amount_in_yuan: 充值金额，单位为元
+            token_amount: 充值代币数量
+
+        Returns:
+            Dict: 包含订单信息的响应数据
+        """
+        return await self.create_recharge_order(user_id, amount_in_yuan, token_amount)
+
+    async def get_order_status(self, order_id: str) -> Dict:
+        """
+        查询充值订单状态（异步版本）
+
+        Args:
+            order_id: 订单ID
+
+        Returns:
+            Dict: 包含订单状态的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败（401错误）时抛出
+        """
+        try:
+            response = await self.client.get(f"/transactions/recharge/order-status/{order_id}", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f'Get order status for {order_id} failed: {e}')
+            if e.response.status_code == 401:
+                logger.warning('Authentication failed (401), attempting to refresh token')
+                if await self.refresh_session():
+                    logger.info('Token refreshed, retrying request')
+                    try:
+                        response = await self.client.get(f"/transactions/recharge/order-status/{order_id}", headers=self.headers)
+                        response.raise_for_status()
+                        return response.json()
+                    except Exception as retry_error:
+                        logger.error(f'Retry after token refresh failed: {retry_error}')
+                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
+                else:
+                    logger.warning('Token refresh failed')
+                    raise AuthenticationError("Token已过期，需要重新登录")
+            # 假设404表示订单未找到或尚未处理，这不应被视为致命错误
+            if e.response.status_code == 404:
+                return {"data": {"status": "pending"}}
+            raise ValueError(f"查询订单状态失败: {str(e)}") from e
+        except Exception as e:
+            logger.error(f'Unexpected error in get_order_status: {e}')
+            raise ValueError(f"查询订单状态失败: {str(e)}") from e
+
+    @to_t
+    async def get_order_status_t(self, order_id: str) -> Dict:
+        """
+        查询充值订单状态（同步版本）
+
+        Args:
+            order_id: 订单ID
+
+        Returns:
+            Dict: 包含订单状态的响应数据
+        """
+        return await self.get_order_status(order_id)
 
     async def recharge_packages(self) -> Dict:
         """
@@ -492,8 +620,8 @@ class APIClient:
             logger.error(f'Unexpected error in recharge_packages: {e}')
             raise ValueError(f"充值套餐失败: {str(e)}") from e
 
-    @to_sync
-    async def recharge_packages_sync(self) -> Dict:
+    @to_t
+    async def recharge_packages_t(self) -> Dict:
         """
         充值套餐（同步版本）
         Returns:
@@ -553,16 +681,12 @@ class APIClient:
 
         except httpx.HTTPStatusError as e:
             logger.error(f'消费代币失败: {e}')
-            if e.response.status_code == 401:
-                logger.warning('Authentication failed (401), attempting to refresh token')
-                raise AuthenticationError("Token已过期，需要重新登录")
-            raise ValueError(f"消费代币失败: {str(e)}")
         except Exception as e:
             logger.error(f'消费代币时发生错误: {e}')
             raise ValueError(f"消费代币失败: {str(e)}") from e
 
-    @to_sync
-    async def consume_tokens_sync(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+    @to_t
+    async def consume_tokens_t(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
         """
         消费代币（同步版本）
 
@@ -592,39 +716,60 @@ class APIClient:
             return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f'Get token coefficients failed: {e}')
-            if e.response.status_code == 401:
-                logger.warning('Authentication failed (401), attempting to refresh token')
-                # 尝试刷新token
-                if await self.refresh_session():
-                    # 刷新成功，重试请求
-                    logger.info('Token refreshed, retrying request')
-                    try:
-                        response = await self.client.get("/features/coefficients", headers=self.headers)
-                        response.raise_for_status()
-                        return response.json()
-                    except Exception as retry_error:
-                        logger.error(f'Retry after token refresh failed: {retry_error}')
-                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录") from retry_error
-                else:
-                    # 刷新失败
-                    logger.warning('Token refresh failed')
-                    raise AuthenticationError("Token已过期，需要重新登录")
             raise Exception(f"获取代币消耗系数失败: {str(e)}")
 
-    @to_sync
-    async def get_token_coefficients_sync(self) -> Dict:
+    @to_t
+    async def get_token_coefficients_t(self) -> Dict:
         """
         获取代币消耗系数（同步版本）
         """
         return await self.get_token_coefficients()
+
+    async def check_version(self, platform: str, current_version: str):
+        """
+        检查客户端版本是否需要更新
+
+        Args:
+            platform: 客户端平台
+            current_version: 当前版本
+
+        Returns:
+            Dict: 包含版本检查结果的响应数据
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/client/check-version",
+                    json={"platform": platform, "current_version": current_version},
+                    headers=self.headers
+                )
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as e:
+                logger.error(f'Check version failed: {e}')
+                raise Exception(f"检查版本失败: {str(e)}") from e
+
+    @to_t
+    async def check_version_t(self, platform: str, current_version: str):
+        return await self.check_version(platform, current_version)
+
+    async def get_profile(self):
+        """异步获取用户资料"""
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "/client/tt",
+                headers=self.headers,
+            )
+            response.raise_for_status()
+            return response.json()
 
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
         self._executor.shutdown(wait=True)
 
-    @to_sync
-    async def close_sync(self):
+    @to_t
+    async def close_t(self):
         """关闭HTTP客户端（同步版本）"""
         await self.close()
 
@@ -634,4 +779,4 @@ class APIClient:
 api_client = APIClient()
 
 if __name__ == '__main__':
-    user_login = api_client.login_sync("tiaodanwusha@gmail.com", "1234567")
+    user_login = api_client.login_t("tiaodanwusha@gmail.com", "1234567")
