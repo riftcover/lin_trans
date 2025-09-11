@@ -21,6 +21,7 @@ from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton, ToolTipPosition,
                                    ToolTipFilter, TransparentToolButton, )
+from nice_ui.task import WORK_TYPE
 
 JOB_STATUS = Literal[0, 1, 2, 3, 4]
 
@@ -35,10 +36,12 @@ class ButtonType(Enum):
 class TableWidgetColumn(IntEnum):
     CHECKBOX = 0
     FILENAME = 1
-    JOB_STATUS = 2
-    BUTTON_WIDGET = 3
-    UNID = 4
-    JOB_OBJ = 5
+    TASK_TYPE = 2
+    CREATE_TIME = 3
+    JOB_STATUS = 4
+    BUTTON_WIDGET = 5
+    UNID = 6
+    JOB_OBJ = 7
 
 
 # 定义一个自定义角色用于存储 VideoFormatInfo 对象
@@ -51,7 +54,7 @@ class TableApp(CardWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace("", "-"))
+        self.setObjectName(text)
         self.setupUi()
         self.data_bridge = data_bridge
         self._connect_signals()
@@ -136,8 +139,13 @@ class TableApp(CardWidget):
         Returns:设置表格
         """
         self.table = TableWidget()
-        self.table.setColumnCount(6)
-        self.table.horizontalHeader().setVisible(False)
+        self.table.setColumnCount(8)
+
+        # 设置表格标题
+        headers = ["", "文件名", "任务类型", "创建时间", "状态", "操作", "", ""]
+        self.table.setHorizontalHeaderLabels(headers)
+
+        self.table.horizontalHeader().setVisible(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
         self.table.setAlternatingRowColors(True)
@@ -150,12 +158,12 @@ class TableApp(CardWidget):
         #         }
         #     """)
         self._set_column_widths()
-        self.table.setColumnHidden(4, True)
-        self.table.setColumnHidden(5, True)
+        self.table.setColumnHidden(6, True)  # UNID列
+        self.table.setColumnHidden(7, True)  # JOB_OBJ列
         layout.addWidget(self.table)
 
     def _set_column_widths(self):
-        widths = [50, -1, 120, 160]  # 调整列宽
+        widths = [50, -1, 100, 140, 120, 160]  # 调整列宽: 复选框, 文件名, 任务类型, 创建时间, 状态, 按钮
         for i, width in enumerate(widths):
             if width == -1:
                 self.table.horizontalHeader().setSectionResizeMode(
@@ -175,13 +183,14 @@ class TableApp(CardWidget):
         srt_data = self.srt_orm.query_data_format_unid_path()
         trans_data = self.trans_orm.query_data_format_unid_path()
 
+        # 合并两个数据源并按创建时间倒序排列
+        all_data = list(srt_data) + list(trans_data)
+        all_data.sort(key=lambda x: x.created_at, reverse=True)
+
         processed_unids = set()
 
-        for item in trans_data:
-            self._process_item(item, processed_unids)
-
-        for item in srt_data:
-            if item not in processed_unids:
+        for item in all_data:
+            if item.unid not in processed_unids:
                 self._process_item(item, processed_unids)
 
     def _choose_sql_orm(self, row: int) -> Optional[ToSrtOrm | ToTranslationOrm]:
@@ -224,6 +233,7 @@ class TableApp(CardWidget):
             unid: str,
             job_status: JOB_STATUS,
             obj_format: VideoFormatInfo,
+            created_at=None,
     ) -> Tuple[CheckBox, QLabel]:
         # 添加复选框
         chk = CheckBox()
@@ -234,6 +244,18 @@ class TableApp(CardWidget):
         file_name = QLabel(filename)
         file_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.table.setCellWidget(row_position, TableWidgetColumn.FILENAME, file_name)
+
+        # 添加任务类型
+        task_type = self._format_task_type(obj_format.work_type)
+        task_type_label = QLabel(task_type)
+        task_type_label.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, TableWidgetColumn.TASK_TYPE, task_type_label)
+
+        # 添加创建时间
+        create_time = self._format_create_time(created_at)
+        create_time_label = QLabel(create_time)
+        create_time_label.setAlignment(Qt.AlignCenter)
+        self.table.setCellWidget(row_position, TableWidgetColumn.CREATE_TIME, create_time_label)
 
         # 添加状态
         file_status = StatusLabel("")
@@ -253,6 +275,24 @@ class TableApp(CardWidget):
         self.table.setItem(row_position, TableWidgetColumn.JOB_OBJ, file_full)
 
         return chk, file_status
+
+    def _format_task_type(self, work_type) -> str:
+        """格式化任务类型显示"""
+        if work_type is None:
+            return "未知"
+
+        #todo： 调整为更专业文案
+        type_map = {
+            WORK_TYPE.ASR: '转录',
+            WORK_TYPE.TRANS: '翻译',
+            WORK_TYPE.ASR_TRANS: '转录翻译',
+            WORK_TYPE.CLOUD_ASR: '转录'
+        }
+        return type_map.get(work_type, str(work_type))
+
+    def _format_create_time(self, created_at) -> str:
+        """格式化创建时间显示"""
+        return "-" if created_at is None else created_at.strftime("%Y-%m-%d %H:%M")
 
     def _set_row_buttons(self, row, button_types):
         # 4个按钮创建并添加到表格的第4列
@@ -287,7 +327,7 @@ class TableApp(CardWidget):
 
         button_widget = QWidget()
         button_widget.setLayout(button_layout)
-        self.table.setCellWidget(row, 3, button_widget)
+        self.table.setCellWidget(row, TableWidgetColumn.BUTTON_WIDGET, button_widget)
 
     def _process_item(self, item, processed_unids):
         """
@@ -304,9 +344,9 @@ class TableApp(CardWidget):
                 if item.job_status in (0, 1):
                     if item.job_status == 1:
                         self._update_job_status(item, obj_data)
-                    self.table_row_init(obj_data, 0)
+                    self.table_row_init(obj_data, 0, item.created_at)
                 elif item.job_status == 2:
-                    self.addRow_init_all(obj_data)
+                    self.addRow_init_all(obj_data, item.created_at)
             else:
                 logger.warning(f"{item.unid} 该数据 obj为空")
         except ValidationError as e:
@@ -318,15 +358,21 @@ class TableApp(CardWidget):
         orm_w = self.orm_factory.set_orm_job_status(work_type)
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
-    def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1):
+    def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1, created_at=None):
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
+
+        # 如果没有传入创建时间，使用当前时间（新建任务的情况）
+        if created_at is None:
+            from datetime import datetime
+            created_at = datetime.now()
+
         filename = obj_format.raw_noextname
         unid = obj_format.unid
-        row_position = self.table.rowCount()
+        row_position = 0  # 插入到第一行
         self.table.insertRow(row_position)
         chk, file_status = self._add_common_widgets(
-            row_position, filename, unid, job_status, obj_format
+            row_position, filename, unid, job_status, obj_format, created_at
         )
         if job_status == 1:
             chk.setEnabled(False)
@@ -401,7 +447,7 @@ class TableApp(CardWidget):
         else:
             logger.error(f'缓存中未找到{unid}的行索引,缓存:{self.row_cache}')
 
-    def addRow_init_all(self, edit_dict: VideoFormatInfo):
+    def addRow_init_all(self, edit_dict: VideoFormatInfo, created_at=None):
         try:
             filename_without_extension = edit_dict.raw_noextname
         except AttributeError:
@@ -413,7 +459,7 @@ class TableApp(CardWidget):
         self.table.insertRow(row_position)
 
         _, file_status = self._add_common_widgets(
-            row_position, filename_without_extension, unid, 2, edit_dict
+            row_position, filename_without_extension, unid, 2, edit_dict, created_at
         )
         file_status.set_status("已完成")
 
@@ -998,7 +1044,6 @@ if __name__ == "__main__":
 
 
     def main():
-
         app = QApplication(sys.argv)
 
         window = TableApp("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
