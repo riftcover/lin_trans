@@ -36,7 +36,7 @@ class ProfileInterface(QFrame):
         self.page_size = 10  # 每页显示15条记录
 
         # 设置对象名称
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(text)
 
         # 初始化UI组件
         self._setup_ui()

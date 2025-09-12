@@ -25,7 +25,7 @@ class WorkSrt(QWidget):
         self.table = LTableWindow(self, settings)
         self.util = SecWindow(self)
         self.language_name = config.langnamelist
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(text)
         self.setup_ui()
         self.bind_action()
 

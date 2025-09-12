@@ -215,7 +215,7 @@ class LocalModelPage(QWidget):
             所有下载完成的判断根据是最后一个文件是否存在来判断，
             最后下载的是文件是tokens.json
             """
-            rr_dir = os.path.join(config.funasr_model_path, model_folder,"tokens.json")
+            rr_dir = os.path.join(config.funasr_model_path, model_folder, "tokens.json")
 
             is_installed = os.path.exists(
                 rr_dir
@@ -331,7 +331,7 @@ class LocalModelPage(QWidget):
 
 class PopupWidget(QWidget):
     def __init__(
-        self, key_id: Optional[int], prompt_name: str, prompt_msg: str, parent=None
+            self, key_id: Optional[int], prompt_name: str, prompt_msg: str, parent=None
     ):
         super().__init__(parent=parent)
         self.key_id = key_id
@@ -411,7 +411,7 @@ class PopupWidget(QWidget):
             # 添加新提示词
             logger.info(f"添加新提示词: 名称={new_name}, 内容={new_content}")
             if _ := self.parent().prompts_orm.insert_table_prompt(
-                prompt_name=new_name, prompt_content=new_content
+                    prompt_name=new_name, prompt_content=new_content
             ):
                 logger.success(f"新提示词已添加: {new_name}")
                 InfoBar.success(
@@ -1065,8 +1065,10 @@ class ProxyPage(QWidget):
 
         reply.deleteLater()
 
+
 class CommonPage(QWidget):
     """关于我们页面"""
+
     def __init__(self, settings=None, parent=None):
         super().__init__(parent=parent)
         self.settings = settings
@@ -1144,13 +1146,13 @@ class CommonPage(QWidget):
         try:
             # 禁用检查更新按钮，直到检查完成
             self.check_update_button.setEnabled(False)
-            
+
             # 获取当前版本
             current_version = self.version_value.text()
-            
+
             # 清空之前的任务
             self.api_worker.clear_tasks()
-            
+
             # 添加版本检查任务
             self.api_worker.add_task(
                 "version",
@@ -1158,10 +1160,10 @@ class CommonPage(QWidget):
                 'windows',
                 current_version
             )
-            
+
             # 启动工作线程
             self.api_worker.start()
-            
+
             InfoBar.info(
                 title="检查更新",
                 content="正在检查更新，请稍候...",
@@ -1324,11 +1326,12 @@ class CommonPage(QWidget):
                 logger.error(f"处理版本检查结果出错: {str(e)}")
                 self.handle_version_check_error(str(e))
 
+
 class SettingInterface(QWidget):
     def __init__(self, text: str, parent=None, settings=None):
         super().__init__(parent=parent)
         self.settings = settings
-        self.setObjectName(text.replace(" ", "-"))
+        self.setObjectName(text)
         self.initUI()
 
     def initUI(self):
