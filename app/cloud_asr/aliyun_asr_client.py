@@ -359,6 +359,126 @@ class AliyunASRClient:
         # 只返回实际使用的部分，避免复制整个数组
         return result[:result_index] if result_index > 0 else []
 
+    def convert_to_segments_format(self, json_data: dict) -> List[Dict[str, Any]]:
+        """
+        将阿里云ASR原始格式转换为项目内部使用的segments格式
+
+        将原始的sentence+words格式转换为按标点符号分割的segments格式，
+        每个segment包含text和对应的timestamp数组。
+
+        Args:
+            json_data: 阿里云ASR返回的原始JSON数据
+
+        Returns:
+            List[Dict[str, Any]]: 转换后的segments列表，格式为:
+            [
+                {
+                    "text": "Picture a winter wonderland,",
+                    "timestamp": [[0, 478], [478, 717], [717, 1196], [1196, 1913]]
+                },
+                ...
+            ]
+        """
+        segments = []
+
+        # 获取转写结果
+        if 'transcripts' not in json_data:
+            logger.warning("JSON数据中没有找到transcripts字段")
+            return segments
+
+        transcripts = json_data['transcripts']
+        if isinstance(transcripts, list) and transcripts:
+            transcript = transcripts[0]
+        elif isinstance(transcripts, dict):
+            transcript = transcripts
+        else:
+            logger.warning("无效的transcripts格式")
+            return segments
+
+        if 'sentences' not in transcript:
+            logger.warning("transcript中没有找到sentences字段")
+            return segments
+
+        sentences = transcript['sentences']
+
+        # 处理每个句子
+        for sentence in sentences:
+            if 'words' not in sentence or not sentence['words']:
+                continue
+
+            words = sentence['words']
+            current_text_parts = []
+            current_timestamps = []
+
+            for word in words:
+                word_text = word.get('text', '')
+                punctuation = word.get('punctuation', '').strip()
+                begin_time = word.get('begin_time', 0)
+                end_time = word.get('end_time', 0)
+
+                # 添加当前词的文本和时间戳
+                current_text_parts.append(word_text)
+                current_timestamps.append([begin_time, end_time])
+
+                # 如果有标点符号，表示当前segment结束
+                if punctuation:
+                    # 将标点符号添加到文本末尾
+                    if current_text_parts:
+                        current_text_parts[-1] = current_text_parts[-1].rstrip() + punctuation
+
+                    # 创建新的segment
+                    if current_text_parts and current_timestamps:
+                        # 计算segment的开始和结束时间
+                        start_time = current_timestamps[0][0] if current_timestamps else 0
+                        end_time = current_timestamps[-1][1] if current_timestamps else 0
+
+                        segment = {
+                            'text': ''.join(current_text_parts).strip(),
+                            'timestamp': current_timestamps.copy(),
+                            'start': start_time,
+                            'end': end_time,
+                            'spk': 0  # 阿里云ASR默认单说话人
+                        }
+                        segments.append(segment)
+
+                        # 重置当前segment
+                        current_text_parts = []
+                        current_timestamps = []
+
+            # 处理句子末尾没有标点符号的情况
+            if current_text_parts and current_timestamps:
+                # 计算segment的开始和结束时间
+                start_time = current_timestamps[0][0] if current_timestamps else 0
+                end_time = current_timestamps[-1][1] if current_timestamps else 0
+
+                segment = {
+                    'text': ''.join(current_text_parts).strip(),
+                    'timestamp': current_timestamps.copy(),
+                    'start': start_time,
+                    'end': end_time,
+                    'spk': 0  # 阿里云ASR默认单说话人
+                }
+                segments.append(segment)
+
+        logger.info(f"成功转换了{len(segments)}个segments")
+        return segments
+
+    @staticmethod
+    def _format_timestamp(ms: int) -> str:
+        """
+        将毫秒转换为SRT格式的时间戳
+
+        Args:
+            ms: 毫秒时间戳
+
+        Returns            str: SRT格式的时间戳 (HH:MM:SS,mmm)
+        """
+        seconds, ms = divmod(ms, 1000)
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d},{ms:03d}"
+
 
 # 创建客户端实例的工厂函数
 def create_aliyun_asr_client() -> AliyunASRClient:

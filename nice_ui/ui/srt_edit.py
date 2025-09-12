@@ -159,16 +159,20 @@ class SubtitleEditPage(QWidget):
 
     def _on_smart_sentence_progress(self, progress: int, message: str):
         """智能分句进度更新"""
+        try:
+            # 严格检查对话框状态 - 确保对话框存在、未被取消且仍然可见
+            if (self.progress_dialog is not None and
+                    hasattr(self.progress_dialog, 'setValue') and
+                    not self.progress_dialog.wasCanceled() and
+                    self.progress_dialog.isVisible()):
 
-        # 简单直接的检查 - 如果对话框存在且未被取消，就更新
-        if (self.progress_dialog is not None and
-                not self.progress_dialog.wasCanceled()):
-
-            self.progress_dialog.setValue(progress)
-            self.progress_dialog.setLabelText(message)
-            logger.debug(f"进度更新: {progress}% - {message}")
-        else:
-            logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
+                self.progress_dialog.setValue(progress)
+                self.progress_dialog.setLabelText(message)
+                logger.debug(f"进度更新: {progress}% - {message}")
+            else:
+                logger.debug(f"进度对话框不可用，跳过更新: {progress}% - {message}")
+        except Exception as e:
+            logger.debug(f"更新进度时发生错误，跳过: {str(e)}")
 
     def _on_smart_sentence_finished(self, success: bool, message: str):
         """智能分句处理完成"""
@@ -441,8 +445,16 @@ class SubtitleEditPage(QWidget):
         """统一清理智能分句相关资源 - Linus式：一个地方处理所有清理"""
         logger.debug("开始清理智能分句资源")
 
-        # 1. 清理工作线程
+        # 1. 先断开工作线程的信号连接，防止延迟信号到达
         if self.smart_sentence_worker:
+            try:
+                # 断开所有信号连接
+                self.smart_sentence_worker.progress_updated.disconnect()
+                self.smart_sentence_worker.finished.disconnect()
+                logger.debug("已断开工作线程信号连接")
+            except Exception:
+                pass  # 信号可能已经断开，忽略错误
+
             if self.smart_sentence_worker.isRunning():
                 logger.debug("终止运行中的智能分句线程")
                 self.smart_sentence_worker.terminate()
