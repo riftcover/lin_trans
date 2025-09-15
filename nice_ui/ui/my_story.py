@@ -21,7 +21,7 @@ from orm.queries import ToSrtOrm, ToTranslationOrm
 from utils import logger
 from vendor.qfluentwidgets import (TableWidget, CheckBox, InfoBar, InfoBarPosition, FluentIcon, CardWidget, SearchLineEdit, ToolButton, ToolTipPosition,
                                    ToolTipFilter, TransparentToolButton, )
-from nice_ui.task import WORK_TYPE
+from nice_ui.task import WORK_TYPE, WORK_TYPE_NAME
 
 JOB_STATUS = Literal[0, 1, 2, 3, 4]
 
@@ -276,19 +276,9 @@ class TableApp(CardWidget):
 
         return chk, file_status
 
-    def _format_task_type(self, work_type) -> str:
+    def _format_task_type(self, work_type:WORK_TYPE) -> str:
         """格式化任务类型显示"""
-        if work_type is None:
-            return "未知"
-
-        #todo： 调整为更专业文案
-        type_map = {
-            WORK_TYPE.ASR: '转录',
-            WORK_TYPE.TRANS: '翻译',
-            WORK_TYPE.ASR_TRANS: '转录翻译',
-            WORK_TYPE.CLOUD_ASR: '转录'
-        }
-        return type_map.get(work_type, str(work_type))
+        return "未知" if work_type is None else WORK_TYPE_NAME.get_name(work_type)
 
     def _format_create_time(self, created_at) -> str:
         """格式化创建时间显示"""
