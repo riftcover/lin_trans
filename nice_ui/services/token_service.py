@@ -6,6 +6,25 @@ from nice_ui.interfaces.ui_manager import UIManagerInterface
 from utils import logger
 
 
+class TaskTokenInfo:
+    """任务算力信息"""
+    def __init__(self):
+        self.asr_tokens: int = 0
+        self.trans_tokens: int = 0
+        self.trans_tokens_estimated: int = 0  # 翻译算力预估值
+        self.is_consumed: bool = False
+
+    @property
+    def total_tokens(self) -> int:
+        """获取总算力"""
+        return self.asr_tokens + self.trans_tokens
+
+    @property
+    def estimated_total_tokens(self) -> int:
+        """获取预估总算力"""
+        return self.asr_tokens + self.trans_tokens_estimated
+
+
 class TokenAmountManager:
     """代币消费量管理器，负责存储和获取任务的代币消费量"""
 
@@ -15,6 +34,7 @@ class TokenAmountManager:
         if cls._instance is None:
             cls._instance = super(TokenAmountManager, cls).__new__(cls)
             cls._instance._token_amounts = {}
+            cls._instance._task_token_info = {}  # 新增：存储任务的详细算力信息
         return cls._instance
 
     def set_token_amount(self, key: str, amount: int) -> None:
@@ -40,6 +60,59 @@ class TokenAmountManager:
         amount = self._token_amounts.get(key, default)
         logger.info(f"获取任务代币消费量: {amount}, 键: {key}")
         return amount
+
+    def set_task_token_info(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int = 0) -> None:
+        """设置任务的算力信息
+
+        Args:
+            task_id: 任务ID
+            asr_tokens: ASR算力
+            trans_tokens_estimated: 翻译算力预估值
+        """
+        if task_id not in self._task_token_info:
+            self._task_token_info[task_id] = TaskTokenInfo()
+
+        info = self._task_token_info[task_id]
+        info.asr_tokens = asr_tokens
+        info.trans_tokens_estimated = trans_tokens_estimated
+        logger.info(f"设置任务算力信息: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
+
+    def set_actual_translation_tokens(self, task_id: str, trans_tokens: int) -> None:
+        """设置任务的实际翻译算力
+
+        Args:
+            task_id: 任务ID
+            trans_tokens: 实际翻译算力
+        """
+        if task_id not in self._task_token_info:
+            self._task_token_info[task_id] = TaskTokenInfo()
+
+        info = self._task_token_info[task_id]
+        info.trans_tokens = trans_tokens
+        logger.info(f"设置实际翻译算力: {trans_tokens}, 任务ID: {task_id}")
+
+    def get_task_token_info(self, task_id: str) -> TaskTokenInfo:
+        """获取任务的算力信息
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            TaskTokenInfo: 任务算力信息
+        """
+        if task_id not in self._task_token_info:
+            self._task_token_info[task_id] = TaskTokenInfo()
+        return self._task_token_info[task_id]
+
+    def mark_task_consumed(self, task_id: str) -> None:
+        """标记任务已扣费
+
+        Args:
+            task_id: 任务ID
+        """
+        if task_id in self._task_token_info:
+            self._task_token_info[task_id].is_consumed = True
+            logger.info(f"标记任务已扣费: {task_id}")
 
     def transfer_key(self, old_key: str, new_key: str) -> None:
         """将旧键的代币消费量转移到新键
@@ -194,7 +267,10 @@ class TokenService(TokenServiceInterface):
         Returns:
             int: 所需代币数量
         """
-        return round(word_counts * self.trans_qps/1000) if word_counts else 0
+
+        amount = round(word_counts * self.trans_qps/1000) if word_counts else 0
+        logger.trace(f'计算代币消耗,字：{word_counts},消耗:{amount}')
+        return amount
 
     def calculate_translation_tokens(self, word_count: int) -> int:
         """
@@ -408,3 +484,90 @@ class TokenService(TokenServiceInterface):
         except Exception as e:
             logger.error(f"消费代币时发生错误: {str(e)}")
             return False
+
+    # 新增：两阶段算力计算方法
+    def set_task_tokens_estimate(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int = 0) -> None:
+        """设置任务的算力预估（第一阶段）
+
+        Args:
+            task_id: 任务ID
+            asr_tokens: ASR算力（精确值）
+            trans_tokens_estimated: 翻译算力预估值
+        """
+        self.token_amount_manager.set_task_token_info(task_id, asr_tokens, trans_tokens_estimated)
+
+    def set_translation_tokens_for_task(self, task_id: str, trans_tokens: int) -> None:
+        """设置任务的实际翻译算力（第二阶段）
+
+        Args:
+            task_id: 任务ID
+            trans_tokens: 实际翻译算力
+        """
+        self.token_amount_manager.set_actual_translation_tokens(task_id, trans_tokens)
+
+    def get_total_task_tokens(self, task_id: str) -> int:
+        """获取任务的总算力（ASR + 实际翻译）
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            int: 总算力
+        """
+        info = self.token_amount_manager.get_task_token_info(task_id)
+        return info.total_tokens
+
+    def get_estimated_task_tokens(self, task_id: str) -> int:
+        """获取任务的预估总算力（ASR + 预估翻译）
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            int: 预估总算力
+        """
+        info = self.token_amount_manager.get_task_token_info(task_id)
+        return info.estimated_total_tokens
+
+    def estimate_translation_tokens_by_duration(self, video_duration: float) -> int:
+        """基于视频时长估算翻译算力
+
+        Args:
+            video_duration: 视频时长（秒）
+
+        Returns:
+            int: 预估翻译算力
+        """
+        # 经验公式：假设每分钟视频产生约100个字符的文本
+        estimated_chars = int(video_duration / 60 * 100)
+        return self.calculate_trans_tokens(estimated_chars)
+
+    def consume_task_tokens(self, task_id: str, feature_key: str = "cloud_asr_trans") -> bool:
+        """为任务统一扣费
+
+        Args:
+            task_id: 任务ID
+            feature_key: 功能标识符
+
+        Returns:
+            bool: 扣费是否成功
+        """
+        info = self.token_amount_manager.get_task_token_info(task_id)
+
+        if info.is_consumed:
+            logger.warning(f"任务已扣费，跳过: {task_id}")
+            return True
+
+        total_tokens = info.total_tokens
+        if total_tokens <= 0:
+            logger.warning(f"任务总算力为0，跳过扣费: {task_id}")
+            return True
+
+        success = self.consume_tokens(total_tokens, feature_key)
+        if success:
+            self.token_amount_manager.mark_task_consumed(task_id)
+            logger.info(f"任务扣费成功: {task_id}, 算力: {total_tokens}")
+        else:
+            logger.error(f"任务扣费失败: {task_id}, 算力: {total_tokens}")
+
+        return success

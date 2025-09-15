@@ -9,38 +9,45 @@ class TransTaskManager:
     def __init__(self):
         pass
 
-    def consume_tokens_for_task(self,task_id:str):
+    def consume_tokens_for_task(self, task_id: str) -> bool:
         """
-        为任务消费代币
+        为翻译任务消费代币
 
         Args:
-            task: ASR任务对象
+            task_id: 翻译任务ID
+
+        Returns:
+            bool: 扣费是否成功
         """
-        logger.info('消费代币')
+        logger.info(f'开始翻译任务扣费流程，任务ID: {task_id}')
         try:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
 
             # 从代币服务中获取代币消费量
             token_amount = token_service.get_task_token_amount(task_id)
-            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task_id}')
+            logger.info(f'翻译任务扣费 - 算力: {token_amount}, 任务ID: {task_id}')
 
-            # 消费代币
-            if token_amount > 0:
-                logger.info(f"为ASR任务消费代币: {token_amount}")
-                if token_service.consume_tokens(
-                        token_amount, "cloud_asr"
-                ):
-                    logger.info(f"代币消费成功: {token_amount}")
-                    self._notify_task_completed(task_id)
+            # 检查代币数量
+            if token_amount <= 0:
+                logger.warning(f"翻译任务算力为0，跳过扣费 - 任务ID: {task_id}")
+                return True  # 算力为0时认为扣费成功
 
-                else:
-                    logger.warning(f"代币消费失败: {token_amount}")
+            # 执行扣费
+            logger.info(f"开始扣费 - 算力: {token_amount}, 任务ID: {task_id}")
+            billing_success = token_service.consume_tokens(token_amount, "cloud_trans")
+
+            if billing_success:
+                logger.info(f"✅ 翻译任务扣费成功 - 算力: {token_amount}, 任务ID: {task_id}")
+                self._notify_task_completed(task_id)
+                return True
             else:
-                logger.warning("代币数量为0，不消费代币")
+                logger.error(f"❌ 翻译任务扣费失败 - 算力: {token_amount}, 任务ID: {task_id}")
+                return False
 
         except Exception as e:
-            logger.error(f"消费代币时发生错误: {str(e)}")
+            logger.error(f"❌ 翻译任务扣费异常 - 任务ID: {task_id}, 错误: {str(e)}")
+            return False
 
 
     def _notify_task_completed(self, task_id: Optional[str]) -> None:

@@ -1,6 +1,8 @@
+import os
 import time
 from abc import ABC, abstractmethod
 
+from agent.srt_translator_adapter import SRTTranslatorAdapter
 from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
 from agent.enhanced_common_agent import translate_document
 from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
@@ -180,6 +182,9 @@ class ASRTransTaskProcessor(TaskProcessor):
 
         logger.trace(f'准备翻译任务:{srt_name}')
 
+        # 计算并设置翻译算力（基于ASR生成的SRT文件）
+        self._calculate_and_set_translation_tokens_for_asr_trans(new_task, srt_name)
+
         # 添加翻译任务到数据库
         trans_orm = ToTranslationOrm()
         trans_orm.add_data_to_table(
@@ -212,6 +217,28 @@ class ASRTransTaskProcessor(TaskProcessor):
                 target_language=config.params["target_language"],  # 目标语言
                 source_language=config.params["source_language"]  # 源语言
             )
+
+            logger.info(f'ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
+
+            # 翻译成功后才扣费
+            token_service = ServiceProvider().get_token_service()
+            token_amount = token_service.get_task_token_amount(new_task.unid, 0)
+            logger.info(f'ASR+翻译任务算力检查 - 算力: {token_amount}, 任务ID: {new_task.unid}')
+
+            if token_amount > 0:
+                # 尝试扣费
+                billing_success = TransTaskManager().consume_tokens_for_task(new_task.unid)
+
+                if billing_success:
+                    logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
+                else:
+                    logger.error(f'❌ ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
+                    # 翻译成功但扣费失败，这是一个严重问题
+                    data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
+                    raise Exception(f"ASR+翻译任务扣费失败: {new_task.unid}")
+            else:
+                logger.info(f'✅ ASR+翻译任务完成（无需扣费）- 任务ID: {new_task.unid}')
+
             logger.debug('ASR_TRANS 任务全部完成')
         except ValueError as e:
             # 检查是否是API密钥缺失的错误
@@ -227,6 +254,48 @@ class ASRTransTaskProcessor(TaskProcessor):
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
 
+    def _calculate_and_set_translation_tokens_for_asr_trans(self, new_task, srt_file_path: str) -> None:
+        """为ASR+翻译任务计算并设置翻译算力"""
+        try:
+            # 检查翻译引擎是否为云翻译
+            translate_engine = config.params.get('translate_channel', '')
+            if translate_engine != 'qwen_cloud':
+                logger.info(f"非云翻译引擎({translate_engine})，跳过算力计算")
+                return
+
+            # 检查SRT文件是否存在
+            if not os.path.exists(srt_file_path):
+                logger.warning(f"SRT文件不存在，无法计算翻译算力: {srt_file_path}")
+                # 设置默认算力
+                token_service = ServiceProvider().get_token_service()
+                token_service.set_task_token_amount(new_task.unid, 10)
+                return
+
+            # 使用SRT适配器解析内容并计算字数
+            with open(srt_file_path, 'r', encoding='utf-8') as f:
+                srt_content = f.read()
+
+
+            adapter = SRTTranslatorAdapter()
+            entries = adapter.parse_srt_content(srt_content)
+
+            # 计算总字符数
+            total_chars = sum(len(entry.text) for entry in entries)
+
+            # 使用TokenService计算翻译算力
+            token_service = ServiceProvider().get_token_service()
+            trans_tokens = token_service.calculate_trans_tokens(total_chars)
+
+            # 设置任务的算力消费量
+            token_service.set_task_token_amount(new_task.unid, trans_tokens)
+
+            logger.info(f'ASR+翻译任务算力计算 - 字符数: {total_chars}, 算力: {trans_tokens}, 任务ID: {new_task.unid}')
+
+        except Exception as e:
+            logger.error(f'计算ASR+翻译任务算力失败: {str(e)}')
+            # 设置默认算力
+            token_service = ServiceProvider().get_token_service()
+            token_service.set_task_token_amount(new_task.unid, 10)
 
 class TaskProcessorFactory:
     """任务处理器工厂，根据任务类型创建对应的处理器"""
