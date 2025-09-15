@@ -36,6 +36,8 @@ class OrmFactory:
             return self._srt_orm, self._trans_orm
         elif work_type == WORK_TYPE.CLOUD_ASR:
             return self._srt_orm
+        elif work_type == WORK_TYPE.CLOUD_ASR_TRANS:
+            return self._srt_orm, self._trans_orm
         else:
             logger.error(f"未知的工作类型: {work_type}，请在OrmFactory中添加对应的映射")
             return None

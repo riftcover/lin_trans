@@ -15,6 +15,7 @@ class WORK_TYPE_NAME(StrEnum):
     TRANS = "翻译"
     ASR_TRANS = "转录双语"
     CLOUD_ASR = "转录"
+    CLOUD_ASR_TRANS = "转录双语"
 
     @classmethod
     def get_name(cls, work_type: 'WORK_TYPE') -> str:
