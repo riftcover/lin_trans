@@ -138,7 +138,19 @@ class TranslationTaskProcessor(TaskProcessor):
                 source_language=config.params["source_language"]  # 源语言
             )
 
-            TransTaskManager().consume_tokens_for_task(task.unid)
+            logger.info('翻译任务执行完成')
+
+            # 翻译成功后扣费并刷新使用记录
+            billing_success = TransTaskManager().consume_tokens_for_task(task.unid)
+
+            if billing_success:
+                logger.info(f'✅ 翻译任务完成并扣费成功 - 任务ID: {task.unid}')
+                # 任务完成后刷新使用记录
+                self._refresh_usage_records_after_task_completion(task.unid)
+            else:
+                logger.error(f'❌ 翻译任务扣费失败 - 任务ID: {task.unid}')
+                data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
+                raise Exception(f"翻译任务扣费失败: {task.unid}")
 
         except ValueError as e:
             # 检查是否是API密钥缺失的错误
@@ -153,6 +165,27 @@ class TranslationTaskProcessor(TaskProcessor):
             logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
+
+    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
+        """任务完成后刷新使用记录"""
+        try:
+            from nice_ui.services.service_provider import ServiceProvider
+
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+
+            # 更新余额
+            if balance := token_service.get_user_balance():
+                logger.info(f"翻译任务完成后更新用户余额: {balance}")
+                data_bridge.emit_update_balance(balance)
+
+            # 更新历史记录
+            if transactions := token_service.get_user_history():
+                logger.info(f"翻译任务完成后更新用户历史记录，记录数: {len(transactions)}")
+                data_bridge.emit_update_history(transactions)
+
+        except Exception as e:
+            logger.error(f"翻译任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
 
 
 class ASRTransTaskProcessor(TaskProcessor):
@@ -236,6 +269,8 @@ class ASRTransTaskProcessor(TaskProcessor):
 
                 if billing_success:
                     logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
+                    # 任务完成后刷新使用记录
+                    self._refresh_usage_records_after_task_completion(new_task.unid)
                 else:
                     logger.error(f'❌ ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
                     # 翻译成功但扣费失败，这是一个严重问题
@@ -284,6 +319,27 @@ class ASRTransTaskProcessor(TaskProcessor):
 
         except Exception as e:
             logger.error(f'设置ASR+翻译任务算力预估失败: {task.unid}, 错误: {e}')
+
+    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
+        """任务完成后刷新使用记录"""
+        try:
+            from nice_ui.services.service_provider import ServiceProvider
+
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+
+            # 更新余额
+            if balance := token_service.get_user_balance():
+                logger.info(f"任务完成后更新用户余额: {balance}")
+                data_bridge.emit_update_balance(balance)
+
+            # 更新历史记录
+            if transactions := token_service.get_user_history():
+                logger.info(f"任务完成后更新用户历史记录，记录数: {len(transactions)}")
+                data_bridge.emit_update_history(transactions)
+
+        except Exception as e:
+            logger.error(f"任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
 
     def _calculate_and_set_translation_tokens_for_asr_trans(self, new_task, srt_file_path: str) -> None:
         """为ASR+翻译任务计算并设置翻译算力"""
@@ -350,7 +406,7 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         # # 获取任务消费的代币数量
         token_service = ServiceProvider().get_token_service()
         token_amount = token_service.get_task_token_amount(task.unid, 10)
-        token_service.set_ast_tokens_for_task(task.unid, token_amount)
+        # token_service.set_ast_tokens_for_task(task.unid, token_amount)
         # logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
 
         # 创建ASR任务
@@ -428,6 +484,8 @@ class CloudASRTransTaskProcessor(TaskProcessor):
 
                 if billing_success:
                     logger.info(f'✅ 云ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
+                    # 任务完成后刷新使用记录
+                    self._refresh_usage_records_after_task_completion(new_task.unid)
                 else:
                     logger.error(f'❌ 云ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
                     # 翻译成功但扣费失败，这是一个严重问题
@@ -509,6 +567,28 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             # 设置默认翻译算力
             token_service = ServiceProvider().get_token_service()
             token_service.set_translation_tokens_for_task(new_task.unid, 10)
+
+    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
+        """任务完成后刷新使用记录"""
+        try:
+            from nice_ui.services.service_provider import ServiceProvider
+
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+
+            # 更新余额
+            if balance := token_service.get_user_balance():
+                logger.info(f"云ASR+翻译任务完成后更新用户余额: {balance}")
+                data_bridge.emit_update_balance(balance)
+
+            # 更新历史记录
+            if transactions := token_service.get_user_history():
+                logger.info(f"云ASR+翻译任务完成后更新用户历史记录，记录数: {len(transactions)}")
+                data_bridge.emit_update_history(transactions)
+
+        except Exception as e:
+            logger.error(f"云ASR+翻译任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
+
 
 class TaskProcessorFactory:
     """任务处理器工厂，根据任务类型创建对应的处理器"""
