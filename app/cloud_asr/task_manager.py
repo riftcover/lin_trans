@@ -719,15 +719,3 @@ def get_task_manager() -> ASRTaskManager:
     if _task_manager_instance is None:
         _task_manager_instance = ASRTaskManager()
     return _task_manager_instance
-
-def get_trans_task_manager() -> ASRTaskManager:
-    """
-    获取任务管理器实例
-
-    Returns:
-        ASRTaskManager: 任务管理器实例
-    """
-    global _task_manager_instance
-    if _task_manager_instance is None:
-        _task_manager_instance = ASRTaskManager()
-    return _task_manager_instance
