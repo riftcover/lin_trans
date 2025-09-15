@@ -247,19 +247,19 @@ class Video2SRT(QWidget):
         model_info = start_tools.match_source_model(model_key)
         model_status = model_info["status"]
 
-        if self.check_fanyi.isChecked() == True and model_status < 100:
-            # 显示警告提示
-            #todo： 支持云识别+翻译后取消这个
-            InfoBar.warning(
-                title="提示",
-                content="使用云模型识别字幕后，请在字幕翻译页面进行翻译操作",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=4000,
-                parent=self,
-            )
-            return
+        # if self.check_fanyi.isChecked() == True and model_status < 100:
+        #     # 显示警告提示
+        #     #todo： 支持云识别+翻译后取消这个
+        #     InfoBar.warning(
+        #         title="提示",
+        #         content="使用云模型识别字幕后，请在字幕翻译页面进行翻译操作",
+        #         orient=Qt.Horizontal,
+        #         isClosable=True,
+        #         position=InfoBarPosition.TOP,
+        #         duration=4000,
+        #         parent=self,
+        #     )
+        #     return
 
         # 如果勾选了翻译，检查API密钥
         if self.check_fanyi.isChecked() and not self._check_api_key():
@@ -506,15 +506,19 @@ class TableWindow:
             # 云模型，消耗算力
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
-            # 计算代币消耗
+            # 计算ASR代币消耗
             logger.info('重新计算')
-            amount = token_service.calculate_asr_tokens(video_long)
-            logger.info(f'代币消耗: {amount}')
+            asr_amount = token_service.calculate_asr_tokens(video_long)
+            amount = asr_amount
+            logger.info(f'ASR代币消耗: {asr_amount}')
 
-        #todo: 此时还不知道字数，待调整
-        # # 判断是否勾选翻译
-        # if self.main.check_fanyi.isChecked():
-        #     amount += start_tools.calc_asr_ds(video_long)
+            # 判断是否勾选翻译
+            if self.main.check_fanyi.isChecked():
+                # 预估翻译算力
+                trans_amount_estimated = token_service.estimate_translation_tokens_by_duration(video_long)
+                amount += trans_amount_estimated
+                logger.info(f'翻译预估代币消耗: {trans_amount_estimated}')
+                logger.info(f'总预估代币消耗: {amount}')
 
         return amount
 

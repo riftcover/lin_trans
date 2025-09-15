@@ -90,8 +90,6 @@ class SrtWriter:
 
             # 4. 生成segment_data文件（供智能分句功能使用）
             try:
-                logger.trace('segments')
-                logger.trace(segments)
                 segment_data_path = self._create_segment_data_file(segments)
                 # 保存segment_data路径信息到工作对象中，供UI使用
                 self._save_segment_data_path(segment_data_path)
