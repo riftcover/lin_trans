@@ -246,7 +246,7 @@ class WorkSrt(QWidget):
                 # 将字符数转换为整数
                 character_count = int(character_count_str)
 
-                # 重新计算算力消耗
+                # 计算算力消耗
                 ds_count = str(self.table._calc_ds(character_count))
 
                 # 更新表格中的算力消耗
