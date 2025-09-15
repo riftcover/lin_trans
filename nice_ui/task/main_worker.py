@@ -222,6 +222,48 @@ class CloudASRTaskHandler(TaskHandler):
         )
 
 
+class CloudASRTransTaskHandler(TaskHandler):
+    """
+    云ASR+翻译任务处理器
+    """
+    def process_tasks(self, task_items: List[str]) -> None:
+        """
+        处理云ASR+云翻译任务列表
+        """
+        srt_orm = ToSrtOrm()
+        token_service = ServiceProvider().get_token_service()
+        for item in task_items:
+            logger.debug(f"处理云ASR+翻译任务: {item}")
+            # 处理任务并获取格式化后的任务信息
+            obj_format = self.process_task(item, WORK_TYPE.CLOUD_ASR_TRANS)
+
+            # 将文件路径与unid关联起来
+            token_service.transfer_task_key(item, obj_format.unid)
+            logger.info(f"将文件路径与unid关联: {item} -> {obj_format.unid}")
+            # 添加任务到数据库
+            self._add_to_database(srt_orm, obj_format)
+
+            logger.debug("云ASR+翻译任务添加完成")
+
+    def _add_to_database(self, srt_orm: ToSrtOrm, obj_format: VideoFormatInfo) -> None:
+        """
+        将云ASR+云翻译任务添加到数据库
+        """
+        srt_orm.add_data_to_table(
+            obj_format.unid,
+            obj_format.raw_name,
+            config.params["source_language"],
+            config.params["source_language_code"],
+            config.params["source_module_status"],
+            config.params["source_module_name"],
+            config.params["translate_status"],
+            config.params["cuda"],
+            obj_format.raw_ext,
+            1,
+            obj_format.model_dump_json(),
+        )
+
+
 class Worker(QObject):
     """
     工作线程，负责将任务添加到队列中
@@ -245,7 +287,8 @@ class Worker(QObject):
             WORK_TYPE.ASR: ASRTaskHandler(self.data_bridge),
             WORK_TYPE.TRANS: TransTaskHandler(self.data_bridge),
             WORK_TYPE.ASR_TRANS: ASRTransTaskHandler(self.data_bridge),
-            WORK_TYPE.CLOUD_ASR: CloudASRTaskHandler(self.data_bridge)
+            WORK_TYPE.CLOUD_ASR: CloudASRTaskHandler(self.data_bridge),
+            WORK_TYPE.CLOUD_ASR_TRANS: CloudASRTransTaskHandler(self.data_bridge),
         }
 
     def do_work(self, work_type: WORK_TYPE):

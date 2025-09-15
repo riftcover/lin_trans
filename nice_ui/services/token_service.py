@@ -61,21 +61,19 @@ class TokenAmountManager:
         logger.info(f"获取任务代币消费量: {amount}, 键: {key}")
         return amount
 
-    def set_task_token_info(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int = 0) -> None:
-        """设置任务的算力信息
+    def set_asr_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
+        """设置任务的ASR算力
 
         Args:
             task_id: 任务ID
             asr_tokens: ASR算力
-            trans_tokens_estimated: 翻译算力预估值
         """
         if task_id not in self._task_token_info:
             self._task_token_info[task_id] = TaskTokenInfo()
 
         info = self._task_token_info[task_id]
         info.asr_tokens = asr_tokens
-        info.trans_tokens_estimated = trans_tokens_estimated
-        logger.info(f"设置任务算力信息: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
+        logger.info(f"设置任务ASR算力: {asr_tokens}, 任务ID: {task_id}")
 
     def set_actual_translation_tokens(self, task_id: str, trans_tokens: int) -> None:
         """设置任务的实际翻译算力
@@ -485,19 +483,17 @@ class TokenService(TokenServiceInterface):
             logger.error(f"消费代币时发生错误: {str(e)}")
             return False
 
-    # 新增：两阶段算力计算方法
-    def set_task_tokens_estimate(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int = 0) -> None:
-        """设置任务的算力预估（第一阶段）
+    def set_ast_tokens_for_task(self,task_id:str ,asr_tokens:int) -> None:
+        """设置任务的ASR算力
 
         Args:
             task_id: 任务ID
-            asr_tokens: ASR算力（精确值）
-            trans_tokens_estimated: 翻译算力预估值
+            asr_tokens: ASR算力
         """
-        self.token_amount_manager.set_task_token_info(task_id, asr_tokens, trans_tokens_estimated)
+        self.token_amount_manager.set_asr_tokens_for_task(task_id, asr_tokens)
 
     def set_translation_tokens_for_task(self, task_id: str, trans_tokens: int) -> None:
-        """设置任务的实际翻译算力（第二阶段）
+        """设置任务的实际翻译算力
 
         Args:
             task_id: 任务ID
@@ -506,7 +502,7 @@ class TokenService(TokenServiceInterface):
         self.token_amount_manager.set_actual_translation_tokens(task_id, trans_tokens)
 
     def get_total_task_tokens(self, task_id: str) -> int:
-        """获取任务的总算力（ASR + 实际翻译）
+        """获取任务的总算力（ASR + 翻译）
 
         Args:
             task_id: 任务ID

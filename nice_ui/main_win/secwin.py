@@ -236,16 +236,23 @@ class SecWindow:
         if is_task:
             # 保持模型信息
             self._save_soure_model_info()
+            # 如果需要翻译，获取翻译设置
+            language_name = config.params["source_language"]
+            translate_status = config.params["translate_status"]
+            if translate_status:
+                self.get_trans_setting(language_name)
+
+
 
             # 保存设置
             self._save_current_settings()
             # 创建工作队列并启动处理
             queue_asr_copy = copy.deepcopy(config.queue_asr)
-            logger.debug(f"add_queue_thread: {queue_asr_copy}")
-            self.add_queue_thread(queue_asr_copy, WORK_TYPE.CLOUD_ASR)
+            work_type = WORK_TYPE.CLOUD_ASR_TRANS if translate_status else WORK_TYPE.CLOUD_ASR
+            self.add_queue_thread(queue_asr_copy, work_type)
 
-        # 更新状态
-        self.update_status(WORK_TYPE.CLOUD_ASR)
+            # 更新状态
+            self.update_status(work_type)
         return is_task
 
     def _check_auth_and_balance(self) -> bool:
@@ -317,7 +324,7 @@ class SecWindow:
         self.thread_manager.create_worker_thread(data_copy, work_type)
 
     def update_status(self, ty: WORK_TYPE):
-        if ty in [WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS, WORK_TYPE.CLOUD_ASR]:
+        if ty in [WORK_TYPE.ASR, WORK_TYPE.ASR_TRANS, WORK_TYPE.CLOUD_ASR, WORK_TYPE.CLOUD_ASR_TRANS]:
             self.main.table.clear_table(self.main.media_table)
             config.queue_asr = []
         elif ty == WORK_TYPE.TRANS:

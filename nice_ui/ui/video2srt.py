@@ -2,7 +2,7 @@ import os
 
 import av
 from PySide6.QtCore import Qt, Slot, QSize
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette, QIcon
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
 
 from agent import get_translate_code, translate_api_name
@@ -69,11 +69,11 @@ class Video2SRT(QWidget):
 
         # 添加语言项目，为法语添加云图标
         for lang_name in config.langnamelist:
-            if lang_name in ["法语", "French","俄语"]:
+            if lang_name in ["法语", "French", "俄语"]:
                 # 使用专业云服务图标
                 self.source_language.addItem(f'{lang_name} (云)')
             else:
-                self.source_language.addItem(lang_name,)
+                self.source_language.addItem(lang_name, )
 
         # 动态计算并设置最适合的宽度
         max_width = 0
@@ -85,7 +85,6 @@ class Video2SRT(QWidget):
         self.source_language.setFixedWidth(max_width + 60)
 
         self.source_language.setCurrentText(config.params["source_language"])
-
 
         source_layout.addWidget(source_language_label)
         source_layout.addWidget(self.source_language)
@@ -131,8 +130,8 @@ class Video2SRT(QWidget):
         self.translate_language_combo.setFixedWidth(98)
         self.translate_language_combo.addItems(self.language_name)
         if (
-            config.params["target_language"]
-            and config.params["target_language"] in self.language_name
+                config.params["target_language"]
+                and config.params["target_language"] in self.language_name
         ):
             self.translate_language_combo.setCurrentText(
                 config.params["target_language"]
@@ -247,18 +246,19 @@ class Video2SRT(QWidget):
         model_info = start_tools.match_source_model(model_key)
         model_status = model_info["status"]
 
-        # if self.check_fanyi.isChecked() == True and model_status < 100:
-        #     # 显示警告提示
-        #     #todo： 支持云识别+翻译后取消这个
-        #     InfoBar.warning(
-        #         title="提示",
-        #         content="使用云模型识别字幕后，请在字幕翻译页面进行翻译操作",
-        #         orient=Qt.Horizontal,
-        #         isClosable=True,
-        #         position=InfoBarPosition.TOP,
-        #         duration=4000,
-        #         parent=self,
-        #     )
+        translate_status = True
+        # todo： model_status 调整为translate_api_name中的值
+        if self.check_fanyi.isChecked() == True and translate_status < 100:
+            #todo： 支持云识别+翻译后取消这个
+            InfoBar.warning(
+                title="提示",
+                content="使用云模型识别字幕后，算力消耗在任务结束后扣费",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=4000,
+                parent=self,
+            )
         #     return
 
         # 如果勾选了翻译，检查API密钥
@@ -275,7 +275,6 @@ class Video2SRT(QWidget):
             duration=2000,
             parent=self,
         )
-
 
         # 保存媒体列表
         self.add_queue_mp4()
@@ -337,7 +336,6 @@ class Video2SRT(QWidget):
                 # 更新表格中的算力消耗
                 self.media_table.item(row, 2).setText(ds_count)
 
-
     def _check_api_key(self) -> bool:
         """检查当前选择的翻译引擎是否配置了API密钥"""
         # 获取当前选择的翻译引擎
@@ -382,11 +380,10 @@ class Video2SRT(QWidget):
 
 class TableWindow:
     def __init__(self, main, settings):
-        self.duration_seconds = None #视频时长，秒
+        self.duration_seconds = None  #视频时长，秒
         self.main = main
         self.settings = settings
-        self.file_duration =None
-
+        self.file_duration = None
 
     # 列表的操作
     @Slot()
@@ -521,8 +518,6 @@ class TableWindow:
                 logger.info(f'总预估代币消耗: {amount}')
 
         return amount
-
-
 
 
 if __name__ == "__main__":
