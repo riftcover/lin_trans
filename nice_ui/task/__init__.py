@@ -1,4 +1,4 @@
-from enum import IntEnum, StrEnum
+from enum import IntEnum,StrEnum
 
 
 class WORK_TYPE(IntEnum):
@@ -7,7 +7,7 @@ class WORK_TYPE(IntEnum):
     TRANS = 2
     ASR_TRANS = 3
     CLOUD_ASR = 4
-
+    CLOUD_ASR_TRANS = 5
 
 class WORK_TYPE_NAME(StrEnum):
     """工作类型名称枚举"""
