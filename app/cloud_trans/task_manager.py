@@ -13,7 +13,7 @@ class TransTaskManager:
     def __init__(self):
         pass
 
-    def consume_tokens_for_task(self, task_id: str, task_type: str = "cloud_trans") -> bool:
+    def consume_tokens_for_task(self, task_id: str,file_name: str, task_type: str = "cloud_trans") -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型
 
@@ -33,18 +33,18 @@ class TransTaskManager:
             token_service = ServiceProvider().get_token_service()
 
             # 使用统一的扣费方法
-            billing_success = token_service.consume_tokens_for_any_task(task_id, task_type)
+            billing_success = token_service.consume_tokens_for_task(task_id, task_type,file_name)
 
             if billing_success:
-                logger.info(f"✅ 任务扣费成功 - 任务ID: {task_id}, 任务类型: {task_type}")
+                logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {task_type}")
                 self._notify_task_completed(task_id)
                 return True
             else:
-                logger.error(f"❌ 任务扣费失败 - 任务ID: {task_id}, 任务类型: {task_type}")
+                logger.error(f"任务扣费失败 - 任务ID: {task_id}, 任务类型: {task_type}")
                 return False
 
         except Exception as e:
-            logger.error(f"❌ 任务扣费异常 - 任务ID: {task_id}, 任务类型: {task_type}, 错误: {str(e)}")
+            logger.error(f"任务扣费异常 - 任务ID: {task_id}, 任务类型: {task_type}, 错误: {str(e)}")
             return False
 
 

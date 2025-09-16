@@ -629,7 +629,7 @@ class APIClient:
         """
         return await self.recharge_packages()
 
-    async def consume_tokens(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+    async def consume_tokens(self, token_amount: int,file_name:str, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
         """
         消费代币
 
@@ -662,7 +662,8 @@ class APIClient:
             # 构建请求体
             json_data = {
                 "feature_key": feature_key,
-                "token_cost": token_amount
+                "token_cost": token_amount,
+                "file_name":file_name
             }
 
             # 发送请求
@@ -681,12 +682,13 @@ class APIClient:
 
         except httpx.HTTPStatusError as e:
             logger.error(f'消费代币失败: {e}')
+            raise ValueError(f"消费代币失败: HTTP {e.response.status_code} - {str(e)}") from e
         except Exception as e:
             logger.error(f'消费代币时发生错误: {e}')
             raise ValueError(f"消费代币失败: {str(e)}") from e
 
     @to_t
-    async def consume_tokens_t(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+    async def consume_tokens_t(self, token_amount: int, feature_key: str = "asr", user_id: Optional[str] = None, file_name: str = "") -> Dict:
         """
         消费代币（同步版本）
 
@@ -694,11 +696,12 @@ class APIClient:
             token_amount: 消费的代币数量
             feature_key: 功能标识符，默认为"asr"
             user_id: 用户ID，如果为None，则使用当前登录用户
+            file_name: 文件名，默认为空字符串
 
         Returns:
             Dict: API响应结果
         """
-        return await self.consume_tokens(token_amount, feature_key, user_id)
+        return await self.consume_tokens(token_amount, file_name, feature_key, user_id)
 
     async def get_token_coefficients(self) -> Dict:
         """

@@ -142,7 +142,7 @@ class TranslationTaskProcessor(TaskProcessor):
 
             # 翻译成功后扣费并刷新使用记录
             trans_task_manager = get_trans_task_manager()
-            billing_success = trans_task_manager.consume_tokens_for_task(task.unid, "cloud_trans")
+            billing_success = trans_task_manager.consume_tokens_for_task(task.unid,task.raw_noextname, "cloud_trans")
 
             if billing_success:
                 logger.info(f'✅ 翻译任务完成并扣费成功 - 任务ID: {task.unid}')
@@ -235,10 +235,9 @@ class ASRTransTaskProcessor(TaskProcessor):
 
             logger.info(f'ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
 
-            # 翻译成功后使用翻译任务管理器扣费（组合任务）
-            billing_success = trans_task_manager.consume_tokens_for_task(new_task.unid, "asr_trans")
-
-            if billing_success:
+            if billing_success := trans_task_manager.consume_tokens_for_task(
+                new_task.unid, task.raw_noextname, "asr_trans"
+            ):
                 logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
                 # 任务完成后刷新使用记录
                 trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
@@ -352,10 +351,9 @@ class CloudASRTransTaskProcessor(TaskProcessor):
 
             logger.info(f'云ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
 
-            # 翻译成功后使用翻译任务管理器扣费（组合任务）
-            billing_success = trans_task_manager.consume_tokens_for_task(new_task.unid, "cloud_asr_trans")
-
-            if billing_success:
+            if billing_success := trans_task_manager.consume_tokens_for_task(
+                new_task.unid, task.raw_noextname, "cloud_asr_trans"
+            ):
                 logger.info(f'✅ 云ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
                 # 任务完成后刷新使用记录
                 trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)

@@ -17,8 +17,8 @@ class TransactionTableWidget(PaginatedTableWidget):
             page_size: 每页显示的记录数，默认为10
         """
         # 设置表头和列宽
-        headers = ['时间', '算力', '订单号']
-        column_widths = [280, 200, 300]  # -1表示自适应
+        headers = ['时间','任务','算力', '订单号']
+        column_widths = [220,200, 100, 250]  # -1表示自适应
 
         super().__init__(
             parent=parent,
@@ -61,10 +61,14 @@ class TransactionTableWidget(PaginatedTableWidget):
                 formatted_time = '未知时间'
             self.table.setItem(row, 0, QTableWidgetItem(formatted_time))
 
+            # 任务类型
+            amount = str(transaction.get('description', ''))
+            self.table.setItem(row, 1, QTableWidgetItem(amount))
+
             # 使用额度
             amount = str(transaction.get('amount', 0))
-            self.table.setItem(row, 1, QTableWidgetItem(amount))
+            self.table.setItem(row, 2, QTableWidgetItem(amount))
 
             # 订单号
             order_id = transaction.get('order_id', '未知')
-            self.table.setItem(row, 2, QTableWidgetItem(str(order_id)))
+            self.table.setItem(row, 3, QTableWidgetItem(str(order_id)))

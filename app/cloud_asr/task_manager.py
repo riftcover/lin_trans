@@ -607,8 +607,10 @@ class ASRTaskManager:
             # 消费代币
             if token_amount > 0:
                 logger.info(f"为ASR任务消费代币: {token_amount}")
+                raw_pathlib = Path(task.audio_file)
+                file_name = raw_pathlib.stem
                 if token_service.consume_tokens(
-                        token_amount, "cloud_asr"
+                        token_amount, "cloud_asr", file_name
                 ):
                     logger.info(f"代币消费成功: {token_amount}")
 

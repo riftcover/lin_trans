@@ -480,13 +480,14 @@ class TokenService(TokenServiceInterface):
         """清空所有任务的代币消费量"""
         self.token_amount_manager.clear()
 
-    def consume_tokens(self, token_amount: int, feature_key: str = "asr") -> bool:
+    def consume_tokens(self, token_amount: int, feature_key: str = "asr", file_name: str = "") -> bool:
         """
         消费代币
 
         Args:
             token_amount: 消费的代币数量
             feature_key: 功能标识符，默认为"asr"
+            file_name: 文件名，默认为空字符串
 
         Returns:
             bool: 消费是否成功
@@ -494,7 +495,7 @@ class TokenService(TokenServiceInterface):
         try:
             # 调用api_client中的方法消费代币
             us_id = api_client.get_id()
-            api_client.consume_tokens_t(token_amount, feature_key, us_id)
+            api_client.consume_tokens_t(token_amount, feature_key, us_id, file_name)
             logger.info(f"消费代币成功: {token_amount}")
             return True
 
@@ -574,37 +575,7 @@ class TokenService(TokenServiceInterface):
 
         logger.info(f"设置任务算力预估: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
 
-    def consume_task_tokens(self, task_id: str, feature_key: str = "cloud_asr_trans") -> bool:
-        """为任务统一扣费
-
-        Args:
-            task_id: 任务ID
-            feature_key: 功能标识符
-
-        Returns:
-            bool: 扣费是否成功
-        """
-        info = self.token_amount_manager.get_task_token_info(task_id)
-
-        if info.is_consumed:
-            logger.warning(f"任务已扣费，跳过: {task_id}")
-            return True
-
-        total_tokens = info.total_tokens
-        if total_tokens <= 0:
-            logger.warning(f"任务总算力为0，跳过扣费: {task_id}")
-            return True
-
-        success = self.consume_tokens(total_tokens, feature_key)
-        if success:
-            self.token_amount_manager.mark_task_consumed(task_id)
-            logger.info(f"任务扣费成功: {task_id}, 算力: {total_tokens}")
-        else:
-            logger.error(f"任务扣费失败: {task_id}, 算力: {total_tokens}")
-
-        return success
-
-    def consume_tokens_for_any_task(self, task_id: str, feature_key: str) -> bool:
+    def consume_tokens_for_task(self, task_id: str, feature_key: str,file_name: str) -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型
 
@@ -641,7 +612,7 @@ class TokenService(TokenServiceInterface):
                 return True
 
             # 执行扣费
-            success = self.consume_tokens(token_amount, feature_key)
+            success = self.consume_tokens(token_amount, feature_key, file_name)
 
             if success:
                 # 标记任务已扣费
