@@ -6,7 +6,7 @@ from agent.srt_translator_adapter import SRTTranslatorAdapter
 from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
 from agent.enhanced_common_agent import translate_document
 from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
-from app.cloud_trans.task_manager import TransTaskManager
+from app.cloud_trans.task_manager import get_trans_task_manager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
@@ -141,12 +141,13 @@ class TranslationTaskProcessor(TaskProcessor):
             logger.info('翻译任务执行完成')
 
             # 翻译成功后扣费并刷新使用记录
-            billing_success = TransTaskManager().consume_tokens_for_task(task.unid)
+            trans_task_manager = get_trans_task_manager()
+            billing_success = trans_task_manager.consume_tokens_for_task(task.unid, "cloud_trans")
 
             if billing_success:
                 logger.info(f'✅ 翻译任务完成并扣费成功 - 任务ID: {task.unid}')
                 # 任务完成后刷新使用记录
-                self._refresh_usage_records_after_task_completion(task.unid)
+                trans_task_manager.refresh_usage_records_after_task_completion(task.unid)
             else:
                 logger.error(f'❌ 翻译任务扣费失败 - 任务ID: {task.unid}')
                 data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
@@ -166,26 +167,7 @@ class TranslationTaskProcessor(TaskProcessor):
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
 
-    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
-        """任务完成后刷新使用记录"""
-        try:
-            from nice_ui.services.service_provider import ServiceProvider
 
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
-            # 更新余额
-            if balance := token_service.get_user_balance():
-                logger.info(f"翻译任务完成后更新用户余额: {balance}")
-                data_bridge.emit_update_balance(balance)
-
-            # 更新历史记录
-            if transactions := token_service.get_user_history():
-                logger.info(f"翻译任务完成后更新用户历史记录，记录数: {len(transactions)}")
-                data_bridge.emit_update_history(transactions)
-
-        except Exception as e:
-            logger.error(f"翻译任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
 
 
 class ASRTransTaskProcessor(TaskProcessor):
@@ -195,8 +177,12 @@ class ASRTransTaskProcessor(TaskProcessor):
         """处理ASR+翻译任务"""
         logger.debug('处理ASR+翻译任务')
 
+        # 获取翻译任务管理器
+        trans_task_manager = get_trans_task_manager()
+
         # 检查是否需要翻译算力预估
-        self._setup_translation_tokens_estimate_if_needed(task)
+        video_duration = getattr(task, 'duration', 0) or 60  # 默认60秒
+        trans_task_manager.setup_translation_tokens_estimate_if_needed(task.unid, video_duration)
 
         # 第一步: ASR 任务
         final_name = task.wav_dirname
@@ -219,19 +205,12 @@ class ASRTransTaskProcessor(TaskProcessor):
         logger.trace(f'准备翻译任务:{srt_name}')
 
         # 计算并设置翻译算力（基于ASR生成的SRT文件）
-        self._calculate_and_set_translation_tokens_for_asr_trans(new_task, srt_name)
+        trans_task_manager.calculate_and_set_translation_tokens_from_srt(new_task.unid, srt_name)
 
         # 添加翻译任务到数据库
-        trans_orm = ToTranslationOrm()
-        trans_orm.add_data_to_table(
+        trans_task_manager.add_translation_task_to_database(
             new_task.unid,
             new_task.raw_name,
-            config.params['source_language'],
-            config.params["source_language_code"],
-            config.params['target_language'],
-            config.params['translate_channel'],
-            1,
-            1,
             new_task.model_dump_json()
         )
         chunk_size_int = get_chunk_size()
@@ -256,28 +235,17 @@ class ASRTransTaskProcessor(TaskProcessor):
 
             logger.info(f'ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
 
-            # 翻译成功后才扣费
-            token_service = ServiceProvider().get_token_service()
+            # 翻译成功后使用翻译任务管理器扣费（组合任务）
+            billing_success = trans_task_manager.consume_tokens_for_task(new_task.unid, "asr_trans")
 
-            # 使用两阶段算力管理获取总算力
-            total_tokens = token_service.get_total_task_tokens(new_task.unid)
-            logger.info(f'ASR+翻译任务总算力检查 - 算力: {total_tokens}, 任务ID: {new_task.unid}')
-
-            if total_tokens > 0:
-                # 尝试统一扣费
-                billing_success = token_service.consume_task_tokens(new_task.unid, "asr_trans")
-
-                if billing_success:
-                    logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
-                    # 任务完成后刷新使用记录
-                    self._refresh_usage_records_after_task_completion(new_task.unid)
-                else:
-                    logger.error(f'❌ ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
-                    # 翻译成功但扣费失败，这是一个严重问题
-                    data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
-                    raise Exception(f"ASR+翻译任务扣费失败: {new_task.unid}")
+            if billing_success:
+                logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
+                # 任务完成后刷新使用记录
+                trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
             else:
-                logger.info(f'✅ ASR+翻译任务完成（无需扣费）- 任务ID: {new_task.unid}')
+                logger.error(f'❌ ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
+                data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
+                raise Exception(f"ASR+翻译任务扣费失败: {new_task.unid}")
 
             logger.debug('ASR_TRANS 任务全部完成')
         except ValueError as e:
@@ -294,94 +262,7 @@ class ASRTransTaskProcessor(TaskProcessor):
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
 
-    def _setup_translation_tokens_estimate_if_needed(self, task: VideoFormatInfo) -> None:
-        """为ASR+翻译任务设置翻译算力预估（如果使用云翻译）"""
-        try:
-            # 检查翻译引擎是否为云翻译
-            translate_engine = config.params.get('translate_channel', '')
-            if translate_engine != 'qwen_cloud':
-                logger.info(f"非云翻译引擎({translate_engine})，跳过翻译算力预估")
-                return
 
-            # 获取视频时长进行翻译算力预估
-            token_service = ServiceProvider().get_token_service()
-
-            # 获取视频时长（如果有的话）
-            video_duration = getattr(task, 'duration', 0) or 60  # 默认60秒
-
-            # 预估翻译算力（基于视频时长）
-            trans_tokens_estimated = token_service.estimate_translation_tokens_by_duration(video_duration)
-
-            # 设置翻译算力预估（ASR算力为0，因为本地ASR不消耗算力）
-            token_service.set_task_tokens_estimate(task.unid, 0, trans_tokens_estimated)
-
-            logger.info(f'ASR+翻译任务算力预估 - ASR: 0（本地）, 翻译预估: {trans_tokens_estimated}, 任务ID: {task.unid}')
-
-        except Exception as e:
-            logger.error(f'设置ASR+翻译任务算力预估失败: {task.unid}, 错误: {e}')
-
-    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
-        """任务完成后刷新使用记录"""
-        try:
-            from nice_ui.services.service_provider import ServiceProvider
-
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
-            # 更新余额
-            if balance := token_service.get_user_balance():
-                logger.info(f"任务完成后更新用户余额: {balance}")
-                data_bridge.emit_update_balance(balance)
-
-            # 更新历史记录
-            if transactions := token_service.get_user_history():
-                logger.info(f"任务完成后更新用户历史记录，记录数: {len(transactions)}")
-                data_bridge.emit_update_history(transactions)
-
-        except Exception as e:
-            logger.error(f"任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
-
-    def _calculate_and_set_translation_tokens_for_asr_trans(self, new_task, srt_file_path: str) -> None:
-        """为ASR+翻译任务计算并设置翻译算力"""
-        try:
-            # 检查翻译引擎是否为云翻译
-            translate_engine = config.params.get('translate_channel', '')
-            if translate_engine != 'qwen_cloud':
-                logger.info(f"非云翻译引擎({translate_engine})，跳过算力计算")
-                return
-
-            # 检查SRT文件是否存在
-            if not os.path.exists(srt_file_path):
-                logger.warning(f"SRT文件不存在，无法计算翻译算力: {srt_file_path}")
-                # 设置默认翻译算力
-                token_service = ServiceProvider().get_token_service()
-                token_service.set_translation_tokens_for_task(new_task.unid, 10)
-                return
-
-            # 使用SRT适配器解析内容并计算字数
-            with open(srt_file_path, 'r', encoding='utf-8') as f:
-                srt_content = f.read()
-
-            adapter = SRTTranslatorAdapter()
-            entries = adapter.parse_srt_content(srt_content)
-
-            # 计算总字符数
-            total_chars = sum(len(entry.text) for entry in entries)
-
-            # 使用TokenService计算翻译算力
-            token_service = ServiceProvider().get_token_service()
-            trans_tokens = token_service.calculate_trans_tokens(total_chars)
-
-            # 设置实际翻译算力（两阶段算力管理）
-            token_service.set_translation_tokens_for_task(new_task.unid, trans_tokens)
-
-            logger.info(f'ASR+翻译任务实际翻译算力计算 - 字符数: {total_chars}, 算力: {trans_tokens}, 任务ID: {new_task.unid}')
-
-        except Exception as e:
-            logger.error(f'计算ASR+翻译任务算力失败: {str(e)}')
-            # 设置默认翻译算力
-            token_service = ServiceProvider().get_token_service()
-            token_service.set_task_token_amount(new_task.unid, 10)
 
 
 class CloudASRTransTaskProcessor(TaskProcessor):
@@ -397,33 +278,37 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         logger.debug(f'准备音视频转wav格式:{final_name}')
         FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
 
-        # 获取任务管理器实例
-        task_manager = get_task_manager()
+        # 获取ASR任务管理器实例
+        asr_task_manager = get_task_manager()
 
         # 获取语言代码
         language_code = config.params["source_language_code"]
 
-        # # 获取任务消费的代币数量
+        # 获取任务消费的代币数量
         token_service = ServiceProvider().get_token_service()
         token_amount = token_service.get_task_token_amount(task.unid, 10)
-        # token_service.set_ast_tokens_for_task(task.unid, token_amount)
-        # logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
+        logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
 
-        # 创建ASR任务
-        # logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}, 代币: {token_amount}')
-        task_manager.create_task(
+        # 创建ASR任务（组合任务，禁用自动扣费）
+        logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}, 代币: {token_amount}')
+        asr_task_manager.create_task(
             task_id=task.unid,
             audio_file=final_name,
-            language=language_code
+            language=language_code,
+            auto_billing=False  # 组合任务禁用ASR自动扣费
         )
 
         # 提交任务到阿里云
         logger.info(f'提交ASR任务到阿里云: {task.unid}')
-        task_manager.submit_task(task.unid)
+        asr_task_manager.submit_task(task.unid)
 
         # 云ASR+翻译任务必须等待ASR完成，因为翻译需要SRT文件
         logger.info(f'等待云ASR任务完成: {task.unid}')
-        self._wait_for_task_completion(task_manager, task.unid)
+        self._wait_for_task_completion(asr_task_manager, task.unid)
+
+        # ASR完成后，设置ASR算力到两阶段算力管理系统
+        token_service.set_ast_tokens_for_task(task.unid, token_amount)
+        logger.info(f'设置ASR算力到两阶段管理系统: {token_amount}, 任务ID: {task.unid}')
 
         # 第二步: 翻译任务
         new_task = change_job_format(task)
@@ -433,20 +318,16 @@ class CloudASRTransTaskProcessor(TaskProcessor):
 
         logger.trace(f'准备云翻译任务:{srt_name}')
 
+        # 获取翻译任务管理器
+        trans_task_manager = get_trans_task_manager()
+
         # 计算并设置翻译算力（基于云ASR生成的SRT文件）
-        self._calculate_and_set_translation_tokens_for_cloud_asr_trans(new_task, srt_name)
+        trans_task_manager.calculate_and_set_translation_tokens_from_srt(new_task.unid, srt_name)
 
         # 添加翻译任务到数据库
-        trans_orm = ToTranslationOrm()
-        trans_orm.add_data_to_table(
+        trans_task_manager.add_translation_task_to_database(
             new_task.unid,
             new_task.raw_name,
-            config.params['source_language'],
-            config.params["source_language_code"],
-            config.params['target_language'],
-            config.params['translate_channel'],
-            1,
-            1,
             new_task.model_dump_json()
         )
         chunk_size_int = get_chunk_size()
@@ -471,28 +352,17 @@ class CloudASRTransTaskProcessor(TaskProcessor):
 
             logger.info(f'云ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
 
-            # 翻译成功后才扣费
-            token_service = ServiceProvider().get_token_service()
+            # 翻译成功后使用翻译任务管理器扣费（组合任务）
+            billing_success = trans_task_manager.consume_tokens_for_task(new_task.unid, "cloud_asr_trans")
 
-            # 使用两阶段算力管理获取总算力
-            total_tokens = token_service.get_total_task_tokens(new_task.unid)
-            logger.info(f'云ASR+翻译任务总算力检查 - 算力: {total_tokens}, 任务ID: {new_task.unid}')
-
-            if total_tokens > 0:
-                # 尝试统一扣费
-                billing_success = token_service.consume_task_tokens(new_task.unid, "cloud_asr_trans")
-
-                if billing_success:
-                    logger.info(f'✅ 云ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
-                    # 任务完成后刷新使用记录
-                    self._refresh_usage_records_after_task_completion(new_task.unid)
-                else:
-                    logger.error(f'❌ 云ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
-                    # 翻译成功但扣费失败，这是一个严重问题
-                    data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
-                    raise Exception(f"云ASR+翻译任务扣费失败: {new_task.unid}")
+            if billing_success:
+                logger.info(f'✅ 云ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
+                # 任务完成后刷新使用记录
+                trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
             else:
-                logger.info(f'✅ 云ASR+翻译任务完成（无需扣费）- 任务ID: {new_task.unid}')
+                logger.error(f'❌ 云ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
+                data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
+                raise Exception(f"云ASR+翻译任务扣费失败: {new_task.unid}")
 
             logger.debug('CLOUD_ASR_TRANS 任务全部完成')
         except ValueError as e:
@@ -509,11 +379,11 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
 
-    def _wait_for_task_completion(self, task_manager, task_id):
+    def _wait_for_task_completion(self, asr_task_manager, task_id):
         """等待任务完成"""
         while True:
             # 获取任务状态
-            asr_task = task_manager.get_task(task_id)
+            asr_task = asr_task_manager.get_task(task_id)
 
             # 检查任务是否完成或失败
             if asr_task.status == ASRTaskStatus.COMPLETED:
@@ -526,68 +396,7 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             # 等待一段时间再检查
             time.sleep(5)
 
-    def _calculate_and_set_translation_tokens_for_cloud_asr_trans(self, new_task, srt_file_path: str) -> None:
-        """为云ASR+翻译任务计算并设置翻译算力"""
-        try:
-            # 检查翻译引擎是否为云翻译
-            translate_engine = config.params.get('translate_channel', '')
-            if translate_engine != 'qwen_cloud':
-                logger.info(f"非云翻译引擎({translate_engine})，跳过翻译算力计算")
-                return
 
-            # 检查SRT文件是否存在（云ASR完成后应该存在）
-            if not os.path.exists(srt_file_path):
-                logger.error(f"云ASR完成后SRT文件仍不存在: {srt_file_path}")
-                # 设置默认翻译算力
-                token_service = ServiceProvider().get_token_service()
-                token_service.set_translation_tokens_for_task(new_task.unid, 10)
-                return
-
-            # 使用SRT适配器解析内容并计算字数
-            with open(srt_file_path, 'r', encoding='utf-8') as f:
-                srt_content = f.read()
-
-            adapter = SRTTranslatorAdapter()
-            srt_entries = adapter.parse_srt_content(srt_content)
-
-            # 计算总字符数
-            total_chars = sum(len(entry.text) for entry in srt_entries)
-
-            # 计算翻译算力
-            token_service = ServiceProvider().get_token_service()
-            trans_tokens = token_service.calculate_trans_tokens(total_chars)
-
-            # 设置实际翻译算力
-            token_service.set_translation_tokens_for_task(new_task.unid, trans_tokens)
-
-            logger.info(f'云ASR+翻译任务实际翻译算力计算 - 字符数: {total_chars}, 算力: {trans_tokens}, 任务ID: {new_task.unid}')
-
-        except Exception as e:
-            logger.error(f'计算云ASR+翻译任务翻译算力失败: {new_task.unid}, 错误: {e}')
-            # 设置默认翻译算力
-            token_service = ServiceProvider().get_token_service()
-            token_service.set_translation_tokens_for_task(new_task.unid, 10)
-
-    def _refresh_usage_records_after_task_completion(self, task_id: str) -> None:
-        """任务完成后刷新使用记录"""
-        try:
-            from nice_ui.services.service_provider import ServiceProvider
-
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
-            # 更新余额
-            if balance := token_service.get_user_balance():
-                logger.info(f"云ASR+翻译任务完成后更新用户余额: {balance}")
-                data_bridge.emit_update_balance(balance)
-
-            # 更新历史记录
-            if transactions := token_service.get_user_history():
-                logger.info(f"云ASR+翻译任务完成后更新用户历史记录，记录数: {len(transactions)}")
-                data_bridge.emit_update_history(transactions)
-
-        except Exception as e:
-            logger.error(f"云ASR+翻译任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
 
 
 class TaskProcessorFactory:

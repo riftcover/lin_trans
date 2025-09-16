@@ -93,6 +93,7 @@ class ASRTask:
         self.progress = 0
         self.created_at = time.time()
         self.updated_at = time.time()
+        self.auto_billing = True  # 默认自动扣费
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -235,7 +236,7 @@ class ASRTaskManager:
         except Exception as e:
             logger.error(f"保存ASR任务状态失败: {str(e)}")
 
-    def create_task(self, task_id: str, audio_file: str, language: str) -> str:
+    def create_task(self, task_id: str, audio_file: str, language: str, auto_billing: bool = True) -> str:
         """
         创建新的ASR任务
 
@@ -243,6 +244,7 @@ class ASRTaskManager:
             task_id: 应用内唯一标识符
             audio_file: 音频文件路径
             language: 语言代码
+            auto_billing: 是否自动扣费，默认True。组合任务应设为False
 
         Returns:
             str: 任务ID
@@ -250,6 +252,7 @@ class ASRTaskManager:
         # 确保语言代码是 'zh' 或 'en'
 
         task = ASRTask(task_id, audio_file, language)
+        task.auto_billing = auto_billing  # 添加自动扣费标志
 
         with self.lock:
             self.tasks[task_id] = task
@@ -550,8 +553,12 @@ class ASRTaskManager:
                             # 通知UI更新进度为100% - 使用线程安全的信号发送
                             data_bridge.whisper_working.emit(task.task_id, 100)
 
-                            # 消费代币
-                            self._consume_tokens_for_task(task)
+                            # 只有在自动扣费模式下才消费代币
+                            if getattr(task, 'auto_billing', True):
+                                logger.info(f'ASR任务自动扣费模式，开始扣费: {task.task_id}')
+                                self._consume_tokens_for_task(task)
+                            else:
+                                logger.info(f'ASR任务非自动扣费模式，跳过扣费: {task.task_id}')
 
                             # 通知UI任务完成
                             self._notify_task_completed(task.task_id)

@@ -38,17 +38,26 @@ class TokenAmountManager:
         return cls._instance
 
     def set_token_amount(self, key: str, amount: int) -> None:
-        """设置任务的代币消费量
+        """设置任务的代币消费量（兼容旧接口，统一使用新系统）
 
         Args:
             key: 任务ID或文件路径
             amount: 代币消费量
         """
+        # 统一使用_task_token_info系统
+        if key not in self._task_token_info:
+            self._task_token_info[key] = TaskTokenInfo()
+
+        # 对于单一任务，将算力设置为翻译算力（保持向后兼容）
+        info = self._task_token_info[key]
+        info.trans_tokens = amount
+
+        # 同时更新旧系统以保持兼容性
         self._token_amounts[key] = amount
         logger.info(f"设置任务代币消费量: {amount}, 键: {key}")
 
     def get_token_amount(self, key: str, default: int = 10) -> int:
-        """获取任务的代币消费量
+        """获取任务的代币消费量（统一从新系统获取）
 
         Args:
             key: 任务ID或文件路径
@@ -57,8 +66,18 @@ class TokenAmountManager:
         Returns:
             int: 代币消费量
         """
+        # 优先从新系统获取
+        if key in self._task_token_info:
+            info = self._task_token_info[key]
+            # 如果是组合任务，返回总算力；否则返回翻译算力
+            amount = info.total_tokens if info.asr_tokens > 0 else info.trans_tokens
+            if amount > 0:
+                logger.info(f"从新系统获取任务代币消费量: {amount}, 键: {key}")
+                return amount
+
+        # 回退到旧系统
         amount = self._token_amounts.get(key, default)
-        logger.info(f"获取任务代币消费量: {amount}, 键: {key}")
+        logger.info(f"从旧系统获取任务代币消费量: {amount}, 键: {key}")
         return amount
 
     def set_asr_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
@@ -538,6 +557,23 @@ class TokenService(TokenServiceInterface):
         estimated_chars = int(video_duration / 60 * 100)
         return self.calculate_trans_tokens(estimated_chars)
 
+    def set_task_tokens_estimate(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int) -> None:
+        """设置任务的算力预估
+
+        Args:
+            task_id: 任务ID
+            asr_tokens: ASR算力
+            trans_tokens_estimated: 翻译算力预估
+        """
+        if task_id not in self.token_amount_manager._task_token_info:
+            self.token_amount_manager._task_token_info[task_id] = TaskTokenInfo()
+
+        info = self.token_amount_manager._task_token_info[task_id]
+        info.asr_tokens = asr_tokens
+        info.trans_tokens_estimated = trans_tokens_estimated
+
+        logger.info(f"设置任务算力预估: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
+
     def consume_task_tokens(self, task_id: str, feature_key: str = "cloud_asr_trans") -> bool:
         """为任务统一扣费
 
@@ -567,3 +603,55 @@ class TokenService(TokenServiceInterface):
             logger.error(f"任务扣费失败: {task_id}, 算力: {total_tokens}")
 
         return success
+
+    def consume_tokens_for_any_task(self, task_id: str, feature_key: str) -> bool:
+        """
+        统一的任务扣费方法，适用于所有任务类型
+
+        Args:
+            task_id: 任务ID
+            feature_key: 功能标识符
+
+        Returns:
+            bool: 扣费是否成功
+        """
+        try:
+            # 获取任务算力信息
+            info = self.token_amount_manager.get_task_token_info(task_id)
+
+            # 检查是否已扣费
+            if info.is_consumed:
+                logger.warning(f"任务已扣费，跳过: {task_id}")
+                return True
+
+            # 确定要扣费的算力数量
+            token_amount = 0
+            if info.asr_tokens > 0 or info.trans_tokens > 0:
+                # 如果有详细算力信息，使用总算力
+                token_amount = info.total_tokens
+                logger.info(f"使用详细算力信息扣费: ASR={info.asr_tokens}, 翻译={info.trans_tokens}, 总计={token_amount}")
+            else:
+                # 回退到旧系统
+                token_amount = self.token_amount_manager.get_token_amount(task_id, 0)
+                logger.info(f"使用旧系统算力信息扣费: {token_amount}")
+
+            # 检查算力是否为0
+            if token_amount <= 0:
+                logger.warning(f"任务算力为0，跳过扣费: {task_id}")
+                return True
+
+            # 执行扣费
+            success = self.consume_tokens(token_amount, feature_key)
+
+            if success:
+                # 标记任务已扣费
+                self.token_amount_manager.mark_task_consumed(task_id)
+                logger.info(f"✅ 统一扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
+            else:
+                logger.error(f"❌ 统一扣费失败: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"❌ 统一扣费异常: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
+            return False
