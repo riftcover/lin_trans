@@ -259,9 +259,14 @@ class TableApp(CardWidget):
 
         # 添加状态
         file_status = StatusLabel("")
-        file_status.setAlignment(Qt.AlignCenter)
+        # 创建一个容器来居中显示StatusLabel
+        status_container = QWidget()
+        status_layout = QHBoxLayout(status_container)
+        status_layout.setContentsMargins(0, 0, 0, 0)
+        status_layout.setAlignment(Qt.AlignCenter)
+        status_layout.addWidget(file_status)
         self.table.setCellWidget(
-            row_position, TableWidgetColumn.JOB_STATUS, file_status
+            row_position, TableWidgetColumn.JOB_STATUS, status_container
         )
 
         # 添加UNID
@@ -387,10 +392,14 @@ class TableApp(CardWidget):
             else:
                 return
 
-        progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+        status_container = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
         logger.info(f"更新文件:{unid}的进度条:{progress}")
         # todo: 处理中，删除别的任务，报错AttributeError: 'NoneType' object has no attribute 'setText'
-        progress_bar.setText(f"处理中 {progress}%")
+        # 从容器中获取StatusLabel
+        if status_container and status_container.layout():
+            progress_bar = status_container.layout().itemAt(0).widget()
+            if hasattr(progress_bar, 'setText'):
+                progress_bar.setText(f"处理中 {progress}%")
 
     def find_row_by_identifier(self, unid: str) -> Optional[int]:
         # 此函数用于根据唯一标识符（unid）在表格中查找行索引
@@ -408,10 +417,14 @@ class TableApp(CardWidget):
         if unid in self.row_cache:
             row = self.row_cache[unid]
             item = self.table.cellWidget(row, TableWidgetColumn.UNID)
-            progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+            status_container = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
             chk = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
             chk.setEnabled(True)
-            progress_bar.set_status("已完成")
+            # 从容器中获取StatusLabel
+            if status_container and status_container.layout():
+                progress_bar = status_container.layout().itemAt(0).widget()
+                if hasattr(progress_bar, 'set_status'):
+                    progress_bar.set_status("已完成")
             orm_result = self._choose_sql_orm(row)
 
             if isinstance(orm_result, tuple):
@@ -732,6 +745,14 @@ class TableApp(CardWidget):
             # 文件名
             filename_widget = self.table.cellWidget(row, TableWidgetColumn.FILENAME)
             row_data['filename'] = filename_widget.text() if filename_widget else ""
+
+            # 任务类型
+            task_type_widget = self.table.cellWidget(row, TableWidgetColumn.TASK_TYPE)
+            row_data['task_type'] = task_type_widget.text() if task_type_widget else ""
+
+            # 创建时间
+            create_time_widget = self.table.cellWidget(row, TableWidgetColumn.CREATE_TIME)
+            row_data['create_time'] = create_time_widget.text() if create_time_widget else ""
 
             # 任务状态
             status_widget = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
