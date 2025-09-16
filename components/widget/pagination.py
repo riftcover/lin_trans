@@ -17,63 +17,99 @@ class PaginatedTableWidget(QWidget):
     # 定义信号
     pageChanged = Signal(int)  # 页码改变时发出信号
 
-    # 表格样式常量 - 保留表格样式为内联样式，因为它不属于分页控件的一部分
+    # 表格样式常量 - 现代化设计风格，优化布局适配
     TABLE_STYLE = """
         QTableWidget {
-            background-color: transparent;
-            border: none;
-            selection-background-color: transparent;
+            background-color: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 14px;
+            selection-background-color: #f8fafc;
+            gridline-color: transparent;
+            font-size: 13px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         QHeaderView::section {
-            background-color: #f5f5f5;
-            padding: 4px;
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                      stop:0 #fafbfc, stop:1 #f1f3f5);
+            padding: 14px 12px;
             border: none;
-            border-bottom: 2px solid #e9ecef;
-            border-radius: 0px;
+            border-bottom: 2px solid #e1e5e9;
+            border-right: 1px solid #f1f3f5;
+            color: #495057;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
         }
         QHeaderView::section:first {
-            border-top-left-radius: 8px;
+            border-top-left-radius: 14px;
+            border-left: none;
         }
         QHeaderView::section:last {
-            border-top-right-radius: 8px;
+            border-top-right-radius: 14px;
+            border-right: none;
+        }
+        QHeaderView::section:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                      stop:0 #f1f3f5, stop:1 #e9ecef);
         }
         QTableWidget::item {
-            padding: 12px 15px;
+            padding: 14px 12px;
             border-bottom: 1px solid #f1f3f5;
+            border-right: none;
             color: #212529;
+            background-color: #ffffff;
+            font-size: 13px;
+        }
+        QTableWidget::item:alternate {
+            background-color: #fafbfc;
         }
         QTableWidget::item:selected {
-            background-color: transparent;
-            color: #212529;
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-bottom: 1px solid #bbdefb;
+        }
+        QTableWidget::item:hover {
+            background-color: #f0f8ff;
         }
         QScrollBar:vertical {
-            background-color: #f8f9fa;
+            background-color: transparent;
             width: 8px;
             margin: 0px;
+            border-radius: 4px;
         }
         QScrollBar::handle:vertical {
             background-color: #ced4da;
             min-height: 30px;
             border-radius: 4px;
+            margin: 1px;
         }
         QScrollBar::handle:vertical:hover {
             background-color: #adb5bd;
+        }
+        QScrollBar::handle:vertical:pressed {
+            background-color: #868e96;
         }
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
             height: 0px;
         }
         QScrollBar:horizontal {
-            background-color: #f8f9fa;
+            background-color: transparent;
             height: 8px;
             margin: 0px;
+            border-radius: 4px;
         }
         QScrollBar::handle:horizontal {
             background-color: #ced4da;
             min-width: 30px;
             border-radius: 4px;
+            margin: 1px;
         }
         QScrollBar::handle:horizontal:hover {
             background-color: #adb5bd;
+        }
+        QScrollBar::handle:horizontal:pressed {
+            background-color: #868e96;
         }
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
             width: 0px;
@@ -124,10 +160,10 @@ class PaginatedTableWidget(QWidget):
         # 加载分页控件样式
         self._load_pagination_style()
 
-        # 创建主布局
+        # 创建主布局 - 优化间距和边距
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(10)
+        self.main_layout.setSpacing(8)  # 减少间距，更紧凑
 
         # 创建表格
         self._create_table()
@@ -156,11 +192,11 @@ class PaginatedTableWidget(QWidget):
         self.main_layout.addWidget(self.table)
 
     def _create_pagination_controls(self):
-        """创建分页控件"""
-        # 创建分页布局
+        """创建分页控件 - 现代化设计，优化布局适配"""
+        # 创建分页布局 - 响应式边距
         self.pagination_layout = QHBoxLayout()
-        self.pagination_layout.setContentsMargins(10, 10, 10, 5)
-        self.pagination_layout.setSpacing(8)  # 减小间距使组件更紧凑
+        self.pagination_layout.setContentsMargins(16, 12, 16, 12)  # 减少边距
+        self.pagination_layout.setSpacing(10)  # 适中的间距
 
         # 创建页码信息标签
         self._create_page_info()
@@ -172,54 +208,73 @@ class PaginatedTableWidget(QWidget):
         self.main_layout.addLayout(self.pagination_layout)
 
     def _create_page_info(self):
-        """创建页码信息标签"""
-        self.page_info = QLabel('共 0 条', self)
-        self.page_info.setObjectName("pageInfo")  # 设置对象名称以匹配QSS
+        """创建页码信息标签 - 现代化样式，优化布局适配"""
+        self.page_info = QLabel('共 0 条记录', self)
+        self.page_info.setObjectName("pageInfo")
+        self.page_info.setStyleSheet("""
+            QLabel#pageInfo {
+                color: #6c757d;
+                font-size: 13px;
+                font-weight: 500;
+                padding: 6px 0px;
+                min-width: 80px;
+            }
+        """)
+        # 设置文本省略
+        self.page_info.setWordWrap(False)
+        self.page_info.setMinimumWidth(80)
+
         self.pagination_layout.addWidget(self.page_info)
         self.pagination_layout.addStretch(1)  # 左侧信息和分页控件之间的弹性空间
 
     def _create_pagination_buttons(self):
-        """创建分页按钮"""
-        # 获取资源路径
-        assets_path = self._get_assets_path()
-
-        # 创建分页控件容器
+        """创建分页按钮 - 现代化设计，优化布局适配"""
+        # 创建分页控件容器 - 响应式设计
         pagination_controls = QWidget()
-        pagination_controls.setObjectName("paginationControls")  # 设置对象名称以匹配QSS
+        pagination_controls.setObjectName("paginationControls")
+        pagination_controls.setStyleSheet("""
+            QWidget#paginationControls {
+                background-color: #f8f9fa;
+                border-radius: 10px;
+                padding: 2px;
+                max-height: 44px;
+            }
+        """)
         pagination_controls_layout = QHBoxLayout(pagination_controls)
-        pagination_controls_layout.setContentsMargins(0, 0, 0, 0)
-        pagination_controls_layout.setSpacing(2)  # 减小间距
+        pagination_controls_layout.setContentsMargins(6, 3, 6, 3)  # 减少内边距
+        pagination_controls_layout.setSpacing(3)  # 减少按钮间距
 
-        # 创建按钮
-        self.first_button = self._create_nav_button(
-            '首页',
-            self.first_page
-        )
-        self.first_button.setObjectName("firstButton")  # 设置对象名称以匹配QSS
+        # 创建按钮 - 优化尺寸
+        self.first_button = self._create_nav_button('首页', self.first_page)
+        self.first_button.setObjectName("firstButton")
 
-        self.prev_button = self._create_nav_button(
-            '上一页',
-            self.prev_page
-        )
-        self.prev_button.setObjectName("prevButton")  # 设置对象名称以匹配QSS
+        self.prev_button = self._create_nav_button('上一页', self.prev_page)
+        self.prev_button.setObjectName("prevButton")
 
-        # 页码指示器
+        # 页码指示器 - 响应式样式
         self.page_indicator = QLabel('1/1', self)
-        self.page_indicator.setObjectName("pageIndicator")  # 设置对象名称以匹配QSS
+        self.page_indicator.setObjectName("pageIndicator")
         self.page_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.page_indicator.setStyleSheet("""
+            QLabel#pageIndicator {
+                color: #495057;
+                font-size: 13px;
+                font-weight: 600;
+                min-width: 60px;
+                max-width: 80px;
+                padding: 6px 12px;
+                background-color: #ffffff;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin: 0px 4px;
+            }
+        """)
 
-        self.next_button = self._create_nav_button(
-            '下一页',
-            self.next_page
-        )
-        self.next_button.setObjectName("nextButton")  # 设置对象名称以匹配QSS
+        self.next_button = self._create_nav_button('下一页', self.next_page)
+        self.next_button.setObjectName("nextButton")
 
-        self.last_button = self._create_nav_button(
-            '末页',
-            self.last_page
-        )
-        self.last_button.setObjectName("lastButton")  # 设置对象名称以匹配QSS
-
+        self.last_button = self._create_nav_button('末页', self.last_page)
+        self.last_button.setObjectName("lastButton")
 
         # 添加分页控件到容器
         pagination_controls_layout.addWidget(self.first_button)
@@ -237,7 +292,7 @@ class PaginatedTableWidget(QWidget):
         return str(Path(__file__).parent.parent / 'assets')
 
     def _create_nav_button(self, tooltip, callback):
-        """创建导航按钮
+        """创建导航按钮 - 现代化样式，优化布局适配
 
         Args:
             tooltip: 提示文本
@@ -247,10 +302,39 @@ class PaginatedTableWidget(QWidget):
             TransparentToolButton: 创建的按钮
         """
         button = TransparentToolButton()
-        button.setFixedSize(32, 32)  # 设置为正方形
+        button.setFixedSize(32, 32)  # 优化按钮尺寸，更紧凑
         button.clicked.connect(callback)
         button.setToolTip(tooltip)
-        button.setProperty("class", "NavButton")  # 设置类名以匹配QSS
+        button.setProperty("class", "NavButton")
+
+        # 应用现代化按钮样式 - 优化适配
+        button.setStyleSheet("""
+            TransparentToolButton.NavButton {
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                background-color: #ffffff;
+                padding: 4px;
+                margin: 1px;
+                min-width: 32px;
+                min-height: 32px;
+                max-width: 32px;
+                max-height: 32px;
+            }
+            TransparentToolButton.NavButton:hover {
+                background-color: #e9ecef;
+                border-color: #adb5bd;
+            }
+            TransparentToolButton.NavButton:pressed {
+                background-color: #dee2e6;
+                border-color: #6c757d;
+            }
+            TransparentToolButton.NavButton:disabled {
+                opacity: 0.4;
+                background-color: #f8f9fa;
+                border-color: #e9ecef;
+            }
+        """)
+
         return button
 
     def _setup_table_headers(self, headers, column_widths, stretch_column):
@@ -337,13 +421,25 @@ class PaginatedTableWidget(QWidget):
         # 设置表格行数
         self.table.setRowCount(len(current_page_items))
 
-        # 如果没有记录，显示提示
+        # 如果没有记录，显示现代化空状态提示
         if not current_page_items:
             self.table.setRowCount(1)
-            empty_item = QTableWidgetItem('暂无记录')
+            empty_item = QTableWidgetItem('📋 暂无使用记录')
             empty_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty_item.setData(Qt.ItemDataRole.ForegroundRole, "#6c757d")
+
+            # 设置空状态样式
+            from PySide6.QtGui import QFont
+            font = QFont()
+            font.setPointSize(14)
+            font.setWeight(QFont.Weight.Medium)
+            empty_item.setFont(font)
+
             self.table.setSpan(0, 0, 1, self.table.columnCount())  # 合并单元格
             self.table.setItem(0, 0, empty_item)
+
+            # 设置空状态行高
+            self.table.setRowHeight(0, 120)
             return
 
         # 填充表格数据 - 这个方法需要被子类重写以处理特定的数据格式
@@ -360,20 +456,28 @@ class PaginatedTableWidget(QWidget):
         pass
 
     def update_page_indicator(self):
-        """更新页码指示器和页面信息"""
+        """更新页码指示器和页面信息 - 现代化显示"""
         # 更新页码指示器
-        self.page_indicator.setText(f"{self.current_page}/{self.total_pages}")
+        self.page_indicator.setText(f"{self.current_page} / {self.total_pages}")
 
         # 计算当前页的记录范围
         total_items = len(self.all_items)
-        start_idx = (self.current_page - 1) * self.page_size + 1 if total_items > 0 else 0
-        end_idx = min(start_idx + self.page_size - 1, total_items)
 
-        # 更新页面信息标签
+        # 更新页面信息标签 - 更友好的显示方式
         if hasattr(self, 'total_records') and self.total_records > 0:
-            self.page_info.setText(f"共 {self.total_records} 条记录")
+            if self.total_records == 0:
+                self.page_info.setText("暂无记录")
+            elif self.total_records == 1:
+                self.page_info.setText("共 1 条记录")
+            else:
+                # 计算当前页显示的记录范围
+                start_idx = (self.current_page - 1) * self.page_size + 1
+                end_idx = min(self.current_page * self.page_size, self.total_records)
+                self.page_info.setText(f"第 {start_idx}-{end_idx} 条，共 {self.total_records} 条记录")
         elif total_items > 0:
-            self.page_info.setText(f"显示 {start_idx}-{end_idx} 条，共 {total_items} 条")
+            start_idx = (self.current_page - 1) * self.page_size + 1
+            end_idx = min(start_idx + self.page_size - 1, total_items)
+            self.page_info.setText(f"第 {start_idx}-{end_idx} 条，共 {total_items} 条记录")
         else:
             self.page_info.setText("暂无记录")
 
@@ -520,3 +624,61 @@ class PaginatedTableWidget(QWidget):
 
         # 填充表格数据
         self._populate_table(items)
+
+    def resizeEvent(self, event):
+        """重写resize事件以实现响应式设计"""
+        super().resizeEvent(event)
+        self._adjust_responsive_pagination()
+
+    def _adjust_responsive_pagination(self):
+        """调整分页控件的响应式布局"""
+        width = self.width()
+
+        # 根据宽度调整分页控件布局
+        if width < 500:
+            # 超小屏幕：隐藏首页和末页按钮
+            if hasattr(self, 'first_button'):
+                self.first_button.setVisible(False)
+                self.last_button.setVisible(False)
+            # 调整页码信息显示
+            if hasattr(self, 'page_info'):
+                self.page_info.setStyleSheet("""
+                    QLabel#pageInfo {
+                        color: #6c757d;
+                        font-size: 12px;
+                        font-weight: 500;
+                        padding: 4px 0px;
+                        min-width: 60px;
+                    }
+                """)
+        elif width < 700:
+            # 小屏幕：显示所有按钮但调整样式
+            if hasattr(self, 'first_button'):
+                self.first_button.setVisible(True)
+                self.last_button.setVisible(True)
+            # 调整页码信息显示
+            if hasattr(self, 'page_info'):
+                self.page_info.setStyleSheet("""
+                    QLabel#pageInfo {
+                        color: #6c757d;
+                        font-size: 13px;
+                        font-weight: 500;
+                        padding: 6px 0px;
+                        min-width: 70px;
+                    }
+                """)
+        else:
+            # 正常屏幕：恢复默认样式
+            if hasattr(self, 'first_button'):
+                self.first_button.setVisible(True)
+                self.last_button.setVisible(True)
+            if hasattr(self, 'page_info'):
+                self.page_info.setStyleSheet("""
+                    QLabel#pageInfo {
+                        color: #6c757d;
+                        font-size: 13px;
+                        font-weight: 500;
+                        padding: 6px 0px;
+                        min-width: 80px;
+                    }
+                """)

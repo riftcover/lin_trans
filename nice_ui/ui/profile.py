@@ -19,7 +19,7 @@ class ProfileInterface(QFrame):
         QLabel {
             font-size: 14px;
             background: transparent;
-            border-bottom: 2px solid #3d7eff;
+            border-bottom: 2px solid #7C3AED;
             margin: 1px;
             min-height: 20px;
         }

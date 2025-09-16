@@ -9,7 +9,7 @@ QTimeEdit {
 
 QTimeEdit:focus {
     background-color: #ffffff;
-    border-color: #3d7eff;
+    border-color: #7C3AED;
     outline: none;
 }
 

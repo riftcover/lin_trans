@@ -51,7 +51,7 @@ RadioButton::indicator {
 }
 
 #pathInputFrame LineEdit:focus {
-    border-color: #3d7eff;
+    border-color: #7C3AEDf;
 }
 
 /* 浏览按钮样式 */
@@ -86,7 +86,7 @@ PushButton:hover {
 PrimaryPushButton {
     padding: 6px 12px;
     border-radius: 4px;
-    background-color: #3d7eff;
+    background-color: #7C3AEDf;
     color: white;
     border: none;
     min-width: 75px;

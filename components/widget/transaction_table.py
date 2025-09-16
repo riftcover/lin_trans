@@ -1,5 +1,6 @@
 import pytz
 from PySide6.QtWidgets import QTableWidgetItem
+from PySide6.QtCore import Qt
 from datetime import datetime
 
 from utils import logger
@@ -62,12 +63,16 @@ class TransactionTableWidget(PaginatedTableWidget):
             self.table.setItem(row, 0, QTableWidgetItem(formatted_time))
 
             # 任务类型
-            amount = str(transaction.get('description', ''))
-            self.table.setItem(row, 1, QTableWidgetItem(amount))
+            description = str(transaction.get('description', ''))
+            description_item = QTableWidgetItem(description)
+            description_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 1, description_item)
 
             # 使用额度
             amount = str(transaction.get('amount', 0))
-            self.table.setItem(row, 2, QTableWidgetItem(amount))
+            amount_item = QTableWidgetItem(amount)
+            amount_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 2, amount_item)
 
             # 订单号
             order_id = transaction.get('order_id', '未知')

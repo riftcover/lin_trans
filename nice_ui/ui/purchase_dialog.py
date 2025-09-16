@@ -72,7 +72,7 @@ class RechargeCard(QFrame):
                 #rechargeCard {
                     background-color: #e8f0fe;
                     border-radius: 6px;
-                    border: 2px solid #3d7eff;
+                    border: 2px solid #7C3AED;
                     padding: 5px;
                 }
             """)
@@ -86,7 +86,7 @@ class RechargeCard(QFrame):
                 }
                 #rechargeCard:hover {
                     background-color: #e8f0fe;
-                    border: 1px solid #3d7eff;
+                    border: 1px solid #7C3AED;
                 }
             """)
 
@@ -300,7 +300,7 @@ class PurchaseDialog(MaskDialogBase):
 
         # 添加余额值
         self.balanceValue = SubtitleLabel("0", self.balanceFrame)
-        self.balanceValue.setStyleSheet("color: #3d7eff;")
+        self.balanceValue.setStyleSheet("color: #7C3AED;")
 
         # 添加单位
         self.balanceUnit = BodyLabel("点数", self.balanceFrame)
