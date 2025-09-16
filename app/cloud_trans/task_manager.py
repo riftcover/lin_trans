@@ -32,10 +32,9 @@ class TransTaskManager:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
 
-            # 使用统一的扣费方法
-            billing_success = token_service.consume_tokens_for_task(task_id, task_type,file_name)
-
-            if billing_success:
+            if billing_success := token_service.consume_tokens_for_task(
+                task_id, task_type, file_name
+            ):
                 logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {task_type}")
                 self._notify_task_completed(task_id)
                 return True

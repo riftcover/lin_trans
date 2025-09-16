@@ -617,12 +617,12 @@ class TokenService(TokenServiceInterface):
             if success:
                 # 标记任务已扣费
                 self.token_amount_manager.mark_task_consumed(task_id)
-                logger.info(f"✅ 统一扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
+                logger.info(f"统一扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
             else:
-                logger.error(f"❌ 统一扣费失败: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
+                logger.error(f"统一扣费失败: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
 
             return success
 
         except Exception as e:
-            logger.error(f"❌ 统一扣费异常: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
+            logger.error(f"统一扣费异常: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
             return False
