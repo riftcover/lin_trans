@@ -36,7 +36,7 @@ class TransTaskManager:
                 task_id, task_type, file_name
             ):
                 logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {task_type}")
-                self._notify_task_completed(task_id)
+                # 注意：不在这里发送完成信号，应该在调用方确认翻译真正完成后再发送
                 return True
             else:
                 logger.error(f"任务扣费失败 - 任务ID: {task_id}, 任务类型: {task_type}")

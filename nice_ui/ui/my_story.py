@@ -343,6 +343,11 @@ class TableApp(CardWidget):
                     self.table_row_init(obj_data, 0, item.created_at)
                 elif item.job_status == 2:
                     self.addRow_init_all(obj_data, item.created_at)
+                elif item.job_status == 4:
+                    # 失败状态：显示为失败状态的行
+                    self.table_row_init(obj_data, 0, item.created_at)
+                    # 立即更新为失败状态显示
+                    self.table_row_failed(item.unid, "任务执行失败")
             else:
                 logger.warning(f"{item.unid} 该数据 obj为空")
         except ValidationError as e:
@@ -469,23 +474,41 @@ class TableApp(CardWidget):
                 return
 
         # 更新UI状态
-        progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+        status_container = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
         chk = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
 
-        if progress_bar:
-            progress_bar.set_status("处理失败")
+        # 安全地更新状态显示
+        if status_container:
+            # 尝试从容器中获取StatusLabel
+            if status_container.layout():
+                progress_bar = status_container.layout().itemAt(0).widget()
+                if hasattr(progress_bar, 'set_status'):
+                    progress_bar.set_status("处理失败")
+                elif hasattr(progress_bar, 'setText'):
+                    progress_bar.setText("处理失败")
+                else:
+                    logger.warning(f"无法更新状态显示，未知的组件类型: {type(progress_bar)}")
+            else:
+                # 直接是StatusLabel的情况
+                if hasattr(status_container, 'set_status'):
+                    status_container.set_status("处理失败")
+                elif hasattr(status_container, 'setText'):
+                    status_container.setText("处理失败")
+                else:
+                    logger.warning(f"无法更新状态显示，未知的组件类型: {type(status_container)}")
+
         if chk:
             chk.setEnabled(True)
 
-        # 更新数据库状态为失败
+        # 更新数据库状态为失败 (job_status=4表示失败)
         orm_result = self._choose_sql_orm(row)
         if isinstance(orm_result, tuple):
             # ASR_TRANS 任务
             srt_orm, trans_orm = orm_result
-            srt_orm.update_table_unid(unid, job_status=0)
-            trans_orm.update_table_unid(unid, job_status=0)
+            srt_orm.update_table_unid(unid, job_status=4)
+            trans_orm.update_table_unid(unid, job_status=4)
         else:
-            orm_result.update_table_unid(unid, job_status=0)
+            orm_result.update_table_unid(unid, job_status=4)
 
         # 设置按钮状态（只显示删除按钮，因为失败的任务可以重新开始）
         self._set_row_buttons(row, [ButtonType.DELETE])
