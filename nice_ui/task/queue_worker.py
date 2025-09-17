@@ -103,6 +103,9 @@ class CloudASRTaskProcessor(TaskProcessor):
                 break
             elif asr_task.status == ASRTaskStatus.FAILED:
                 logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
+                # 通知UI任务失败，而不是抛出异常
+                from nice_ui.ui.SingalBridge import data_bridge
+                data_bridge.emit_task_error(task_id, asr_task.error or "未知错误")
                 break
 
             # 等待一段时间再检查
