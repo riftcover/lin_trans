@@ -331,6 +331,8 @@ class ASRTaskManager:
                         error=error_msg,
                         progress=0
                     )
+                    # 通知UI任务失败
+                    self._notify_task_failed(task.task_id, error_msg)
                     return
 
                 # 更新任务状态为上传中
@@ -368,6 +370,8 @@ class ASRTaskManager:
                         error=error_msg,
                         progress=0
                     )
+                    # 通知UI任务失败
+                    self._notify_task_failed(task.task_id, error_msg)
                     return
 
                 # 上传成功，更新文件URL
@@ -428,6 +432,8 @@ class ASRTaskManager:
                 status=ASRTaskStatus.FAILED,
                 error=str(e)
             )
+            # 通知UI任务失败
+            self._notify_task_failed(task.task_id, str(e))
 
     def _ensure_polling_thread(self) -> None:
         """确保轮询线程正在运行"""
@@ -568,6 +574,8 @@ class ASRTaskManager:
                                 error=error_msg,
                                 progress=0
                             )
+                            # 通知UI任务失败
+                            self._notify_task_failed(task.task_id, error_msg)
                             aliyun_task_id = response.output.task_id if hasattr(response, 'output') else 'unknown'
                             logger.error(f"ASR任务失败 - 内部ID: {task.task_id}, 阿里云ID: {aliyun_task_id}, 错误: {error_msg}")
                     except Exception as e:
@@ -664,6 +672,22 @@ class ASRTaskManager:
 
         except Exception as e:
             logger.error(f"通知任务完成失败: {str(e)}")
+
+    def _notify_task_failed(self, task_id: Optional[str], error_message: str) -> None:
+        """
+        通知UI任务失败
+
+        Args:
+            task_id: 应用内唯一标识符（可选）
+            error_message: 错误信息
+        """
+        try:
+            # 如果有task_id，使用数据桥通知UI
+            if task_id:
+                logger.info(f'通知任务失败，task_id: {task_id}, 错误: {error_message}')
+                data_bridge.emit_task_error(task_id, error_message)
+        except Exception as e:
+            logger.error(f"通知任务失败失败: {str(e)}")
 
     def stop(self) -> None:
         """停止任务管理器"""

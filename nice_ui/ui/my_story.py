@@ -4,7 +4,7 @@ import shutil
 from enum import Enum, auto, IntEnum
 from typing import Optional, Tuple, Literal
 
-from PySide6.QtCore import Qt, QThread
+from PySide6.QtCore import Qt, QThread, Slot
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QWidget, QTableWidgetItem, QHeaderView, QDialog, QCheckBox, )
 from pydantic import ValidationError
 
@@ -72,6 +72,7 @@ class TableApp(CardWidget):
         self.data_bridge.update_table.connect(self.table_row_init)
         self.data_bridge.whisper_working.connect(self.table_row_working)
         self.data_bridge.whisper_finished.connect(self.table_row_finish)
+        self.data_bridge.task_error.connect(self.table_row_failed)
         self.selectAllBtn.stateChanged.connect(self._selectAll)
         self.selectAllBtn.stateChanged.connect(self.exportBtn.setVisible)
         self.selectAllBtn.stateChanged.connect(self.deleteBtn.setVisible)
@@ -436,6 +437,47 @@ class TableApp(CardWidget):
 
         else:
             logger.error(f'缓存中未找到{unid}的行索引,缓存:{self.row_cache}')
+
+    @Slot(str, str)
+    def table_row_failed(self, unid: str, error_message: str):
+        """处理任务失败状态"""
+        logger.error(f"任务失败: {unid} - {error_message}")
+
+        ask = self.row_cache
+        if unid in ask:
+            row = self.row_cache[unid]
+        else:
+            logger.debug(f"缓存未找到文件:{unid}的索引,尝试从列表中查找")
+            row = self.find_row_by_identifier(unid)
+            if row is not None:
+                ask[unid] = row
+            else:
+                logger.error(f"未找到任务:{unid}的行索引")
+                return
+
+        # 更新UI状态
+        progress_bar = self.table.cellWidget(row, TableWidgetColumn.JOB_STATUS)
+        chk = self.table.cellWidget(row, TableWidgetColumn.CHECKBOX)
+
+        if progress_bar:
+            progress_bar.set_status("处理失败")
+        if chk:
+            chk.setEnabled(True)
+
+        # 更新数据库状态为失败
+        orm_result = self._choose_sql_orm(row)
+        if isinstance(orm_result, tuple):
+            # ASR_TRANS 任务
+            srt_orm, trans_orm = orm_result
+            srt_orm.update_table_unid(unid, job_status=0)
+            trans_orm.update_table_unid(unid, job_status=0)
+        else:
+            orm_result.update_table_unid(unid, job_status=0)
+
+        # 设置按钮状态（只显示删除按钮，因为失败的任务可以重新开始）
+        self._set_row_buttons(row, [ButtonType.DELETE])
+
+        logger.info(f"已更新任务失败状态: {unid}")
 
     def addRow_init_all(self, edit_dict: VideoFormatInfo, created_at=None):
         try:
