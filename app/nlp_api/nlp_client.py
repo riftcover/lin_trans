@@ -249,12 +249,12 @@ class NLPAPIClient:
                 # 绝对URL
                 full_url = srt_url
 
-            response = self.client.get(full_url)
-            response.raise_for_status()
-
-            # 保存SRT内容到文件
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(response.text)
+            # 直接流式下载到目标文件，避免内存占用和换行符问题
+            with open(local_path, 'wb') as f:
+                with self.client.stream('GET', full_url) as response:
+                    response.raise_for_status()
+                    for chunk in response.iter_bytes():
+                        f.write(chunk)
 
             logger.info(f"SRT 文件下载成功: {local_path}")
             return True, ""
