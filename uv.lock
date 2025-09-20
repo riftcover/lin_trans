@@ -786,6 +786,15 @@ wheels = [
 ]
 
 [[package]]
+name = "json-repair"
+version = "0.50.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/71/6d57ed93e43e98cdd124e82ab6231c6817f06a10743e7ae4bc6f66d03a02/json_repair-0.50.1.tar.gz", hash = "sha256:4ee69bc4be7330fbb90a3f19e890852c5fe1ceacec5ed1d2c25cdeeebdfaec76", size = 34864 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ad/be/b1e05740d9c6f333dab67910f3894e2e2416c1ef00f9f7e20a327ab1f396/json_repair-0.50.1-py3-none-any.whl", hash = "sha256:9b78358bb7572a6e0b8effe7a8bd8cb959a3e311144842b1d2363fe39e2f13c5", size = 26020 },
+]
+
+[[package]]
 name = "kaldiio"
 version = "2.18.1"
 source = { registry = "https://pypi.org/simple" }
@@ -870,6 +879,7 @@ dependencies = [
     { name = "dotenv" },
     { name = "funasr" },
     { name = "httpx" },
+    { name = "json-repair" },
     { name = "loguru" },
     { name = "modelscope" },
     { name = "nuitka" },
@@ -903,6 +913,7 @@ requires-dist = [
     { name = "dotenv", specifier = "==0.9.9" },
     { name = "funasr", specifier = "==1.2.6" },
     { name = "httpx", specifier = "==0.27.2" },
+    { name = "json-repair", specifier = ">=0.50.1" },
     { name = "loguru", specifier = "==0.7.3" },
     { name = "modelscope", specifier = "==1.25.0" },
     { name = "nuitka", specifier = "==2.7.12" },
