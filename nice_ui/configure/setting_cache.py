@@ -3,6 +3,7 @@ import os
 from PySide6.QtCore import QSettings
 
 from nice_ui.configure import config
+from nice_ui.ui import SettingsManager
 
 
 def get_setting_cache(settings: QSettings):
@@ -21,17 +22,12 @@ def get_setting_cache(settings: QSettings):
     if settings.value("clone_voicelist", ""):
         config.clone_voicelist = settings.value("clone_voicelist", "").split(',')
 
-    config.params["chatgpt_model"] = settings.value("chatgpt_model", config.params['chatgpt_model'])
-    config.params["localllm_model"] = settings.value("localllm_model", config.params['localllm_model'])
-    config.params["zijiehuoshan_model"] = settings.value("zijiehuoshan_model", config.params['zijiehuoshan_model'])
-    os.environ['OPENAI_API_KEY'] = config.params["chatgpt_key"]
 
     config.params["ttsapi_url"] = settings.value("ttsapi_url", "")
     config.params["ttsapi_extra"] = settings.value("ttsapi_extra", "linlintrans")
     config.params["ttsapi_voice_role"] = settings.value("ttsapi_voice_role", "")
 
     config.params["gptsovits_extra"] = settings.value("gptsovits_extra", "pyvideotrans")
-    config.params["azure_model"] = settings.value("azure_model", config.params['azure_model'])
 
     config.params['translate_channel'] = settings.value("translate_channel", config.params['translate_channel'])
     if config.params['translate_channel'] == 'FreeChatGPT':
@@ -50,3 +46,7 @@ def save_setting(settings: QSettings):
     settings.setValue("proxy", config.proxy)
     settings.setValue("voice_rate", config.params['voice_rate'].replace('%', '').replace('+', ''))
     settings.setValue("clone_voicelist", ','.join(config.clone_voicelist))
+
+if __name__ == '__main__':
+    settings = SettingsManager.get_instance()
+    get_setting_cache(settings)

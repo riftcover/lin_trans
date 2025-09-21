@@ -81,9 +81,6 @@ def parse_init():
         "crf": 13,
         "video_codec": 264,
         "retries": 2,
-        "chatgpt_model": "gpt-3.5-turbo,gpt-4,gpt-4-turbo-preview,qwen",
-        "localllm_model": "qwen",
-        "zijiehuoshan_model": "",
         "separate_sec": 600,
         "audio_rate": 1.5,
         "video_rate": 20,
@@ -214,11 +211,7 @@ clone_voicelist = ["clone"]
 ChatTTS_voicelist = re.split("\,|，", settings["chattts_voice"])
 
 openaiTTS_rolelist = "alloy,echo,fable,onyx,nova,shimmer"
-chatgpt_model_list = [it.strip() for it in settings["chatgpt_model"].split(",")]
-localllm_model_list = [it.strip() for it in settings["localllm_model"].split(",")]
-zijiehuoshan_model_list = [
-    it.strip() for it in settings["zijiehuoshan_model"].split(",")
-]
+
 # 存放 edget-tts 角色列表
 edgeTTS_rolelist = None
 AzureTTS_rolelist = None
@@ -297,48 +290,6 @@ params = {  # 操作系统类型:win32、linux、darwin
     "subtitle_type": 0,  # embed soft
     "voice_autorate": False,
     "auto_ajust": True,
-    "deepl_authkey": "",
-    "deepl_api": "",
-    "deeplx_address": "",
-    "ott_address": "",
-    "tencent_SecretId": "",
-    "tencent_SecretKey": "",
-    "baidu_appid": "",
-    "baidu_miyue": "",
-    "coquitts_role": "",
-    "coquitts_key": "",
-    "elevenlabstts_role": [],
-    "elevenlabstts_key": "",
-    "clone_api": "",
-    "zh_recogn_api": "",
-    "chatgpt_api": "",
-    "chatgpt_key": "",
-    "localllm_api": "",
-    "localllm_key": "",
-    "zijiehuoshan_key": "",
-    "chatgpt_model": chatgpt_model_list[0],
-    "localllm_model": localllm_model_list[0],
-    "zijiehuoshan_model": zijiehuoshan_model_list[0],
-    "chatgpt_template": "",
-    "localllm_template": "",
-    "zijiehuoshan_template": "",
-    "azure_api": "",
-    "azure_key": "",
-    "azure_model": "gpt-3.5-turbo",
-    "azure_template": "",
-    "openaitts_role": openaiTTS_rolelist,
-    "gemini_key": "",
-    "gemini_template": "",
-    "ttsapi_url": "",
-    "ttsapi_voice_role": "",
-    "ttsapi_extra": "linlin",
-    "trans_api_url": "",
-    "trans_secret": "",
-    "azure_speech_region": "",
-    "azure_speech_key": "",
-    "gptsovits_url": "",
-    "gptsovits_role": "",
-    "gptsovits_extra": "linlin",
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"
