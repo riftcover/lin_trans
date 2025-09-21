@@ -35,7 +35,7 @@ class GladiaASRClient:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"文件不存在: {file_path}")
 
-        logger.info(f"直接上传音频文件到Gladia: {file_path}")
+        logger.info(f"直接上传音频文件到Cloud: {file_path}")
 
         with open(file_path, "rb") as f:
             file_content = f.read()
@@ -53,7 +53,7 @@ class GladiaASRClient:
 
         result = response.json()
         audio_url = result["audio_url"]
-        logger.info(f"Gladia直接上传成功: {audio_url}")
+        logger.info(f"Cloud直接上传成功: {audio_url}")
         return audio_url
 
     def upload_audio_oss(self, file_path: str) -> str:

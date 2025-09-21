@@ -116,7 +116,7 @@ class GladiaTaskManager:
             )
             self._notify_task_progress(task.task_id, 25)
 
-            logger.info(f"成功提交ASR任务 - 内部ID: {task_id}, Gladia结果URL: {result_url}")
+            logger.info(f"成功提交ASR任务 - 内部ID: {task_id}, Cloud结果URL: {result_url}")
 
             # 确保轮询线程正在运行
             self._ensure_polling_thread()
