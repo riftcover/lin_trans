@@ -8,7 +8,7 @@ import requests
 from dashscope.audio.asr import Transcription
 from pydantic import BaseModel, Field, field_validator
 
-from app.cloud_asr import aliyun_sdk
+from app.cloud_asr import cloud_sdk
 from utils import logger
 
 
@@ -91,9 +91,9 @@ class AliyunASRClient:
             }
 
             # 使用DashScope SDK提交异步转写任务
-            logger.trace(f'aliyun_sdk:{aliyun_sdk}')
+            logger.trace(f'aliyun_sdk:{cloud_sdk}')
             transcribe_response = Transcription.async_call(
-                model=aliyun_sdk.asr_model,  # 使用最新的模型
+                model=cloud_sdk.asr_model,  # 使用最新的模型
                 file_urls=[audio_file],  # URL地址
                 language_hints=[language_hint],  # 语言提示
                 headers=custom_headers  # 添加自定义请求头
@@ -488,7 +488,7 @@ def create_aliyun_asr_client() -> AliyunASRClient:
     Returns:
         AliyunASRClient: 阿里云ASR客户端实例
     """
-    if api_key := aliyun_sdk.asr_api_key:
+    if api_key := cloud_sdk.asr_api_key:
         return AliyunASRClient(api_key)
     else:
         raise ValueError("阿里云ASR配置不完整，请检查配置中的阿里云DashScope API Key")

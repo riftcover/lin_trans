@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 from PySide6.QtCore import QSettings
 
-from app.cloud_asr import aliyun_sdk
+from app.cloud_asr import cloud_sdk
 from nice_ui.ui import SettingsManager
 
 
@@ -28,7 +28,7 @@ class AgentRegistry(BaseModel):
     # 预定义的配置
     QWEN_CLOUD_BASE_URL: ClassVar[str] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     QWEN_CCLOUD_MODEL: ClassVar[str] = "qwen-plus"
-    QWEN_CCLOUD_KEY: ClassVar[str] = aliyun_sdk.asr_api_key
+    QWEN_CCLOUD_KEY: ClassVar[str] = cloud_sdk.asr_api_key
 
     QWEN_BASE_URL: ClassVar[str] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     QWEN_MODEL: ClassVar[str] = "qwen-plus"

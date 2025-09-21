@@ -7,7 +7,7 @@ from queue import Queue
 
 from nice_ui.configure import ModelDict
 from utils import logger
-
+from utils.crypto_utils import crypto_utils
 
 def get_executable_path():
     # 这个函数会返回可执行文件所在的目录
@@ -233,6 +233,7 @@ class PplSdkConfig(BaseModel):
     bucket: str = "asr-file-tth"
     asr_api_key: str = ""
     asr_model: str = "paraformer-v2"
+    gladia_api_key: str = ""
 
 class CloudConfig(BaseModel):
     ppl_sdk: PplSdkConfig
@@ -241,8 +242,6 @@ class CloudConfig(BaseModel):
 def get_cloud_config():
     """获取云服务配置，优先从加密文件加载，如果不存在则使用环境变量"""
     try:
-        from nice_ui.util.crypto_utils import crypto_utils
-
         # 初始化加密工具
         crypto_utils.initialize()
 
@@ -260,12 +259,6 @@ def get_cloud_config():
     except Exception as e:
         logger.error(f"获取云服务配置失败: {str(e)}")
 
-    # 如果都失败了，返回空配置
-    return CloudConfig(
-        ppl_sdk=PplSdkConfig()
-    )
-
-# 使用函数获取配置
 aa_bb = get_cloud_config()
 
 # 配置
@@ -347,9 +340,6 @@ params = {  # 操作系统类型:win32、linux、darwin
     "gptsovits_url": "",
     "gptsovits_role": "",
     "gptsovits_extra": "linlin",
-
-    # 阿里云ASR配置
-    "aliyun_asr_api_key": ""
 }
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"

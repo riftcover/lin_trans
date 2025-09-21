@@ -1,6 +1,6 @@
 import base64
 import json
-import os
+
 from pathlib import Path
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -44,7 +44,7 @@ class CryptoUtils:
         """初始化加密工具"""
         if password is None:
             # 如果没有提供密码，尝试从环境变量获取
-            password = os.environ.get('LINLIN_CRYPTO_KEY', 'linlintrans_default_key')
+            password = 'linlin_pan4646606'
         
         self._key = self._derive_key(password)
         self._fernet = Fernet(self._key)

@@ -167,3 +167,5 @@ orm/linlin.db
 /nuitka-crash-report.xml
 !/tmp/asr_tasks.json
 !/.vscode/
+!/tmp/asr_tasks.json
+!/test/asr_xx.ipynb

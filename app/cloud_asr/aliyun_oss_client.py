@@ -13,7 +13,7 @@ from typing import Tuple, Optional, Callable
 
 import alibabacloud_oss_v2 as oss
 
-from app.cloud_asr import aliyun_sdk
+from app.cloud_asr import cloud_sdk
 from utils import logger
 
 
@@ -252,10 +252,10 @@ def create_oss_client() -> Optional[AliyunOSSClientV2]:
         Optional[AliyunOSSClientV2]: OSS客户端实例，如果配置不完整则返回None
     """
     # 从配置中获取阿里云OSS的凭证
-    access_key_id = aliyun_sdk.aki
-    access_key_secret = aliyun_sdk.aks
-    region = aliyun_sdk.region
-    bucket_name = aliyun_sdk.bucket
+    access_key_id = cloud_sdk.aki
+    access_key_secret = cloud_sdk.aks
+    region = cloud_sdk.region
+    bucket_name = cloud_sdk.bucket
 
     # 检查配置是否完整
     if not access_key_id or not access_key_secret or not bucket_name:
@@ -307,10 +307,6 @@ def upload_file_for_asr(local_file_path: str, progress_callback: Optional[Callab
             logger.trace(f"segment_data文件上传成功: {url}")
         else:
             logger.error(f"segment_data文件上传失败: {error}")
-
-        # success = True
-        # url = 'https://asr-file-tth.oss-cn-beijing.aliyuncs.com/nlp_segments/1755866850_test_zh_segment_data.json?x-oss-signature-version=OSS4-HMAC-SHA256&x-oss-date=20250822T124732Z&x-oss-expires=900&x-oss-credential=LTAI5t7eCsZFb4AnqJFX5e3v%2F20250822%2Fcn-beijing%2Foss%2Faliyun_v4_request&x-oss-signature=2d74321fcf22191c5837a8a34be6e13fa1c03dc39093d454808d64632c4d874c'
-        # error =None
 
         return success, url, error
 

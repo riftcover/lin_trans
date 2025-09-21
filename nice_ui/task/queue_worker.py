@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from agent.srt_translator_adapter import SRTTranslatorAdapter
 from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
 from agent.enhanced_common_agent import translate_document
-from app.cloud_asr.task_manager import get_task_manager, ASRTaskStatus
+from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, ASRTaskStatus
 from app.cloud_trans.task_manager import get_trans_task_manager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
@@ -62,7 +62,7 @@ class CloudASRTaskProcessor(TaskProcessor):
         FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
 
         # 获取任务管理器实例
-        task_manager = get_task_manager()
+        task_manager = get_gladia_task_manager()
 
         # 获取语言代码
         language_code = config.params["source_language_code"]
@@ -80,8 +80,8 @@ class CloudASRTaskProcessor(TaskProcessor):
             language=language_code
         )
 
-        # 提交任务到阿里云
-        logger.info(f'提交ASR任务到阿里云: {task.unid}')
+        # 提交任务到Gladia
+        logger.info(f'提交ASR任务到云: {task.unid}')
         task_manager.submit_task(task.unid)
 
         # 是否等待任务完成
@@ -280,8 +280,8 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         logger.debug(f'准备音视频转wav格式:{final_name}')
         FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
 
-        # 获取ASR任务管理器实例
-        asr_task_manager = get_task_manager()
+        # 使用Gladia ASR任务管理器
+        asr_task_manager = get_gladia_task_manager()
 
         # 获取语言代码
         language_code = config.params["source_language_code"]
@@ -300,8 +300,8 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             auto_billing=False  # 组合任务禁用ASR自动扣费
         )
 
-        # 提交任务到阿里云
-        logger.info(f'提交ASR任务到阿里云: {task.unid}')
+        # 提交任务到Gladia
+        logger.trace(f'提交ASR任务到云: {task.unid}')
         asr_task_manager.submit_task(task.unid)
 
         # 云ASR+翻译任务必须等待ASR完成，因为翻译需要SRT文件
