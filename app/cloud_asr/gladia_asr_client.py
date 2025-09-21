@@ -1,16 +1,16 @@
 """
+Gladia ASR 客户端
 """
 
 import os
 import time
-
-import requests
-from pydantic import HttpUrl
 from typing import Dict, List, Optional
 
+import requests
+
 from app.cloud_asr import cloud_sdk
-from utils import logger
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
+from utils import logger
 
 
 class GladiaASRClient:
@@ -217,8 +217,6 @@ class GladiaASRClient:
             ]
         """
         utterances = result.get('result', {}).get('transcription', {}).get('utterances', [])
-        logger.trace('utterances')
-        logger.trace(utterances)
 
         segments = []
         for utterance in utterances:
@@ -248,7 +246,6 @@ class GladiaASRClient:
 
             segments.append(segment)
 
-        logger.info(f"成功转换了{len(segments)}个segments")
         return segments
     
     def get_transcript(self, result: Dict) -> str:

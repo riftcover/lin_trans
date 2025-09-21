@@ -2,9 +2,8 @@ import json
 import os
 import threading
 import time
-import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 
 from pydantic import BaseModel, Field, field_validator
 from pydantic.json import pydantic_encoder

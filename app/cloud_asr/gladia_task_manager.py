@@ -6,19 +6,16 @@ import json
 import os
 import threading
 import time
-import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
-
+from typing import Dict, Optional
 
 from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
-
 from nice_ui.configure.signal import data_bridge
-from utils.file_utils import write_segment_data_file
 from utils import logger
 from utils.file_utils import funasr_write_srt_file
+from utils.file_utils import write_segment_data_file
 
 
 class ASRTaskStatus:
