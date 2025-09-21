@@ -194,18 +194,61 @@ class GladiaASRClient:
         return result
     
     def get_segments(self, result: Dict) -> List[Dict]:
-        """获取语音片段"""
+        """
+        获取语音片段，转换为项目内部使用的segments格式
+
+        将Gladia API返回的utterances格式转换为与阿里云ASR兼容的segments格式，
+        包含text、timestamp、start、end、spk等字段。
+
+        Args:
+            result: Gladia API返回的完整结果
+
+        Returns:
+            List[Dict]: 转换后的segments列表，格式为:
+            [
+                {
+                    "text": "Do you think that you're a better skier than you actually are?",
+                    "timestamp": [[388, 508], [589, 709], [829, 1089], ...],
+                    "start": 388,
+                    "end": 4012,
+                    "spk": 0
+                },
+                ...
+            ]
+        """
         utterances = result.get('result', {}).get('transcription', {}).get('utterances', [])
+        logger.trace('utterances')
+        logger.trace(utterances)
 
         segments = []
         for utterance in utterances:
-            segments.append({
-                'start': int(utterance.get('start', 0) * 1000),
-                'end': int(utterance.get('end', 0) * 1000),
-                'text': utterance.get('text', '').strip(),
-                'speaker': utterance.get('speaker', 0)
-            })
+            # 提取基本信息
+            start_time = int(utterance.get('start', 0) * 1000)  # 转换为毫秒
+            end_time = int(utterance.get('end', 0) * 1000)      # 转换为毫秒
+            text = utterance.get('text', '').strip()
+            speaker = utterance.get('speaker', 0)
 
+            # 提取词级时间戳
+            words = utterance.get('words', [])
+            timestamp = []
+
+            for word in words:
+                word_start = int(word.get('start', 0) * 1000)  # 转换为毫秒
+                word_end = int(word.get('end', 0) * 1000)      # 转换为毫秒
+                timestamp.append([word_start, word_end])
+
+            # 构建segment对象，与阿里云ASR格式兼容
+            segment = {
+                'text': text,
+                'timestamp': timestamp,
+                'start': start_time,
+                'end': end_time,
+                'spk': speaker  # 使用spk字段保持与阿里云ASR一致
+            }
+
+            segments.append(segment)
+
+        logger.info(f"成功转换了{len(segments)}个segments")
         return segments
     
     def get_transcript(self, result: Dict) -> str:

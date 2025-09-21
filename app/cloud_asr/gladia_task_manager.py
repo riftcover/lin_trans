@@ -10,13 +10,13 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 
-from pydantic import BaseModel, Field
+
 from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
-from nice_ui.configure import config
-from nice_ui.configure.signal import data_bridge
 
+from nice_ui.configure.signal import data_bridge
+from utils.file_utils import write_segment_data_file
 from utils import logger
 from utils.file_utils import funasr_write_srt_file
 
@@ -250,11 +250,32 @@ class GladiaTaskManager:
             segments = client.get_segments(result)
 
             if segments:
+                # 更新进度到95%
+                self.update_task(task.task_id, progress=95)
+                self._notify_task_progress(task.task_id, 95)
+
                 # 生成SRT文件
                 srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
                 funasr_write_srt_file(segments, srt_file_path)
 
-                # 更新任务状态
+                # 更新进度到97%
+                self.update_task(task.task_id, progress=97)
+                self._notify_task_progress(task.task_id, 97)
+
+                # 生成segment_data文件（供智能分句功能使用）
+                try:
+                    segment_data_path = self._create_segment_data_file(segments, task.audio_file)
+                    # 保存segment_data路径信息到工作对象中，供UI使用
+                    self._save_segment_data_path(segment_data_path, task.audio_file, task.language)
+                    logger.info(f"已生成segment_data文件，智能分句功能可用")
+                except Exception as e:
+                    logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+
+                # 更新进度到99%
+                self.update_task(task.task_id, progress=99)
+                self._notify_task_progress(task.task_id, 99)
+
+                # 更新任务状态为完成
                 self.update_task(task.task_id, status=ASRTaskStatus.COMPLETED, progress=100)
                 self._notify_task_completed(task.task_id)
 
@@ -278,6 +299,37 @@ class GladiaTaskManager:
     def _notify_task_failed(self, task_id: str, error: str):
         """通知任务失败"""
         data_bridge.emit_task_error(task_id, error)
+
+    def _create_segment_data_file(self, segments, audio_file):
+        """创建segment_data文件"""
+
+
+        segment_data_path = f"{os.path.splitext(audio_file)[0]}_segment_data.json"
+        write_segment_data_file(segments, segment_data_path)
+        logger.info(f"已创建segment_data文件: {segment_data_path}")
+        return segment_data_path
+
+    def _save_segment_data_path(self, segment_data_path, audio_file, language):
+        """保存segment_data路径信息，供UI智能分句功能使用"""
+        try:
+            import json
+            import time
+
+            # 创建一个元数据文件来保存segment_data路径
+            metadata_path = f"{os.path.splitext(audio_file)[0]}_metadata.json"
+            metadata = {
+                'segment_data_path': segment_data_path,
+                'created_time': time.time(),
+                'audio_file': audio_file,
+                'language': language  # 添加语言信息
+            }
+
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+            logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
+        except Exception as e:
+            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
 
 
 # 全局任务管理器实例
