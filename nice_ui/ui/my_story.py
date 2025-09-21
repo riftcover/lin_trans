@@ -340,12 +340,12 @@ class TableApp(CardWidget):
                 if item.job_status in (0, 1):
                     if item.job_status == 1:
                         self._update_job_status(item, obj_data)
-                    self.table_row_init(obj_data, 0, item.created_at)
+                    self.table_row_init(obj_data, 0, item.created_at, is_initialization=True)
                 elif item.job_status == 2:
                     self.addRow_init_all(obj_data, item.created_at)
                 elif item.job_status == 4:
                     # 失败状态：显示为失败状态的行
-                    self.table_row_init(obj_data, 0, item.created_at)
+                    self.table_row_init(obj_data, 0, item.created_at, is_initialization=True)
                     # 立即更新为失败状态显示
                     self.table_row_failed(item.unid, "任务执行失败")
             else:
@@ -359,7 +359,7 @@ class TableApp(CardWidget):
         orm_w = self.orm_factory.set_orm_job_status(work_type)
         orm_w.update_table_unid(item.unid, job_status=new_status)
 
-    def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1, created_at=None):
+    def table_row_init(self, obj_format: VideoFormatInfo, job_status: JOB_STATUS = 1, created_at=None, is_initialization=False):
         if job_status == 1:
             logger.debug(f"添加新文件:{obj_format.raw_noextname} 到我的创作列表")
 
@@ -370,7 +370,15 @@ class TableApp(CardWidget):
 
         filename = obj_format.raw_noextname
         unid = obj_format.unid
-        row_position = 0  # 插入到第一行
+
+        # 简化插入逻辑：
+        # - 初始化时：添加到末尾（数据已按时间排序）
+        # - 新任务时：添加到第一行（最新的）
+        if is_initialization:
+            row_position = self.table.rowCount()  # 添加到末尾
+        else:
+            row_position = 0  # 新任务添加到第一行
+
         self.table.insertRow(row_position)
         chk, file_status = self._add_common_widgets(
             row_position, filename, unid, job_status, obj_format, created_at
