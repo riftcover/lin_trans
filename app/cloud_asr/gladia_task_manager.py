@@ -202,8 +202,7 @@ class GladiaTaskManager:
 
     def _polling_worker(self):
         """轮询工作线程"""
-        api_key = config.params.get("gladia_api_key", "")
-        client = GladiaASRClient(api_key) if api_key else None
+        client = creat_gladia_asr_client()
 
         while self.polling_active:
             try:

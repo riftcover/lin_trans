@@ -405,7 +405,7 @@ class TableApp(CardWidget):
         if status_container and status_container.layout():
             progress_bar = status_container.layout().itemAt(0).widget()
             if hasattr(progress_bar, 'setText'):
-                progress_bar.setText(f"处理中 {progress}%")
+                progress_bar.setText(f"处理中")
 
     def find_row_by_identifier(self, unid: str) -> Optional[int]:
         # 此函数用于根据唯一标识符（unid）在表格中查找行索引
@@ -454,7 +454,7 @@ class TableApp(CardWidget):
 
 
         else:
-            logger.error(f'缓存中未找到{unid}的行索引,缓存:{self.row_cache}')
+            logger.error(f'缓存中未找到{unid}的行索引')
 
     @Slot(str, str)
     def table_row_failed(self, unid: str, error_message: str):
