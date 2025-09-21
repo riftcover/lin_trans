@@ -171,10 +171,7 @@ class AliyunOSSClientV2:
 
         )
 
-        # 打印预签名请求的详细信息
-        logger.info("生成预签名请求成功:")
-        logger.trace(f"  - URL: {pre_result.url}")
-
+        logger.info("生成预签名请求成功")
         return pre_result.url
 
     def upload_and_generate_url(self,
@@ -303,9 +300,7 @@ def upload_file_for_asr(local_file_path: str, progress_callback: Optional[Callab
             progress_callback=progress_callback
         )
 
-        if success:
-            logger.trace(f"segment_data文件上传成功: {url}")
-        else:
+        if not success:
             logger.error(f"segment_data文件上传失败: {error}")
 
         return success, url, error

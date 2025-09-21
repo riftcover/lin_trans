@@ -239,8 +239,6 @@ class NLPAPIClient:
             Tuple[bool, str]: (是否成功, 错误信息)
         """
         try:
-            logger.info(f"下载 SRT 文件: {srt_url} -> {local_path}")
-
             # 构建完整的URL
             if srt_url.startswith('/'):
                 # 相对URL，需要添加base_url
