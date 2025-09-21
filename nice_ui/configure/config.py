@@ -162,12 +162,11 @@ obj = json.load(lang_path.open("r", encoding="utf-8"))
 transobj = obj["translate_language"]
 # 软件界面
 uilanglist = obj["ui_lang"]
-# 语言代码:语言显示名称
+# 语言显示名称:语言代码 (新格式)
 langlist: dict = obj["language_code_list"]
-# 语言显示名称：语言代码
-rev_langlist = {code_alias: code for code, code_alias in langlist.items()}
+
 # 语言显示名称 list
-langnamelist = list(langlist.values())
+langnamelist = list(langlist.keys())
 
 # 模型列表
 model_list: ModelDict = obj["model_code_list"]
@@ -273,7 +272,7 @@ params = {  # 操作系统类型:win32、linux、darwin
     "source_module_key": "中文模型",
     "detect_language": "en",
     "translate_status": False,
-    "target_language": "zh-cn",
+    "target_language": "zh",
     "translate_channel": "qwen",
     "subtitle_language": "chi",
     "prompt_name": "默认",

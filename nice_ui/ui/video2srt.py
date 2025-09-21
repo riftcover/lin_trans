@@ -10,6 +10,7 @@ from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
+from nice_ui.ui import LANGUAGE_WIDTH
 from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
 from orm.queries import PromptsOrm
@@ -75,14 +76,7 @@ class Video2SRT(QWidget):
             else:
                 self.source_language.addItem(lang_name, )
 
-        # 动态计算并设置最适合的宽度
-        max_width = 0
-        for lang_name in config.langnamelist:
-            text_width = self.source_language.fontMetrics().boundingRect(lang_name).width()
-            max_width = max(max_width, text_width)
-
-        # 设置合适的宽度（文本宽度 + 图标 + 箭头 + 边距）
-        self.source_language.setFixedWidth(max_width + 60)
+        self.source_language.setFixedWidth(LANGUAGE_WIDTH)
 
         self.source_language.setCurrentText(config.params["source_language"])
 
@@ -127,15 +121,9 @@ class Video2SRT(QWidget):
 
         translate_language_label = BodyLabel("翻译语种")
         self.translate_language_combo = TransComboBox()
-        self.translate_language_combo.setFixedWidth(98)
+        self.translate_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.translate_language_combo.addItems(self.language_name)
-        if (
-                config.params["target_language"]
-                and config.params["target_language"] in self.language_name
-        ):
-            self.translate_language_combo.setCurrentText(
-                config.params["target_language"]
-            )
+        self.translate_language_combo.setCurrentText(config.params["target_language"])
         translate_language_layout.addWidget(translate_language_label)
         translate_language_layout.addWidget(self.translate_language_combo)
         combo_layout.addLayout(translate_language_layout)

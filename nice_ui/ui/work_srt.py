@@ -11,6 +11,7 @@ from components.widget import DeleteButton, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
+from nice_ui.ui import LANGUAGE_WIDTH
 from orm.queries import PromptsOrm
 from utils import logger
 from utils.agent_dict import agent_settings
@@ -60,7 +61,7 @@ class WorkSrt(QWidget):
         source_language_name = BodyLabel("原始语种")
 
         self.source_language_combo = TransComboBox(self)
-        self.source_language_combo.setFixedWidth(98)
+        self.source_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.source_language_combo.addItems(self.language_name)
         if (
                 config.params["source_language"]
@@ -85,7 +86,7 @@ class WorkSrt(QWidget):
         translate_language_name = BodyLabel("翻译语种")
 
         self.translate_language_combo = TransComboBox(self)
-        self.translate_language_combo.setFixedWidth(117)
+        self.translate_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.translate_language_combo.addItems(self.language_name)
         if (
                 config.params["target_language"]
@@ -121,25 +122,6 @@ class WorkSrt(QWidget):
         engine_layout.addWidget(translate_model_name)
         engine_layout.addWidget(self.translate_model)
         combo_layout.addLayout(engine_layout)
-
-        prompt_layout = QHBoxLayout()
-        prompt_layout.setSpacing(5)
-        prompt_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeading
-            | Qt.AlignmentFlag.AlignLeft
-            | Qt.AlignmentFlag.AlignVCenter
-        )
-        ai_prompt_name = BodyLabel("提示词")
-        self.ai_prompt = TransComboBox(self)
-        self.ai_prompt.setFixedWidth(98)
-        self.ai_prompt.addItems(self._get_ai_prompt())
-        self.ai_prompt.setCurrentText(config.params["prompt_name"])
-        prompt_layout.addWidget(ai_prompt_name)
-        prompt_layout.addWidget(self.ai_prompt)
-        main_layout.addLayout(prompt_layout)
-
-        ai_prompt_name.hide()
-        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)

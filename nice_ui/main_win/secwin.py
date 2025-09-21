@@ -12,10 +12,8 @@ from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.task.main_worker import QueueConsumer, Worker
-from nice_ui.util import tools
 from nice_ui.util.tools import start_tools
 from utils import logger
-from videotrans import translator
 
 # 常量定义
 DEFAULT_PROGRESS_RANGE = (0, 100)
