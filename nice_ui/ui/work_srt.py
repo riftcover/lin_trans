@@ -7,7 +7,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, )
 
 from agent import get_translate_code, translate_api_name
-from components.widget import DeleteButton, SearchableComboBox
+from components.widget import DeleteButton, SearchableComboBox, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
@@ -72,6 +72,7 @@ class WorkSrt(QWidget):
             self.source_language_combo.setCurrentIndex(2)
         source_layout.addWidget(source_language_name)
         source_layout.addWidget(self.source_language_combo)
+        source_layout.addStretch()
         combo_layout.addLayout(source_layout)
 
         # 翻译语种布局
@@ -98,6 +99,7 @@ class WorkSrt(QWidget):
 
         translate_layout.addWidget(translate_language_name)
         translate_layout.addWidget(self.translate_language_combo)
+        translate_layout.addStretch()
         combo_layout.addLayout(translate_layout)
 
         # 翻译引擎布局
@@ -111,7 +113,7 @@ class WorkSrt(QWidget):
 
         translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = SearchableComboBox(self)
+        self.translate_model = TransComboBox()
         self.translate_model.setFixedWidth(117)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
@@ -121,6 +123,7 @@ class WorkSrt(QWidget):
 
         engine_layout.addWidget(translate_model_name)
         engine_layout.addWidget(self.translate_model)
+        engine_layout.addStretch()
         combo_layout.addLayout(engine_layout)
 
         # 媒体表格卡片

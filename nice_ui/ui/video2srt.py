@@ -6,7 +6,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
 
 from agent import get_translate_code, translate_api_name
-from components.widget import DeleteButton, SearchableComboBox
+from components.widget import DeleteButton, SearchableComboBox, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
@@ -68,7 +68,7 @@ class Video2SRT(QWidget):
 
         self.source_language = SearchableComboBox()
 
-        # 添加语言项目，为法语添加云图标
+        # todo:添加云图标
         for lang_name in config.langnamelist:
             if lang_name in ["法语", "French", "俄语"]:
                 # 使用专业云服务图标
@@ -82,6 +82,7 @@ class Video2SRT(QWidget):
 
         source_layout.addWidget(source_language_label)
         source_layout.addWidget(self.source_language)
+        source_layout.addStretch()
         combo_layout.addLayout(source_layout)
 
         # 识别引擎布局
@@ -96,13 +97,14 @@ class Video2SRT(QWidget):
         # 识别引擎
         recognition_label = BodyLabel("识别引擎")
 
-        self.source_model = SearchableComboBox()
+        self.source_model = TransComboBox()
         self.source_model.setFixedWidth(131)
         model_type = self.settings.value("source_module_status", type=int)
         self.source_model.addItems(config.model_code_list)
         self.source_model.setCurrentText(config.params["source_module_key"])
         recognition_layout.addWidget(recognition_label)
         recognition_layout.addWidget(self.source_model)
+        recognition_layout.addStretch()
         combo_layout.addLayout(recognition_layout)
 
         combo_layout.addStretch()
@@ -126,6 +128,7 @@ class Video2SRT(QWidget):
         self.translate_language_combo.setCurrentText(config.params["target_language"])
         translate_language_layout.addWidget(translate_language_label)
         translate_language_layout.addWidget(self.translate_language_combo)
+        translate_language_layout.addStretch()
         combo_layout.addLayout(translate_language_layout)
 
         # 翻译引擎布局
@@ -139,7 +142,7 @@ class Video2SRT(QWidget):
 
         translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = SearchableComboBox(self)
+        self.translate_model = TransComboBox()
         self.translate_model.setFixedWidth(117)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
@@ -149,26 +152,8 @@ class Video2SRT(QWidget):
 
         translate_engine_layout.addWidget(translate_model_name)
         translate_engine_layout.addWidget(self.translate_model)
+        translate_engine_layout.addStretch()
         combo_layout.addLayout(translate_engine_layout)
-
-        prompt_layout = QHBoxLayout()
-        prompt_layout.setSpacing(5)
-        prompt_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeading
-            | Qt.AlignmentFlag.AlignLeft
-            | Qt.AlignmentFlag.AlignVCenter
-        )
-        ai_prompt_name = BodyLabel("提示词")
-        self.ai_prompt = SearchableComboBox(self)
-        self.ai_prompt.setFixedWidth(98)
-        self.ai_prompt.addItems(self._get_ai_prompt())
-        self.ai_prompt.setCurrentText(config.params["prompt_name"])
-        prompt_layout.addWidget(ai_prompt_name)
-        prompt_layout.addWidget(self.ai_prompt)
-        combo_layout.addLayout(prompt_layout)
-
-        ai_prompt_name.hide()
-        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)
