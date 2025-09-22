@@ -4,7 +4,7 @@ SearchableComboBox {
     border: 1px solid rgba(0, 0, 0, 0.073);
     border-radius: 5px;
     /* 移除 border-bottom 以去除底部黑线 */
-    padding: 0 30px 0 10px;
+    padding: 0 20px 0 10px;  /* 缩短右边距，减少文字和下拉箭头间距 */
     color: black;
     background-color: rgba(255, 255, 255, 0.7);
     text-align: left;
