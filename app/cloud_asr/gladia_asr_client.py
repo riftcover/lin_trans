@@ -21,7 +21,7 @@ class GladiaASRClient:
         self.base_url = base_url.rstrip('/')
 
         logger.trace(f"Gladia ASR客户端初始化完成")
-    
+
     def upload_audio_direct(self, file_path: str) -> str:
         """
         直接上传音频文件到Gladia（备用方案）
@@ -103,7 +103,7 @@ class GladiaASRClient:
             return self.upload_audio_oss(file_path)
         else:
             return self.upload_audio_direct(file_path)
-    
+
     def submit_transcription(self, audio_url: str, config: Dict = None) -> str:
         """提交转录任务，返回result_url"""
         data = {
@@ -133,7 +133,7 @@ class GladiaASRClient:
         result_url = result["result_url"]
         logger.info(f"任务提交成功: {result_url}")
         return result_url
-    
+
     def get_result(self, result_url: str) -> Dict:
         """获取转录结果"""
         headers = {
@@ -144,7 +144,7 @@ class GladiaASRClient:
         response = requests.get(result_url, headers=headers)
         response.raise_for_status()
         return response.json()
-    
+
     def wait_for_completion(self, result_url: str, max_wait_time: int = 600) -> Dict:
         """等待转录完成"""
         logger.info("等待转录完成...")
@@ -166,7 +166,7 @@ class GladiaASRClient:
             time.sleep(1)
 
         raise TimeoutError(f"转录超时，超过 {max_wait_time} 秒")
-    
+
     def transcribe_file(self, file_path: str, config: Dict = None, use_oss: bool = True) -> Dict:
         """
         完整的转录流程：上传 -> 提交 -> 等待完成
@@ -192,7 +192,7 @@ class GladiaASRClient:
 
         logger.info("转录流程完成")
         return result
-    
+
     def get_segments(self, result: Dict) -> List[Dict]:
         """
         获取语音片段，转换为项目内部使用的segments格式
@@ -222,7 +222,7 @@ class GladiaASRClient:
         for utterance in utterances:
             # 提取基本信息
             start_time = int(utterance.get('start', 0) * 1000)  # 转换为毫秒
-            end_time = int(utterance.get('end', 0) * 1000)      # 转换为毫秒
+            end_time = int(utterance.get('end', 0) * 1000)  # 转换为毫秒
             text = utterance.get('text', '').strip()
             speaker = utterance.get('speaker', 0)
 
@@ -232,7 +232,7 @@ class GladiaASRClient:
 
             for word in words:
                 word_start = int(word.get('start', 0) * 1000)  # 转换为毫秒
-                word_end = int(word.get('end', 0) * 1000)      # 转换为毫秒
+                word_end = int(word.get('end', 0) * 1000)  # 转换为毫秒
                 timestamp.append([word_start, word_end])
 
             # 构建segment对象，与阿里云ASR格式兼容
@@ -247,7 +247,7 @@ class GladiaASRClient:
             segments.append(segment)
 
         return segments
-    
+
     def get_transcript(self, result: Dict) -> str:
         """获取完整转录文本"""
         return result.get('result', {}).get('transcription', {}).get('full_transcript', '')
@@ -255,6 +255,7 @@ class GladiaASRClient:
     def get_language(self, result: Dict) -> Optional[str]:
         """获取检测到的语言"""
         return result.get('result', {}).get('metadata', {}).get('detected_language')
+
 
 def creat_gladia_asr_client() -> Optional[GladiaASRClient]:
     """从配置中创建Gladia ASR客户端实例"""
@@ -264,17 +265,32 @@ def creat_gladia_asr_client() -> Optional[GladiaASRClient]:
         return None
     return GladiaASRClient(api_key)
 
-def create_config(diarization: bool = False, translation: bool = False) -> Dict:
-    """创建简单配置"""
-    return {
-        "diarization": diarization,
-        "translation": translation,
+
+def create_config(ln: str) -> Dict:
+    """
+    创建配置
+    ln: 转录文件语言
+    """
+
+    config = {
+        "diarization": False,
+        "translation": False,
         "custom_vocabulary": False,
         "custom_spelling": False,
         "language_config": {},
         "name_consistency": False,
         "punctuation_enhanced": False
     }
+
+    if ln != 'auto':
+        data = {"language_config": {
+            "languages": [
+                ln
+            ]
+        }
+        }
+        config.update(data)
+    return config
 
 
 # 使用示例

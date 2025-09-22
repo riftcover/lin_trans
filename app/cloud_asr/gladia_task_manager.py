@@ -103,8 +103,8 @@ class GladiaTaskManager:
             self._notify_task_progress(task.task_id, 15)
 
             # 提交转录任务
-            logger.info(f"开始提交转录任务 - 任务ID: {task_id}")
-            config_dict = create_config(diarization=False)  # 简化配置
+            logger.info(f"开始提交转录任务 - 任务ID: {task_id}, 语言:{task.language}")
+            config_dict = create_config(task.language)
             result_url = client.submit_transcription(audio_url, config_dict)
 
             # 更新任务状态
