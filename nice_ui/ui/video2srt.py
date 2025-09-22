@@ -144,7 +144,7 @@ class Video2SRT(QWidget):
 
         self.translate_model = TransComboBox()
         self.translate_model.setFixedWidth(117)
-        # todo: 翻译引擎列表需调整
+
         translate_list = get_translate_code()
         self.translate_model.addItems(translate_list)
         translate_name = config.params["translate_channel"]
@@ -154,6 +154,25 @@ class Video2SRT(QWidget):
         translate_engine_layout.addWidget(self.translate_model)
         translate_engine_layout.addStretch()
         combo_layout.addLayout(translate_engine_layout)
+
+        prompt_layout = QHBoxLayout()
+        prompt_layout.setSpacing(5)
+        prompt_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+        ai_prompt_name = BodyLabel("提示词")
+        self.ai_prompt = SearchableComboBox(self)
+        self.ai_prompt.setFixedWidth(98)
+        self.ai_prompt.addItems(self._get_ai_prompt())
+        self.ai_prompt.setCurrentText(config.params["prompt_name"])
+        prompt_layout.addWidget(ai_prompt_name)
+        prompt_layout.addWidget(self.ai_prompt)
+        combo_layout.addLayout(prompt_layout)
+
+        ai_prompt_name.hide()
+        self.ai_prompt.hide()
 
         # 媒体表格卡片
         table_card = CardWidget(self)
