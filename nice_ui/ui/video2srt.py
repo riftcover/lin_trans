@@ -67,7 +67,7 @@ class Video2SRT(QWidget):
         source_language_label = BodyLabel("原始语种")
 
         self.source_language = SearchableComboBox()
-
+        self.source_language.addItem("自动检测")
         # todo:添加云图标
         for lang_name in config.langnamelist:
             if lang_name in ["法语", "French", "俄语"]:
