@@ -6,7 +6,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
 
 from agent import get_translate_code, translate_api_name
-from components.widget import DeleteButton, TransComboBox
+from components.widget import DeleteButton, SearchableComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
@@ -66,7 +66,7 @@ class Video2SRT(QWidget):
 
         source_language_label = BodyLabel("原始语种")
 
-        self.source_language = TransComboBox()
+        self.source_language = SearchableComboBox()
 
         # 添加语言项目，为法语添加云图标
         for lang_name in config.langnamelist:
@@ -96,7 +96,7 @@ class Video2SRT(QWidget):
         # 识别引擎
         recognition_label = BodyLabel("识别引擎")
 
-        self.source_model = TransComboBox()
+        self.source_model = SearchableComboBox()
         self.source_model.setFixedWidth(131)
         model_type = self.settings.value("source_module_status", type=int)
         self.source_model.addItems(config.model_code_list)
@@ -120,7 +120,7 @@ class Video2SRT(QWidget):
         )
 
         translate_language_label = BodyLabel("翻译语种")
-        self.translate_language_combo = TransComboBox()
+        self.translate_language_combo = SearchableComboBox()
         self.translate_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.translate_language_combo.addItems(self.language_name)
         self.translate_language_combo.setCurrentText(config.params["target_language"])
@@ -139,7 +139,7 @@ class Video2SRT(QWidget):
 
         translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = TransComboBox(self)
+        self.translate_model = SearchableComboBox(self)
         self.translate_model.setFixedWidth(117)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
@@ -159,7 +159,7 @@ class Video2SRT(QWidget):
             | Qt.AlignmentFlag.AlignVCenter
         )
         ai_prompt_name = BodyLabel("提示词")
-        self.ai_prompt = TransComboBox(self)
+        self.ai_prompt = SearchableComboBox(self)
         self.ai_prompt.setFixedWidth(98)
         self.ai_prompt.addItems(self._get_ai_prompt())
         self.ai_prompt.setCurrentText(config.params["prompt_name"])

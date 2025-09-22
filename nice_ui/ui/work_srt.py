@@ -7,7 +7,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QTableWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, )
 
 from agent import get_translate_code, translate_api_name
-from components.widget import DeleteButton, TransComboBox
+from components.widget import DeleteButton, SearchableComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
@@ -60,7 +60,7 @@ class WorkSrt(QWidget):
 
         source_language_name = BodyLabel("原始语种")
 
-        self.source_language_combo = TransComboBox(self)
+        self.source_language_combo = SearchableComboBox(self)
         self.source_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.source_language_combo.addItems(self.language_name)
         if (
@@ -85,7 +85,7 @@ class WorkSrt(QWidget):
 
         translate_language_name = BodyLabel("翻译语种")
 
-        self.translate_language_combo = TransComboBox(self)
+        self.translate_language_combo = SearchableComboBox(self)
         self.translate_language_combo.setFixedWidth(LANGUAGE_WIDTH)
         self.translate_language_combo.addItems(self.language_name)
         if (
@@ -111,7 +111,7 @@ class WorkSrt(QWidget):
 
         translate_model_name = BodyLabel("翻译引擎")
 
-        self.translate_model = TransComboBox(self)
+        self.translate_model = SearchableComboBox(self)
         self.translate_model.setFixedWidth(117)
         # todo: 翻译引擎列表需调整
         translate_list = get_translate_code()
