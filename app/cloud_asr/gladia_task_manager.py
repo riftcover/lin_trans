@@ -13,6 +13,7 @@ from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
 from nice_ui.configure.signal import data_bridge
+from services.decorators import except_handler
 from utils import logger
 from utils.file_utils import funasr_write_srt_file
 from utils.file_utils import write_segment_data_file
@@ -79,6 +80,7 @@ class GladiaTaskManager:
         with self.lock:
             return self.tasks.get(task_id)
 
+    @except_handler("ASR request failed", retry=5, delay=1)
     def submit_task(self, task_id: str):
         """提交任务到Gladia"""
         task = self.get_task(task_id)
