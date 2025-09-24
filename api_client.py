@@ -56,6 +56,7 @@ class APIClient:
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout_value)
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
+        self._token_expires_at: Optional[int] = None  # token过期时间戳
         self._executor = ThreadPoolExecutor(max_workers=1)
 
     def load_token_from_settings(self, settings) -> bool:
@@ -70,6 +71,7 @@ class APIClient:
         """
         token = settings.value('token')
         refresh_token = settings.value('refresh_token')
+        token_expires_at = settings.value('token_expires_at')
 
         if token:
             self._token = token
@@ -79,6 +81,13 @@ class APIClient:
                 self._refresh_token = refresh_token
                 logger.trace('Refresh token loaded from settings')
 
+            if token_expires_at:
+                try:
+                    self._token_expires_at = int(token_expires_at)
+                    logger.trace(f'Token expires at: {time.ctime(self._token_expires_at)}')
+                except (ValueError, TypeError):
+                    logger.warning('Invalid token expiry time in settings')
+
             return True
         return False
 
@@ -86,7 +95,8 @@ class APIClient:
         """清除token和refresh_token"""
         self._token = None
         self._refresh_token = None
-        logger.trace('Token and refresh token cleared')
+        self._token_expires_at = None
+        logger.trace('Token, refresh token and expiry time cleared')
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -94,6 +104,27 @@ class APIClient:
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
+
+    async def _ensure_valid_token(self) -> bool:
+        """
+        确保token有效，如果即将过期则自动刷新
+
+        Returns:
+            bool: token是否有效
+        """
+        if not self._token:
+            return False
+
+        # 检查token是否即将过期（提前5分钟刷新）
+        if self.is_token_expiring_soon(300):
+            logger.info("Token即将过期，尝试自动刷新")
+            success = await self.refresh_session()
+            if not success:
+                logger.warning("Token自动刷新失败")
+                return False
+            logger.info("Token自动刷新成功")
+
+        return True
 
     async def login(self, email: str, password: str) -> Dict:
         """
@@ -131,6 +162,15 @@ class APIClient:
                 logger.trace('Refresh token updated')
             else:
                 logger.warning('No refresh token found in response')
+
+            # 更新过期时间
+            if 'expires_at' in response_data['session']:
+                self._token_expires_at = response_data['session']['expires_at']
+                logger.trace(f'Token expires at: {time.ctime(self._token_expires_at)}')
+            else:
+                # 如果没有提供过期时间，假设24小时有效期
+                self._token_expires_at = int(time.time()) + 24 * 3600
+                logger.trace('No expiry time provided, assuming 24 hours validity')
         else:
             logger.warning('No session data found in response')
 
@@ -168,6 +208,30 @@ class APIClient:
         """刷新会话token（同步版本）"""
         return await self.refresh_session()
 
+    def is_token_expired(self) -> bool:
+        """检查token是否已过期"""
+        if not self._token_expires_at:
+            return False
+        return int(time.time()) >= self._token_expires_at
+
+    def is_token_expiring_soon(self, threshold_seconds: int = 600) -> bool:
+        """
+        检查token是否即将过期
+
+        Args:
+            threshold_seconds: 提前多少秒认为即将过期，默认10分钟
+
+        Returns:
+            bool: 是否即将过期
+        """
+        if not self._token_expires_at:
+            return False
+        return (self._token_expires_at - int(time.time())) <= threshold_seconds
+
+    def get_token_expiry_time(self) -> Optional[int]:
+        """获取token过期时间戳"""
+        return self._token_expires_at
+
     @to_t
     async def login_t(self, email: str, password: str) -> Dict:
         """用户登录（同步版本）"""
@@ -183,6 +247,10 @@ class APIClient:
         Raises:
             AuthenticationError: 当认证失败（401错误）时抛出
         """
+        # 确保token有效
+        if not await self._ensure_valid_token():
+            raise AuthenticationError("Token无效或刷新失败，需要重新登录")
+
         try:
             response = await self.client.get("/transactions/get_balance", headers=self.headers)
             response.raise_for_status()

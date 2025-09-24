@@ -11,7 +11,8 @@ from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
-from api_client import api_client, AuthenticationError
+from api_client import api_client
+from nice_ui.services.token_refresh_service import get_token_refresh_service, AuthenticationError
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.configure.signal import data_bridge
@@ -69,6 +70,10 @@ class Window(_create_smart_window_class()):
         self.auth_service = self.service_provider.get_auth_service()
         self.ui_manager = self.service_provider.get_ui_manager()
 
+        # 初始化token刷新服务
+        self.token_refresh_service = get_token_refresh_service()
+        self._setup_token_refresh_signals()
+
         # 平台特定的窗口设置
         # self._setupPlatformSpecificFeatures()
 
@@ -86,6 +91,62 @@ class Window(_create_smart_window_class()):
         self._connect_signals()
         # 尝试自动登录
         self.tryAutoLogin()
+
+    def _setup_token_refresh_signals(self):
+        """设置token刷新服务的信号连接"""
+        self.token_refresh_service.token_refreshed.connect(self._on_token_refreshed)
+        self.token_refresh_service.refresh_failed.connect(self._on_token_refresh_failed)
+
+    def _on_token_refreshed(self, token_info):
+        """处理token刷新成功"""
+        logger.info("Token已自动刷新")
+
+        # 更新设置中的token信息
+        self.settings.setValue('token', token_info.get('access_token'))
+        if token_info.get('refresh_token'):
+            self.settings.setValue('refresh_token', token_info.get('refresh_token'))
+        if token_info.get('expires_at'):
+            self.settings.setValue('token_expires_at', token_info.get('expires_at'))
+        self.settings.sync()
+
+        # 显示成功提示（可选，避免过于频繁的通知）
+        # InfoBar.success(
+        #     title='会话已更新',
+        #     content='您的登录会话已自动更新',
+        #     orient=Qt.Horizontal,
+        #     isClosable=True,
+        #     position=InfoBarPosition.TOP,
+        #     duration=2000,
+        #     parent=self
+        # )
+
+    def _on_token_refresh_failed(self):
+        """处理token刷新失败"""
+        logger.warning("Token刷新失败，需要重新登录")
+
+        # 清除登录状态
+        self.is_logged_in = False
+        api_client.clear_token()
+
+        # 清除设置中的token
+        self.settings.remove('token')
+        self.settings.remove('refresh_token')
+        self.settings.remove('token_expires_at')
+        self.settings.sync()
+
+        # 显示需要重新登录的提示
+        InfoBar.warning(
+            title='会话已过期',
+            content='您的登录会话已过期，请重新登录',
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
+
+        # 显示登录对话框
+        self.auth_service.show_login_dialog()
 
     def _setupPlatformSpecificFeatures(self):
         """设置平台特定功能"""
@@ -239,6 +300,11 @@ class Window(_create_smart_window_class()):
                         from nice_ui.services.service_provider import ServiceProvider
                         token_service = ServiceProvider().get_token_service()
                         token_service.update_token_coefficients()
+
+                        # 启动token刷新服务
+                        expires_at = api_client.get_token_expiry_time()
+                        if expires_at:
+                            self.token_refresh_service.start_monitoring(expires_at)
                 except AuthenticationError as e:
                     logger.warning(f"Token验证失败，尝试刷新: {e}")
                     # 尝试刷新token
@@ -256,6 +322,11 @@ class Window(_create_smart_window_class()):
 
                         # 更新个人中心页面
                         self.loginInterface.updateUserInfo(user_info)
+
+                        # 启动token刷新服务
+                        expires_at = api_client.get_token_expiry_time()
+                        if expires_at:
+                            self.token_refresh_service.start_monitoring(expires_at)
                     else:
                         logger.warning("Token刷新失败，需要重新登录")
                         # Token刷新失败，清除状态

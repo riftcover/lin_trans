@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QAppl
 from api_client import api_client
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
                                    CheckBox)
+from nice_ui.services.token_refresh_service import get_token_refresh_service
 
 
 class LoginWindow(QFrame):
@@ -206,17 +207,26 @@ class LoginWindow(QFrame):
             self.settings.remove('email')
         self.settings.sync()
 
-    def save_login_state(self, token, refresh_token=None):
+    def save_login_state(self, token, refresh_token=None, expires_at=None):
         """保存登录状态
 
         Args:
             token: 访问token
             refresh_token: 刷新token（可选）
+            expires_at: token过期时间戳（可选）
         """
         self.settings.setValue('token', token)
 
         if refresh_token:
             self.settings.setValue('refresh_token', refresh_token)
+
+        if expires_at:
+            self.settings.setValue('token_expires_at', expires_at)
+        else:
+            # 如果没有提供过期时间，假设24小时有效期
+            import time
+            expires_at = int(time.time()) + 24 * 3600
+            self.settings.setValue('token_expires_at', expires_at)
 
         self.settings.sync()
 
@@ -248,9 +258,15 @@ class LoginWindow(QFrame):
                 if 'session' in user_login:
                     access_token = user_login['session'].get('access_token')
                     refresh_token = user_login['session'].get('refresh_token')
+                    expires_at = user_login['session'].get('expires_at')
 
                     if access_token:
-                        self.save_login_state(access_token, refresh_token)
+                        self.save_login_state(access_token, refresh_token, expires_at)
+
+                        # 启动token刷新服务
+                        token_refresh_service = get_token_refresh_service()
+                        token_refresh_service.start_monitoring(expires_at)
+
                 user_info = {'email': user_login['user']['email']}
                 # 发送登录成功信号
                 self.loginSuccessful.emit(user_info)
