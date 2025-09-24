@@ -8,6 +8,7 @@ from api_client import api_client
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
                                    CheckBox)
 from nice_ui.services.token_refresh_service import get_token_refresh_service
+from nice_ui.services.simple_api_service import simple_api_service
 
 
 class LoginWindow(QFrame):
@@ -22,8 +23,7 @@ class LoginWindow(QFrame):
         self.setup_animation()
         self.load_saved_email()
 
-        # 创建事件循环
-        self.loop = asyncio.get_event_loop()
+        # 移除事件循环引用，使用ApiService管理异步调用
 
     def setup_ui(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window) # 独立窗口
@@ -250,51 +250,8 @@ class LoginWindow(QFrame):
         self.loginButton.setEnabled(False)
         self.loginButton.setText('登录中...')
 
-        try:
-            user_login = api_client.login_t(email, password)
-            # 保存邮箱账号和登录状态
-            if user_login:
-                self.save_email(email)
-                if 'session' in user_login:
-                    access_token = user_login['session'].get('access_token')
-                    refresh_token = user_login['session'].get('refresh_token')
-                    expires_at = user_login['session'].get('expires_at')
-
-                    if access_token:
-                        self.save_login_state(access_token, refresh_token, expires_at)
-
-                        # 启动token刷新服务
-                        token_refresh_service = get_token_refresh_service()
-                        token_refresh_service.start_monitoring(expires_at)
-
-                user_info = {'email': user_login['user']['email']}
-                # 发送登录成功信号
-                self.loginSuccessful.emit(user_info)
-
-                # 显示登录成功提示
-                InfoBar.success(
-                    title='成功',
-                    content='登录成功',
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self
-                )
-        except Exception as e:
-            InfoBar.error(
-                title='错误',
-                content=str(e),
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
-        finally:
-            # 确保按钮始终重新启用 - 修复Token过期时按钮无法点击的问题
-            self.loginButton.setEnabled(True)
-            self.loginButton.setText('登录')
+        # 异步登录
+        self._perform_async_login(email, password)
 
     def handle_forgot_password(self):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
@@ -359,3 +316,61 @@ class LoginWindow(QFrame):
         if not self.parent():
             QApplication.quit()
         super().closeEvent(event)
+
+    def _perform_async_login(self, email, password):
+        """执行异步登录"""
+        def on_success(result):
+            # 保存邮箱账号和登录状态
+            if result:
+                self.save_email(email)
+                if 'session' in result:
+                    access_token = result['session'].get('access_token')
+                    refresh_token = result['session'].get('refresh_token')
+                    expires_at = result['session'].get('expires_at')
+
+                    if access_token:
+                        self.save_login_state(access_token, refresh_token, expires_at)
+
+                        # 启动token刷新服务
+                        token_refresh_service = get_token_refresh_service()
+                        token_refresh_service.start_monitoring(expires_at)
+
+                user_info = {'email': result['user']['email']}
+                # 发送登录成功信号
+                self.loginSuccessful.emit(user_info)
+
+                # 显示登录成功提示
+                InfoBar.success(
+                    title='成功',
+                    content='登录成功',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self
+                )
+
+            # 重新启用按钮
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
+
+        def on_error(error):
+            InfoBar.error(
+                title='错误',
+                content=str(error),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            # 重新启用按钮
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
+
+        # 使用简化的API服务
+        simple_api_service.login(
+            email, password,
+            callback_success=on_success,
+            callback_error=on_error
+        )

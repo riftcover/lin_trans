@@ -4,6 +4,7 @@ from PySide6.QtCore import QSettings
 
 from api_client import api_client
 from nice_ui.services.token_refresh_service import get_token_refresh_service
+from nice_ui.services.api_service import api_service
 from nice_ui.interfaces.auth import AuthInterface
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from nice_ui.ui import SettingsManager
@@ -64,23 +65,23 @@ class AuthService(AuthInterface):
                 self.show_login_dialog()
                 return False, None
 
-            # 尝试进行一个简单的API调用来验证token是否有效
-            try:
-                # 获取用户余额信息来验证token
-                balance_data = api_client.get_balance_t()
-                if 'data' in balance_data and 'balance' in balance_data['data']:
-                    user_balance = int(balance_data['data']['balance'])
-                    logger.info(f"用户当前代币余额: {user_balance}")
-                    # 用户已登录，可以继续使用云引擎
-                    logger.info("用户已登录，可以继续使用云引擎")
-                    return True, user_balance
-                else:
-                    logger.warning(f"响应数据格式不正确: {balance_data}")
-                    return False, None
-            except Exception as e:
-                logger.info(f"Token验证失败，需要重新登录 {str(e)}")
+            # 检查token是否过期（简化验证，不进行API调用）
+            if api_client.is_token_expired():
+                logger.info("Token已过期，需要重新登录")
                 self.show_login_dialog()
                 return False, None
+
+            # Token存在且未过期，获取真实余额
+            logger.info("用户已登录，获取用户余额")
+
+            # 从TokenService获取同步余额
+            from nice_ui.services.service_provider import ServiceProvider
+            service_provider = ServiceProvider()
+            token_service = service_provider.get_token_service()
+            user_balance = token_service.get_user_balance()
+
+            logger.info(f"用户余额: {user_balance}")
+            return True, user_balance
 
         except Exception as e:
             logger.error(f"检查登录状态时发生错误: {str(e)}")
@@ -101,6 +102,9 @@ class AuthService(AuthInterface):
         # 停止token刷新服务
         token_refresh_service = get_token_refresh_service()
         token_refresh_service.stop_monitoring()
+
+        # 重置API服务状态
+        api_service.reset_service()
 
         # 清除API客户端的token
         api_client.clear_token()

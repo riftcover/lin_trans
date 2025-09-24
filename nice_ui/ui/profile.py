@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 from api_client import api_client, AuthenticationError
 # 导入自定义组件
 from components.widget.transaction_table import TransactionTableWidget
+from nice_ui.services.simple_api_service import simple_api_service
 from nice_ui.configure.signal import data_bridge
 from nice_ui.ui.purchase_dialog import PurchaseDialog
 from utils import logger
@@ -256,16 +257,23 @@ class ProfileInterface(QFrame):
             return False
 
     def _update_balance(self):
-        """更新算力余额"""
-        logger.info("个人中心接收到更新余额信号，开始更新余额")
-        balance_data = api_client.get_balance_t()
-        if balance_data and 'data' in balance_data:
-            balance = balance_data['data'].get('balance', 0)
-            self.quotaValue.setText(str(balance))
-            logger.info(f"余额更新成功: {balance}")
-        else:
-            self.quotaValue.setText('0')
-            logger.warning("获取余额失败或余额为0")
+        """更新算力余额（异步）"""
+        logger.info("个人中心接收到更新余额信号，开始异步更新余额")
+
+        def on_success(result):
+            if result and 'data' in result:
+                balance = result['data'].get('balance', 0)
+                self.quotaValue.setText(str(balance))
+                logger.info(f"余额更新成功: {balance}")
+            else:
+                self.quotaValue.setText('0')
+                logger.warning("获取余额失败或余额为0")
+
+        def on_error(error):
+            logger.error(f"获取余额失败: {error}")
+            self.quotaValue.setText('获取失败')
+
+        simple_api_service.get_balance(callback_success=on_success, callback_error=on_error)
 
     def set_balance(self, balance: int):
         """
@@ -333,26 +341,33 @@ class ProfileInterface(QFrame):
         if page is not None:
             self.current_page = page
 
-        # 调用API获取指定页的交易记录
-        history_data = api_client.get_history_t(
+        # 异步调用API获取指定页的交易记录
+        def on_success(result):
+            if not result or 'data' not in result:
+                logger.warning("获取交易记录失败或数据格式不正确")
+                return
+
+            # 获取交易记录
+            transactions = result['data'].get('transactions', [])
+            total_records = result['data'].get('total', 0)
+            # 输出分页信息到日志
+            logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
+
+            # 使用新方法更新表格和分页状态
+            self.transactionTable.update_with_data(
+                items=transactions,
+                current_page=self.current_page,
+                total_records=total_records
+            )
+
+        def on_error(error):
+            logger.error(f"获取交易记录失败: {error}")
+
+        simple_api_service.get_history(
             page=self.current_page,
-            page_size=self.page_size
-        )
-
-        if not history_data or 'data' not in history_data:
-            return
-
-        # 获取交易记录
-        transactions = history_data['data'].get('transactions', [])
-        total_records = history_data['data'].get('total', 0)
-        # 输出分页信息到日志
-        logger.info(f"交易记录分页信息: 当前页={self.current_page}, 总记录数={total_records}, 当前页数据数量={len(transactions)}")
-
-        # 使用新方法更新表格和分页状态
-        self.transactionTable.update_with_data(
-            items=transactions,
-            current_page=self.current_page,
-            total_records=total_records
+            page_size=self.page_size,
+            callback_success=on_success,
+            callback_error=on_error
         )
 
     def showPurchaseDialog(self):

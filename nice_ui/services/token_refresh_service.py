@@ -30,8 +30,6 @@ class TokenRefreshService(QObject):
         self._is_running = False
         self._last_refresh_time = 0
         self._token_expires_at = None
-        
-        logger.info("Token刷新服务初始化完成")
     
     def start_monitoring(self, token_expires_at: Optional[int] = None):
         """
@@ -41,7 +39,6 @@ class TokenRefreshService(QObject):
             token_expires_at: token过期时间戳（秒），如果为None则从API客户端获取
         """
         if self._is_running:
-            logger.debug("Token监控已在运行中")
             return
         
         # 设置过期时间
@@ -111,8 +108,8 @@ class TokenRefreshService(QObject):
             
             self._last_refresh_time = current_time
             
-            # 调用API客户端刷新token
-            success = api_client.refresh_session_t()
+            # 调用API客户端刷新token（使用同步版本，因为这是在定时器回调中）
+            success = api_client._refresh_session_sync()
             
             if success:
                 logger.info("Token刷新成功")
