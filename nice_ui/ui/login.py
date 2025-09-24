@@ -4,7 +4,6 @@ from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signa
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
 
-from api_client import api_client
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
                                    CheckBox)
 from nice_ui.services.token_refresh_service import get_token_refresh_service

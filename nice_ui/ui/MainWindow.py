@@ -11,7 +11,7 @@ from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
-from api_client import api_client, AuthenticationError
+from app.core.api_client import api_client, AuthenticationError
 from nice_ui.services.token_refresh_service import get_token_refresh_service
 from nice_ui.services.simple_api_service import simple_api_service
 

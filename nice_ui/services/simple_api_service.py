@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from PySide6.QtCore import QObject, Signal, QThread, QMutex, QMutexLocker, QTimer
 
-from api_client import api_client
+from app.core.api_client import api_client
 from utils import logger
 
 

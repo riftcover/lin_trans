@@ -2,7 +2,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 
-from api_client import api_client, AuthenticationError
+from app.core.api_client import api_client, AuthenticationError
 # 导入自定义组件
 from components.widget.transaction_table import TransactionTableWidget
 from nice_ui.services.simple_api_service import simple_api_service

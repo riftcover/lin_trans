@@ -3,7 +3,7 @@ from typing import Optional, Dict, Callable
 
 from PySide6.QtCore import QObject, Signal, QThread
 
-from api_client import APIClient
+from app.core.api_client import APIClient
 from utils import logger
 
 

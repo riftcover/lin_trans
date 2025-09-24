@@ -4,8 +4,7 @@ from PySide6.QtGui import QPixmap, QColor, QDesktopServices
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                                QFrame, QPushButton, QWidget)
 
-from api_client import api_client
-from nice_ui.services.service_provider import ServiceProvider
+from app.core.api_client import api_client
 from nice_ui.services.simple_api_service import simple_api_service
 from utils import logger
 from vendor.qfluentwidgets import (SubtitleLabel, BodyLabel, PrimaryPushButton, FluentIcon as FIF, StrongBodyLabel)

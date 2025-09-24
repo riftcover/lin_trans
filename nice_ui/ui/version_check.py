@@ -2,7 +2,7 @@ import asyncio
 
 from PySide6.QtCore import QThread, Signal
 
-from api_client import api_client
+from app.core.api_client import api_client
 from utils import logger
 
 

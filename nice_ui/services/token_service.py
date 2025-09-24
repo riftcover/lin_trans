@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from api_client import api_client, AuthenticationError
+from app.core.api_client import api_client
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.services.simple_api_service import simple_api_service
 from nice_ui.interfaces.ui_manager import UIManagerInterface
@@ -243,7 +243,6 @@ class TokenService(TokenServiceInterface):
             import sys
             import os
             sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-            from api_client import api_client
 
             # 调用api_client的同步方法
             result = api_client.get_balance_sync()

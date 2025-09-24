@@ -6,7 +6,7 @@ import time
 from typing import Optional
 from PySide6.QtCore import QTimer, QObject, Signal
 from utils import logger
-from api_client import api_client
+from app.core.api_client import api_client
 
 
 class TokenRefreshService(QObject):
