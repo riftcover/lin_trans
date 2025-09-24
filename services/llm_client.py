@@ -137,10 +137,7 @@ def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
                 if end_idx > start_idx:
                     json_content = json_content[start_idx:end_idx].strip()
 
-            # 使用json_repair库解析可能损坏的JSON
-            logger.debug(f"尝试解析JSON内容，长度: {len(json_content)}")
             resp = json_repair.loads(json_content)
-            logger.debug(f"JSON解析成功，结果类型: {type(resp)}")
         except Exception as e:
             error_msg = f"JSON解析失败 ({log_title}): {e}. 响应内容: {repr(resp_content[:500])}"
             logger.error(error_msg)
