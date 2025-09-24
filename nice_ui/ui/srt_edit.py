@@ -317,7 +317,12 @@ class SubtitleEditPage(QWidget):
             top_layout.addWidget(button)
 
         # 智能分句按钮（根据可用性决定是否添加）
-        if check_smart_sentence_available(self.patt):
+        """
+        todo: 先屏蔽智能分句按钮，等待本地语言和服务端分句支持保证一致再打开
+        （auto|不支持的语言：服务端无法处理，分句后时间轴可能还有问题）        
+        """
+        if 1 == 2:
+            # if check_smart_sentence_available(self.patt):
             smart_sentence_btn = TransparentToolButton(FluentIcon.ROBOT)
             smart_sentence_btn.setIconSize(QSize(20, 20))
             smart_sentence_btn.setFixedSize(QSize(30, 30))
