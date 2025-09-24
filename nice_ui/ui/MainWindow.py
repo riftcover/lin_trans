@@ -11,8 +11,9 @@ from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
-from api_client import api_client
-from nice_ui.services.token_refresh_service import get_token_refresh_service, AuthenticationError
+from api_client import api_client, AuthenticationError
+from nice_ui.services.token_refresh_service import get_token_refresh_service
+
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.configure.signal import data_bridge
