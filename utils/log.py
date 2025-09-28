@@ -70,9 +70,12 @@ class Logings:
              }
         ]
 
-        # 如果是开发环境，添加控制台日志处理器
-        if not getattr(sys, 'frozen', False):
-            handlers.append({"sink": sys.stderr, "level": "TRACE"})
+        # 始终尝试添加控制台日志处理器（包括打包后的可执行文件）
+        try:
+            if sys.stderr is not None:
+                handlers.append({"sink": sys.stderr, "level": "TRACE", "colorize": True})
+        except Exception:
+            pass
 
         self.logger.configure(handlers=handlers)
 

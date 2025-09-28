@@ -10,8 +10,6 @@ import pkgutil
 import fnmatch
 from nice_ui.ui import __version__
 
-# ... (保留现有的 import 语句和函数定义) ...
-
 # 添加命令行参数解析
 parser = argparse.ArgumentParser(description='构建应用程序')
 parser.add_argument('--debug', action='store_true', help='启用调试模式')
@@ -52,7 +50,7 @@ exclude_patterns = [
     "scipy/optimize", "scipy/spatial", "scipy/stats", "scipy/cluster", "scipy/fft", "scipy/integrate",
     "scipy/interpolate", "scipy/io", "scipy/linalg", "scipy/misc", "scipy/ndimage", "scipy/odr",
     "scipy/signal", "scipy/sparse", "scipy/special",
-    "numpy/distutils", "numpy/doc", "numpy/f2py", "numpy/testing", "numpy/typing"
+    "numpy/doc", "numpy/f2py", "numpy/testing", "numpy/typing"
 ]
 
 # PyInstaller 打包命令
@@ -61,8 +59,8 @@ cmd = [
     "-m", "PyInstaller",
     "--name=Lapped",
     "--onedir",
-    "--noconsole",
-    "--windowed",   # 添加 --windowed 参数，使用 GUI 模式
+    "--console",
+    # "--windowed",   # 注释掉 --windowed 参数，允许显示控制台
     f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     f"--add-data=models{os.pathsep}models",
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
@@ -71,6 +69,19 @@ cmd = [
     f"--add-data=tmp{os.pathsep}tmp",
     f"--add-data=.credentials{os.pathsep}.credentials",
     f"--add-data=config{os.pathsep}config",
+    # 使用自定义 Hook 文件自动处理 FunASR 和其他依赖
+    f"--additional-hooks-dir=hooks",
+    # 包含基础的隐式导入（Hook 文件会自动处理 FunASR）
+    f"--hidden-import=distutils",
+    f"--hidden-import=distutils.util",
+    f"--hidden-import=distutils.version",
+    f"--hidden-import=distutils.spawn",
+    f"--hidden-import=distutils.sysconfig",
+    f"--hidden-import=distutils.core",
+    f"--hidden-import=setuptools",
+    f"--hidden-import=pkg_resources",
+    f"--hidden-import=packaging",
+    f"--hidden-import=packaging.version",
     "--noconfirm",  # 不询问确认
     "--clean",      # 清理临时文件
 ]
@@ -156,17 +167,15 @@ def copy_models():
         'bin', 'datasets', 'train'
     ]
     exclude_files = [
-        '*.pyc', '*.pyo', '*.pyd', '*.so', '*.a', '*.lib',
-        '*.md', '*.rst', '*.txt', '*.html', '*.pdf'
     ]
 
     # 特定库的排除目录
     specific_excludes = {
-        'torch': ['test', 'testing', 'optim', 'distributed', 'utils/data', 'onnx', 'profiler'],
-        'modelscope': ['examples', 'metrics', 'trainers', 'utils/test_utils'],
-        'funasr': ['bin', 'datasets', 'train'],
-        'scipy': ['optimize', 'spatial', 'stats', 'cluster', 'fft', 'integrate', 'interpolate', 'io', 'linalg', 'misc', 'ndimage', 'odr', 'signal', 'sparse', 'special'],
-        'numpy': ['distutils', 'doc', 'f2py', 'testing', 'typing']
+        # 'torch': ['test', 'testing', 'optim', 'distributed', 'utils/data', 'onnx', 'profiler'],
+        # 'modelscope': ['examples', 'metrics', 'trainers', 'utils/test_utils'],
+        # 'funasr': ['bin', 'datasets', 'train'],
+        # 'scipy': ['optimize', 'spatial', 'stats', 'cluster', 'fft', 'integrate', 'interpolate', 'io', 'linalg', 'misc', 'ndimage', 'odr', 'signal', 'sparse', 'special'],
+        # 'numpy': ['doc', 'f2py', 'testing', 'typing']
     }
 
     model_lists = ['modelscope', 'funasr']
