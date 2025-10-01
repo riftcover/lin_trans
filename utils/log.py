@@ -58,7 +58,7 @@ class Logings:
              "encoding": 'utf-8',
              "backtrace": True,
              "diagnose": True,
-             "enqueue": True},
+            },
             {"sink": str(error_file),
              "level": "ERROR",
              "rotation": "1 day",
@@ -66,7 +66,6 @@ class Logings:
              "encoding": 'utf-8',
              "backtrace": True,
              "diagnose": True,
-             "enqueue": True
              }
         ]
 
