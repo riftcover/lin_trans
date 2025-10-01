@@ -1,3 +1,8 @@
-from .log import Logings
+"""
+工具模块
 
-logger = Logings().logger
+提供日志等通用工具。
+"""
+from .log import logger
+
+__all__ = ['logger']

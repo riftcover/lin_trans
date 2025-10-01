@@ -3,9 +3,7 @@ from typing import List, Dict, Union, Any
 
 import unicodedata
 
-from utils.log import Logings
-
-logger = Logings().logger
+from utils.log import logger
 
 
 def format_time(ms: int) -> str:

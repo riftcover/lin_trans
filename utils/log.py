@@ -1,82 +1,69 @@
-import datetime
-import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
 
 
-class Logings:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(Logings, cls).__new__(cls)
-            cls._instance._initialize()
-        return cls._instance
-
-    def _initialize(self):
-        # 文件名称，按天创建
-        DATE = datetime.datetime.now().strftime('%Y-%m-%d')
-        self.logger = logger
-
+def _get_log_dir() -> Path:
+    """获取日志目录路径。开发环境用项目目录，打包环境用用户数据目录。"""
+    if getattr(sys, 'frozen', False):
+        # 打包环境：用户数据目录
         if sys.platform == "win32":
-            # Windows: 使用LOCALAPPDATA目录
-            user_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')))
-            app_root = user_data_dir / "lappedAI"
+            base = Path(sys.environ.get('LOCALAPPDATA', Path.home()))
         else:
-            # Linux/macOS: 使用用户主目录下的隐藏文件夹
-            app_root = Path.home() / ".lappedAI"
+            base = Path.home()
+        return base / ".lappedAI" / "logs"
 
-        # 获取应用程序根目录
-        if getattr(sys, 'frozen', False):
-            # 打包后的可执行文件，使用用户数据目录避免权限问题
-            if sys.platform == "win32":
-                # Windows: 使用LOCALAPPDATA目录
-                user_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')))
-                app_root = user_data_dir / "lappedAI"
-            else:
-                # Linux/macOS: 使用用户主目录下的隐藏文件夹
-                app_root = Path.home() / ".lappedAI"
-        else:
-            # 开发环境，使用项目目录
-            app_root = Path(__file__).parent.parent
+    # 开发环境：项目目录
+    return Path(__file__).parent.parent / "logs"
 
-        # 创建日志目录
-        log_path = app_root / "logs"
-        log_path.mkdir(parents=True, exist_ok=True)
 
-        # 配置日志
-        log_file = log_path / f"{DATE}.log"
-        error_file = log_path / f"error_{DATE}.log"
+def _setup_logger():
+    """配置 loguru logger。只调用一次。"""
+    log_dir = _get_log_dir()
+    log_dir.mkdir(parents=True, exist_ok=True)
 
-        handlers = [
-            {"sink": str(log_file),
-             "level": "TRACE",
-             "rotation": "1 day",
-             "retention": "1 day",  # 只保留1天的日志
-             "encoding": 'utf-8',
-             "backtrace": True,
-             "diagnose": True,
-            },
-            {"sink": str(error_file),
-             "level": "ERROR",
-             "rotation": "1 day",
-             "retention": "1 day",  # 错误日志也只保留1天
-             "encoding": 'utf-8',
-             "backtrace": True,
-             "diagnose": True,
-             }
-        ]
+    date = datetime.now().strftime('%Y-%m-%d')
 
-        # 始终尝试添加控制台日志处理器（包括打包后的可执行文件）
-        try:
-            if sys.stderr is not None:
-                handlers.append({"sink": sys.stderr, "level": "TRACE", "colorize": True})
-        except Exception:
-            pass
+    handlers = [
+        {
+            "sink": log_dir / f"{date}.log",
+            "level": "TRACE",
+            "rotation": "1 day",
+            "retention": "1 day",
+            "encoding": "utf-8",
+            "backtrace": True,
+            "diagnose": True,
+        },
+        {
+            "sink": log_dir / f"error_{date}.log",
+            "level": "ERROR",
+            "rotation": "1 day",
+            "retention": "1 day",
+            "encoding": "utf-8",
+            "backtrace": True,
+            "diagnose": True,
+        },
+        {
+            "sink": sys.stderr,
+            "level": "TRACE",
+            "colorize": True,
+        },
+    ]
 
-        self.logger.configure(handlers=handlers)
+    logger.configure(handlers=handlers)
+
+
+# 向后兼容：保留旧的 Logings 类
+class Logings:
+    """已废弃。直接使用 logger 即可。"""
+    def __init__(self):
+        self.logger = logger
 
     def get_logger(self):
         return self.logger
+
+
+# 初始化
+_setup_logger()
