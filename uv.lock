@@ -776,7 +776,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/89/b5/4a283bec43b15aad54fcae18d951f06a2ec3f78db5708d3b59a48e9c3fbd/jiter-0.11.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:11840d2324c9ab5162fc1abba23bc922124fedcff0d7b7f85fffa291e2f69206", size = 509461 },
     { url = "https://files.pythonhosted.org/packages/34/a5/f8bad793010534ea73c985caaeef8cc22dfb1fedb15220ecdf15c623c07a/jiter-0.11.0-cp312-cp312-win32.whl", hash = "sha256:4f01a744d24a5f2bb4a11657a1b27b61dc038ae2e674621a74020406e08f749b", size = 206664 },
     { url = "https://files.pythonhosted.org/packages/ed/42/5823ec2b1469395a160b4bf5f14326b4a098f3b6898fbd327366789fa5d3/jiter-0.11.0-cp312-cp312-win_amd64.whl", hash = "sha256:29fff31190ab3a26de026da2f187814f4b9c6695361e20a9ac2123e4d4378a4c", size = 203520 },
-    { url = "https://files.pythonhosted.org/packages/70/f3/ce100253c80063a7b8b406e1d1562657fd4b9b4e1b562db40e68645342fb/jiter-0.11.0-graalpy311-graalpy242_311_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:902b43386c04739229076bd1c4c69de5d115553d982ab442a8ae82947c72ede7", size = 336380 },
 ]
 
 [[package]]
@@ -902,6 +901,7 @@ dependencies = [
     { name = "pip" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "pyinstall" },
     { name = "pyinstaller" },
     { name = "pyside6" },
     { name = "pysidesix-frameless-window" },
@@ -936,6 +936,7 @@ requires-dist = [
     { name = "pip", specifier = ">=25.1.1" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = "==2.9.1" },
+    { name = "pyinstall", specifier = ">=0.1.4" },
     { name = "pyinstaller", specifier = ">=6.11.0" },
     { name = "pyside6", specifier = "==6.7.2" },
     { name = "pysidesix-frameless-window", specifier = "==0.4.3" },
@@ -1699,6 +1700,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b014
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217 },
 ]
+
+[[package]]
+name = "pyinstall"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/cc/8554fe5499561da83e80186e9603616c0a5e091b78237bc2abf9b66d86d3/pyinstall-0.1.4.tar.gz", hash = "sha256:bb2407a3664ce25454f7e4a93763198f3a6a43c0cc727e33a06c0ce18324cd15", size = 37894 }
 
 [[package]]
 name = "pyinstaller"
