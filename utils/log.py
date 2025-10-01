@@ -55,15 +55,5 @@ def _setup_logger():
     logger.configure(handlers=handlers)
 
 
-# 向后兼容：保留旧的 Logings 类
-class Logings:
-    """已废弃。直接使用 logger 即可。"""
-    def __init__(self):
-        self.logger = logger
-
-    def get_logger(self):
-        return self.logger
-
-
 # 初始化
 _setup_logger()
