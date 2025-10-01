@@ -3,7 +3,7 @@ from typing import Optional, Dict, Callable
 
 from PySide6.QtCore import QObject, Signal, QThread
 
-from app.core.api_client import APIClient
+from app.core.api_client import APIClient, api_client
 from utils import logger
 
 
@@ -20,7 +20,7 @@ class ApiWorker(QThread):
     def __init__(self):
         super().__init__()
         self.signals = ApiSignals()
-        self.client = APIClient()
+        self.client = api_client
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.tasks: Dict[str, Callable] = {}  # 存储任务名称和对应的异步函数
 

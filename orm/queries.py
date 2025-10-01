@@ -6,9 +6,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from orm.inint import Prompts, engine, ToSrt, ToTranslation
-from utils.log import Logings
+from utils import logger
 
-logger = Logings().logger
 # 创建一个数据库会话
 
 SessionLocal = scoped_session(sessionmaker(bind=engine))
