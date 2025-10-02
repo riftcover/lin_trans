@@ -1,4 +1,3 @@
-import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
@@ -138,14 +137,14 @@ class LocalModelPage(QWidget):
             logger.error(f"路径不存在: {path}")
 
     def change_path(self):
+        """更改模型存储路径"""
         # 选择路径
         if new_path := QFileDialog.getExistingDirectory(self, "选择模型存储路径"):
             self.path_input.setText(new_path)
-            # logger.info(f"new_path type: {type(new_path)}")
             config.models_path = new_path
-            self.settings.setValue(
-                "models_path", config.models_path
-            )
+            self.settings.setValue("models_path", config.models_path)
+            config.funasr_model_path = Path(new_path) / "funasr" / "iic"
+            self.settings.setValue("funasr_model_path", config.funasr_model_path)
 
             # 重新检查模型安装状态
             self.show_funasr_table(self.funasr_model_table)
@@ -194,6 +193,11 @@ class LocalModelPage(QWidget):
     #         self.populate_model_table(self.faster_model_table, faster_models)
 
     def show_funasr_table(self, table):
+        """
+        显示 FunASR 模型表格
+
+        根据当前 models_path 检查模型安装状态，并更新第三列的按钮/状态。
+        """
         faster_models = [
             # ("多语言模型", "940 MB"),
             ("中文模型", "909.6 MB"),
@@ -213,14 +217,17 @@ class LocalModelPage(QWidget):
             最后下载的是文件是tokens.json
             """
             rr_dir = Path(config.funasr_model_path) / model_folder / "tokens.json"
-
             is_installed = rr_dir.exists()
-            logger.trace(f'rr_dir: {rr_dir},is_installed:{is_installed}')
-
+            # 设置前两列（模型名称和大小）
             for col, value in enumerate([model_name, model_size]):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignCenter)
                 table.setItem(row, col, item)
+
+            # 清除第三列的旧内容（重要：避免 widget 残留）
+            old_widget = table.cellWidget(row, 2)
+            if old_widget:
+                table.removeCellWidget(row, 2)
 
             # 添加安装状态或安装按钮
             if is_installed:
