@@ -3,10 +3,11 @@ import contextlib
 import copy
 import hashlib
 import json
-import os
+import os  # 保留用于 os.environ 和 os.kill
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -48,12 +49,9 @@ class StartTools:
     @staticmethod
     def ask_model_folder(model_name: str) -> bool:
         # todo：当前是写死funasr，后续需要改成根据模型名称来获取模型路径
-        is_installed = os.path.exists(
-            os.path.join(config.funasr_model_path, model_name)
-        )
-        logger.info(
-            f"ask_model_folder-is_installed path :{os.path.join(config.funasr_model_path, model_name)}"
-        )
+        model_path = Path(config.funasr_model_path) / model_name
+        is_installed = model_path.exists()
+        logger.info(f"ask_model_folder-is_installed path :{model_path}")
         return is_installed
 
     def calc_trans_ds(self, word_count: int) -> int:
@@ -93,7 +91,7 @@ def runffmpeg(arg, *, noextname=None, is_box=False, fps=None):
 
     for i, it in enumerate(arg):
         if arg[i] == "-i" and i < len(arg) - 1:
-            arg[i + 1] = os.path.normpath(arg[i + 1]).replace("\\", "/")
+            arg[i + 1] = str(Path(arg[i + 1]).as_posix())
             if not vail_file(arg[i + 1]):
                 raise OSError(f'..{arg[i + 1]} {config.transobj["vlctips2"]}')
 
@@ -339,12 +337,9 @@ def conver_to_8k(audio, target_audio):
 def backandvocal(backwav, peiyinm4a):
     backwav = Path(backwav).as_posix()
     peiyinm4a = Path(peiyinm4a).as_posix()
-    tmpwav = Path(
-        (os.environ["TEMP"] or os.environ["temp"]) + f"/{time.time()}-1.m4a"
-    ).as_posix()
-    tmpm4a = Path(
-        (os.environ["TEMP"] or os.environ["temp"]) + f"/{time.time()}.m4a"
-    ).as_posix()
+    temp_dir = Path(os.environ.get("TEMP") or os.environ.get("temp", "/tmp"))
+    tmpwav = (temp_dir / f"{time.time()}-1.m4a").as_posix()
+    tmpm4a = (temp_dir / f"{time.time()}.m4a").as_posix()
     # 背景转为m4a文件,音量降低为0.8
     wav2m4a(
         backwav, tmpm4a, ["-filter:a", f"volume={config.settings['backaudio_volume']}"]
@@ -597,7 +592,7 @@ def format_srt(content):
 
 def get_subtitle_from_srt(srtfile, *, is_file=True):
     if is_file:
-        if os.path.getsize(srtfile) == 0:
+        if Path(srtfile).stat().st_size == 0:
             raise ValueError(config.transobj["zimuwenjianbuzhengque"])
         try:
             with open(srtfile, "r", encoding="utf-8") as f:
@@ -728,7 +723,7 @@ def is_novoice_mp4(novoice_mp4, noextname):
         if config.current_status != "ing":
             raise VideoProcessingError("stop")
         if vail_file(novoice_mp4):
-            current_size = os.path.getsize(novoice_mp4)
+            current_size = Path(novoice_mp4).stat().st_size
             if 0 < last_size == current_size and t > 600:
                 return True
             last_size = current_size
@@ -836,23 +831,29 @@ def rename_move(file, *, is_dir=False):
     patter = r'[ \s`"\'!@#$%^&*()=+,?\|{}\[\]]+'
     if re.search(patter, file):
         if is_dir:
-            os.makedirs(config.homedir + "/target_dir", exist_ok=True)
-            return True, config.homedir + "/target_dir", False
-        dirname = os.path.dirname(file)
-        basename = os.path.basename(file)
+            target_dir = Path(config.homedir) / "target_dir"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            return True, str(target_dir), False
+
+        file_path = Path(file)
+        dirname = file_path.parent
+        basename = file_path.name
+
         # 目录不规则，迁移目录
-        if re.search(patter, dirname):
+        if re.search(patter, str(dirname)):
             basename = re.sub(patter, "", basename, 0, re.I)
             basename = basename.replace(":", "")
-            os.makedirs(f"{config.homedir}/rename", exist_ok=True)
-            newfile = config.homedir + f"/rename/{basename}"
+            rename_dir = Path(config.homedir) / "rename"
+            rename_dir.mkdir(parents=True, exist_ok=True)
+            newfile = rename_dir / basename
         else:
             # 目录规则仅名称不规则，只修改名称
             basename = re.sub(patter, "", basename, 0, re.I)
             basename = basename.replace(":", "")
-            newfile = dirname + "/" + basename
+            newfile = dirname / basename
+
         shutil.copy2(file, newfile)
-        return True, newfile, basename
+        return True, str(newfile), basename
     return False, False, False
 
 
@@ -922,15 +923,15 @@ def remove_qsettings_data(organization="Jameson", application="VideoTranslate"):
         return
     with contextlib.suppress(Exception):
         # On MacOS and Linux, settings are usually stored in a config file within the user's home directory
-        config_dir = os.path.join(os.path.expanduser("~"), ".config", organization)
-        config_file_path = os.path.join(config_dir, f"{application}.ini")
+        config_dir = Path.home() / ".config" / organization
+        config_file_path = config_dir / f"{application}.ini"
 
         # Check if the config file exists and remove it
-        if os.path.isfile(config_file_path):
-            os.remove(config_file_path)
+        if config_file_path.is_file():
+            config_file_path.unlink()
         # If the whole directory for the organization should be removed, you would use shutil.rmtree as follows
         # Warning: This will remove all settings for all applications under this organization
-        elif os.path.isdir(config_dir):
+        elif config_dir.is_dir():
             shutil.rmtree(config_dir, ignore_errors=True)
 
 
@@ -1107,12 +1108,12 @@ def open_dir(self, dirname=None):
     from PySide6.QtCore import QUrl
     from PySide6.QtGui import QDesktopServices
 
-    dirname = dirname.strip()
-    if not os.path.isdir(dirname):
-        dirname = os.path.dirname(dirname)
-    if not dirname or not os.path.isdir(dirname):
+    dir_path = Path(dirname.strip())
+    if not dir_path.is_dir():
+        dir_path = dir_path.parent
+    if not dir_path or not dir_path.is_dir():
         return
-    QDesktopServices.openUrl(QUrl.fromLocalFile(dirname))
+    QDesktopServices.openUrl(QUrl.fromLocalFile(str(dir_path)))
 
 
 def vail_file(file=None) -> bool:
@@ -1198,8 +1199,9 @@ def get_video_codec():
 
 # 设置ass字体格式
 def set_ass_font(srtfile=None):
-    if not os.path.exists(srtfile) or os.path.getsize(srtfile) == 0:
-        return os.path.basename(srtfile)
+    srt_path = Path(srtfile)
+    if not srt_path.exists() or srt_path.stat().st_size == 0:
+        return srt_path.name
     runffmpeg(["-y", "-i", srtfile, f"{srtfile}.ass"])
     assfile = f"{srtfile}.ass"
     with open(assfile, "r", encoding="utf-8") as f:
@@ -1220,7 +1222,7 @@ def set_ass_font(srtfile=None):
 
     with open(assfile, "w", encoding="utf-8") as f:
         f.write("".join(ass_str))
-    return os.path.basename(assfile)
+    return Path(assfile).name
 
 
 # 根据原始语言list中每个项字数，所占所字数比例，将翻译结果list target_list 按照同样比例切割
@@ -1319,13 +1321,11 @@ def list_model_files(model_dir: str = None) -> list:
     model_files = []
     model_list = config.model_list
 
-    for root, dirs, files in os.walk(model_dir):
-        for file in files:
-            # 使用 Path 对象来处理文件路径,这样可以跨平台使用
-            file_path = Path(root) / file
+    # 使用 Path.rglob() 替代 os.walk
+    for file_path in Path(model_dir).rglob("*"):
+        if file_path.is_file():
             # 获取文件名(不带后缀)
-            file_name = file_path.stem
-            model_files.append(file_name)
+            model_files.append(file_path.stem)
 
     return model_files
 

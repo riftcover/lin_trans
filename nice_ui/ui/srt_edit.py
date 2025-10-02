@@ -1,5 +1,5 @@
-import os
 import shutil
+from pathlib import Path
 
 from PySide6.QtCore import QUrl, Qt, QSize, QSettings, QThread, Signal
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QWidget, QLineEdit, QPushButton, QRadioButton, QFileDialog,
@@ -560,7 +560,7 @@ class ExportSubtitleDialog(QDialog):
         export_path = self.path_input.text()
         export_format = "srt" if self.srt_radio.isChecked() else "txt"
         # 检查导出路径是否存在
-        if not os.path.exists(export_path):
+        if not Path(export_path).exists():
             logger.error(f"导出目录不存在: {export_path}")
             InfoBar.error(
                 title="错误",
@@ -574,7 +574,7 @@ class ExportSubtitleDialog(QDialog):
             return
 
         for path in self.paths:
-            if not os.path.exists(path):
+            if not Path(path).exists():
                 logger.error(f"字幕文件被删除: {path}")
                 InfoBar.error(
                     title="错误",
@@ -632,7 +632,7 @@ class ExportSubtitleDialog(QDialog):
                 i += 1
 
         # 保存提取的文本到 export_path
-        export_name = os.path.splitext(os.path.basename(src_path))[0]
+        export_name = Path(src_path).stem
         with open(
                 f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
         ) as dest_file:

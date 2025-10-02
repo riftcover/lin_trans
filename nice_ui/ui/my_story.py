@@ -1,7 +1,7 @@
 import json
-import os
 import shutil
 from enum import Enum, auto, IntEnum
+from pathlib import Path
 from typing import Optional, Tuple, Literal
 
 from PySide6.QtCore import Qt, QThread, Slot
@@ -580,7 +580,7 @@ class TableApp(CardWidget):
             video_format_info.media_dirname
         )  # 假设 media_dirname 是正确的路径属性
 
-        if not os.path.isfile(job_path):
+        if not Path(job_path).is_file():
             logger.error(f"文件:{job_path}不存在,无法开始处理")
             InfoBar.error(
                 title="错误",
@@ -689,7 +689,7 @@ class TableApp(CardWidget):
 
     def _delete_local_files(self, result_dir: str, unid: str) -> bool:
         """删除本地文件"""
-        if not result_dir or not os.path.exists(result_dir):
+        if not result_dir or not Path(result_dir).exists():
             return True  # 文件不存在视为删除成功
 
         try:
@@ -1043,7 +1043,7 @@ class TableApp(CardWidget):
         work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
         logger.trace(f"work_obj:{work_obj}")
         srt_path = work_obj.srt_dirname
-        if not os.path.isfile(srt_path):
+        if not Path(srt_path).is_file():
             logger.error(f"文件:{srt_path}不存在,无法导出")
             InfoBar.error(
                 title="错误",
@@ -1084,7 +1084,7 @@ class TableApp(CardWidget):
         job_obj = self.table.item(row, TableWidgetColumn.JOB_OBJ)
         work_obj: VideoFormatInfo = job_obj.data(VideoFormatInfoRole)
         srt_path = work_obj.srt_dirname
-        if not os.path.isfile(srt_path):
+        if not Path(srt_path).is_file():
             logger.error(f"文件:{srt_path}不存在,无法编辑")
             InfoBar.error(
                 title="错误",

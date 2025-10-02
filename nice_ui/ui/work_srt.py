@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 import path
 from PySide6.QtCore import Qt, Slot
@@ -319,7 +319,7 @@ class LTableWindow:
             for file_path in file_paths:
                 self.add_file_to_table(ui_table, file_path)
 
-            config.last_opendir = os.path.dirname(file_paths[0])
+            config.last_opendir = str(Path(file_paths[0]).parent)
             self.settings.setValue("last_dir", config.last_opendir)
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
@@ -330,7 +330,7 @@ class LTableWindow:
         ts_count = str(self._calc_ds(file_character_count))
         if file_character_count:
             ui_table.insertRow(row_position)
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             # logger.info(f"file_name type: {type(file_name)}")
             # logger.info(f"file_name: {file_name}")
             # logger.info(f"file_character_count: {file_character_count}")
@@ -438,9 +438,9 @@ class LTableWindow:
 if __name__ == "__main__":
     import sys
     from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
+    from nice_ui.ui import SettingsManager
 
     app = QApplication(sys.argv)
-    window = WorkSrt("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window = WorkSrt("字幕翻译", settings=SettingsManager.get_instance())
     window.show()
     sys.exit(app.exec())

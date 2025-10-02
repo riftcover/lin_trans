@@ -8,6 +8,7 @@ import site
 import time
 import pkgutil
 import fnmatch
+from pathlib import Path
 from nice_ui.ui import __version__
 
 # 添加命令行参数解析
@@ -19,17 +20,18 @@ args = parser.parse_args()
 your_version = __version__  # 替换为您的实际版本号
 
 # 定义项目根目录和其他目录
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
-RESULT_DIR = os.path.join(PROJECT_ROOT, 'result')
-NICE_UI_DIR = os.path.join(PROJECT_ROOT, 'nice_ui')
-LOGS_DIR = os.path.join(PROJECT_ROOT, 'logs')
-ORM_DIR = os.path.join(PROJECT_ROOT, 'orm')
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODELS_DIR = PROJECT_ROOT / 'models'
+RESULT_DIR = PROJECT_ROOT / 'result'
+NICE_UI_DIR = PROJECT_ROOT / 'nice_ui'
+LOGS_DIR = PROJECT_ROOT / 'logs'
+ORM_DIR = PROJECT_ROOT / 'orm'
 
 
-def ensure_dir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+def ensure_dir(directory: Path):
+    directory = Path(directory)
+    if not directory.exists():
+        directory.mkdir(parents=True, exist_ok=True)
         print(f"创建目录: {directory}")
 
 
@@ -105,9 +107,9 @@ if args.debug:
 
 # 根据操作系统添加特定选项
 if platform.system() == "Windows":
-    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.ico")}'])
+    cmd.extend([f'--icon={Path("components") / "assets" / "lapped.ico"}'])
 elif platform.system() == "Darwin":  # macOS
-    cmd.extend([f'--icon={os.path.join("components", "assets", "lapped.icns")}'])
+    cmd.extend([f'--icon={Path("components") / "assets" / "lapped.icns"}'])
     if platform.machine() == "arm64":
         cmd.append("--target-architecture=arm64")
     else:
@@ -120,22 +122,21 @@ def clean_logs_directory():
     """清空 logs 文件夹中的所有文件，但保留文件夹"""
     try:
         # 确保 logs 目录存在
-        if not os.path.exists(LOGS_DIR):
+        if not LOGS_DIR.exists():
             print(f"创建 logs 目录: {LOGS_DIR}")
-            os.makedirs(LOGS_DIR)
+            LOGS_DIR.mkdir(parents=True, exist_ok=True)
             return
 
         # 删除 logs 目录中的所有文件和子目录
-        for item in os.listdir(LOGS_DIR):
-            item_path = os.path.join(LOGS_DIR, item)
+        for item in LOGS_DIR.iterdir():
             try:
-                if os.path.isfile(item_path):
-                    os.unlink(item_path)
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
-                print(f"已删除: {item_path}")
+                if item.is_file():
+                    item.unlink()
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                print(f"已删除: {item}")
             except Exception as e:
-                print(f"删除 {item_path} 时出错: {e}")
+                print(f"删除 {item} 时出错: {e}")
 
         print("logs 目录已清空")
     except Exception as e:
@@ -145,10 +146,12 @@ def clean_logs_directory():
 start_time = time.time()
 
 # 清理旧的构建文件和日志
-if os.path.exists("dist"):
-    shutil.rmtree("dist")
-if os.path.exists("build"):
-    shutil.rmtree("build")
+dist_dir = Path("dist")
+build_dir = Path("build")
+if dist_dir.exists():
+    shutil.rmtree(dist_dir)
+if build_dir.exists():
+    shutil.rmtree(build_dir)
 clean_logs_directory()
 
 print("开始打包...")
@@ -187,14 +190,14 @@ def copy_models():
             continue
         try:
             # 获取包的根目录
-            model_root = os.path.dirname(model_path)
+            model_root = Path(model_path).parent
             print(f"{model} 库路径: {model_root}")
 
             # 目标路径 (_internal 目录)
-            target_path = os.path.join("dist", "Lapped", "_internal", model)
+            target_path = Path("dist") / "Lapped" / "_internal" / model
 
             # 确保目标目录存在
-            os.makedirs(target_path, exist_ok=True)
+            target_path.mkdir(parents=True, exist_ok=True)
 
             # 复制库目录，排除不必要的文件
             def custom_ignore(src, names):
@@ -202,9 +205,9 @@ def copy_models():
 
                 # 检查是否在排除目录列表中
                 for name in names:
-                    full_path = os.path.join(src, name)
+                    full_path = Path(src) / name
                     # 排除目录
-                    if os.path.isdir(full_path):
+                    if full_path.is_dir():
                         if any(exclude in name for exclude in exclude_dirs):
                             ignored_names.append(name)
                             continue
@@ -212,13 +215,13 @@ def copy_models():
                         # 检查特定库的排除目录
                         for lib, excludes in specific_excludes.items():
                             if lib in src:
-                                rel_path = os.path.relpath(full_path, model_root)
+                                rel_path = full_path.relative_to(model_root)
                                 for exclude in excludes:
-                                    if exclude in rel_path:
+                                    if exclude in str(rel_path):
                                         ignored_names.append(name)
                                         break
                     # 排除文件
-                    elif os.path.isfile(full_path):
+                    elif full_path.is_file():
                         if any(fnmatch.fnmatch(name, pattern) for pattern in exclude_files):
                             ignored_names.append(name)
 

@@ -1,4 +1,5 @@
-import os
+import hashlib
+from pathlib import Path
 
 from PySide6.QtCore import QSize, QSettings
 
@@ -18,10 +19,16 @@ class SettingsManager:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            # 获取当前工作目录
-            current_directory = os.path.basename(os.getcwd())
-            cls._instance = QSettings(
-                "Locoweed3",
-                f"LinLInTrans_{current_directory}"
-            )
+            # 使用项目根目录的绝对路径生成唯一标识
+            # 这样即使两个项目目录名称相同，也不会冲突
+            project_root = Path.cwd().resolve()
+
+            # 生成路径的短哈希（取前8位，足够区分不同项目）
+            path_hash = hashlib.md5(str(project_root).encode()).hexdigest()[:8]
+
+            # 应用名称格式：LinLInTrans_<目录名>_<路径哈希>
+            # 例如：LinLInTrans_lin_trans_a1b2c3d4
+            app_name = f"LappedAI_{path_hash}"
+
+            cls._instance = QSettings("Locoweed3", app_name)
         return cls._instance

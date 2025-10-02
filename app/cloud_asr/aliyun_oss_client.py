@@ -6,9 +6,9 @@
 https://help.aliyun.com/zh/oss/developer-reference/get-started-with-oss-sdk-for-python-v2
 """
 import mimetypes
-import os
 import time
 import uuid
+from pathlib import Path
 from typing import Tuple, Optional, Callable
 
 import alibabacloud_oss_v2 as oss
@@ -68,7 +68,7 @@ class AliyunOSSClientV2:
         logger.trace(f"正在上传文件到OSS: {local_file_path}")
 
         # 检查文件是否存在
-        if not os.path.exists(local_file_path):
+        if not Path(local_file_path).exists():
             error_msg = f"文件不存在: {local_file_path}"
             logger.error(error_msg)
             return False, "", error_msg
@@ -76,7 +76,7 @@ class AliyunOSSClientV2:
         try:
             # 如果没有指定OSS路径，则自动生成
             if not oss_path:
-                file_ext = os.path.splitext(local_file_path)[1]
+                file_ext = Path(local_file_path).suffix
                 timestamp = int(time.time())
                 random_str = str(uuid.uuid4()).replace("-", "")[:8]
                 oss_path = f"audio/{timestamp}_{random_str}{file_ext}"
@@ -202,15 +202,16 @@ class AliyunOSSClientV2:
             return False, "", error_msg
 
         # 检查文件是否存在
-        if not os.path.exists(local_file_path):
+        file_path = Path(local_file_path)
+        if not file_path.exists():
             error_msg = f"上传文件失败: 文件不存在: {local_file_path}"
             logger.error(error_msg)
             return False, "", error_msg
 
         try:
             # 记录文件大小
-            file_size = os.path.getsize(local_file_path)
-            file_name = os.path.basename(local_file_path)
+            file_size = file_path.stat().st_size
+            file_name = file_path.name
             logger.trace(f"开始上传文件: {file_name}, 大小: {file_size/1024/1024:.2f}MB")
 
             # 上传文件
@@ -286,7 +287,7 @@ def upload_file_for_asr(local_file_path: str, progress_callback: Optional[Callab
             return False, "", error_msg
 
         # 为segment_data文件生成特定的OSS路径
-        file_name = os.path.basename(local_file_path)
+        file_name = Path(local_file_path).name
         timestamp = int(time.time())
         oss_path = f"nlp_segments/{timestamp}_{file_name}"
 

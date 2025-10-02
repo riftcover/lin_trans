@@ -1,4 +1,3 @@
-import os
 import shutil
 import subprocess
 import sys
@@ -6,6 +5,7 @@ import platform
 import argparse
 import site
 import time
+from pathlib import Path
 
 # 检查并安装必要的模块
 def install_required_modules():
@@ -33,18 +33,19 @@ args = parser.parse_args()
 your_version = "0.1.0"  # 替换为您的实际版本号
 
 # 定义项目根目录和models目录
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
-RESULT_DIR = os.path.join(PROJECT_ROOT, 'result')
-NICE_UI_DIR = os.path.join(PROJECT_ROOT, 'nice_ui')
-LOGS_DIR = os.path.join(PROJECT_ROOT, 'logs')
-ORM_DIR = os.path.join(PROJECT_ROOT, 'orm')
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODELS_DIR = PROJECT_ROOT / 'models'
+RESULT_DIR = PROJECT_ROOT / 'result'
+NICE_UI_DIR = PROJECT_ROOT / 'nice_ui'
+LOGS_DIR = PROJECT_ROOT / 'logs'
+ORM_DIR = PROJECT_ROOT / 'orm'
 
 
 # 确保必要的目录存在
-def ensure_dir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+def ensure_dir(directory: Path):
+    directory = Path(directory)
+    if not directory.exists():
+        directory.mkdir(parents=True, exist_ok=True)
         print(f"创建目录: {directory}")
 
 # 创建 result 和 logs 目录
@@ -157,8 +158,8 @@ def copy_modelscope():
     # todo funasr，torch,unittest,torchgen，pdb,bdb,plistlib，torchaudio，logging
     modelscope_path = None
     for path in site.getsitepackages():
-        possible_path = os.path.join(path, 'modelscope')
-        if os.path.exists(possible_path):
+        possible_path = Path(path) / 'modelscope'
+        if possible_path.exists():
             modelscope_path = possible_path
             break
 
@@ -169,17 +170,17 @@ def copy_modelscope():
     # 确定目标路径
     if platform.system() == "Darwin":  # macOS
         app_name = "run.app"  # 替换为您的应用程序名称
-        dst_path = os.path.join("build", app_name, "Contents", "MacOS", "modelscope")
+        dst_path = Path("build") / app_name / "Contents" / "MacOS" / "modelscope"
     else:  # Windows 或其他系统
-        dst_path = os.path.join("build",'run.dist', "modelscope")
+        dst_path = Path("build") / 'run.dist' / "modelscope"
 
     # 复制 modelscope 库
     print(f"正在复制 modelscope 库从 {modelscope_path} 到 {dst_path}")
     shutil.copytree(modelscope_path, dst_path, dirs_exist_ok=True)
 
 def copy_site_packages():
-    site_packages = site.getsitepackages()[0]
-    dst_path = os.path.join("build", "site-packages")
+    site_packages = Path(site.getsitepackages()[0])
+    dst_path = Path("build") / "site-packages"
     print(f"正在复制第三方库从 {site_packages} 到 {dst_path}")
     shutil.copytree(site_packages, dst_path, dirs_exist_ok=True)
 
@@ -190,8 +191,9 @@ start_time = time.time()
 # install_required_modules()
 
 # 清理旧的构建文件
-if os.path.exists("build"):
-    shutil.rmtree("build")
+build_dir = Path("build")
+if build_dir.exists():
+    shutil.rmtree(build_dir)
 # 执行打包命令
 subprocess.run(cmd, check=True)
 

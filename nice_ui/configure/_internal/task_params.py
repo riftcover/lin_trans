@@ -68,13 +68,11 @@ class TaskParams(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         """
         转换为字典，用于向后兼容
-        
-        注意：Path 对象会被转换为字符串
+
+        注意：Path 对象保持为 Path 类型（不转换为字符串）
         """
         data = self.model_dump()
-        # 将 Path 对象转换为字符串
-        if isinstance(data.get("target_dir"), Path):
-            data["target_dir"] = data["target_dir"]
+        # target_dir 保持为 Path 对象，因为代码中很多地方依赖 Path 的方法
         return data
 
 
@@ -132,9 +130,10 @@ class MutableDict(dict):
 def create_task_params(root_path: Path) -> MutableDict:
     """
     创建任务参数实例
-    
+
     返回一个可变字典，支持向后兼容的访问方式。
     """
-    model = TaskParams(target_dir=root_path / "result")
+    target_dir = root_path / "result"
+    model = TaskParams(target_dir=target_dir)
     return MutableDict(model)
 

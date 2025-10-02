@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import av
 from PySide6.QtCore import Qt, Slot, QSize
@@ -394,7 +394,7 @@ class TableWindow:
             for file_path in file_paths:
                 self.add_file_to_table(ui_table, file_path)
 
-            config.last_opendir = os.path.dirname(file_paths[0])
+            config.last_opendir = str(Path(file_paths[0]).parent)
             self.settings.setValue("last_dir", config.last_opendir)
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
@@ -408,7 +408,7 @@ class TableWindow:
         ds_count = str(self._calc_ds(self.duration_seconds))
         if self.file_duration:
             ui_table.insertRow(row_position)
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             # 文件名
             ui_table.setItem(row_position, 0, QTableWidgetItem(file_name))
             # 时长

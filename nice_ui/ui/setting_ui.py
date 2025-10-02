@@ -1,7 +1,10 @@
-import os
+import subprocess
+import sys
+from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import QThread, Signal, Qt, QUrl, QSize, QTimer, Slot
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest, QNetworkReply, )
 from PySide6.QtWidgets import (QTabWidget, QTableWidgetItem, QFileDialog, QAbstractItemView, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QTextEdit, QHeaderView, QButtonGroup, QPushButton, QSpacerItem, QProgressBar, )
@@ -127,16 +130,10 @@ class LocalModelPage(QWidget):
         self.path_change_btn.clicked.connect(self.change_path)
 
     def open_directory(self):
-        # 打开目录
-        path = self.path_input.text()
-        if os.path.exists(path):
-            # 用 os.startfile (Windows) 或 os.system('open ...') (macOS/Linux) 来打开文件夹。
-            (
-                os.startfile(path)
-                if sys.platform == "win32"
-                else os.system(f'open "{path}"')
-            )
-
+        path = Path(self.path_input.text())
+        if path.exists():
+            # 使用Qt打开文件夹
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
         else:
             logger.error(f"路径不存在: {path}")
 
@@ -215,11 +212,9 @@ class LocalModelPage(QWidget):
             所有下载完成的判断根据是最后一个文件是否存在来判断，
             最后下载的是文件是tokens.json
             """
-            rr_dir = os.path.join(config.funasr_model_path, model_folder, "tokens.json")
+            rr_dir = Path(config.funasr_model_path) / model_folder / "tokens.json"
 
-            is_installed = os.path.exists(
-                rr_dir
-            )
+            is_installed = rr_dir.exists()
 
             for col, value in enumerate([model_name, model_size]):
                 item = QTableWidgetItem(str(value))
@@ -1354,12 +1349,29 @@ class SettingInterface(QWidget):
         self.setLayout(layout)
 
 
-if __name__ == "__main__":
-    import sys
+def main():
+    """主函数 - 启动设置界面"""
     from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
+    from nice_ui.ui import SettingsManager
 
     app = QApplication(sys.argv)
-    window = SettingInterface("字幕翻译", settings=QSettings("Locoweed", "LinLInTrans"))
+    window = SettingInterface("字幕翻译", settings=SettingsManager.get_instance())
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    import multiprocessing
+
+    # macOS + PyInstaller 必须设置 multiprocessing 启动方法
+    # 必须在任何可能创建进程的代码之前调用
+    try:
+        multiprocessing.set_start_method("spawn", force=True)
+    except RuntimeError:
+        pass  # 已经设置过了，忽略
+
+    # 冻结支持：防止 multiprocessing 在 PyInstaller 打包后无限启动新进程
+    multiprocessing.freeze_support()
+
+    # 启动主程序
+    main()

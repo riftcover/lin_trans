@@ -142,24 +142,24 @@ class TokenRefreshService(QObject):
     def _get_token_expiry_from_settings(self) -> Optional[int]:
         """从设置中获取token过期时间"""
         try:
-            from PySide6.QtCore import QSettings
-            settings = QSettings()
+            from nice_ui.ui import SettingsManager
+            settings = SettingsManager.get_instance()
             expires_at = settings.value('token_expires_at')
             if expires_at:
                 return int(expires_at)
         except Exception as e:
             logger.warning(f"无法从设置中获取token过期时间: {str(e)}")
         return None
-    
+
     def _save_token_to_settings(self, token_info: dict):
         """保存token信息到设置中"""
         try:
-            from PySide6.QtCore import QSettings
-            settings = QSettings()
-            
+            from nice_ui.ui import SettingsManager
+            settings = SettingsManager.get_instance()
+
             if 'access_token' in token_info:
                 settings.setValue('token', token_info['access_token'])
-            
+
             if 'refresh_token' in token_info:
                 settings.setValue('refresh_token', token_info['refresh_token'])
             

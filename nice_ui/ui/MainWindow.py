@@ -1,8 +1,8 @@
 # coding:utf-8
 import asyncio
-import os
 import platform
 import sys
+from pathlib import Path
 
 import httpx
 from PySide6.QtCore import QUrl, Qt, Slot, QTimer
@@ -50,15 +50,9 @@ class Window(_create_smart_window_class()):
         self.setObjectName("MainWindow")
 
         # 获取当前工作目录
-        current_directory = os.path.basename(os.getcwd())
+        current_directory = Path.cwd().name
         self.settings = SettingsManager.get_instance()
-        # 根据平台设置合适的主题颜色
-        if sys.platform == "darwin":
-            # macOS使用系统蓝色
-            setThemeColor(QColor("#7C3AED"))
-        else:
-            # 其他平台使用微软蓝
-            setThemeColor(QColor("#7C3AED"))
+        setThemeColor(QColor("#7C3AED"))
 
         # 根据操作系统设置字体
         self.set_font()

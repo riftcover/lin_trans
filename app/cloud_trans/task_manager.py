@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Optional
 
 from agent.srt_translator_adapter import SRTTranslatorAdapter
@@ -64,7 +64,7 @@ class TransTaskManager:
                 return
 
             # 检查SRT文件是否存在
-            if not os.path.exists(srt_file_path):
+            if not Path(srt_file_path).exists():
                 logger.warning(f"SRT文件不存在，设置默认翻译算力: {srt_file_path}")
                 self._set_default_translation_tokens(task_id)
                 return

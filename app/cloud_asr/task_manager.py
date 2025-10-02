@@ -1,5 +1,4 @@
 import json
-import os
 import threading
 import time
 from pathlib import Path
@@ -324,7 +323,7 @@ class ASRTaskManager:
             # 如果是本地文件，先上传到OSS
             if not is_url:
                 # 检查文件是否存在
-                if not os.path.exists(audio_file):
+                if not Path(audio_file).exists():
                     error_msg = f"文件不存在: {audio_file}"
                     logger.error(error_msg)
                     self.update_task(
@@ -497,7 +496,7 @@ class ASRTaskManager:
                             transcription_url = client.parse_result(response)
 
                             # 下载转写结果文件
-                            json_file_path = f"{os.path.splitext(task.audio_file)[0]}_asr_result.json"
+                            json_file_path = f"{Path(task.audio_file).stem}_asr_result.json"
                             saved_path = client.download_file(transcription_url, json_file_path)
 
                             # 更新任务状态为分词中
@@ -526,7 +525,7 @@ class ASRTaskManager:
                             self._notify_task_progress(task.task_id, 95)
 
                             # 生成本地SRT文件（基础版本，不使用NLP分句）
-                            srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                            srt_file_path = f"{Path(task.audio_file).stem}.srt"
                             logger.info(f'生成本地SRT文件: {srt_file_path}')
                             funasr_write_srt_file(segments, srt_file_path)
 
@@ -708,7 +707,7 @@ class ASRTaskManager:
         """创建segment_data文件"""
         from utils.file_utils import write_segment_data_file
 
-        segment_data_path = f"{os.path.splitext(audio_file)[0]}_segment_data.json"
+        segment_data_path = f"{Path(audio_file).stem}_segment_data.json"
         write_segment_data_file(segments, segment_data_path)
         logger.info(f"已创建segment_data文件: {segment_data_path}")
         return segment_data_path
@@ -720,7 +719,7 @@ class ASRTaskManager:
             import time
 
             # 创建一个元数据文件来保存segment_data路径
-            metadata_path = f"{os.path.splitext(audio_file)[0]}_metadata.json"
+            metadata_path = f"{Path(audio_file).stem}_metadata.json"
             metadata = {
                 'segment_data_path': segment_data_path,
                 'created_time': time.time(),

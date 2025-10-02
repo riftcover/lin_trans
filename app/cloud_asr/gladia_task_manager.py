@@ -3,7 +3,6 @@ Gladia ASR 任务管理器
 """
 
 import json
-import os
 import threading
 import time
 from pathlib import Path
@@ -254,7 +253,7 @@ class GladiaTaskManager:
                 self._notify_task_progress(task.task_id, 95)
 
                 # 生成SRT文件
-                srt_file_path = f"{os.path.splitext(task.audio_file)[0]}.srt"
+                srt_file_path = f"{Path(task.audio_file).stem}.srt"
                 funasr_write_srt_file(segments, srt_file_path)
 
                 # 更新进度到97%
@@ -303,7 +302,7 @@ class GladiaTaskManager:
         """创建segment_data文件"""
 
 
-        segment_data_path = f"{os.path.splitext(audio_file)[0]}_segment_data.json"
+        segment_data_path = f"{Path(audio_file).stem}_segment_data.json"
         write_segment_data_file(segments, segment_data_path)
         logger.info(f"已创建segment_data文件: {segment_data_path}")
         return segment_data_path
@@ -315,7 +314,7 @@ class GladiaTaskManager:
             import time
 
             # 创建一个元数据文件来保存segment_data路径
-            metadata_path = f"{os.path.splitext(audio_file)[0]}_metadata.json"
+            metadata_path = f"{Path(audio_file).stem}_metadata.json"
             metadata = {
                 'segment_data_path': segment_data_path,
                 'created_time': time.time(),

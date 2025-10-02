@@ -1,6 +1,6 @@
-import os
 import time
 from http import HTTPStatus
+from pathlib import Path
 from typing import Dict, Any, List
 
 import dashscope
@@ -220,7 +220,7 @@ class AliyunASRClient:
             logger.info(f"开始下载文件: {url}")
 
             # 创建目录（如果不存在）
-            os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
+            Path(save_path).resolve().parent.mkdir(parents=True, exist_ok=True)
 
             # 使用流式下载大文件
             with requests.get(url, stream=True, timeout=60) as response:
