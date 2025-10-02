@@ -1,112 +1,196 @@
-"""
-配置模块 - 重构版本
-
-这个模块提供应用程序的所有配置和运行时状态。
-采用延迟初始化策略，避免导入时的副作用。
-对外保持100%向后兼容。
-
-重构原则：
-1. 内部使用清晰的数据结构（Pydantic模型）
-2. 外部暴露兼容的字典接口
-3. 延迟初始化，避免导入时副作用
-4. 分离配置、参数、状态
-"""
 import json
+from pydantic import BaseModel
 import os
 import re
 import sys
 from pathlib import Path
+from queue import Queue
 
-# 内部模块
-from nice_ui.configure._internal.paths import _path_config
-from nice_ui.configure._internal.settings import get_settings_loader
-from nice_ui.configure._internal.task_params import create_task_params
-from nice_ui.configure._internal.runtime_state import _runtime_state
-from nice_ui.configure._internal.language_data import get_language_data
-from nice_ui.configure._internal.cloud_config import get_cloud_config_loader, PplSdkConfig, CloudConfig
+from nice_ui.configure import ModelDict
+from utils import logger
+from utils.crypto_utils import crypto_utils
 
 
 # ============================================================================
-# 路径配置 - 延迟初始化，访问时自动创建目录
+# 路径配置
 # ============================================================================
 
 def get_executable_path():
-    """获取可执行文件所在目录（兼容旧API）"""
+
     if getattr(sys, "frozen", False):
+        # 如果程序是被“冻结”打包的，使用这个路径
         return os.path.dirname(sys.executable).replace("\\", "/")
     else:
         return str(Path.cwd()).replace("\\", "/")
 
 
-# 路径变量 - 通过函数包装实现延迟加载
+# 基础路径
 rootdir = get_executable_path()
-root_path = _path_config.root_path
+root_path = Path(__file__).parent.parent.parent  # 项目根目录
 sys_platform = sys.platform
-root_same = _path_config.root_path.parent
-models_path = _path_config.models_path
+root_same = root_path.parent
 
-
-def update_funasr_path():
-    """更新FunASR路径（兼容旧API）"""
-    global funasr_model_path
-    funasr_model_path = _path_config.funasr_model_path
-    return funasr_model_path
-
-
-# 初始化funasr_model_path（延迟到首次访问）
-funasr_model_path = _path_config.funasr_model_path
+# 模型路径（全局变量，单一数据源）
+models_path = root_same / "models"
+funasr_model_path = models_path / "funasr" / "iic"
 
 # 其他路径
-temp_path = _path_config.temp_path
-TEMP_DIR = _path_config.TEMP_DIR
-homepath = _path_config.homepath
-homedir = _path_config.homedir
-TEMP_HOME = _path_config.TEMP_HOME
-result_path = _path_config.result_path
+temp_path = root_path / "tmp"
+TEMP_DIR = temp_path.as_posix()
+homepath = Path.home() / "Videos/lapped"
+homedir = homepath.as_posix()
+TEMP_HOME = f"{homedir}/tmp"
+result_path = root_path / "result"
+
+
+def ensure_directories():
+    """
+    确保所有必需的目录存在
+    
+    这个函数在模块导入时调用一次，或者在需要时手动调用。
+    """
+    funasr_model_path.mkdir(parents=True, exist_ok=True)
+    temp_path.mkdir(parents=True, exist_ok=True)
+    homepath.mkdir(parents=True, exist_ok=True)
+    Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
+
+
+# 初始化时创建目录
+ensure_directories()
 
 
 # ============================================================================
-# 应用设置 - 从 set.ini 加载，延迟初始化
+# 应用设置 - 从 set.ini 加载
 # ============================================================================
 
 defaulelang = "zh"
 
-# 设置加载器
-_settings_loader = get_settings_loader(root_path)
 
-# 设置字典 - 延迟加载
-settings = _settings_loader.to_dict()
+def parse_init():
+    """解析 set.ini 配置文件"""
+    init_settings = {
+        "lang": defaulelang,
+        "dubbing_thread": 3,
+        "trans_row": 40,
+        "trans_sleep": 22,
+        "agent_rpm": 2,
+        "cuda_com_type": "float16",
+        "whisper_threads": 4,
+        "whisper_worker": 1,
+        "beam_size": 1,
+        "best_of": 1,
+        "vad": True,
+        "temperature": 1,
+        "condition_on_previous_text": False,
+        "crf": 13,
+        "video_codec": 264,
+        "retries": 2,
+        "separate_sec": 600,
+        "audio_rate": 1.5,
+        "video_rate": 20,
+        "initial_prompt_zh": "Please break sentences correctly and retain punctuation",
+        "fontsize": 16,
+        "fontname": "黑体",
+        "fontcolor": "&HFFFFFF",
+        "fontbordercolor": "&H000000",
+        "subtitle_bottom": 0,
+        "voice_silence": 200,
+        "interval_split": 6,
+        "cjk_len": 24,
+        "other_len": 36,
+        "backaudio_volume": 0.5,
+        "overall_silence": 2100,
+        "overall_maxsecs": 3,
+        "overall_threshold": 0.5,
+        "overall_speech_pad_ms": 100,
+        "remove_srt_silence": False,
+        "remove_silence": True,
+        "remove_white_ms": 100,
+        "vsync": "passthrough",
+        "force_edit_srt": True,
+        "loop_backaudio": False,
+        "chattts_voice": "1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869",
+        "cors_run": True,
+    }
+    
+    file = root_path / "nice_ui/set.ini"
+    if file.exists():
+        try:
+            with file.open("r", encoding="utf-8") as f:
+                for it in f.readlines():
+                    it = it.strip()
+                    if not it or it.startswith(";") or it.startswith("#"):
+                        continue
+                    key, value = it.split("=", maxsplit=1)
+                    key = key.strip()
+                    value = value.strip()
+                    
+                    # 类型转换
+                    if re.match(r"^\d+$", value):
+                        init_settings[key] = int(value)
+                    elif re.match(r"^\d+\.\d$", value):
+                        init_settings[key] = round(float(value), 1)
+                    elif value.lower() == "true":
+                        init_settings[key] = True
+                    elif value.lower() == "false":
+                        init_settings[key] = False
+                    else:
+                        init_settings[key] = str(value.lower()) if value else ""
+        except Exception as e:
+            logger.error(f"set.ini 中有语法错误: {str(e)}")
+        
+        # 修正 fontsize
+        if isinstance(init_settings["fontsize"], str) and init_settings["fontsize"].find("px") > 0:
+            init_settings["fontsize"] = int(init_settings["fontsize"].replace("px", ""))
+    
+    return init_settings
 
 
-# ============================================================================
-# 语言和模型数据 - 从 JSON 加载，延迟初始化
-# ============================================================================
+# 加载设置
+settings = parse_init()
 
-# 更新默认语言（如果 settings 中有设置）
+# 更新默认语言
 if settings.get("lang"):
     defaulelang = settings["lang"].lower()
 
-# 语言数据加载器
-_language_data = get_language_data(root_path, defaulelang)
 
-# 语言相关变量
-transobj = _language_data.transobj
-uilanglist = _language_data.uilanglist
-langlist = _language_data.langlist
-langnamelist = _language_data.langnamelist
-model_list = _language_data.model_list
+# ============================================================================
+# 语言和模型数据 - 从 JSON 加载
+# ============================================================================
+
+# 语言代码文件
+lang_path = root_path / f"nice_ui/language/{defaulelang}.json"
+if not lang_path.exists():
+    defaulelang = "en"
+    lang_path = root_path / "nice_ui/language/{defaulelang}.json"
+
+obj = json.load(lang_path.open("r", encoding="utf-8"))
+
+# 交互语言代码
+transobj = obj["translate_language"]
+# 软件界面
+uilanglist = obj["ui_lang"]
+# 语言显示名称:语言代码
+langlist: dict = obj["language_code_list"]
+# 语言显示名称 list
+langnamelist = list(langlist.keys())
+# 模型列表
+model_list: ModelDict = obj["model_code_list"]
 
 
-def init_model_code_key():
+def init_model_code_key() -> list:
     """
     模型列表的key值
     example: ['多语言模型', '中文模型', '英语模型']
     """
-    return _language_data.model_code_list
+    code = [key.split(".")[0] for key in model_list.keys()]
+    return code
 
 
 model_code_list = init_model_code_key()
-box_lang = _language_data.box_lang
+
+# 工具箱语言
+box_lang = obj["toolbox_lang"]
 
 
 # ============================================================================
@@ -122,64 +206,135 @@ os.environ["SOFT_NAME"] = "Lapped AI"
 # ============================================================================
 
 # 队列
-queue_logs = _runtime_state.queue_logs
-queuebox_logs = _runtime_state.queuebox_logs
-lin_queue = _runtime_state.lin_queue
+queue_logs = Queue(1000)
+queuebox_logs = Queue(1000)
+lin_queue = Queue()
 
 # 任务队列
-queue_asr = _runtime_state.queue_asr
-queue_trans = _runtime_state.queue_trans
-queue_novice = _runtime_state.queue_novice
+queue_asr = []
+queue_trans = []
+queue_novice = {}
 
 # 状态标志
-box_status = _runtime_state.box_status
-box_trans = _runtime_state.box_trans
-separate_status = _runtime_state.separate_status
-is_consuming = _runtime_state.is_consuming
-exit_soft = _runtime_state.exit_soft
-canceldown = _runtime_state.canceldown
+box_status = "stop"
+box_trans = "stop"
+separate_status = "stop"
+is_consuming = False
+exit_soft = False
+canceldown = False
 
 # 计数器
-geshi_num = _runtime_state.geshi_num
-task_countdown = _runtime_state.task_countdown
+geshi_num = 0
+task_countdown = 60
 
 # 缓存
-video_cache = _runtime_state.video_cache
-errorlist = _runtime_state.errorlist
+video_cache = {}
+errorlist = {}
 
 # 其他状态
-last_opendir = homedir  # 初始化为 homedir
-video_codec = _runtime_state.video_codec
-video_min_ms = _runtime_state.video_min_ms
+last_opendir = homedir
+video_codec = None
+video_min_ms = 50
 
 # TTS 相关
-edgeTTS_rolelist = _runtime_state.edgeTTS_rolelist
-AzureTTS_rolelist = _runtime_state.AzureTTS_rolelist
-proxy = _runtime_state.proxy
+edgeTTS_rolelist = None
+AzureTTS_rolelist = None
+proxy = None
 
 # 语音列表
-clone_voicelist = _runtime_state.clone_voicelist
+clone_voicelist = ["clone"]
 ChatTTS_voicelist = re.split(r",|，", settings.get("chattts_voice", "1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869"))
-openaiTTS_rolelist = _runtime_state.openaiTTS_rolelist
+openaiTTS_rolelist = "alloy,echo,fable,onyx,nova,shimmer"
 
 
 # ============================================================================
 # 任务参数 - 运行时可修改的参数
 # ============================================================================
 
-params = create_task_params(root_path)
+params = {
+    "source_mp4": "",
+    "target_dir": root_path / "result",
+    "output_dir": "",
+    "source_language_code": "en",
+    "source_language": "英语",
+    "source_module_status": 302,
+    "source_module_name": "small",
+    "source_module_key": "中文模型",
+    "detect_language": "en",
+    "translate_status": False,
+    "target_language": "中文",
+    "translate_channel": "通义千问",
+    "subtitle_language": "chi",
+    "prompt_name": "默认",
+    "prompt_text": "",
+    "cuda": False,
+    "is_separate": False,
+    "voice_role": "No",
+    "voice_rate": "0",
+    "tts_type": "edgeTTS",
+    "tts_type_list": [
+        "edgeTTS",
+        "ChatTTS",
+        "gtts",
+        "AzureTTS",
+        "GPT-SoVITS",
+        "clone-voice",
+        "openaiTTS",
+        "elevenlabsTTS",
+        "TTS-API",
+    ],
+    "only_video": False,
+    "subtitle_type": 0,
+    "voice_autorate": False,
+    "auto_ajust": True,
+}
 
 
 # ============================================================================
-# 云服务配置 - 加密凭证，延迟加载
+# 云服务配置 - 加密凭证
 # ============================================================================
 
-_cloud_config_loader = get_cloud_config_loader(root_path)
-aa_bb = _cloud_config_loader.get_config()
+
+
+
+class PplSdkConfig(BaseModel):
+    aki: str = ""
+    aks: str = ""
+    region: str = "cn-beijing"
+    bucket: str = "asr-file-tth"
+    asr_api_key: str = ""
+    asr_model: str = "paraformer-v2"
+    gladia_api_key: str = ""
+
+
+class CloudConfig(BaseModel):
+    ppl_sdk: PplSdkConfig
+
+
+def get_cloud_config():
+    """获取云服务配置，优先从加密文件加载"""
+    try:
+        crypto_utils.initialize()
+        credentials_file = crypto_utils.get_credentials_file_path(root_path)
+        
+        if credentials_file.exists():
+            try:
+                credentials = crypto_utils.decrypt_from_file(credentials_file)
+                if isinstance(credentials, dict) and 'ppl_sdk' in credentials:
+                    return CloudConfig(**credentials)
+            except Exception as e:
+                logger.error(f"从加密文件加载凭证失败: {str(e)}")
+    except Exception as e:
+        logger.error(f"获取云服务配置失败: {str(e)}")
+    
+    return None
+
+
+aa_bb = get_cloud_config()
 
 
 # ============================================================================
-# 代理设置（保留兼容性）
+# 代理设置
 # ============================================================================
 
 agent_settings = {
@@ -195,7 +350,7 @@ agent_settings = {
 
 
 # ============================================================================
-# 模板路径（保留兼容性）
+# 模板路径
 # ============================================================================
 
 chatgpt_path = root_path / "nice_ui/chatgpt.txt"
@@ -203,29 +358,3 @@ localllm_path = root_path / "nice_ui/localllm.txt"
 zijiehuoshan_path = root_path / "nice_ui/zijie.txt"
 azure_path = root_path / "nice_ui/azure.txt"
 gemini_path = root_path / "nice_ui/gemini.txt"
-
-
-# ============================================================================
-# 向后兼容性说明
-# ============================================================================
-
-"""
-这个重构版本保持了100%的向后兼容性：
-
-1. 所有变量名保持不变
-2. 所有访问方式保持不变（config.params["key"], config.settings["key"]）
-3. 所有赋值方式保持不变（config.params["key"] = value）
-4. 所有函数签名保持不变
-
-内部改进：
-1. 延迟初始化 - 导入时不再立即创建所有目录
-2. 类型安全 - 使用 Pydantic 模型提供类型检查
-3. 清晰分类 - 路径、设置、参数、状态分离
-4. 可测试性 - 每个模块可以独立测试
-
-重构收益：
-- 消除导入时副作用（目录创建延迟到首次访问）
-- 数据结构清晰（5个独立模块）
-- 类型安全（Pydantic验证）
-- 易于维护（353行拆分为多个小模块）
-"""
