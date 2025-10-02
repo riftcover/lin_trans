@@ -495,9 +495,10 @@ class ASRTaskManager:
                             # 解析结果，获取转写结果的URL
                             transcription_url = client.parse_result(response)
 
-                            # 下载转写结果文件
-                            json_file_path = f"{Path(task.audio_file).stem}_asr_result.json"
-                            saved_path = client.download_file(transcription_url, json_file_path)
+                            # 下载转写结果文件（使用完整路径）
+                            audio_path = Path(task.audio_file)
+                            json_file_path = audio_path.with_name(f"{audio_path.stem}_asr_result.json")
+                            saved_path = client.download_file(transcription_url, str(json_file_path))
 
                             # 更新任务状态为分词中
                             self.update_task(
@@ -706,33 +707,31 @@ class ASRTaskManager:
     def _create_segment_data_file(self, segments, audio_file):
         """创建segment_data文件"""
         from utils.file_utils import write_segment_data_file
-
-        segment_data_path = f"{Path(audio_file).stem}_segment_data.json"
+        audio_path = Path(audio_file)
+        segment_data_path = audio_path.with_name(f"{audio_path.stem}_segment_data.json")
         write_segment_data_file(segments, segment_data_path)
         logger.info(f"已创建segment_data文件: {segment_data_path}")
         return segment_data_path
 
     def _save_segment_data_path(self, segment_data_path, audio_file, language):
         """保存segment_data路径信息，供UI智能分句功能使用"""
-        try:
-            import json
-            import time
+        import json
+        import time
 
-            # 创建一个元数据文件来保存segment_data路径
-            metadata_path = f"{Path(audio_file).stem}_metadata.json"
-            metadata = {
-                'segment_data_path': segment_data_path,
-                'created_time': time.time(),
-                'audio_file': audio_file,
-                'language': language  # 添加语言信息
-            }
+        # 创建一个元数据文件来保存segment_data路径（使用完整路径）
+        audio_path = Path(audio_file)
+        metadata_path = audio_path.with_name(f"{audio_path.stem}_metadata.json")
+        metadata = {
+            'segment_data_path': segment_data_path,
+            'created_time': time.time(),
+            'audio_file': audio_file,
+            'language': language  # 添加语言信息
+        }
 
-            with open(metadata_path, 'w', encoding='utf-8') as f:
-                json.dump(metadata, f, ensure_ascii=False, indent=2)
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
 
-            logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
-        except Exception as e:
-            logger.warning(f"保存segment_data路径信息失败: {str(e)}")
+        logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
 
 
 # 单例模式

@@ -399,10 +399,10 @@ class TableWindow:
 
     def add_file_to_table(self, ui_table: TableWidget, file_path: str):
         # 添加文件到表格
-        logger.info(f"add_file_to_table: {file_path}")
+
         # 不加这个log，mac系统上在check_asr函数中中target_dir就是空值
-        logger.trace("config.params:")
-        logger.trace(config.params)
+        # logger.trace("config.params:")
+        # logger.trace(config.params)
         row_position = ui_table.rowCount()
         self.file_duration = self.get_video_duration(file_path)  # 获取视频时长
         ds_count = str(self._calc_ds(self.duration_seconds))
