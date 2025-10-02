@@ -633,8 +633,9 @@ class ExportSubtitleDialog(QDialog):
 
         # 保存提取的文本到 export_path
         export_name = Path(src_path).stem
+        output_file = Path(export_path) / f"{export_name}.txt"
         with open(
-                f"{export_path}/{export_name}.txt", "w", encoding="utf-8"
+                output_file, "w", encoding="utf-8"
         ) as dest_file:
             # 写入第一行字幕，每行都换行
             dest_file.write("\n".join(first_line_subtitles) + "\n")

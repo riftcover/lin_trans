@@ -707,11 +707,13 @@ class ASRTaskManager:
     def _create_segment_data_file(self, segments, audio_file):
         """创建segment_data文件"""
         from utils.file_utils import write_segment_data_file
+
+        # 使用完整路径
         audio_path = Path(audio_file)
         segment_data_path = audio_path.with_name(f"{audio_path.stem}_segment_data.json")
-        write_segment_data_file(segments, segment_data_path)
+        write_segment_data_file(segments, str(segment_data_path))
         logger.info(f"已创建segment_data文件: {segment_data_path}")
-        return segment_data_path
+        return str(segment_data_path)
 
     def _save_segment_data_path(self, segment_data_path, audio_file, language):
         """保存segment_data路径信息，供UI智能分句功能使用"""

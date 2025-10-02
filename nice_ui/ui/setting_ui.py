@@ -151,24 +151,24 @@ class LocalModelPage(QWidget):
             self.show_funasr_table(self.funasr_model_table)
             # self.settings.sync()
 
-    def populate_model_table(self, table, models):
-        table.setRowCount(len(models))
-        for row, model in enumerate(models):
-            for col, value in enumerate(model):
-                item = QTableWidgetItem(str(value))
-                item.setTextAlignment(Qt.AlignCenter)
-                if col in [2, 5]:  # 准确度列
-                    item.setText("★" * value)
-                elif col == 6:  # 状态列
-                    btn = PushButton(value)
-                    if value == "已安装":
-                        btn.setEnabled(False)
-                    table.setCellWidget(row, col, btn)
-                    continue
-                table.setItem(row, col, item)
-
-        table.resizeColumnsToContents()
-        table.setColumnWidth(0, 150)  # 设置第一列宽度
+    # def populate_model_table(self, table, models):
+    #     table.setRowCount(len(models))
+    #     for row, model in enumerate(models):
+    #         for col, value in enumerate(model):
+    #             item = QTableWidgetItem(str(value))
+    #             item.setTextAlignment(Qt.AlignCenter)
+    #             if col in [2, 5]:  # 准确度列
+    #                 item.setText("★" * value)
+    #             elif col == 6:  # 状态列
+    #                 btn = PushButton(value)
+    #                 if value == "已安装":
+    #                     btn.setEnabled(False)
+    #                 table.setCellWidget(row, col, btn)
+    #                 continue
+    #             table.setItem(row, col, item)
+    #
+    #     table.resizeColumnsToContents()
+    #     table.setColumnWidth(0, 150)  # 设置第一列宽度
 
     # def show_model_list(self, engine):
     #     if engine == "Whisper.Cpp":
@@ -215,6 +215,7 @@ class LocalModelPage(QWidget):
             rr_dir = Path(config.funasr_model_path) / model_folder / "tokens.json"
 
             is_installed = rr_dir.exists()
+            logger.trace(f'rr_dir: {rr_dir},is_installed:{is_installed}')
 
             for col, value in enumerate([model_name, model_size]):
                 item = QTableWidgetItem(str(value))
