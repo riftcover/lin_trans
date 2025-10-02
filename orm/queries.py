@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
     print(to_orm.query_data_by_name("默认"))
     a = to_orm.query_data_by_name("默认")
-    print(a.prompt_content.format(translate_name='中文', source_language_name='英文'))
+    print(a.prompt_content.format(translate_name='中文', source_language_name='英语'))
     # 替换 {lang} 为 zh-cn
     # modified_content = to_orm.prompt_content.format(lang='zh-cn', text='你好')
     # print(modified_content)

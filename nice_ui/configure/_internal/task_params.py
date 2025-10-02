@@ -19,7 +19,7 @@ class TaskParams(BaseModel):
     target_dir: Path = Field(default_factory=lambda: Path("result"))
     output_dir: str = ""
     source_language_code: str = "en"
-    source_language: str = "英文"
+    source_language: str = "英语"
     source_module_status: int = 302
     source_module_name: str = "small"
     source_module_key: str = "中文模型"
