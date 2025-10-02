@@ -110,7 +110,7 @@ class ApiWorkerThread(QThread):
             
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"Request {request.request_id} failed: {error_msg}")
+            logger.debug(f"Request {request.func.__name__} failed: {error_msg}")
             
             # 发出失败信号
             self.signals.request_failed.emit(request.request_id, error_msg)

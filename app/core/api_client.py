@@ -116,9 +116,9 @@ class APIClient:
             self._update_token(data)
             return data
         except httpx.HTTPStatusError as e:
-            error_json = e.response.json()
-            logger.error(f'Login failed: {error_json}')
-            raise Exception(error_json.get('detail'))
+            logger.error(f"Login HTTP error: {e.response.status_code}")
+            logger.trace(f"Response text: {e.response.text}")
+            raise Exception(f"Login failed with status {e.response.status_code}: {e.response.text}")
 
     def _update_token(self, response_data: Dict) -> None:
         """更新token和refresh_token的辅助方法"""
