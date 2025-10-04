@@ -4,7 +4,7 @@ from pathlib import Path
 from PySide6.QtCore import QSize, QSettings
 
 # ...其他常量
-__version__ = "0.2.1"
+__version__ = "0.3.2"
 # 字幕编辑窗口大小
 SUBTITLE_EDIT_DIALOG_SIZE = QSize(1300, 800)
 # 主窗口大小

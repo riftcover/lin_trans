@@ -1,13 +1,21 @@
 import sys
 import contextlib
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from nice_ui.ui.MainWindow import Window
+# 导入资源文件
+import components.lin_resource_rc
 
 
 def main():
     app = QApplication(sys.argv)
+    if sys.platform == "darwin":
+        app.setWindowIcon(QIcon(":/icon/assets/lapped.png"))
+    else:
+        app.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
+
     window = Window()
     window.show()
     sys.exit(app.exec())

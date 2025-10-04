@@ -12,9 +12,9 @@ from PySide6.QtWidgets import QApplication
 from packaging import version
 
 from app.core.api_client import api_client, AuthenticationError
+from nice_ui.services.api_service import api_service
 from nice_ui.services.token_refresh_service import get_token_refresh_service
 from nice_ui.services.simple_api_service import simple_api_service
-
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.configure.signal import data_bridge
@@ -105,17 +105,6 @@ class Window(_create_smart_window_class()):
             self.settings.setValue('token_expires_at', token_info.get('expires_at'))
         self.settings.sync()
 
-        # 显示成功提示（可选，避免过于频繁的通知）
-        # InfoBar.success(
-        #     title='会话已更新',
-        #     content='您的登录会话已自动更新',
-        #     orient=Qt.Horizontal,
-        #     isClosable=True,
-        #     position=InfoBarPosition.TOP,
-        #     duration=2000,
-        #     parent=self
-        # )
-
     def _on_token_refresh_failed(self):
         """处理token刷新失败"""
         logger.warning("Token刷新失败，需要重新登录")
@@ -147,25 +136,6 @@ class Window(_create_smart_window_class()):
 
         # 显示登录对话框
         self.auth_service.show_login_dialog()
-
-    def _setupPlatformSpecificFeatures(self):
-        """设置平台特定功能"""
-        if sys.platform == "darwin":
-            # macOS特有设置
-            try:
-                # 启用macOS统一标题栏外观
-                if hasattr(self, 'setMacUnifiedTitleAndToolBar'):
-                    self.setMacUnifiedTitleAndToolBar(True)
-
-                # 设置macOS应用程序图标
-                if hasattr(QApplication.instance(), 'setWindowIcon'):
-                    QApplication.instance().setWindowIcon(QIcon(":icon/assets/lapped.png"))
-
-                logger.info("已启用macOS原生标题栏和优化")
-            except Exception as e:
-                logger.warning(f"设置macOS特性时出现问题: {e}")
-        else:
-            logger.info(f"当前平台: {platform.system()}，使用标准FluentWindow")
 
     def set_font(self):
         system = platform.system()
@@ -204,7 +174,13 @@ class Window(_create_smart_window_class()):
 
     def initWindow(self):
         self.resize(MAIN_WINDOW_SIZE)
-        self.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
+
+        # 设置窗口图标 - macOS使用PNG格式
+        if sys.platform == "darwin":
+            self.setWindowIcon(QIcon(":/icon/assets/lapped.png"))
+        else:
+            self.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
+
         self.setWindowTitle("Lapped AI")
 
         desktop = QApplication.screens()[0].availableGeometry()

@@ -4,7 +4,6 @@ import subprocess
 import sys
 import platform
 import argparse
-import site
 import time
 import pkgutil
 import fnmatch
@@ -74,16 +73,16 @@ cmd = [
     # 使用自定义 Hook 文件自动处理 FunASR 和其他依赖
     f"--additional-hooks-dir=hooks",
     # 包含基础的隐式导入（Hook 文件会自动处理 FunASR）
-    f"--hidden-import=distutils",
-    f"--hidden-import=distutils.util",
-    f"--hidden-import=distutils.version",
-    f"--hidden-import=distutils.spawn",
-    f"--hidden-import=distutils.sysconfig",
-    f"--hidden-import=distutils.core",
-    f"--hidden-import=setuptools",
-    f"--hidden-import=pkg_resources",
-    f"--hidden-import=packaging",
-    f"--hidden-import=packaging.version",
+    # f"--hidden-import=distutils",
+    # f"--hidden-import=distutils.util",
+    # f"--hidden-import=distutils.version",
+    # f"--hidden-import=distutils.spawn",
+    # f"--hidden-import=distutils.sysconfig",
+    # f"--hidden-import=distutils.core",
+    # f"--hidden-import=setuptools",
+    # f"--hidden-import=pkg_resources",
+    # f"--hidden-import=packaging",
+    # f"--hidden-import=packaging.version",
     "--noconfirm",  # 不询问确认
     "--clean",      # 清理临时文件
 ]
@@ -245,11 +244,12 @@ hours, rem = divmod(total_time, 3600)
 minutes, seconds = divmod(rem, 60)
 print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
 
-"""
-2024-10-22 14:43:45.981 | DEBUG    | nice_ui.task.queue_worker:consume_queue:28 - 获取到任务:raw_name='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' raw_dirname='F:/ski/国外教学翻译' raw_basename='Top 10 Affordable Ski Resorts in Europe.mp4' raw_noextname='Top 10 Affordable Ski Resorts in Europe' raw_ext='mp4' codec_type='video' output='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48' wav_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.wav' media_dirname='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' srt_dirname='C:/tool/linlin/scripts/result/2db4247eee62b0a4a56ca1e8acda7d48/Top 10 Affordable Ski Resorts in Europe.srt' unid='2db4247eee62b0a4a56ca1e8acda7d48' source_mp4='F:/ski/国外教学翻译/Top 10 Affordable Ski Resorts in Europe.mp4' work_type=<WORK_TYPE.ASR: 1>
 
-result 输出目录不对
-"""
+print("=" * 50)
+print("\n运行方式:")
+print(f"  相对路径: ./dist/Lapped/Lapped")
+print(f"  绝对路径: .{PROJECT_ROOT / 'dist' / 'Lapped' / 'Lapped'}")
+
 
 # # 在主程序 run.py 中添加以下代码来处理控制台输出
 # if not os.path.exists('logs'):
