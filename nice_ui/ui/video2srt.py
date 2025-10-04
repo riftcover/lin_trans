@@ -229,8 +229,8 @@ class Video2SRT(QWidget):
         self.start_btn.clicked.connect(self.on_start_clicked)
         self.act_btn_get_video()
 
-        # 添加识别引擎切换事件，重新计算算力消耗
-        self.source_model.currentTextChanged.connect(self.recalculate_computing_power)
+        # 添加识别引擎切换事件
+        self.source_model.currentTextChanged.connect(self._on_model_changed)
 
     def on_start_clicked(self):
         # 获取识别引擎代码
@@ -309,6 +309,51 @@ class Video2SRT(QWidget):
     def _get_ai_prompt(self):
         prompt_names = self.prompts_orm.get_prompt_name()
         return [i.prompt_name for i in prompt_names]
+
+    def _on_model_changed(self):
+        """当识别引擎切换时的处理"""
+        # 更新原始语种列表
+        self._update_source_language_list()
+        # 重新计算算力消耗
+        self.recalculate_computing_power()
+
+    def _update_source_language_list(self):
+        """根据当前识别引擎更新原始语种列表"""
+        # 保存当前选择
+        current_selection = self.source_language.currentText()
+
+        # 清空列表
+        self.source_language.clear()
+
+        # 获取当前识别引擎
+        model_key = self.source_model.currentText()
+        model_info = start_tools.match_source_model(model_key)
+        model_status = model_info["status"]
+
+        if model_status < 100:
+            # 云模型 - 支持所有语言
+            self.source_language.addItem("自动检测")
+            self.source_language.addItems(config.langnamelist)
+        else:
+            # 中文模型 - 仅支持中文和英语
+            supported_languages = ["中文", "英语"]
+            for lang_name in config.langnamelist:
+                if lang_name in supported_languages:
+                    self.source_language.addItem(lang_name)
+
+        # 尝试恢复之前的选择
+        index = self.source_language.findText(current_selection)
+        if index >= 0:
+            self.source_language.setCurrentIndex(index)
+        else:
+            # 如果之前的选择不在新列表中，尝试使用配置中的默认值
+            default_lang = config.params.get("source_language", "")
+            index = self.source_language.findText(default_lang)
+            if index >= 0:
+                self.source_language.setCurrentIndex(index)
+            else:
+                # 都找不到就选第一个
+                self.source_language.setCurrentIndex(0)
 
     def recalculate_computing_power(self):
         """当切换识别引擎时，重新计算所有文件的算力消耗"""
