@@ -246,7 +246,7 @@ class GladiaTaskManager:
         """处理任务完成"""
         try:
             # 获取转录结果
-            segments = client.get_segments(result)
+            segments,gladia_language = client.get_segments(result)
 
             if segments:
                 # 更新进度到95%
@@ -263,13 +263,13 @@ class GladiaTaskManager:
                 self._notify_task_progress(task.task_id, 97)
 
                 # 生成segment_data文件（供智能分句功能使用）
-                try:
-                    segment_data_path = self._create_segment_data_file(segments, task.audio_file)
-                    # 保存segment_data路径信息到工作对象中，供UI使用
-                    self._save_segment_data_path(segment_data_path, task.audio_file, task.language)
-                    logger.info(f"已生成segment_data文件，智能分句功能可用")
-                except Exception as e:
-                    logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
+                segment_data_path = self._create_segment_data_file(segments, task.audio_file)
+                # 保存segment_data路径信息到工作对象中，供UI使用
+                if task.language == 'auto':
+                    task.language = gladia_language
+                self._save_segment_data_path(segment_data_path, task.audio_file, task.language)
+                logger.info(f"已生成segment_data文件，智能分句功能可用")
+
 
                 # 更新进度到99%
                 self.update_task(task.task_id, progress=99)

@@ -193,7 +193,7 @@ class GladiaASRClient:
         logger.info("转录流程完成")
         return result
 
-    def get_segments(self, result: Dict) -> List[Dict]:
+    def get_segments(self, result: Dict) -> (List[Dict], str):
         """
         获取语音片段，转换为项目内部使用的segments格式
 
@@ -215,8 +215,11 @@ class GladiaASRClient:
                 },
                 ...
             ]
+            str：语言
         """
-        utterances = result.get('result', {}).get('transcription', {}).get('utterances', [])
+        transcription = result.get('result', {}).get('transcription', {})
+        utterances = transcription.get('utterances', [])
+        gladia_language = transcription.get('languages')[0]
 
         segments = []
         for utterance in utterances:
@@ -246,7 +249,7 @@ class GladiaASRClient:
 
             segments.append(segment)
 
-        return segments
+        return segments, gladia_language
 
     def get_transcript(self, result: Dict) -> str:
         """获取完整转录文本"""
