@@ -20,6 +20,8 @@ from nice_ui.configure.setting_cache import get_setting_cache
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import MAIN_WINDOW_SIZE, SettingsManager
+
+# bug: TableApp 大量导入导致启动程序耗时久
 from nice_ui.ui.my_story import TableApp
 from nice_ui.ui.profile import ProfileInterface
 from nice_ui.ui.setting_ui import SettingInterface
