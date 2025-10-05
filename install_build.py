@@ -248,6 +248,7 @@ print(f"总打包时间: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
 print("=" * 50)
 print("\n运行方式:")
 print(f"  相对路径: ./dist/Lapped/Lapped")
+print(f"  相对路径: .\dist\Lapped\Lapped.exe")
 print(f"  绝对路径: .{PROJECT_ROOT / 'dist' / 'Lapped' / 'Lapped'}")
 
 
