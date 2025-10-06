@@ -4,7 +4,6 @@ PyInstaller hook for FunASR library
 """
 
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
-import os
 
 # 收集所有 funasr 子模块
 hiddenimports = collect_submodules('funasr')
