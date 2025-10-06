@@ -143,8 +143,6 @@ class SimpleApiService(QObject):
         
         # 启动工作线程
         self._start_worker()
-        
-        logger.info("SimpleApiService initialized")
     
     def _start_worker(self):
         """启动工作线程"""
