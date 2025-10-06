@@ -26,7 +26,7 @@ dependencies = [
     "torchaudio==2.4.1",
     "funasr==1.2.6",
     "pydantic>=2.9.2",
-    "pyside6==6.7.2", #使用6.8.0 do_work() 线程工作完成后会卡住，无法进行下一步. mac上：6.7.2版本设置页ui显示错误， 6.9.1版本ui正确功能:mac版本第二次任务线程崩溃
+    "pyside6==6.7.3", #使用6.8.0 do_work() 线程工作完成后会卡住，无法进行下一步. mac上：6.7.2版本设置页ui显示错误， 6.9.3版本ui正确功能:mac版本第二次任务线程崩溃,下载模型报错
     "pyinstaller>=6.11.0",
     "av==14.4.0",
     "alibabacloud-oss-v2==1.1.0",
