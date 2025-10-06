@@ -259,7 +259,7 @@ params = {
     "source_language": "英语",
     "source_module_status": 302,
     "source_module_name": "small",
-    "source_module_key": "中文模型",
+    "source_module_key": "云模型",
     "detect_language": "en",
     "translate_status": False,
     "target_language": "中文",
