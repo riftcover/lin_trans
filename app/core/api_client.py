@@ -47,11 +47,9 @@ class APIClient:
 
         if token:
             self._token = token
-            logger.trace('Token loaded from settings')
 
             if refresh_token:
                 self._refresh_token = refresh_token
-                logger.trace('Refresh token loaded from settings')
 
             if token_expires_at:
                 try:
