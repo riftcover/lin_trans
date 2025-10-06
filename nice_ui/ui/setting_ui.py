@@ -104,7 +104,7 @@ class LocalModelPage(QWidget):
         # 设置label的宽度
         self.funasr_model_table.setColumnWidth(0, 150)
         self.funasr_model_table.setColumnWidth(1, 100)
-        self.funasr_model_table.setColumnWidth(2, 130)
+        self.funasr_model_table.setColumnWidth(2, 110)
         self.funasr_model_table.verticalHeader().setVisible(False)
         self.funasr_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -243,6 +243,8 @@ class LocalModelPage(QWidget):
 
         table.resizeColumnsToContents()
         table.setColumnWidth(0, 150)  # 设置第一列宽度
+        table.setColumnWidth(1, 100)  # 设置第二列宽度
+        table.setColumnWidth(2, 110)  # 设置第三列宽度
 
     def install_model(self, row, model_folder):
         model_cn_name = self.funasr_model_table.item(row, 0).text()
