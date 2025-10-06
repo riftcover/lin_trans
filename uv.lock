@@ -927,7 +927,7 @@ requires-dist = [
     { name = "httpx", specifier = "==0.27.2" },
     { name = "json-repair", specifier = ">=0.50.1" },
     { name = "loguru", specifier = "==0.7.3" },
-    { name = "modelscope", specifier = "==1.30.0" },
+    { name = "modelscope", specifier = "==1.25.0" },
     { name = "nuitka", specifier = "==2.7.12" },
     { name = "numpy", specifier = "==1.24.4" },
     { name = "openai", specifier = "==1.76.0" },
@@ -939,7 +939,7 @@ requires-dist = [
     { name = "pyinstall", specifier = ">=0.1.4" },
     { name = "pyinstaller", specifier = ">=6.11.0" },
     { name = "pyside6", specifier = "==6.7.3" },
-    { name = "pysidesix-frameless-window", specifier = "==0.4.3" },
+    { name = "pysidesix-frameless-window", specifier = "==0.7.3" },
     { name = "pytz", specifier = ">=2025.2" },
     { name = "scipy", specifier = "==1.15.2" },
     { name = "socksio", specifier = "==1.0.0" },
@@ -1068,18 +1068,16 @@ wheels = [
 
 [[package]]
 name = "modelscope"
-version = "1.30.0"
+version = "1.25.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "filelock" },
     { name = "requests" },
-    { name = "setuptools" },
     { name = "tqdm" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cc/cb/2c8a53914c17c2de204ea45b6ece2e54dd5afb6973cc3b3a295a05bdbaf3/modelscope-1.30.0.tar.gz", hash = "sha256:1ebedc419881852a784890330e3b6638ab934fa57f82ffa7e2b81b191fd5f76e", size = 4439412 }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/4b/1c11ca8bea237b49ad55889fd2387c012ce5d1fc574d4280cd593c32f41b/modelscope-1.25.0.tar.gz", hash = "sha256:b9a5ef2e68f17a63c8ea688104d82de1fc8b506c37ded1aeedfcf3eb6028b60a", size = 4388940 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/2b/3f7efc0538766ecfc082e47d8358abdfad764397665e8576e0c00edaf0c1/modelscope-1.30.0-py3-none-any.whl", hash = "sha256:a391c63a20f286e50010498ec3cc2aa1a86210a9dd74c55cfa4609fd2f8a999f", size = 5922191 },
+    { url = "https://files.pythonhosted.org/packages/38/8f/b051fc200ba09584f4d53c35da68e4e3d08a0a8688dab60d6fe726e290c8/modelscope-1.25.0-py3-none-any.whl", hash = "sha256:30f0b8c94502ca44c911a9ce5ff388b3de4276c5b5cba2f850bc370dbf8cac57", size = 5854156 },
 ]
 
 [[package]]
