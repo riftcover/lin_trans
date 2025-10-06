@@ -1,7 +1,10 @@
 #模型下载
 import os
+import sys
 import threading
 import time
+from contextlib import contextmanager
+from io import StringIO
 
 from modelscope import snapshot_download
 
@@ -9,11 +12,31 @@ from nice_ui.configure import config
 from utils import logger
 
 
+@contextmanager
+def suppress_console_output():
+    """
+    抑制控制台输出（开发环境和打包环境都禁用）
+    用于屏蔽 modelscope 下载时的进度条输出
+    """
+    # 重定向所有输出到空设备
+    devnull = StringIO()
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    try:
+        sys.stdout = devnull
+        sys.stderr = devnull
+        yield
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+
 #模型下载-中文
 def download_model(model_name: str, progress_callback=None):
     logger.info(f"开始下载模型: {model_name}")
     download_path = os.path.join(config.funasr_model_path, model_name)
     temp_path = os.path.join(config.models_path, 'funasr', '._____temp', 'iic', model_name)
+    funasr_parent_path = os.path.join(config.models_path, 'funasr')
     logger.info(f"下载路径: {download_path}")
     model_dir = os.path.join(config.models_path, 'funasr')
     os.makedirs(download_path, exist_ok=True)
@@ -30,33 +53,36 @@ def download_model(model_name: str, progress_callback=None):
         logger.info("vad模型已下载，跳过")
     else:
         logger.info("开始下载vad模型")
-        snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=model_dir)
+        with suppress_console_output():
+            snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-pytorch', cache_dir=model_dir)
         logger.info("vad模型下载完成")
 
     if os.path.exists(punc_model_path):
         logger.info("标点模型已下载，跳过")
     else:
         logger.info("开始下载标点模型")
-        snapshot_download('iic/punc_ct-transformer_cn-en-common-vocab471067-large', cache_dir=model_dir)
+        with suppress_console_output():
+            snapshot_download('iic/punc_ct-transformer_cn-en-common-vocab471067-large', cache_dir=model_dir)
         logger.info("标点模型下载完成")
 
     if os.path.exists(spk_model_path):
         logger.info("说话人模型已下载，跳过")
     else:
         logger.info("开始下载说话人模型")
-        snapshot_download('iic/speech_campplus_sv_zh-cn_16k-common', cache_dir=model_dir)
+        with suppress_console_output():
+            snapshot_download('iic/speech_campplus_sv_zh-cn_16k-common', cache_dir=model_dir)
         logger.info("说话人模型下载完成")
 
     if os.path.exists(fa_zh_path):
         logger.info("fa_zh模型已下载，跳过")
     else:
         logger.info("开始下载fa_zh模型")
-        snapshot_download('iic/speech_timestamp_prediction-v1-16k-offline', cache_dir=model_dir)
+        with suppress_console_output():
+            snapshot_download('iic/speech_timestamp_prediction-v1-16k-offline', cache_dir=model_dir)
         logger.info("fa_zh模型下载完成")
 
     start_time = time.time()
-    #todo： 这里是多语言模型大小，其他两种没他大，并且相差不大就不改了
-    total_size = 940016365  # 这是一个估计值，您可能需要根据实际情况调整
+    total_size = 1129338905  # 这是一个估计值，您可能需要根据实际情况调整
     last_downloaded_size = 0
 
     def check_download_progress():
@@ -64,10 +90,10 @@ def download_model(model_name: str, progress_callback=None):
         progress,current_size = 0,0
 
         # 因为.PT模型文件会先放在temp目录缓存，所以需要遍历两个目录
-        for path in [download_path, temp_path]:
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    current_size += os.path.getsize(os.path.join(root, file))
+
+        for root, dirs, files in os.walk(funasr_parent_path):
+            for file in files:
+                current_size += os.path.getsize(os.path.join(root, file))
         if current_size > total_size:
             total_size = current_size
         logger.info(f"当前下载大小：{current_size}字节")
@@ -93,14 +119,10 @@ def download_model(model_name: str, progress_callback=None):
     # 启动进度检查线程
     progress_thread = threading.Thread(target=progress_checker)
     progress_thread.start()
-
-    try:
-        # 开始下载
+    with suppress_console_output():
         snapshot_download(f'iic/{model_name}', cache_dir=model_dir)
-    finally:
-        # 停止进度检查线程
-        stop_event.set()
-        progress_thread.join()
+    stop_event.set()
+    progress_thread.join()
 
     # 确保进度达到100%
     if progress_callback:

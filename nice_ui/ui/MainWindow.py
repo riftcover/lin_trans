@@ -180,6 +180,8 @@ class Window(_create_smart_window_class()):
         # 设置窗口图标 - macOS使用PNG格式
         if sys.platform == "darwin":
             self.setWindowIcon(QIcon(":/icon/assets/lapped.png"))
+            # macOS: 禁用窗口状态恢复
+            self.setAttribute(Qt.WA_QuitOnClose, True)
         else:
             self.setWindowIcon(QIcon(":icon/assets/lapped.ico"))
 
@@ -411,10 +413,28 @@ class Window(_create_smart_window_class()):
     def closeEvent(self, event):
         """处理窗口关闭事件"""
         try:
-            # 异步清理API客户端资源
+            # 1. 停止token刷新服务
+            if hasattr(self, 'token_refresh_service'):
+                self.token_refresh_service.stop_monitoring()
+                logger.info("Token refresh service stopped")
+
+            # 2. 停止API服务的工作线程
+            if hasattr(simple_api_service, '_worker_thread'):
+                simple_api_service._stop_worker()
+                logger.info("API worker thread stopped")
+
+            # 3. 异步清理API客户端资源
             if hasattr(self, 'is_logged_in') and self.is_logged_in:
-                self._cleanup_api_client()
-                logger.info("API client cleanup initiated")
+                # 同步关闭，不使用异步
+                try:
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(api_client.close())
+                    loop.close()
+                    logger.info("API client closed successfully")
+                except Exception as e:
+                    logger.error(f"Error closing API client: {e}")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 

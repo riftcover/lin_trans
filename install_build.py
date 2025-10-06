@@ -60,8 +60,8 @@ cmd = [
     "-m", "PyInstaller",
     "--name=Lapped",
     "--onedir",
-    "--console",
-    # "--windowed",   # 注释掉 --windowed 参数，允许显示控制台
+    "--noconsole",
+    "--windowed",   # 注释掉 --windowed 参数，允许显示控制台
     f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     f"--add-data=models{os.pathsep}models",
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",

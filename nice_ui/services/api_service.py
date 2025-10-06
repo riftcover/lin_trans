@@ -228,8 +228,6 @@ class ApiService(QObject):
         # 任务队列管理
         self._pending_tasks = []  # 待执行的任务队列
         self._is_processing_queue = False  # 是否正在处理队列
-        
-        logger.info("ApiService initialized")
     
     def _generate_task_id(self) -> str:
         """生成唯一的任务ID"""

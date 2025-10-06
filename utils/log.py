@@ -45,12 +45,16 @@ def _setup_logger():
             "backtrace": True,
             "diagnose": True,
         },
-        {
+    ]
+
+    # 只在非打包环境下添加控制台输出
+    # 打包后的可执行文件不需要控制台日志
+    if not getattr(sys, 'frozen', False):
+        handlers.append({
             "sink": sys.stderr,
             "level": "TRACE",
             "colorize": True,
-        },
-    ]
+        })
 
     logger.configure(handlers=handlers)
 
