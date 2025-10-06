@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -7,13 +8,13 @@ from loguru import logger
 
 def _get_log_dir() -> Path:
     """获取日志目录路径。开发环境用项目目录，打包环境用用户数据目录。"""
-    # if getattr(sys, 'frozen', False):
-    #     # 打包环境：用户数据目录
-    #     if sys.platform == "win32":
-    #         base = Path(sys.environ.get('LOCALAPPDATA', Path.home()))
-    #     else:
-    #         base = Path.home()
-    #     return base / ".lappedAI" / "logs"
+    if getattr(sys, 'frozen', True):
+        # 打包环境：用户数据目录
+        if sys.platform == "win32":
+            base = Path(os.environ.get('LOCALAPPDATA', Path.home()))
+        else:
+            base = Path.home()
+        return base / ".lappedAI" / "logs"
 
     # 开发环境：项目目录
     return Path(__file__).parent.parent / "logs"
@@ -61,3 +62,6 @@ def _setup_logger():
 
 # 初始化
 _setup_logger()
+
+if __name__ == '__main__':
+    print(_get_log_dir())
