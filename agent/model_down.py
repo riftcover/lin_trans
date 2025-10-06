@@ -14,6 +14,7 @@ def download_model(model_name: str, progress_callback=None):
     logger.info(f"开始下载模型: {model_name}")
     download_path = os.path.join(config.funasr_model_path, model_name)
     temp_path = os.path.join(config.models_path, 'funasr', '._____temp', 'iic', model_name)
+    funasr_parent_path = os.path.join(config.models_path, 'funasr')
     logger.info(f"下载路径: {download_path}")
     model_dir = os.path.join(config.models_path, 'funasr')
     os.makedirs(download_path, exist_ok=True)
@@ -55,8 +56,7 @@ def download_model(model_name: str, progress_callback=None):
         logger.info("fa_zh模型下载完成")
 
     start_time = time.time()
-    #todo： 这里是多语言模型大小，其他两种没他大，并且相差不大就不改了
-    total_size = 940016365  # 这是一个估计值，您可能需要根据实际情况调整
+    total_size = 1129338905  # 这是一个估计值，您可能需要根据实际情况调整
     last_downloaded_size = 0
 
     def check_download_progress():
@@ -64,10 +64,10 @@ def download_model(model_name: str, progress_callback=None):
         progress,current_size = 0,0
 
         # 因为.PT模型文件会先放在temp目录缓存，所以需要遍历两个目录
-        for path in [download_path, temp_path]:
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    current_size += os.path.getsize(os.path.join(root, file))
+
+        for root, dirs, files in os.walk(funasr_parent_path):
+            for file in files:
+                current_size += os.path.getsize(os.path.join(root, file))
         if current_size > total_size:
             total_size = current_size
         logger.info(f"当前下载大小：{current_size}字节")
@@ -93,14 +93,9 @@ def download_model(model_name: str, progress_callback=None):
     # 启动进度检查线程
     progress_thread = threading.Thread(target=progress_checker)
     progress_thread.start()
-
-    try:
-        # 开始下载
-        snapshot_download(f'iic/{model_name}', cache_dir=model_dir)
-    finally:
-        # 停止进度检查线程
-        stop_event.set()
-        progress_thread.join()
+    snapshot_download(f'iic/{model_name}', cache_dir=model_dir)
+    stop_event.set()
+    progress_thread.join()
 
     # 确保进度达到100%
     if progress_callback:
