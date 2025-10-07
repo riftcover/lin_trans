@@ -1,7 +1,6 @@
 #模型下载
 import os
 import sys
-import threading
 import time
 from contextlib import contextmanager
 from io import StringIO
@@ -49,6 +48,10 @@ def download_model(model_name: str, progress_callback=None):
     punc_model_path = os.path.join(config.funasr_model_path, 'punc_ct-transformer_cn-en-common-vocab471067-large')
     spk_model_path = os.path.join(config.funasr_model_path, 'speech_campplus_sv_zh-cn_16k-common')
     fa_zh_path = f'{config.funasr_model_path}/speech_timestamp_prediction-v1-16k-offline'
+    # 进度监控由调用方（DownloadThread）负责
+    # start_time = time.time()
+    logger.info(f"开始下载模型: {model_name}")
+
     if os.path.exists(vad_model_path):
         logger.info("vad模型已下载，跳过")
     else:
@@ -81,52 +84,31 @@ def download_model(model_name: str, progress_callback=None):
             snapshot_download('iic/speech_timestamp_prediction-v1-16k-offline', cache_dir=model_dir)
         logger.info("fa_zh模型下载完成")
 
-    start_time = time.time()
-    total_size = 1129338905  # 这是一个估计值，您可能需要根据实际情况调整
-    last_downloaded_size = 0
-
-    def check_download_progress():
-        nonlocal total_size, last_downloaded_size
-        progress,current_size = 0,0
-
-        # 因为.PT模型文件会先放在temp目录缓存，所以需要遍历两个目录
-
-        for root, dirs, files in os.walk(funasr_parent_path):
-            for file in files:
-                current_size += os.path.getsize(os.path.join(root, file))
-        if current_size > total_size:
-            total_size = current_size
-        logger.info(f"当前下载大小：{current_size}字节")
-        if total_size > 0:
-            progress = int((current_size / total_size) * 100)
-            if progress_callback:
-                progress_callback(progress)
-
-        downloaded_size = current_size - last_downloaded_size
-        last_downloaded_size = current_size
-        logger.info(f"下载进度：{progress}%，已下载：{current_size}字节")
-
-        return downloaded_size
-
-    # 创建一个事件来控制进度检查线程
-    stop_event = threading.Event()
-
-    def progress_checker():
-        while not stop_event.is_set():
-            check_download_progress()
-            time.sleep(1)  # 每秒检查一次进度
-
-    # 启动进度检查线程
-    progress_thread = threading.Thread(target=progress_checker)
-    progress_thread.start()
+    logger.info("开始下载zn模型")
     with suppress_console_output():
         snapshot_download(f'iic/{model_name}', cache_dir=model_dir)
-    stop_event.set()
-    progress_thread.join()
-
-    # 确保进度达到100%
-    if progress_callback:
-        progress_callback(100)
-
-    logger.info(f"模型 {model_name} 下载完成，用时 {time.time() - start_time:.2f} 秒")
+    # logger.info(f"模型 {model_name} 下载完成，用时 {time.time() - start_time:.2f} 秒")
     return download_path
+
+
+def calculate_directory_size(directory_path):
+    """
+    计算目录总大小（供外部调用）
+
+    Args:
+        directory_path: 目录路径
+
+    Returns:
+        int: 目录总大小（字节）
+    """
+    total_size = 0
+    try:
+        if os.path.exists(directory_path):
+            for root, dirs, files in os.walk(directory_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if os.path.exists(file_path):
+                        total_size += os.path.getsize(file_path)
+    except Exception as e:
+        logger.warning(f"计算目录大小时出错: {e}")
+    return total_size

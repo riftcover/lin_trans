@@ -24,21 +24,65 @@ class DownloadThread(QThread):
     progress_signal = Signal(int)
     finished_signal = Signal(bool)
 
-    def __init__(self, model_name):
+    def __init__(self, model_name, funasr_parent_path):
         super().__init__()
         self.model_name = model_name
+        self.funasr_parent_path = funasr_parent_path
+        self._stop_monitoring = False
 
     def run(self):
+        import time
+        import threading
+        from agent.model_down import download_model
+
+        # 启动进度监控线程（在QThread中运行，可以安全emit Signal）
+        monitor_thread = threading.Thread(target=self._monitor_progress, daemon=True)
+        monitor_thread.start()
+
         try:
-            from agent.model_down import download_model
-            download_model(self.model_name, progress_callback=self.update_progress)
+            # 不再传递progress_callback，由自己的监控线程处理
+            download_model(self.model_name, progress_callback=None)
+            self._stop_monitoring = True
+            monitor_thread.join(timeout=2)
+
+            # 确保进度达到100%
+            self.progress_signal.emit(100)
             self.finished_signal.emit(True)
         except Exception as e:
             logger.error(f"下载模型时发生错误: {str(e)}")
+            self._stop_monitoring = True
             self.finished_signal.emit(False)
 
-    def update_progress(self, progress):
-        self.progress_signal.emit(progress)
+    def _monitor_progress(self):
+        """在独立线程中监控下载进度"""
+        import time
+        from agent.model_down import calculate_directory_size
+
+        total_size = 2296383557  # 估计值
+        last_progress = 0
+
+        while not self._stop_monitoring:
+            try:
+                # 使用辅助函数计算目录大小
+                current_size = calculate_directory_size(self.funasr_parent_path)
+
+                # 动态调整total_size
+                if current_size > total_size:
+                    total_size = current_size
+
+                # 计算进度
+                if total_size > 0:
+                    progress = min(int((current_size / total_size) * 100), 99)
+                    # 只在进度变化时emit信号
+                    if progress != last_progress:
+                        self.progress_signal.emit(progress)
+                        last_progress = progress
+                        logger.info(f"下载进度: {progress}%, 当前大小: {current_size} 字节")
+
+            except Exception as e:
+                logger.warning(f"监控下载进度时出错: {e}")
+
+            time.sleep(1)  # 每秒检查一次
 
 
 class LocalModelPage(QWidget):
@@ -200,7 +244,7 @@ class LocalModelPage(QWidget):
         """
         faster_models = [
             # ("多语言模型", "940 MB"),
-            ("本地模型", "909.6 MB"),
+            ("本地模型", "2.3 GB"),
             # ("多语言模型", "880 MB"),
         ]
         model_list = config.model_list
@@ -270,8 +314,12 @@ class LocalModelPage(QWidget):
         progress_bar.setValue(0)
         self.funasr_model_table.setCellWidget(row, 2, progress_bar)
 
-        # 创建下载线程
-        self.download_thread = DownloadThread(model_name)
+        # 获取funasr父目录路径
+        import os
+        funasr_parent_path = os.path.join(config.models_path, 'funasr')
+
+        # 创建下载线程（传递funasr_parent_path参数）
+        self.download_thread = DownloadThread(model_name, funasr_parent_path)
         self.download_thread.progress_signal.connect(progress_bar.setValue)
         self.download_thread.finished_signal.connect(
             lambda success: self.download_finished(success, row, model_folder)
