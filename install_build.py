@@ -16,6 +16,8 @@ parser.add_argument('--debug', action='store_true', help='启用调试模式')
 parser.add_argument('--no-installer', action='store_true', help='不创建安装包（DMG/EXE）')
 parser.add_argument('--dmg-only', action='store_true', help='仅创建 DMG（macOS）')
 parser.add_argument('--installer-only', action='store_true', help='仅创建安装包（Windows）')
+parser.add_argument('--clean', action='store_true', help='清理缓存，强制重新分析依赖（生产构建推荐）')
+parser.add_argument('--reuse-analysis', action='store_true', help='复用 Analysis 缓存，加快构建速度（开发阶段推荐）')
 args = parser.parse_args()
 
 # 定义版本号
@@ -87,8 +89,14 @@ cmd = [
     # f"--hidden-import=packaging",
     # f"--hidden-import=packaging.version",
     "--noconfirm",  # 不询问确认
-    "--clean",  # 清理临时文件
 ]
+
+# 根据参数决定是否清理缓存
+if args.clean:
+    cmd.append("--clean")  # 强制清理，重新分析所有依赖
+elif not args.reuse_analysis:
+    # 默认行为：清理 dist/ 但保留 build/ 以复用 Analysis
+    pass  # 不添加 --clean 参数
 
 # 添加所有排除模式
 for pattern in exclude_patterns:
@@ -151,11 +159,19 @@ start_time = time.time()
 
 # 清理旧的构建文件和日志
 dist_dir = Path("dist")
-build_dir = Path("build")
 if dist_dir.exists():
     shutil.rmtree(dist_dir)
-if build_dir.exists():
-    shutil.rmtree(build_dir)
+    print("已清理 dist/ 目录")
+
+# 如果指定了 --clean，也清理 build/ 目录
+if args.clean:
+    build_dir = Path("build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+        print("已清理 build/ 目录（强制重新分析）")
+else:
+    print("保留 build/ 目录以复用 Analysis 缓存（加快构建速度）")
+
 clean_logs_directory()
 
 print("开始打包...")
@@ -430,6 +446,12 @@ def create_windows_installer():
 
     print(f"✓ 找到可执行文件: {exe_path}")
 
+    # 图标文件路径
+    icon_path = PROJECT_ROOT / "components" / "assets" / "lapped.ico"
+    if not icon_path.exists():
+        print(f"⚠ 警告: 未找到图标文件 {icon_path}")
+        icon_path = None
+
     # 创建 Inno Setup 脚本
     iss_script = f"""
 ; Lapped 安装脚本
@@ -449,17 +471,17 @@ AppPublisher={{#MyAppPublisher}}
 AppPublisherURL={{#MyAppURL}}
 AppSupportURL={{#MyAppURL}}
 AppUpdatesURL={{#MyAppURL}}
-DefaultDirName={{autopf}}\\{{#MyAppName}}
+DefaultDirName={{userpf}}\\{{#MyAppName}}
 DefaultGroupName={{#MyAppName}}
 AllowNoIcons=yes
 OutputDir={PROJECT_ROOT / "dist"}
-OutputBaseFilename=Lapped-{your_version}-Windows-Setup
+OutputBaseFilename=Lapped AI setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=lowest
-UninstallDisplayIcon={{app}}\\{{#MyAppExeName}}
+SetupIconFile={PROJECT_ROOT / "components/assets/lapped.ico"}
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"
@@ -529,7 +551,8 @@ Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#Stri
         )
 
         # 查找生成的安装程序
-        installer_name = f"Lapped-{your_version}-Windows-Setup.exe"
+        # installer_name = f"Lapped-{your_version}-Windows-Setup.exe"
+        installer_name = f"Lapped AI setup.exe"
         installer_path = PROJECT_ROOT / "dist" / installer_name
 
         if installer_path.exists():
