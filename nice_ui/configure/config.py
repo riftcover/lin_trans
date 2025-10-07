@@ -16,7 +16,6 @@ from utils.crypto_utils import crypto_utils
 # ============================================================================
 
 def get_executable_path():
-
     if getattr(sys, "frozen", False):
         # 如果程序是被“冻结”打包的，使用这个路径
         return os.path.dirname(sys.executable).replace("\\", "/")
@@ -24,40 +23,73 @@ def get_executable_path():
         return str(Path.cwd()).replace("\\", "/")
 
 
+def get_app_data_dir():
+    """
+    获取应用数据目录
+    用于存储model
+    macOS: ~/Library/Application Support/Lapped/
+    Windows: 项目根目录（保持原有行为）
+    Linux: ~/.local/share/Lapped/
+    """
+    if sys.platform == "darwin":  # macOS - 使用标准路径
+        return Path.home() / "Library" / "Application Support" / "Lapped"
+    elif sys.platform == "win32":  # Windows - 保持原有行为
+        return Path(__file__).parent.parent.parent
+    else:  # Linux
+        return Path.home() / ".local" / "share" / "Lapped"
+
+
+def get_documents_dir():
+    """
+    获取用户文档目录
+
+    用于存储用户生成的文件（视频、字幕等）
+
+    macOS: ~/Documents/Lapped/
+    Windows: 项目根目录/result（保持原有行为）
+    Linux: ~/Documents/Lapped/
+    """
+    if sys.platform == "darwin":  # macOS - 使用标准路径
+        return Path.home() / "Documents" / "Lapped"
+    elif sys.platform == "win32":  # Windows - 保持原有行为
+        return Path(__file__).parent.parent.parent / "result"
+    else:  # Linux
+        return Path.home() / "Documents" / "Lapped"
+
+
 # 基础路径
 rootdir = get_executable_path()
 root_path = Path(__file__).parent.parent.parent  # 项目根目录
 sys_platform = sys.platform
-root_same = root_path.parent
+app_data_dir = get_app_data_dir()
+documents_dir = get_documents_dir()
 
 # 模型路径（全局变量，单一数据源）
-models_path = root_same / "models"
+models_path = app_data_dir / "models"
 funasr_model_path = models_path / "funasr" / "iic"
 
 # 其他路径
-temp_path = root_path / "tmp"
+temp_path = app_data_dir / "tmp"
 TEMP_DIR = temp_path.as_posix()
-homepath = Path.home() / "Videos/lapped"
-homedir = homepath.as_posix()
-TEMP_HOME = f"{homedir}/tmp"
-result_path = root_path / "result"
+sys_video = Path.home() / "Videos"
+homedir = sys_video.as_posix()
+result_path = documents_dir / "result"
 
 
 def ensure_directories():
     """
     确保所有必需的目录存在
-    
+
     这个函数在模块导入时调用一次，或者在需要时手动调用。
     """
+    app_data_dir.mkdir(parents=True, exist_ok=True)
+    documents_dir.mkdir(parents=True, exist_ok=True)
     funasr_model_path.mkdir(parents=True, exist_ok=True)
     temp_path.mkdir(parents=True, exist_ok=True)
-    homepath.mkdir(parents=True, exist_ok=True)
-    Path(TEMP_HOME).mkdir(parents=True, exist_ok=True)
 
 
 # 初始化时创建目录
 ensure_directories()
-
 
 # ============================================================================
 # 应用设置 - 从 set.ini 加载
@@ -112,7 +144,7 @@ def parse_init():
         "chattts_voice": "1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869",
         "cors_run": True,
     }
-    
+
     file = root_path / "nice_ui/set.ini"
     if file.exists():
         try:
@@ -124,7 +156,7 @@ def parse_init():
                     key, value = it.split("=", maxsplit=1)
                     key = key.strip()
                     value = value.strip()
-                    
+
                     # 类型转换
                     if re.match(r"^\d+$", value):
                         init_settings[key] = int(value)
@@ -138,11 +170,11 @@ def parse_init():
                         init_settings[key] = str(value.lower()) if value else ""
         except Exception as e:
             logger.error(f"set.ini 中有语法错误: {str(e)}")
-        
+
         # 修正 fontsize
         if isinstance(init_settings["fontsize"], str) and init_settings["fontsize"].find("px") > 0:
             init_settings["fontsize"] = int(init_settings["fontsize"].replace("px", ""))
-    
+
     return init_settings
 
 
@@ -152,7 +184,6 @@ settings = parse_init()
 # 更新默认语言
 if settings.get("lang"):
     defaulelang = settings["lang"].lower()
-
 
 # ============================================================================
 # 语言和模型数据 - 从 JSON 加载
@@ -192,14 +223,12 @@ model_code_list = init_model_code_key()
 # 工具箱语言
 box_lang = obj["toolbox_lang"]
 
-
 # ============================================================================
 # 环境变量设置
 # ============================================================================
 
 os.environ["QT_API"] = "pyside6"
 os.environ["SOFT_NAME"] = "Lapped AI"
-
 
 # ============================================================================
 # 运行时状态 - 全局可变状态
@@ -246,14 +275,13 @@ clone_voicelist = ["clone"]
 ChatTTS_voicelist = re.split(r",|，", settings.get("chattts_voice", "1111,2222,3333,4444,5555,6666,7777,8888,9999,4099,5099,6653,7869"))
 openaiTTS_rolelist = "alloy,echo,fable,onyx,nova,shimmer"
 
-
 # ============================================================================
 # 任务参数 - 运行时可修改的参数
 # ============================================================================
 
 params = {
     "source_mp4": "",
-    "target_dir": root_path / "result",
+    "target_dir": result_path,
     "output_dir": "",
     "source_language_code": "en",
     "source_language": "英语",
@@ -295,8 +323,6 @@ params = {
 # ============================================================================
 
 
-
-
 class PplSdkConfig(BaseModel):
     aki: str = ""
     aks: str = ""
@@ -316,7 +342,7 @@ def get_cloud_config():
     try:
         crypto_utils.initialize()
         credentials_file = crypto_utils.get_credentials_file_path(root_path)
-        
+
         if credentials_file.exists():
             try:
                 credentials = crypto_utils.decrypt_from_file(credentials_file)
@@ -326,12 +352,11 @@ def get_cloud_config():
                 logger.error(f"从加密文件加载凭证失败: {str(e)}")
     except Exception as e:
         logger.error(f"获取云服务配置失败: {str(e)}")
-    
+
     return None
 
 
 aa_bb = get_cloud_config()
-
 
 # ============================================================================
 # 代理设置
@@ -347,7 +372,6 @@ agent_settings = {
         "model": "moonshot-v1-8k"
     },
 }
-
 
 # ============================================================================
 # 模板路径

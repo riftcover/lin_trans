@@ -12,6 +12,7 @@ from typing import Dict, Optional
 from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
+from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from services.decorators import except_handler
 from utils import logger
@@ -54,10 +55,7 @@ class GladiaTaskManager:
         self.lock = threading.Lock()
         self.polling_thread = None
         self.polling_active = False
-        self.tasks_file = Path("tmp/asr_tasks.json")
-
-        # 确保目录存在
-        self.tasks_file.parent.mkdir(exist_ok=True)
+        self.tasks_file = Path(f"{config.temp_path}/asr_tasks.json")
 
         # 加载现有任务
         self._load_tasks()
