@@ -76,7 +76,6 @@ class SrtWriter:
         智能分句功能将在用户手动触发时执行
         """
         logger.info('使用中文模型')
-
         try:
             # 1. 初始化ASR模型
             model = self._init_asr_model(model_name)
@@ -89,19 +88,15 @@ class SrtWriter:
             funasr_write_srt_file(segments, srt_file_path)
 
             # 4. 生成segment_data文件（供智能分句功能使用）
-            try:
-                segment_data_path = self._create_segment_data_file(segments)
-                # 保存segment_data路径信息到工作对象中，供UI使用
-                self._save_segment_data_path(segment_data_path)
-            except Exception as e:
-                logger.warning(f"segment_data文件生成失败，智能分句功能将不可用: {str(e)}")
-
+            segment_data_path = self._create_segment_data_file(segments)
+            # 保存segment_data路径信息到工作对象中，供UI使用
+            self._save_segment_data_path(segment_data_path)
+            self.data_bridge.emit_whisper_finished(self.unid)
         except Exception as e:
             logger.error(f"funasr_zn_model执行过程中发生严重错误: {str(e)}")
-            # 即使发生严重错误，也要通知UI完成，避免界面卡死
-        finally:
-            # 无论如何都要通知完成
-            self.data_bridge.emit_whisper_finished(self.unid)
+            # 通知UI任务失败
+            self.data_bridge.emit_task_error(self.unid, f"识别失败: {str(e)}")
+
 
     def _init_asr_model(self, model_name: str):
         """初始化ASR模型"""
@@ -207,14 +202,12 @@ class SrtWriter:
             segment_data_path = self._create_segment_data_file(results)
             # 保存segment_data路径信息到工作对象中，供UI使用
             self._save_segment_data_path(segment_data_path)
-
+            self.data_bridge.emit_whisper_finished(self.unid)
 
         except Exception as e:
             logger.error(f"funasr_sense_model执行过程中发生严重错误: {str(e)}")
-            # 即使发生严重错误，也要通知UI完成，避免界面卡死
-        finally:
-            # 无论如何都要通知完成
-            self.data_bridge.emit_whisper_finished(self.unid)
+            # 通知UI任务失败
+            self.data_bridge.emit_task_error(self.unid, f"识别失败: {str(e)}")
 
     @staticmethod
     def _init_models(model_name: str) -> dict:
