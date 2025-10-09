@@ -68,6 +68,9 @@ class Window(_create_smart_window_class()):
         self.auth_service = self.service_provider.get_auth_service()
         self.ui_manager = self.service_provider.get_ui_manager()
 
+        # 设置主窗口引用（避免初始化顺序问题）
+        self.ui_manager.set_main_window(self)
+
         # 初始化token刷新服务
         self.token_refresh_service = get_token_refresh_service()
         self._setup_token_refresh_signals()

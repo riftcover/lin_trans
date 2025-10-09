@@ -12,30 +12,31 @@ from utils import logger
 
 
 class AuthService(AuthInterface):
-    """认证服务实现类，处理登录状态检查和管理"""
+    """
+    认证服务实现类，处理登录状态检查和管理
 
-    _instance = None
+    职责：
+    - 检查登录状态（通过余额接口验证token有效性）
+    - 显示登录对话框
+    - 用户登出
+    - 获取用户信息
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(AuthService, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
+    依赖：
+    - UIManager: 显示登录对话框
+    - TokenService: 调用余额接口验证token
+    """
 
-    def __init__(self, ui_manager: UIManagerInterface):
+    def __init__(self, ui_manager: UIManagerInterface, token_service):
         """
         初始化认证服务
 
         Args:
             ui_manager: UI管理器实例
+            token_service: 代币服务实例（用于验证token）
         """
-        # 避免重复初始化
-        if getattr(self, '_initialized', False):
-            return
-
         self.ui_manager = ui_manager
+        self.token_service = token_service
         self._settings = None
-        self._initialized = True
 
     def _get_settings(self):
         """
@@ -48,7 +49,7 @@ class AuthService(AuthInterface):
             self._settings = SettingsManager.get_instance()
         return self._settings
 
-    def check_login_status(self) -> (bool, int):
+    def check_login_status(self) -> (bool, Optional[int]):
         """
         检查用户是否已登录
 
@@ -71,16 +72,18 @@ class AuthService(AuthInterface):
                 self.show_login_dialog()
                 return False, None
 
-            # Token存在且未过期，获取真实余额
-            logger.info("用户已登录，获取用户余额")
+            # Token存在且未过期，通过余额接口验证token有效性
+            logger.info("用户已登录，通过余额接口验证token有效性")
 
-            # 从TokenService获取同步余额
-            from nice_ui.services.service_provider import ServiceProvider
-            service_provider = ServiceProvider()
-            token_service = service_provider.get_token_service()
-            user_balance = token_service.get_user_balance()
+            # 调用TokenService获取余额（同时验证token）
+            user_balance = self.token_service.get_user_balance()
 
-            logger.info(f"用户余额: {user_balance}")
+            if user_balance is None:
+                logger.warning("获取余额失败，token可能无效")
+                self.show_login_dialog()
+                return False, None
+
+            logger.info(f"Token验证成功，用户余额: {user_balance}")
             return True, user_balance
 
         except Exception as e:

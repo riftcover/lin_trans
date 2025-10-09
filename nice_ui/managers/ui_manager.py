@@ -9,39 +9,38 @@ from utils import logger
 
 class MainUIManager(UIManagerInterface):
     """主UI管理器实现类，处理UI相关操作"""
-    
-    _instance = None
-    
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(MainUIManager, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-    
+
     def __init__(self):
         """初始化UI管理器"""
-        # 避免重复初始化
-        if getattr(self, '_initialized', False):
-            return
-            
-        self.main_window = None
-        self._initialized = True
-        
+        self._main_window = None
+
+    def set_main_window(self, window):
+        """
+        设置主窗口引用（由MainWindow调用，避免初始化顺序问题）
+
+        Args:
+            window: 主窗口实例
+        """
+        self._main_window = window
+        logger.info("主窗口引用已设置")
+
     def _find_main_window(self):
         """
         查找主窗口实例
-        
+
         Returns:
             主窗口实例或None
         """
-        if self.main_window is not None:
-            return self.main_window
-            
+        # 优先使用已设置的引用
+        if self._main_window is not None:
+            return self._main_window
+
+        # 回退：从QApplication查找
         for widget in QApplication.topLevelWidgets():
             if widget.objectName() == "MainWindow":
-                self.main_window = widget
-                return self.main_window
-                
+                self._main_window = widget
+                return self._main_window
+
         return None
     
     def show_login_window(self, callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
