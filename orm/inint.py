@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, JSON
 from sqlalchemy import create_engine, BOOLEAN
 from sqlalchemy.orm import declarative_base, sessionmaker
 
