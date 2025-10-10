@@ -347,7 +347,7 @@ class LTableWindow:
             delete_button = DeleteButton("删除")
             ui_table.setCellWidget(row_position, 3, delete_button)
             delete_button.clicked.connect(
-                lambda row=row_position: self.delete_file(ui_table, row)
+                lambda checked=False, btn=delete_button: self.delete_file(ui_table, btn)
             )
             # 文件路径
             ui_table.setItem(row_position, 4, QTableWidgetItem(file_path))
@@ -383,18 +383,12 @@ class LTableWindow:
         return character_count
 
     @Slot()
-    def delete_file(self, ui_table: QTableWidget, row: int):
-        # Confirm delete action
-
-        ui_table.removeRow(row)
-        # Update the delete buttons' connections
-        self.update_delete_buttons(ui_table)
-
-    def update_delete_buttons(self, ui_table: QTableWidget):
+    def delete_file(self, ui_table: QTableWidget, button):
+        # 遍历所有行，找到包含这个按钮的行
         for row in range(ui_table.rowCount()):
-            delete_button = ui_table.cellWidget(row, 3)
-            delete_button.clicked.disconnect()
-            delete_button.clicked.connect(lambda r=row: self.delete_file(ui_table, r))
+            if ui_table.cellWidget(row, 3) == button:
+                ui_table.removeRow(row)
+                break
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入
