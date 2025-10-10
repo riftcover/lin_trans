@@ -131,27 +131,26 @@ cmd.append("run.py")
 
 def clean_logs_directory():
     """清空 logs 文件夹中的所有文件，但保留文件夹"""
-    try:
-        # 确保 logs 目录存在
-        if not LOGS_DIR.exists():
-            print(f"创建 logs 目录: {LOGS_DIR}")
-            LOGS_DIR.mkdir(parents=True, exist_ok=True)
-            return
+    # 确保 logs 目录存在
+    if not LOGS_DIR.exists():
+        print(f"创建 logs 目录: {LOGS_DIR}")
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        return
 
-        # 删除 logs 目录中的所有文件和子目录
-        for item in LOGS_DIR.iterdir():
-            try:
-                if item.is_file():
-                    item.unlink()
-                elif item.is_dir():
-                    shutil.rmtree(item)
-                print(f"已删除: {item}")
-            except Exception as e:
-                print(f"删除 {item} 时出错: {e}")
+    # 删除 logs 目录中的所有文件和子目录
+    for item in LOGS_DIR.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                shutil.rmtree(item)
+    print("logs 目录已清空")
 
-        print("logs 目录已清空")
-    except Exception as e:
-        print(f"清理 logs 目录时出错: {e}")
+    for item in RESULT_DIR.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                shutil.rmtree(item)
+    print("result 目录已清空")
 
 
 # 执行打包命令
