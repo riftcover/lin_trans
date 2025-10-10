@@ -14,6 +14,7 @@ from pydantic.json import pydantic_encoder
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
+from nice_ui.services.service_provider import ServiceProvider
 from services.decorators import except_handler
 from utils import logger
 from utils.file_utils import funasr_write_srt_file
@@ -275,6 +276,11 @@ class GladiaTaskManager:
 
                 # 更新任务状态为完成
                 self.update_task(task.task_id, status=ASRTaskStatus.COMPLETED, progress=100)
+
+                logger.info(f'ASR任务自动扣费模式，开始扣费: {task.task_id}')
+                self._consume_tokens_for_task(task)
+
+                # 通知个人中心
                 self._notify_task_completed(task.task_id)
 
                 logger.info(f"任务完成 - ID: {task.task_id}, SRT文件: {srt_file_path}")
@@ -287,16 +293,69 @@ class GladiaTaskManager:
             self._notify_task_failed(task.task_id, str(e))
 
     def _notify_task_progress(self, task_id: str, progress: int):
-        """通知任务进度"""
-        data_bridge.emit_whisper_working(task_id, progress)
+        """
+        通知UI任务进度
+
+        Args:
+            task_id: 应用内唯一标识符
+            progress: 进度值（0-100）
+        """
+        try:
+            # 如果有task_id，使用数据桥通知UI
+            if task_id:
+                logger.info(f'更新任务进度，task_id: {task_id}, 进度: {progress}%')
+                data_bridge.emit_whisper_working(task_id, progress)
+        except Exception as e:
+            logger.error(f"通知任务进度失败: {str(e)}")
 
     def _notify_task_completed(self, task_id: str):
-        """通知任务完成"""
-        data_bridge.emit_whisper_finished(task_id)
+        """
+        通知UI任务完成，更新个人中心余额和历史记录
 
-    def _notify_task_failed(self, task_id: str, error: str):
-        """通知任务失败"""
-        data_bridge.emit_task_error(task_id, error)
+        Args:
+            task_id: 应用内唯一标识符
+        """
+        try:
+            # 如果有task_id，使用数据桥通知UI
+            if task_id:
+                logger.info(f'更新任务完成状态，task_id: {task_id}')
+                data_bridge.emit_whisper_finished(task_id)
+
+                # 更新个人中心的余额和历史记录
+                try:
+                    # 获取代币服务
+                    token_service = ServiceProvider().get_token_service()
+
+                    # 更新余额（同步方式）
+                    if balance := token_service.get_user_balance():
+                        data_bridge.emit_update_balance(balance)
+
+                    # 更新历史记录（同步方式，与余额保持一致）
+                    if transactions := token_service.get_user_history():
+                        # 通知UI更新历史记录显示
+                        data_bridge.emit_update_history(transactions)
+
+                except Exception as e:
+                    logger.error(f"更新个人中心信息失败: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"通知任务完成失败: {str(e)}")
+
+    def _notify_task_failed(self, task_id: str, error_message: str):
+        """
+        通知UI任务失败
+
+        Args:
+            task_id: 应用内唯一标识符
+            error_message: 错误信息
+        """
+        try:
+            # 如果有task_id，使用数据桥通知UI
+            if task_id:
+                logger.info(f'通知任务失败，task_id: {task_id}, 错误: {error_message}')
+                data_bridge.emit_task_error(task_id, error_message)
+        except Exception as e:
+            logger.error(f"通知任务失败失败: {str(e)}")
 
     def _create_segment_data_file(self, segments, audio_file):
         """创建segment_data文件"""
@@ -323,6 +382,40 @@ class GladiaTaskManager:
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
         logger.info(f"已保存segment_data路径信息: {metadata_path}，语言: {language}")
+
+    def _consume_tokens_for_task(self, task: 'ASRTask') -> None:
+        """
+        为任务消费代币
+
+        Args:
+            task: ASR任务对象
+        """
+        logger.info('消费代币')
+        try:
+            # 获取代币服务
+            token_service = ServiceProvider().get_token_service()
+
+            # 从代币服务中获取代币消费量
+            token_amount = token_service.get_task_token_amount(task.task_id, 10)
+            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.task_id}')
+
+            # 消费代币
+            if token_amount > 0:
+                logger.info(f"为ASR任务消费代币: {token_amount}")
+                raw_pathlib = Path(task.audio_file)
+                file_name = raw_pathlib.stem
+                if token_service.consume_tokens(
+                        token_amount, "cloud_asr", file_name
+                ):
+                    logger.info(f"代币消费成功: {token_amount}")
+
+                else:
+                    logger.warning(f"代币消费失败: {token_amount}")
+            else:
+                logger.warning("代币数量为0，不消费代币")
+
+        except Exception as e:
+            logger.error(f"消费代币时发生错误: {str(e)}")
 
 
 # 全局任务管理器实例
