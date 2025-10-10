@@ -307,6 +307,64 @@ class APIClient:
         except Exception as e:
             raise Exception(f"同步获取余额失败: {e}")
 
+
+    def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
+                        start_date: Optional[str] = None, end_date: Optional[str] = None) -> Dict:
+        """
+        同步获取交易历史记录
+
+        Args:
+            page: 页码，默认为1
+            page_size: 每页记录数，默认为10
+            transaction_type: 交易类型，可选
+            start_date: 开始日期，可选
+            end_date: 结束日期，可选
+
+        Returns:
+            Dict: 包含交易历史记录的响应数据
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            # 检查是否有有效token
+            if not self._token:
+                raise AuthenticationError("No valid token")
+
+            # 构建查询参数
+            params = {
+                "page": page,
+                "page_size": page_size
+            }
+
+            # 只在参数有值时添加到请求中
+            if transaction_type is not None:
+                params["transaction_type"] = transaction_type
+            if start_date is not None:
+                params["start_date"] = start_date
+            if end_date is not None:
+                params["end_date"] = end_date
+
+            # 使用同步HTTP客户端
+            with httpx.Client(base_url=self.base_url) as client:
+                response = client.get(
+                    "/transactions/history",
+                    params=params,
+                    headers=self.headers
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except httpx.TimeoutException:
+            raise Exception("获取交易历史超时")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                raise AuthenticationError("Token已过期")
+            else:
+                raise Exception(f"获取交易历史HTTP错误: {e}")
+        except Exception as e:
+            raise Exception(f"同步获取交易历史失败: {e}")
     async def reset_password(self, email: str) -> Dict:
         """
         请求重置密码（异步版本）
