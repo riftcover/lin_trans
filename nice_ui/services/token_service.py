@@ -250,7 +250,6 @@ class TokenService(TokenServiceInterface):
             if result and 'data' in result:
                 balance = result['data'].get('balance', 0)
                 self.current_balance = balance  # 更新缓存
-                logger.info(f"同步获取余额成功: {balance}")
                 return balance
             else:
                 logger.warning("余额API返回数据格式不正确")
@@ -260,43 +259,32 @@ class TokenService(TokenServiceInterface):
             logger.error(f"获取余额失败: {e}")
             return self.current_balance
 
-    def get_user_history(self) -> list:
+    def get_user_history(self, page: int = 1, page_size: int = 10) -> list:
         """
-        获取用户当前消费记录
+        获取用户当前消费记录（同步方式）
+
+        设计原则：
+        1. 与 get_user_balance() 保持一致，都使用同步方式
+        2. 调用者在后台线程，不会阻塞UI
+        3. 简化数据流：直接返回数据，不需要回调嵌套
+
+        Args:
+            page: 页码，默认为1
+            page_size: 每页记录数，默认为10
 
         Returns:
-
+            list: 交易历史记录列表，失败时返回空列表
         """
-        # 注意：此方法已修改为异步获取，避免阻塞主线程
-        def on_success(result):
-            try:
-                if result and 'data' in result:
-                    transactions = result['data'].get('transactions', [])
-                    total_records = result['data'].get('total', 0)
-                    logger.info(f"更新交易历史记录: 共 {total_records} 条记录")
-                    return transactions
-                else:
-                    logger.warning("获取交易历史记录响应格式不正确")
-                    return []
-            except Exception as e:
-                logger.error(f"处理交易历史记录响应失败: {str(e)}")
-                return []
 
-        def on_error(error):
-            logger.error(f"获取交易历史记录失败: {str(error)}")
-            return []
+        result = api_client.get_history_sync(page=page, page_size=page_size)
 
-        try:
-            # 异步获取交易历史记录
-            simple_api_service.get_history(
-                page=1, page_size=10,
-                callback_success=on_success,
-                callback_error=on_error
-            )
-
-            return []  # 立即返回空列表，实际数据通过回调处理
-        except Exception as e:
-            logger.error(f"发起获取交易历史记录请求失败: {str(e)}")
+        if result and 'data' in result:
+            transactions = result['data'].get('transactions', [])
+            total_records = result['data'].get('total', 0)
+            logger.info(f"同步获取交易历史记录成功: 共 {total_records} 条记录")
+            return transactions
+        else:
+            logger.warning("交易历史API返回数据格式不正确")
             return []
     def calculate_asr_tokens(self, video_duration: float) -> int:
         """
@@ -515,17 +503,23 @@ class TokenService(TokenServiceInterface):
         """清空所有任务的代币消费量"""
         self.token_amount_manager.clear()
 
-    def consume_tokens(self, token_amount: int, feature_key: str = "asr", file_name: str = "") -> bool:
+    def consume_tokens(self, token_amount: int, feature_key: str = "asr", file_name: str = "",
+                      callback_success=None, callback_error=None) -> bool:
         """
-        消费代币
+        消费代币（异步方式）
+
+        设计原则：Service层只负责业务逻辑，不负责UI通知
+        调用者通过回调函数处理结果和UI更新
 
         Args:
             token_amount: 消费的代币数量
             feature_key: 功能标识符，默认为"asr"
             file_name: 文件名，默认为空字符串
+            callback_success: 成功回调函数，接收 result 作为参数
+            callback_error: 失败回调函数，接收错误信息作为参数
 
         Returns:
-            bool: 消费是否成功
+            bool: 请求是否成功发起（不代表消费成功，实际结果通过回调返回）
         """
         try:
             # 调用api_client中的方法消费代币（异步）
@@ -533,9 +527,14 @@ class TokenService(TokenServiceInterface):
 
             def on_success(result):
                 logger.info(f"消费代币成功: {token_amount}")
+                # 调用外部回调，让调用者决定如何处理结果
+                if callback_success:
+                    callback_success(result)
 
             def on_error(error):
                 logger.error(f"消费代币失败: {str(error)}")
+                if callback_error:
+                    callback_error(str(error))
 
             simple_api_service.execute_async(
                 api_client.consume_tokens,
@@ -543,11 +542,13 @@ class TokenService(TokenServiceInterface):
                 callback_success=on_success,
                 callback_error=on_error
             )
-            logger.info(f"消费代币成功: {token_amount}")
+            logger.info(f"已发起消费代币请求: {token_amount}")
             return True
 
         except Exception as e:
             logger.error(f"消费代币时发生错误: {str(e)}")
+            if callback_error:
+                callback_error(str(e))
             return False
 
     def set_ast_tokens_for_task(self,task_id:str ,asr_tokens:int) -> None:
