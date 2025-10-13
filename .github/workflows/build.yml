@@ -1,20 +1,24 @@
-name: Build Lapped Application
+name: Build and Release
 
 on:
   push:
-    branches: [ main.xx ]
+    branches:
+      - 'build/**'
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main.xx ]
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-        python-version: ['3.11']
-        
+        include:
+          - os: windows-latest
+            python-version: '3.11'
+            artifact_name: windows
+          - os: macos-latest
+            python-version: '3.11'
+            artifact_name: macos
+
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -62,29 +66,29 @@ jobs:
       run: |
         python install_build.py
         
-    - name: Package Windows artifacts
-      if: matrix.os == 'windows-latest'
+    - name: Package artifacts
       run: |
         cd dist
-        7z a -tzip Lapped-windows.zip Lapped/
-        
-    - name: Package macOS artifacts
-      if: matrix.os == 'macos-latest'
-      run: |
-        cd dist
-        zip -r Lapped-macos.zip Lapped/
-        
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          7z a -tzip Lapped-${{ matrix.artifact_name }}.zip Lapped/
+        else
+          zip -r Lapped-${{ matrix.artifact_name }}.zip Lapped/
+        fi
+      shell: bash
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Lapped-${{ matrix.os }}
-        path: dist/Lapped-${{ runner.os }}.zip
-        
+        name: Lapped-${{ matrix.artifact_name }}
+        path: dist/Lapped-${{ matrix.artifact_name }}.zip
+
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          dist/Lapped-${{ runner.os }}.zip
+        files: dist/Lapped-${{ matrix.artifact_name }}.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
