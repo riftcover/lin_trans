@@ -49,6 +49,8 @@ jobs:
     - name: Build with PyInstaller
       run: uv run python install_build.py
       shell: bash
+      env:
+        PYTHONIOENCODING: utf-8
         
     - name: Package artifacts
       run: |
