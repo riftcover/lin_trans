@@ -38,26 +38,17 @@ jobs:
     - name: Install dependencies
       run: uv sync --frozen
         
-    - name: Create necessary directories (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        New-Item -ItemType Directory -Force -Path models
-        New-Item -ItemType Directory -Force -Path result
-        New-Item -ItemType Directory -Force -Path logs
-        New-Item -ItemType Directory -Force -Path orm
+    - name: Create necessary directories
+      run: mkdir -p models result logs
+      shell: bash
 
-    - name: Create necessary directories (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        mkdir -p models
-        mkdir -p result
-        mkdir -p logs
-        mkdir -p orm
-        
+    - name: Initialize database
+      run: uv run python -c "import orm.inint"
+      shell: bash
+
     - name: Build with PyInstaller
-      run: |
-        uv run python install_build.py
+      run: uv run python install_build.py
+      shell: bash
         
     - name: Package artifacts
       run: |

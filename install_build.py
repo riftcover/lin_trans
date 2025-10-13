@@ -174,8 +174,12 @@ else:
 clean_logs_directory()
 
 print("开始打包...")
-# 执行 PyInstaller 命令
-subprocess.run(cmd, check=True)
+print(f"PyInstaller 命令: {' '.join(cmd)}")
+# 执行 PyInstaller 命令，捕获输出以便调试
+result = subprocess.run(cmd, capture_output=False, text=True)
+if result.returncode != 0:
+    print(f"❌ PyInstaller 失败，退出码: {result.returncode}")
+    sys.exit(1)
 
 print("打包完成!")
 
