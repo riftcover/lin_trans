@@ -185,8 +185,8 @@ class TokenService(TokenServiceInterface):
 
         # 从配置中获取默认系数值
         # todo: 当前没有登录时，使用云任务代币消耗会为0，所以先写死默认值。等以后重构登录状态管理器再调整
-        self.asr_qps = 4
-        self.trans_qps = 16
+        self.asr_qps = 0.4
+        self.trans_qps = 1.6
 
         self._initialized = True
 
