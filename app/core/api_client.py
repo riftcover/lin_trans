@@ -1,4 +1,6 @@
 import time
+import asyncio
+import threading
 from typing import Optional, Dict
 
 import httpx
@@ -30,6 +32,8 @@ class APIClient:
         self._token: Optional[str] = None
         self._refresh_token: Optional[str] = None
         self._token_expires_at: Optional[int] = None  # token过期时间戳
+        self._refresh_lock = asyncio.Lock()  # 防止异步并发刷新token
+        self._refresh_lock_sync = threading.Lock()  # 防止同步并发刷新token
 
     def load_token_from_settings(self, settings) -> bool:
         """
@@ -77,17 +81,21 @@ class APIClient:
 
     async def _ensure_valid_token(self) -> bool:
         """
-        确保token有效，如果即将过期则自动刷新
+        确保token有效，如果过期或即将过期则自动刷新
+
+        统一处理：不区分"已过期"和"即将过期"，都尝试刷新
+        提前5分钟刷新，避免在API调用时才发现过期
 
         Returns:
             bool: token是否有效
         """
         if not self._token:
+            logger.trace("No token available")
             return False
 
-        # 检查token是否即将过期（提前5分钟刷新）
-        if self.is_token_expiring_soon(300):
-            logger.info("Token即将过期，尝试自动刷新")
+        # 统一处理：过期或即将过期（提前5分钟）都刷新
+        if self.is_token_expired() or self.is_token_expiring_soon(300):
+            logger.info("Token过期或即将过期，尝试自动刷新")
             success = await self.refresh_session()
             if not success:
                 logger.warning("Token自动刷新失败")
@@ -110,7 +118,7 @@ class APIClient:
         try:
             response = await self.client.post("/auth/login", json={"email": email, "password": password}, headers=self.headers)
             response.raise_for_status()
-            data = response.json()
+            data = response.json().get('data')
             self._update_token(data)
             return data
         except httpx.HTTPStatusError as e:
@@ -138,9 +146,9 @@ class APIClient:
                 self._token_expires_at = response_data['session']['expires_at']
                 logger.trace(f'Token expires at: {time.ctime(self._token_expires_at)}')
             else:
-                # 如果没有提供过期时间，假设24小时有效期
-                self._token_expires_at = int(time.time()) + 24 * 3600
-                logger.trace('No expiry time provided, assuming 24 hours validity')
+                # 如果没有提供过期时间，假设1小时有效期（Supabase默认）
+                self._token_expires_at = int(time.time()) + 3600
+                logger.trace('No expiry time provided, assuming 1 hour validity (Supabase default)')
         else:
             logger.warning('No session data found in response')
 
@@ -148,46 +156,19 @@ class APIClient:
         """
         刷新会话token（异步版本）
 
-        Returns:
-            bool: 刷新是否成功
-        """
-        if not self._refresh_token:
-            logger.warning('No refresh token available for session refresh')
-            return False
-
-        try:
-            # 调用后端的刷新会话接口
-            response = await self.client.post(
-                "/auth/refresh",
-                json={"refresh_token": self._refresh_token},
-                headers={"Content-Type": "application/json"}
-            )
-            response.raise_for_status()
-            data = response.json()
-
-            # 更新token
-            self._update_token(data)
-            logger.info('Session refreshed successfully')
-            return True
-        except Exception as e:
-            logger.error(f'Failed to refresh session: {e}')
-            return False
-
-    def _refresh_session_sync(self) -> bool:
-        """
-        刷新会话token（同步版本，仅供内部使用）
+        使用锁保护，防止并发刷新导致的竞态条件
 
         Returns:
             bool: 刷新是否成功
         """
-        if not self._refresh_token:
-            logger.warning('No refresh token available for session refresh')
-            return False
+        async with self._refresh_lock:
+            if not self._refresh_token:
+                logger.warning('No refresh token available for session refresh')
+                return False
 
-        try:
-            # 使用同步HTTP客户端调用后端的刷新会话接口
-            with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
-                response = client.post(
+            try:
+                # 调用后端的刷新会话接口
+                response = await self.client.post(
                     "/auth/refresh",
                     json={"refresh_token": self._refresh_token},
                     headers={"Content-Type": "application/json"}
@@ -197,11 +178,44 @@ class APIClient:
 
                 # 更新token
                 self._update_token(data)
-                logger.info('Session refreshed successfully (sync)')
+                logger.info('Session refreshed successfully')
                 return True
-        except Exception as e:
-            logger.error(f'Failed to refresh session (sync): {e}')
-            return False
+            except Exception as e:
+                logger.error(f'Failed to refresh session: {e}')
+                return False
+
+    def _refresh_session_sync(self) -> bool:
+        """
+        刷新会话token（同步版本，仅供内部使用）
+
+        使用线程锁保护，防止并发刷新导致的竞态条件
+
+        Returns:
+            bool: 刷新是否成功
+        """
+        with self._refresh_lock_sync:
+            if not self._refresh_token:
+                logger.warning('No refresh token available for session refresh')
+                return False
+
+            try:
+                # 使用同步HTTP客户端调用后端的刷新会话接口
+                with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
+                    response = client.post(
+                        "/auth/refresh",
+                        json={"refresh_token": self._refresh_token},
+                        headers={"Content-Type": "application/json"}
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    # 更新token
+                    self._update_token(data)
+                    logger.info('Session refreshed successfully (sync)')
+                    return True
+            except Exception as e:
+                logger.error(f'Failed to refresh session (sync): {e}')
+                return False
 
 
 
