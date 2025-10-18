@@ -22,7 +22,3 @@ class TaskStatus:
     COMPLETED = "COMPLETED"      # 已完成
     FAILED = "FAILED"            # 失败
 
-
-# 向后兼容：保留旧的类名
-ASRTaskStatus = TaskStatus
-

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from agent.srt_translator_adapter import SRTTranslatorAdapter
+from app.core.feature_types import FeatureKey
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
@@ -13,37 +14,43 @@ class TransTaskManager:
     def __init__(self):
         pass
 
-    def consume_tokens_for_task(self, task_id: str,file_name: str, task_type: str = "cloud_trans") -> bool:
+    def consume_tokens_for_task(
+        self,
+        task_id: str,
+        file_name: str,
+        feature_key: FeatureKey = "cloud_trans"
+    ) -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型
 
         Args:
             task_id: 翻译任务ID
-            task_type: 任务类型，用于确定正确的feature_key
+            feature_key: 任务类型，用于确定正确的feature_key
+            可选值：   - "cloud_asr": 云ASR任务
                       - "cloud_trans": 纯翻译任务
-                      - "asr_trans": ASR+翻译任务
+                      - "asr_trans": ASR+云翻译任务
                       - "cloud_asr_trans": 云ASR+翻译任务
 
         Returns:
             bool: 扣费是否成功
         """
-        logger.info(f'开始统一任务扣费流程，任务ID: {task_id}, 任务类型: {task_type}')
+        logger.info(f'开始统一任务扣费流程，任务ID: {task_id}, 任务类型: {feature_key}')
         try:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
 
             if billing_success := token_service.consume_tokens_for_task(
-                task_id, task_type, file_name
+                task_id, feature_key, file_name
             ):
-                logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {task_type}")
+                logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {feature_key}")
                 # 注意：不在这里发送完成信号，应该在调用方确认翻译真正完成后再发送
                 return True
             else:
-                logger.error(f"任务扣费失败 - 任务ID: {task_id}, 任务类型: {task_type}")
+                logger.error(f"任务扣费失败 - 任务ID: {task_id}, 任务类型: {feature_key}")
                 return False
 
         except Exception as e:
-            logger.error(f"任务扣费异常 - 任务ID: {task_id}, 任务类型: {task_type}, 错误: {str(e)}")
+            logger.error(f"任务扣费异常 - 任务ID: {task_id}, 任务类型: {feature_key}, 错误: {str(e)}")
             return False
 
 

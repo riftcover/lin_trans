@@ -9,22 +9,12 @@ from pydantic.json import pydantic_encoder
 
 from app.cloud_asr.aliyun_asr_client import create_aliyun_asr_client
 from app.cloud_asr.aliyun_oss_client import upload_file_for_asr
+from app.core.task_status import TaskStatus
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from utils import logger
 from utils.file_utils import funasr_write_srt_file
-
-
-class ASRTaskStatus:
-    """ASR任务状态常量"""
-    PENDING = "PENDING"  # 等待提交
-    UPLOADING = "UPLOADING"  # 上传中
-    SUBMITTED = "SUBMITTED"  # 已提交
-    RUNNING = "RUNNING"  # 运行中
-    SPLITING = "SPLITING" # 分词中
-    COMPLETED = "COMPLETED"  # 已完成
-    FAILED = "FAILED"  # 失败
 
 
 class ASRTaskModel(BaseModel):
@@ -33,7 +23,7 @@ class ASRTaskModel(BaseModel):
     audio_file: str = Field(..., description="音频文件路径")
     audio_url: Optional[str] = Field(None, description="音频文件URL，上传到OSS后生成")
     language: str = Field(..., description="语言代码")
-    status: str = Field(ASRTaskStatus.PENDING, description="任务状态")
+    status: str = Field(TaskStatus.PENDING, description="任务状态")
     error: Optional[str] = Field(None, description="错误信息")
     progress: int = Field(0, description="任务进度（0-100）")
     created_at: float = Field(default_factory=time.time, description="创建时间")
@@ -43,13 +33,13 @@ class ASRTaskModel(BaseModel):
     def validate_status(cls, v):
         """验证任务状态"""
         valid_statuses = [
-            ASRTaskStatus.PENDING,
-            ASRTaskStatus.UPLOADING,
-            ASRTaskStatus.SUBMITTED,
-            ASRTaskStatus.RUNNING,
-            ASRTaskStatus.SPLITING,
-            ASRTaskStatus.COMPLETED,
-            ASRTaskStatus.FAILED
+            TaskStatus.PENDING,
+            TaskStatus.UPLOADING,
+            TaskStatus.SUBMITTED,
+            TaskStatus.RUNNING,
+            TaskStatus.SPLITING,
+            TaskStatus.COMPLETED,
+            TaskStatus.FAILED
         ]
         if v not in valid_statuses:
             raise ValueError(f"无效的任务状态: {v}，有效状态: {valid_statuses}")
@@ -86,7 +76,7 @@ class ASRTask:
         self.audio_url = None  # 音频文件URL，上传到OSS后生成
         self.language = language
         self.response = None  # 保存DashScope响应对象
-        self.status = ASRTaskStatus.PENDING
+        self.status = TaskStatus.PENDING
         self.error = None
         self.progress = 0
         self.created_at = time.time()
@@ -328,7 +318,7 @@ class ASRTaskManager:
                     logger.error(error_msg)
                     self.update_task(
                         task_id,
-                        status=ASRTaskStatus.FAILED,
+                        status=TaskStatus.FAILED,
                         error=error_msg,
                         progress=0
                     )
@@ -339,7 +329,7 @@ class ASRTaskManager:
                 # 更新任务状态为上传中
                 self.update_task(
                     task_id,
-                    status=ASRTaskStatus.UPLOADING,
+                    status=TaskStatus.UPLOADING,
                     progress=5
                 )
 
@@ -367,7 +357,7 @@ class ASRTaskManager:
                     logger.error(error_msg)
                     self.update_task(
                         task_id,
-                        status=ASRTaskStatus.FAILED,
+                        status=TaskStatus.FAILED,
                         error=error_msg,
                         progress=0
                     )
@@ -414,7 +404,7 @@ class ASRTaskManager:
             self.update_task(
                 task_id,
                 response=response,
-                status=ASRTaskStatus.SUBMITTED,
+                status=TaskStatus.SUBMITTED,
                 progress=15
             )
 
@@ -430,7 +420,7 @@ class ASRTaskManager:
             logger.error(f"提交ASR任务失败: {str(e)}")
             self.update_task(
                 task_id,
-                status=ASRTaskStatus.FAILED,
+                status=TaskStatus.FAILED,
                 error=str(e)
             )
             # 通知UI任务失败
@@ -457,7 +447,7 @@ class ASRTaskManager:
                         task
                         for task in self.tasks.values()
                         if task.status
-                        in [ASRTaskStatus.SUBMITTED, ASRTaskStatus.RUNNING]
+                        in [TaskStatus.SUBMITTED, TaskStatus.RUNNING]
                         and task.response
                     )
                 if not tasks_to_poll:
@@ -485,7 +475,7 @@ class ASRTaskManager:
                             self.update_task(
                                 task.task_id,
                                 response=response,
-                                status=ASRTaskStatus.RUNNING,
+                                status=TaskStatus.RUNNING,
                                 progress=progress
                             )
 
@@ -503,7 +493,7 @@ class ASRTaskManager:
                             # 更新任务状态为分词中
                             self.update_task(
                                 task.task_id,
-                                status=ASRTaskStatus.SPLITING,
+                                status=TaskStatus.SPLITING,
                                 progress=92
                             )
                             self._notify_task_progress(task.task_id, 92)
@@ -551,7 +541,7 @@ class ASRTaskManager:
                             self.update_task(
                                 task.task_id,
                                 response=response,
-                                status=ASRTaskStatus.COMPLETED,
+                                status=TaskStatus.COMPLETED,
                                 progress=100
                             )
 
@@ -576,7 +566,7 @@ class ASRTaskManager:
                             self.update_task(
                                 task.task_id,
                                 response=response,
-                                status=ASRTaskStatus.FAILED,
+                                status=TaskStatus.FAILED,
                                 error=error_msg,
                                 progress=0
                             )

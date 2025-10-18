@@ -1,6 +1,9 @@
 import asyncio
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.core.feature_types import FeatureKey
 
 import httpx
 
@@ -650,13 +653,13 @@ class APIClient:
 
 
 
-    async def consume_tokens(self, token_amount: int,file_name:str, feature_key: str = "asr", user_id: Optional[str] = None) -> Dict:
+    async def consume_tokens(self, token_amount: int, file_name: str, feature_key: FeatureKey = "cloud_asr", user_id: Optional[str] = None) -> Dict:
         """
         消费代币
 
         Args:
             token_amount: 消费的代币数量
-            feature_key: 功能标识符，默认为"asr"
+            feature_key: 功能标识符，默认为"cloud_asr"
             user_id: 用户ID，如果为None，则使用当前登录用户
 
         Returns:

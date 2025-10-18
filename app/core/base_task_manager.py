@@ -14,6 +14,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+
+from app.core.feature_types import FeatureKey
 from pydantic.json import pydantic_encoder
 
 from nice_ui.configure.signal import data_bridge
@@ -249,10 +251,10 @@ class BaseTaskManager(ABC):
     
     # ==================== 代币扣费（统一实现） ====================
     
-    def _consume_tokens_for_task(self, task: Any, feature_key: str, file_name: str) -> None:
+    def _consume_tokens_for_task(self, task: Any, feature_key: FeatureKey, file_name: str) -> None:
         """
         为任务消费代币（统一回调机制）
-        
+
         Args:
             task: 任务对象
             feature_key: 功能标识符（cloud_asr, cloud_trans等）

@@ -1,11 +1,9 @@
-import os
 import time
 from abc import ABC, abstractmethod
 
-from agent.srt_translator_adapter import SRTTranslatorAdapter
 from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
 from agent.enhanced_common_agent import translate_document
-from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, ASRTaskStatus
+from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, TaskStatus
 from app.cloud_trans.task_manager import get_trans_task_manager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
@@ -14,7 +12,7 @@ from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
-from orm.queries import ToTranslationOrm, ToSrtOrm
+from orm.queries import ToSrtOrm
 from utils import logger
 
 
@@ -67,13 +65,8 @@ class CloudASRTaskProcessor(TaskProcessor):
         # 获取语言代码
         language_code = config.params["source_language_code"]
 
-        # 获取任务消费的代币数量
-        token_service = ServiceProvider().get_token_service()
-        token_amount = token_service.get_task_token_amount(task.unid, 10)
-        logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
-
         # 创建ASR任务
-        logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}, 代币: {token_amount}')
+        logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}')
         task_manager.create_task(
             task_id=task.unid,
             audio_file=final_name,
@@ -98,10 +91,10 @@ class CloudASRTaskProcessor(TaskProcessor):
             asr_task = task_manager.get_task(task_id)
 
             # 检查任务是否完成或失败
-            if asr_task.status == ASRTaskStatus.COMPLETED:
+            if asr_task.status == TaskStatus.COMPLETED:
                 logger.info(f'云ASR任务已完成: {task_id}')
                 break
-            elif asr_task.status == ASRTaskStatus.FAILED:
+            elif asr_task.status == TaskStatus.FAILED:
                 logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
                 # 通知UI任务失败，而不是抛出异常
                 from nice_ui.ui.SingalBridge import data_bridge
@@ -148,11 +141,9 @@ class TranslationTaskProcessor(TaskProcessor):
             billing_success = trans_task_manager.consume_tokens_for_task(task.unid,task.raw_noextname, "cloud_trans")
 
             if billing_success:
-                logger.info(f'✅ 翻译任务完成并扣费成功 - 任务ID: {task.unid}')
                 # 任务完成后刷新使用记录
                 trans_task_manager.refresh_usage_records_after_task_completion(task.unid)
             else:
-                logger.error(f'❌ 翻译任务扣费失败 - 任务ID: {task.unid}')
                 data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
                 raise Exception(f"翻译任务扣费失败: {task.unid}")
 
@@ -241,11 +232,9 @@ class ASRTransTaskProcessor(TaskProcessor):
             if billing_success := trans_task_manager.consume_tokens_for_task(
                 new_task.unid, task.raw_noextname, "asr_trans"
             ):
-                logger.info(f'✅ ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
                 # 任务完成后刷新使用记录
                 trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
             else:
-                logger.error(f'❌ ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
                 data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
                 raise Exception(f"ASR+翻译任务扣费失败: {new_task.unid}")
 
@@ -286,13 +275,9 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         # 获取语言代码
         language_code = config.params["source_language_code"]
 
-        # 获取任务消费的代币数量
-        token_service = ServiceProvider().get_token_service()
-        token_amount = token_service.get_task_token_amount(task.unid, 10)
-        logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
 
         # 创建ASR任务（组合任务，禁用自动扣费）
-        logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}, 代币: {token_amount}')
+        logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}')
         asr_task_manager.create_task(
             task_id=task.unid,
             audio_file=final_name,
@@ -307,10 +292,6 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         # 云ASR+翻译任务必须等待ASR完成，因为翻译需要SRT文件
         logger.info(f'等待云ASR任务完成: {task.unid}')
         self._wait_for_task_completion(asr_task_manager, task.unid)
-
-        # ASR完成后，设置ASR算力到两阶段算力管理系统
-        token_service.set_ast_tokens_for_task(task.unid, token_amount)
-        logger.info(f'设置ASR算力到两阶段管理系统: {token_amount}, 任务ID: {task.unid}')
 
         # 第二步: 翻译任务
         new_task = change_job_format(task)
@@ -357,12 +338,10 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             if billing_success := trans_task_manager.consume_tokens_for_task(
                 new_task.unid, task.raw_noextname, "cloud_asr_trans"
             ):
-                logger.info(f'✅ 云ASR+翻译任务完成并扣费成功 - 任务ID: {new_task.unid}')
                 # 任务完成后刷新使用记录
                 trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
             else:
-                logger.error(f'❌ 云ASR+翻译任务扣费失败 - 任务ID: {new_task.unid}')
-                data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
+                data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
                 raise Exception(f"云ASR+翻译任务扣费失败: {new_task.unid}")
 
             logger.debug('CLOUD_ASR_TRANS 任务全部完成')
@@ -387,10 +366,10 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             asr_task = asr_task_manager.get_task(task_id)
 
             # 检查任务是否完成或失败
-            if asr_task.status == ASRTaskStatus.COMPLETED:
+            if asr_task.status == TaskStatus.COMPLETED:
                 logger.info(f'云ASR任务已完成: {task_id}')
                 break
-            elif asr_task.status == ASRTaskStatus.FAILED:
+            elif asr_task.status == TaskStatus.FAILED:
                 logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
                 raise Exception(f"云ASR任务失败: {asr_task.error}")
 

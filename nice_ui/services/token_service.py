@@ -1,5 +1,6 @@
 from typing import List, Dict
 
+from app.core.feature_types import FeatureKey
 from app.core.api_client import api_client
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.services.simple_api_service import simple_api_service
@@ -503,7 +504,7 @@ class TokenService(TokenServiceInterface):
         """清空所有任务的代币消费量"""
         self.token_amount_manager.clear()
 
-    def consume_tokens(self, token_amount: int, feature_key: str = "asr", file_name: str = "",
+    def consume_tokens(self, token_amount: int, feature_key: FeatureKey = "cloud_asr", file_name: str = "",
                       callback_success=None, callback_error=None) -> bool:
         """
         消费代币（异步方式）
@@ -513,7 +514,7 @@ class TokenService(TokenServiceInterface):
 
         Args:
             token_amount: 消费的代币数量
-            feature_key: 功能标识符，默认为"asr"
+            feature_key: 功能标识符，默认为"cloud_asr"
             file_name: 文件名，默认为空字符串
             callback_success: 成功回调函数，接收 result 作为参数
             callback_error: 失败回调函数，接收错误信息作为参数
@@ -623,7 +624,7 @@ class TokenService(TokenServiceInterface):
 
         logger.info(f"设置任务算力预估: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
 
-    def consume_tokens_for_task(self, task_id: str, feature_key: str,file_name: str) -> bool:
+    def consume_tokens_for_task(self, task_id: str, feature_key: 'FeatureKey', file_name: str) -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型
 

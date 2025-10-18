@@ -1,16 +1,7 @@
-"""
-Gladia ASR 任务管理器（重构版本）
-
-重构说明：
-1. 继承 BaseTaskManager，复用所有共同功能
-2. 只保留 Gladia 特定的业务逻辑
-3. 使用统一的 TaskStatus 常量
-"""
-
 import threading
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
 from app.core.base_task_manager import BaseTaskManager
