@@ -1,14 +1,8 @@
 import time
 from abc import ABC, abstractmethod
 
-from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
-from agent.enhanced_common_agent import translate_document
 from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, TaskStatus
 from app.cloud_trans.task_manager import get_trans_task_manager
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.core.feature_types import FeatureKey
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
@@ -71,67 +65,6 @@ class TaskProcessor(ABC):
 
             # 等待一段时间再检查
             time.sleep(5)
-
-    def _execute_translation(
-            self,
-            task: VideoFormatInfo,
-            in_document: str,
-            out_document: str,
-            feature_key: 'FeatureKey'
-    ):
-        """
-        执行翻译任务（通用方法）
-
-        Args:
-            task: 任务对象
-            in_document: 输入文档路径
-            out_document: 输出文档路径
-            feature_key: 功能键（用于扣费）
-        """
-        agent_type = config.params['translate_channel']
-        chunk_size_int = get_chunk_size()
-        max_entries_int = get_max_entries()
-        sleep_time_int = get_sleep_time()
-
-        logger.trace(f'准备翻译任务:{out_document}')
-        logger.trace(
-            f'任务参数:{task.unid}, {in_document}, {out_document}, {agent_type},'
-            f'{chunk_size_int},{max_entries_int},{sleep_time_int},'
-            f'{config.params["target_language"]},{config.params["source_language"]}'
-        )
-
-        try:
-            translate_document(
-                unid=task.unid,
-                in_document=in_document,
-                out_document=out_document,
-                agent_name=agent_type,
-                chunk_size=chunk_size_int,
-                max_entries=max_entries_int,
-                sleep_time=sleep_time_int,
-                target_language=config.params["target_language"],
-                source_language=config.params["source_language"]
-            )
-
-            logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task.unid}')
-
-            # 扣费并刷新使用记录
-            ttt = get_trans_task_manager()
-            ttt.consume_tokens_for_task(task, "cloud_trans", task.raw_noextname)
-
-        except ValueError as e:
-            # 检查是否是API密钥缺失的错误
-            if "请填写API密钥" in str(e):
-                logger.error(f"翻译任务失败 - API密钥缺失: {task.unid}")
-                data_bridge.emit_task_error(task.unid, "填写key")
-            else:
-                logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
-                data_bridge.emit_task_error(task.unid, str(e))
-            raise e
-        except Exception as e:
-            logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
-            data_bridge.emit_task_error(task.unid, str(e))
-            raise e
 
 
 class ASRTaskProcessor(TaskProcessor):
@@ -197,8 +130,9 @@ class TranslationTaskProcessor(TaskProcessor):
         """处理翻译任务"""
         logger.debug('处理翻译任务')
 
-        # 执行翻译并扣费
-        self._execute_translation(
+        # 获取翻译任务管理器并执行翻译
+        trans_task_manager = get_trans_task_manager()
+        trans_task_manager.execute_translation(
             task=task,
             in_document=task.raw_name,
             out_document=task.srt_dirname,
@@ -241,7 +175,7 @@ class ASRTransTaskProcessor(TaskProcessor):
         )
 
         # 执行翻译并扣费
-        self._execute_translation(
+        trans_task_manager.execute_translation(
             task=new_task,
             in_document=srt_name,
             out_document=srt_name,
@@ -304,7 +238,7 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         )
 
         # 执行翻译并扣费
-        self._execute_translation(
+        trans_task_manager.execute_translation(
             task=new_task,
             in_document=srt_name,
             out_document=srt_name,

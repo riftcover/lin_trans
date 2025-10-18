@@ -258,23 +258,43 @@ class BaseTaskManager(ABC):
     
     # ==================== 代币扣费（统一实现） ====================
 
+    @staticmethod
+    def _get_task_id(task: Any) -> str:
+        """
+        获取任务ID（兼容不同的任务对象）
+
+        Args:
+            task: 任务对象
+
+        Returns:
+            str: 任务ID
+        """
+        # 尝试不同的属性名
+        if hasattr(task, 'task_id'):
+            return task.task_id
+        elif hasattr(task, 'unid'):
+            return task.unid
+        else:
+            raise AttributeError(f"任务对象没有 task_id 或 unid 属性: {type(task)}")
+
     def _consume_tokens_for_task(self, task: Any, feature_key: 'FeatureKey', file_name: str) -> None:
         """
         为任务消费代币（统一回调机制）
 
         Args:
-            task: 任务对象
+            task: 任务对象（支持 task_id 或 unid 属性）
             feature_key: 功能标识符（cloud_asr, cloud_trans等）
             file_name: 文件名
         """
-        logger.info(f'消费代币 - 任务ID: {task.task_id}, 功能: {feature_key}')
+        task_id = self._get_task_id(task)
+        logger.info(f'消费代币 - 任务ID: {task_id}, 功能: {feature_key}')
         try:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
 
             # 从代币服务中获取代币消费量
-            token_amount = token_service.get_task_token_amount(task.task_id, 10)
-            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.task_id}')
+            token_amount = token_service.get_task_token_amount(task_id, 10)
+            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task_id}')
 
             # 消费代币
             if token_amount > 0:
@@ -284,12 +304,12 @@ class BaseTaskManager(ABC):
                 def on_consume_success(result):
                     logger.info(f"代币消费成功: {token_amount}, 结果: {result}")
                     # 扣费成功后，更新个人中心余额和历史记录
-                    self._notify_task_completed(task.task_id)
+                    self._notify_task_completed(task_id)
 
                 def on_consume_error(error):
                     logger.warning(f"代币消费失败: {token_amount}, 错误: {error}")
                     # 即使扣费失败，也通知任务完成（但不更新余额）
-                    data_bridge.emit_whisper_finished(task.task_id)
+                    data_bridge.emit_whisper_finished(task_id)
 
                 # 异步消费代币，通过回调处理结果
                 token_service.consume_tokens(
@@ -300,12 +320,12 @@ class BaseTaskManager(ABC):
             else:
                 logger.warning("代币数量为0，不消费代币")
                 # 无需扣费，直接通知完成
-                self._notify_task_completed(task.task_id)
+                self._notify_task_completed(task_id)
 
         except Exception as e:
             logger.error(f"消费代币时发生错误: {str(e)}")
             # 异常情况也要通知任务完成
-            data_bridge.emit_whisper_finished(task.task_id)
+            data_bridge.emit_whisper_finished(task_id)
     
     # ==================== Segment数据处理（统一实现） ====================
     

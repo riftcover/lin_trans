@@ -551,7 +551,11 @@ class ASRTaskManager:
                             # 只有在自动扣费模式下才消费代币
                             if getattr(task, 'auto_billing', True):
                                 logger.info(f'ASR任务自动扣费模式，开始扣费: {task.task_id}')
-                                self._consume_tokens_for_task(task)
+                                # 使用 BaseTaskManager 的统一扣费方法
+                                from app.core.base_task_manager import BaseTaskManager
+                                raw_pathlib = Path(task.audio_file)
+                                file_name = raw_pathlib.stem
+                                BaseTaskManager._consume_tokens_for_task(self, task, "cloud_asr", file_name)
                             else:
                                 logger.info(f'ASR任务非自动扣费模式，跳过扣费: {task.task_id}')
 
@@ -584,40 +588,6 @@ class ASRTaskManager:
             except Exception as e:
                 logger.error(f"任务轮询线程出错: {str(e)}")
                 time.sleep(10)  # 出错后等待较长时间再重试
-
-    def _consume_tokens_for_task(self, task: 'ASRTask') -> None:
-        """
-        为任务消费代币
-
-        Args:
-            task: ASR任务对象
-        """
-        logger.info('消费代币')
-        try:
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
-            # 从代币服务中获取代币消费量
-            token_amount = token_service.get_task_token_amount(task.task_id, 10)
-            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.task_id}')
-
-            # 消费代币
-            if token_amount > 0:
-                logger.info(f"为ASR任务消费代币: {token_amount}")
-                raw_pathlib = Path(task.audio_file)
-                file_name = raw_pathlib.stem
-                if token_service.consume_tokens(
-                        token_amount, "cloud_asr", file_name
-                ):
-                    logger.info(f"代币消费成功: {token_amount}")
-
-                else:
-                    logger.warning(f"代币消费失败: {token_amount}")
-            else:
-                logger.warning("代币数量为0，不消费代币")
-
-        except Exception as e:
-            logger.error(f"消费代币时发生错误: {str(e)}")
 
     def _notify_task_progress(self, task_id: Optional[str], progress: int) -> None:
         """

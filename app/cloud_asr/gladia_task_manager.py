@@ -30,7 +30,7 @@ class ASRTask:
 
 
 class GladiaTaskManager(BaseTaskManager):
-    """Gladia ASR任务管理器（重构版本）"""
+    """Gladia ASR任务管理器"""
 
     def __init__(self):
         # 初始化基类

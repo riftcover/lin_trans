@@ -608,22 +608,6 @@ class TokenService(TokenServiceInterface):
         estimated_chars = int(video_duration / 60 * 100)
         return self.calculate_trans_tokens(estimated_chars)
 
-    def set_task_tokens_estimate(self, task_id: str, asr_tokens: int, trans_tokens_estimated: int) -> None:
-        """设置任务的算力预估
-
-        Args:
-            task_id: 任务ID
-            asr_tokens: ASR算力
-            trans_tokens_estimated: 翻译算力预估
-        """
-        if task_id not in self.token_amount_manager._task_token_info:
-            self.token_amount_manager._task_token_info[task_id] = TaskTokenInfo()
-
-        info = self.token_amount_manager._task_token_info[task_id]
-        info.asr_tokens = asr_tokens
-        info.trans_tokens_estimated = trans_tokens_estimated
-
-        logger.info(f"设置任务算力预估: ASR={asr_tokens}, 翻译预估={trans_tokens_estimated}, 任务ID: {task_id}")
 
     def consume_tokens_for_task(self, task_id: str, feature_key: 'FeatureKey', file_name: str) -> bool:
         """
