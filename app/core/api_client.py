@@ -467,10 +467,9 @@ class APIClient:
                 # 发送请求
                 response = client.get("/users/profile", headers=self.headers)
                 response.raise_for_status()
-                data = response.json()
-
-                if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
-                    return data["data"]["user"]["id"]
+                data = response.json().get("data")
+                return data["user"]["id"]
+        except ValueError:
                 logger.error(f"User ID not found in response: {data}")
                 raise ValueError("无法获取用户ID：响应数据格式不正确")
         except httpx.HTTPStatusError as e:
