@@ -30,7 +30,7 @@ translator:
   max_entries: 10
   # 翻译API调用间隔
   sleep_time: 1
-default: production
+default: development
 development:
   api_base_url: http://127.0.0.1:8000/api
   web_base_url: http://127.0.0.1:3000
