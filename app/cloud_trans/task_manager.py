@@ -13,9 +13,7 @@ from utils import logger
 
 
 class TransTaskManager:
-    def __init__(self):
-        pass
-
+    """云翻译任务管理器"""
     def consume_tokens_for_task(
         self,
         task_id: str,
@@ -74,8 +72,7 @@ class TransTaskManager:
 
             # 检查SRT文件是否存在
             if not Path(srt_file_path).exists():
-                logger.warning(f"SRT文件不存在，设置默认翻译算力: {srt_file_path}")
-                self._set_default_translation_tokens(task_id)
+                logger.warning(f"SRT文件不存在")
                 return
 
             # 使用SRT适配器解析内容并计算字数
@@ -99,16 +96,6 @@ class TransTaskManager:
 
         except Exception as e:
             logger.error(f'计算翻译任务算力失败: {task_id}, 错误: {e}')
-            self._set_default_translation_tokens(task_id)
-
-    def _set_default_translation_tokens(self, task_id: str) -> None:
-        """设置默认翻译算力"""
-        try:
-            token_service = ServiceProvider().get_token_service()
-            token_service.set_translation_tokens_for_task(task_id, 10)
-            logger.info(f'设置默认翻译算力: 10, 任务ID: {task_id}')
-        except Exception as e:
-            logger.error(f'设置默认翻译算力失败: {task_id}, 错误: {e}')
 
     def add_translation_task_to_database(self, task_id: str, raw_name: str, task_json: str) -> None:
         """
@@ -136,35 +123,6 @@ class TransTaskManager:
         except Exception as e:
             logger.error(f'添加翻译任务到数据库失败: {task_id}, 错误: {e}')
             raise e
-
-    def setup_translation_tokens_estimate_if_needed(self, task_id: str, video_duration: float = 60) -> None:
-        """
-        为翻译任务设置算力预估（如果使用云翻译）
-
-        Args:
-            task_id: 任务ID
-            video_duration: 视频时长（秒），默认60秒
-        """
-        try:
-            # 检查翻译引擎是否为云翻译
-            translate_engine = config.params.get('translate_channel', '')
-            if translate_engine != 'qwen_cloud':
-                logger.info(f"非云翻译引擎({translate_engine})，跳过翻译算力预估")
-                return
-
-            # 获取代币服务进行翻译算力预估
-            token_service = ServiceProvider().get_token_service()
-
-            # 预估翻译算力（基于视频时长）
-            trans_tokens_estimated = token_service.estimate_translation_tokens_by_duration(video_duration)
-
-            # 设置翻译算力预估（ASR算力为0，因为本地ASR不消耗算力）
-            token_service.set_task_tokens_estimate(task_id, 0, trans_tokens_estimated)
-
-            logger.info(f'翻译任务算力预估完成 - 翻译预估: {trans_tokens_estimated}, 任务ID: {task_id}')
-
-        except Exception as e:
-            logger.error(f'设置翻译任务算力预估失败: {task_id}, 错误: {e}')
 
     def refresh_usage_records_after_task_completion(self, task_id: str) -> None:
         """

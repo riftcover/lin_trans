@@ -236,10 +236,6 @@ class ASRTransTaskProcessor(TaskProcessor):
         # 获取翻译任务管理器
         trans_task_manager = get_trans_task_manager()
 
-        # 检查是否需要翻译算力预估
-        video_duration = getattr(task, 'duration', 0) or 60  # 默认60秒
-        trans_task_manager.setup_translation_tokens_estimate_if_needed(task.unid, video_duration)
-
         # 第一步: ASR 任务
         self._convert_to_wav(task)
 
