@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, Callable
 from PySide6.QtCore import QSettings
 
 from app.core.api_client import api_client
-from nice_ui.services.token_refresh_service import get_token_refresh_service
+from app.core.auth_manager import AuthManager
 from nice_ui.services.api_service import api_service
 from nice_ui.interfaces.auth import AuthInterface
 from nice_ui.interfaces.ui_manager import UIManagerInterface
@@ -102,22 +102,16 @@ class AuthService(AuthInterface):
 
     def logout(self) -> None:
         """用户登出"""
-        # 停止token刷新服务
-        token_refresh_service = get_token_refresh_service()
-        token_refresh_service.stop_monitoring()
-
         # 重置API服务状态
         api_service.reset_service()
 
+        # 清除认证状态（使用 AuthManager）
+        settings = self._get_settings()
+        auth_manager = AuthManager(settings)
+        auth_manager.clear_auth_state()
+
         # 清除API客户端的token
         api_client.clear_token()
-
-        # 清除设置中的token和相关信息
-        settings = self._get_settings()
-        settings.remove('token')
-        settings.remove('refresh_token')
-        settings.remove('token_expires_at')
-        settings.sync()
 
         logger.info("用户已登出")
 

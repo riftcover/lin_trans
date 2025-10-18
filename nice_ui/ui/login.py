@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QAppl
 
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
                                    CheckBox)
-from nice_ui.services.token_refresh_service import get_token_refresh_service
 from nice_ui.services.simple_api_service import simple_api_service
 
 
@@ -192,8 +191,7 @@ class LoginWindow(QFrame):
     def load_saved_email(self):
         """加载保存的邮箱账号"""
         if bool(self.settings.value('remember_email', False)):
-            saved_email = self.settings.value('email', '')
-            if saved_email:
+            if saved_email := self.settings.value('email', ''):
                 self.emailInput.setText(saved_email)
 
     def save_email(self, email):
@@ -206,28 +204,7 @@ class LoginWindow(QFrame):
             self.settings.remove('email')
         self.settings.sync()
 
-    def save_login_state(self, token, refresh_token=None, expires_at=None):
-        """保存登录状态
 
-        Args:
-            token: 访问token
-            refresh_token: 刷新token（可选）
-            expires_at: token过期时间戳（可选）
-        """
-        self.settings.setValue('token', token)
-
-        if refresh_token:
-            self.settings.setValue('refresh_token', refresh_token)
-
-        if expires_at:
-            self.settings.setValue('token_expires_at', expires_at)
-        else:
-            # 如果没有提供过期时间，假设24小时有效期
-            import time
-            expires_at = int(time.time()) + 24 * 3600
-            self.settings.setValue('token_expires_at', expires_at)
-
-        self.settings.sync()
 
     def handle_login(self):
         email = self.emailInput.text()
@@ -317,22 +294,17 @@ class LoginWindow(QFrame):
         super().closeEvent(event)
 
     def _perform_async_login(self, email, password):
-        """执行异步登录"""
+        """执行异步登录 - 简化版本
+
+        Token 保存由 api_client._update_token() 自动完成，不需要手动保存
+        """
         def on_success(result):
-            # 保存邮箱账号和登录状态
             if result:
+                # 保存邮箱账号（记住账号功能）
                 self.save_email(email)
-                if 'session' in result:
-                    access_token = result['session'].get('access_token')
-                    refresh_token = result['session'].get('refresh_token')
-                    expires_at = result['session'].get('expires_at')
 
-                    if access_token:
-                        self.save_login_state(access_token, refresh_token, expires_at)
-
-                        # 启动token刷新服务
-                        token_refresh_service = get_token_refresh_service()
-                        token_refresh_service.start_monitoring(expires_at)
+                # Token 已经由 api_client._update_token() 自动保存到 QSettings
+                # 不需要手动调用 save_login_state()
 
                 user_info = {'email': result['user']['email']}
                 # 发送登录成功信号
@@ -354,9 +326,21 @@ class LoginWindow(QFrame):
             self.loginButton.setText('登录')
 
         def on_error(error):
+            # 使用简化的错误处理器
+            from app.core.error_handler import get_error_message
+            from utils import logger
+
+            # 获取用户友好的消息（支持多语言）
+            # TODO: 从设置中读取用户选择的语言
+            lang = "zh"  # 默认中文，未来可以改为 settings.value('language', 'zh')
+            user_message = get_error_message(error, lang)
+
+            # 在日志中保留原始错误信息
+            logger.warning(f"登录失败: {error}")
+
             InfoBar.error(
-                title='错误',
-                content=str(error),
+                title='登录失败',
+                content=user_message,
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

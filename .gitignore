@@ -11,6 +11,9 @@ __pycache__/
 models/
 data/
 result/
+.specify/
+specs
+.gemini
 # Distribution / packaging
 .Python
 build/

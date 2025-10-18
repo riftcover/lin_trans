@@ -11,9 +11,9 @@ from PySide6.QtNetwork import QNetworkProxy
 from PySide6.QtWidgets import QApplication
 from packaging import version
 
-from app.core.api_client import api_client, AuthenticationError
+from app.core.api_client import api_client
+from app.core.auth_manager import AuthManager
 from nice_ui.services.api_service import api_service
-from nice_ui.services.token_refresh_service import get_token_refresh_service
 from nice_ui.services.simple_api_service import simple_api_service
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
@@ -71,12 +71,9 @@ class Window(_create_smart_window_class()):
         # 设置主窗口引用（避免初始化顺序问题）
         self.ui_manager.set_main_window(self)
 
-        # 初始化token刷新服务
-        self.token_refresh_service = get_token_refresh_service()
-        self._setup_token_refresh_signals()
-
-        # 平台特定的窗口设置
-        # self._setupPlatformSpecificFeatures()
+        # 创建认证管理器并设置到 api_client
+        self.auth_manager = AuthManager(self.settings)
+        api_client.set_auth_manager(self.auth_manager)
 
         self.initWindow()
         # create sub interface
@@ -92,55 +89,6 @@ class Window(_create_smart_window_class()):
         self._connect_signals()
         # 尝试自动登录
         self.tryAutoLogin()
-
-    def _setup_token_refresh_signals(self):
-        """设置token刷新服务的信号连接"""
-        self.token_refresh_service.token_refreshed.connect(self._on_token_refreshed)
-        self.token_refresh_service.refresh_failed.connect(self._on_token_refresh_failed)
-
-    def _on_token_refreshed(self, token_info):
-        """处理token刷新成功"""
-        logger.info("Token已自动刷新")
-
-        # 更新设置中的token信息
-        self.settings.setValue('token', token_info.get('access_token'))
-        if token_info.get('refresh_token'):
-            self.settings.setValue('refresh_token', token_info.get('refresh_token'))
-        if token_info.get('expires_at'):
-            self.settings.setValue('token_expires_at', token_info.get('expires_at'))
-        self.settings.sync()
-
-    def _on_token_refresh_failed(self):
-        """处理token刷新失败"""
-        logger.warning("Token刷新失败，需要重新登录")
-
-        # 清除登录状态
-        self.is_logged_in = False
-
-        # 重置API服务状态
-        simple_api_service.reset_service()
-
-        api_client.clear_token()
-
-        # 清除设置中的token
-        self.settings.remove('token')
-        self.settings.remove('refresh_token')
-        self.settings.remove('token_expires_at')
-        self.settings.sync()
-
-        # 显示需要重新登录的提示
-        InfoBar.warning(
-            title='会话已过期',
-            content='您的登录会话已过期，请重新登录',
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=5000,
-            parent=self
-        )
-
-        # 显示登录对话框
-        self.auth_service.show_login_dialog()
 
     def set_font(self):
         system = platform.system()
@@ -262,40 +210,28 @@ class Window(_create_smart_window_class()):
             )
 
     def tryAutoLogin(self):
-        """尝试自动登录"""
+        """尝试自动登录 - 简化版本"""
         try:
-            # 尝试从设置加载token和refresh_token
-            if api_client.load_token_from_settings(self.settings):
+            # 使用 AuthManager 加载认证状态
+            if self.auth_manager.load_to_api_client(api_client):
                 try:
-                    # 验证token是否有效
-                    user_info = {
-                        'email': self.settings.value('email', '已登录'),
-                    }
-                    # 更新用户信息
-                    self.loginInterface.updateUserInfo(user_info)
+                    # 获取用户信息
+                    user_info = {'email': self.auth_manager.get_email()}
 
-                    # 更新登录状态
+                    # 更新 UI
+                    self.loginInterface.updateUserInfo(user_info)
                     self.is_logged_in = True
                     self.avatarWidget.setName(user_info['email'])
-                    # 更新个人中心页面
-                    logger.info("自动登录成功")
                     self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
+
+                    logger.info("自动登录成功")
 
                     # 更新算力消耗系数
                     from nice_ui.services.service_provider import ServiceProvider
                     token_service = ServiceProvider().get_token_service()
                     token_service.update_token_coefficients()
 
-                    # 启动token刷新服务
-                    expires_at = api_client.get_token_expiry_time()
-                    if expires_at:
-                        self.token_refresh_service.start_monitoring(expires_at)
-                except AuthenticationError as e:
-                    logger.warning(f"Token验证失败，尝试刷新: {e}")
-                    # 异步刷新token
-                    self._refresh_token_for_auto_login(user_info)
                 except Exception as e:
-                    # 检查是否是网络连接错误
                     if "All connection attempts failed" in str(e):
                         logger.warning(f"网络连接失败，无法验证登录状态: {e}")
                         # 显示网络连接错误提示
@@ -308,21 +244,14 @@ class Window(_create_smart_window_class()):
                             duration=3000,
                             parent=self
                         )
-                        # 不清除token，但也不标记为已登录
+                        # 不清除token，保持离线状态
                         self.is_logged_in = False
                     else:
-                        logger.warning(f"Token验证失败: {e}")
-                        # Token无效，清除状态
-                        self.is_logged_in = False
-                        self.settings.remove('token')
-                        self.settings.remove('refresh_token')
-                        self.settings.sync()
+                        logger.warning(f"自动登录失败: {e}")
+                        # 清除无效的认证状态
+                        self.auth_manager.clear_auth_state()
                         api_client.clear_token()
-
-                        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
-                        if self.login_window:
-                            self.login_window.close()
-                            self.login_window = None
+                        self.is_logged_in = False
             else:
                 logger.info("无保存的登录状态")
         except Exception as e:
@@ -369,7 +298,6 @@ class Window(_create_smart_window_class()):
         self.avatarWidget.setName(user_info.get('email', '已登录'))
 
         # 登录成功后使用设置图标作为头像
-        # 直接使用FluentIcon作为头像，确保与导航图标一致
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
 
         # 关闭登录窗口
@@ -387,14 +315,13 @@ class Window(_create_smart_window_class()):
             self.switchTo(self.loginInterface)
 
     def handleAuthError(self):
-        """处理认证错误（401）"""
-        # 异步刷新token
-        self._refresh_token_for_auth_error()
-        self.settings.remove('refresh_token')
-        self.settings.sync()
+        """处理认证错误（401）- 简化版本"""
+        # 清除认证状态
+        self.auth_manager.clear_auth_state()
         api_client.clear_token()
+        self.is_logged_in = False
 
-        # 重置登录窗口状态 - 修复登录按钮无法点击的问题
+        # 重置登录窗口状态
         if self.login_window:
             self.login_window.close()
             self.login_window = None
@@ -414,30 +341,12 @@ class Window(_create_smart_window_class()):
         self.showLoginInterface()
 
     def closeEvent(self, event):
-        """处理窗口关闭事件"""
+        """处理窗口关闭事件 - 简化版本"""
         try:
-            # 1. 停止token刷新服务
-            if hasattr(self, 'token_refresh_service'):
-                self.token_refresh_service.stop_monitoring()
-                logger.info("Token refresh service stopped")
-
-            # 2. 停止API服务的工作线程
+            # 停止API服务的工作线程
             if hasattr(simple_api_service, '_worker_thread'):
                 simple_api_service._stop_worker()
                 logger.info("API worker thread stopped")
-
-            # 3. 异步清理API客户端资源
-            if hasattr(self, 'is_logged_in') and self.is_logged_in:
-                # 同步关闭，不使用异步
-                try:
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(api_client.close())
-                    loop.close()
-                    logger.info("API client closed successfully")
-                except Exception as e:
-                    logger.error(f"Error closing API client: {e}")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 
@@ -465,78 +374,9 @@ class Window(_create_smart_window_class()):
             parent=self
         )
 
-    def _refresh_token_for_auto_login(self, user_info):
-        """为自动登录刷新token（异步）"""
-        def on_success(result):
-            logger.info("Token刷新成功，重新尝试自动登录")
-            # 刷新成功，更新设置中的token
-            self.settings.setValue('token', api_client._token)
-            if api_client._refresh_token:
-                self.settings.setValue('refresh_token', api_client._refresh_token)
-            self.settings.sync()
-
-            # 更新登录状态
-            self.is_logged_in = True
-            self.avatarWidget.setName(user_info['email'])
-
-            # 更新个人中心页面
-            self.loginInterface.updateUserInfo(user_info)
-
-            # 启动token刷新服务
-            expires_at = api_client.get_token_expiry_time()
-            if expires_at:
-                self.token_refresh_service.start_monitoring(expires_at)
-
-        def on_error(error):
-            logger.error(f"Token刷新失败: {error}")
-            # 刷新失败的处理逻辑可以在这里添加
-
-        simple_api_service.refresh_token(callback_success=on_success, callback_error=on_error)
-
-    def _refresh_token_for_auth_error(self):
-        """为认证错误刷新token（异步）"""
-        def on_success(result):
-            logger.info("Token刷新成功")
-            # 刷新成功，更新设置中的token
-            self.settings.setValue('token', api_client._token)
-            if api_client._refresh_token:
-                self.settings.setValue('refresh_token', api_client._refresh_token)
-            self.settings.sync()
-
-            # 从服务器获取并更新算力消耗系数
-            from nice_ui.services.service_provider import ServiceProvider
-            token_service = ServiceProvider().get_token_service()
-            token_service.update_token_coefficients()
-
-            # 显示成功提示
-            InfoBar.success(
-                title='会话已更新',
-                content='您的登录会话已自动更新',
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self
-            )
-
-        def on_error(error):
-            logger.error(f"Token刷新失败: {error}")
-            # 刷新失败，清除登录状态
-            self.is_logged_in = False
-            self.avatarWidget.setName('未登录')
-
-            # 清除保存的token和refresh_token
-            self.settings.remove('token')
-            self.settings.remove('refresh_token')
-            self.settings.sync()
-
-            # 显示登录窗口
-            self.showLoginInterface()
-
-        api_service.refresh_token(callback_success=on_success, callback_error=on_error)
-
     def _cleanup_api_client(self):
         """清理API客户端（异步）"""
+
         def on_complete(result):
             logger.info("API client resources cleaned up successfully")
 
@@ -567,5 +407,6 @@ if __name__ == "__main__":
         window = Window()
         window.show()
         sys.exit(app.exec())
+
 
     main()

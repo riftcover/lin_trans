@@ -1,7 +1,8 @@
-import hmac
 import hashlib
-from ..core.config import settings
+import hmac
 from base64 import b64encode
+
+from ..core.config import settings
 
 
 def generate_signature(user_id: str, amount: int, feature_key: str, timestamp: int) -> str:

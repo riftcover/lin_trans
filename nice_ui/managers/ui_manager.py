@@ -22,8 +22,6 @@ class MainUIManager(UIManagerInterface):
             window: 主窗口实例
         """
         self._main_window = window
-        logger.info("主窗口引用已设置")
-
     def _find_main_window(self):
         """
         查找主窗口实例

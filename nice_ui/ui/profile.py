@@ -2,7 +2,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout)
 
-from app.core.api_client import api_client, AuthenticationError
+from app.core.api_client import api_client
 # 导入自定义组件
 from components.widget.transaction_table import TransactionTableWidget
 from nice_ui.services.simple_api_service import simple_api_service
@@ -249,9 +249,6 @@ class ProfileInterface(QFrame):
             # 显示退出按钮
             self.logoutButton.setVisible(True)
             return True
-        except AuthenticationError as e:
-            self._handle_auth_error(f"认证错误: {e}")
-            return False
         except Exception as e:
             logger.error(f"更新用户信息失败: {e}")
             return False
@@ -313,8 +310,6 @@ class ProfileInterface(QFrame):
                     current_page=1,  # 重置到第一页
                     total_records=total_records
                 )
-        except AuthenticationError as e:
-            self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
             logger.error(f"更新使用记录失败: {e}")
 
@@ -395,8 +390,6 @@ class ProfileInterface(QFrame):
 
             # 显示购买成功提示
             self._show_info_bar(type_="success", title="购买成功", content="", duration=3000)
-        except AuthenticationError as e:
-            self._handle_auth_error(f"认证错误: {e}")
         except Exception as e:
             logger.error(f"更新购买信息失败: {e}")
             self._show_info_bar(type_="error", title="错误", content="更新购买信息失败", duration=3000)
@@ -417,8 +410,6 @@ class ProfileInterface(QFrame):
                 logger.info(f"开始获取第 {page} 页数据")
                 self._fetch_all_transactions(page=page)
                 logger.info(f"获取第 {page} 页数据成功")
-            except AuthenticationError as e:
-                self._handle_auth_error(f"认证错误: {e}")
             except Exception as e:
                 logger.error(f"获取交易记录失败: {e}")
                 self._show_info_bar(type_="error", title="错误", content="获取交易记录失败", duration=2000)
@@ -447,13 +438,13 @@ class ProfileInterface(QFrame):
         self.current_page = 1
 
     def _clear_login_state(self):
-        """清除登录状态"""
-        # 清除保存的登录状态
-        if self.settings:
-            self.settings.remove('token')
-            self.settings.sync()
+        """清除登录状态 - 修复：使用 AuthManager 彻底清除"""
+        # 使用 AuthManager 清除所有认证状态
+        from app.core.auth_manager import AuthManager
+        auth_manager = AuthManager(self.settings)
+        auth_manager.clear_auth_state()  # 清除所有：token, refresh_token, token_expires_at, email
 
-        # 清除API客户端的token
+        # 清除 API 客户端的 token
         api_client.clear_token()
 
         # 通知主窗口退出登录
