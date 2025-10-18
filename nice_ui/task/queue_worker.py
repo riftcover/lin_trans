@@ -5,11 +5,14 @@ from services.config_manager import get_chunk_size, get_max_entries, get_sleep_t
 from agent.enhanced_common_agent import translate_document
 from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, TaskStatus
 from app.cloud_trans.task_manager import get_trans_task_manager
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.core.feature_types import FeatureKey
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
-from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.task import WORK_TYPE
 from nice_ui.util.tools import VideoFormatInfo, change_job_format
 from orm.queries import ToSrtOrm
@@ -24,6 +27,130 @@ class TaskProcessor(ABC):
         """处理任务的抽象方法"""
         pass
 
+    # ==================== 通用工具方法 ====================
+
+    def _convert_to_wav(self, task: VideoFormatInfo) -> str:
+        """
+        音视频转 WAV 格式（通用方法）
+
+        Args:
+            task: 任务对象
+
+        Returns:
+            str: WAV 文件路径
+        """
+        final_name = task.wav_dirname
+        logger.debug(f'准备音视频转wav格式:{final_name}')
+        FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+        return final_name
+
+    def _wait_for_cloud_asr_completion(self, task_manager, task_id: str, raise_on_error: bool = False):
+        """
+        等待云 ASR 任务完成（通用方法）
+
+        Args:
+            task_manager: ASR 任务管理器
+            task_id: 任务 ID
+            raise_on_error: 失败时是否抛出异常（默认 False，只通知 UI）
+        """
+        while True:
+            # 获取任务状态
+            asr_task = task_manager.get_task(task_id)
+
+            # 检查任务是否完成或失败
+            if asr_task.status == TaskStatus.COMPLETED:
+                logger.info(f'云ASR任务已完成: {task_id}')
+                break
+            elif asr_task.status == TaskStatus.FAILED:
+                logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
+                if raise_on_error:
+                    raise Exception(f"云ASR任务失败: {asr_task.error}")
+                # 通知UI任务失败
+                data_bridge.emit_task_error(task_id, asr_task.error or "未知错误")
+                break
+
+            # 等待一段时间再检查
+            time.sleep(5)
+
+    def _execute_translation(
+        self,
+        task: VideoFormatInfo,
+        in_document: str,
+        out_document: str,
+        feature_key: 'FeatureKey'
+    ):
+        """
+        执行翻译任务（通用方法）
+
+        Args:
+            task: 任务对象
+            in_document: 输入文档路径
+            out_document: 输出文档路径
+            feature_key: 功能键（用于扣费）
+        """
+        agent_type = config.params['translate_channel']
+        chunk_size_int = get_chunk_size()
+        max_entries_int = get_max_entries()
+        sleep_time_int = get_sleep_time()
+
+        logger.trace(f'准备翻译任务:{out_document}')
+        logger.trace(
+            f'任务参数:{task.unid}, {in_document}, {out_document}, {agent_type},'
+            f'{chunk_size_int},{max_entries_int},{sleep_time_int},'
+            f'{config.params["target_language"]},{config.params["source_language"]}'
+        )
+
+        try:
+            translate_document(
+                unid=task.unid,
+                in_document=in_document,
+                out_document=out_document,
+                agent_name=agent_type,
+                chunk_size=chunk_size_int,
+                max_entries=max_entries_int,
+                sleep_time=sleep_time_int,
+                target_language=config.params["target_language"],
+                source_language=config.params["source_language"]
+            )
+
+            logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task.unid}')
+
+            # 扣费并刷新使用记录
+            self._consume_tokens_and_refresh(task, feature_key)
+
+        except ValueError as e:
+            # 检查是否是API密钥缺失的错误
+            if "请填写API密钥" in str(e):
+                logger.error(f"翻译任务失败 - API密钥缺失: {task.unid}")
+                data_bridge.emit_task_error(task.unid, "填写key")
+            else:
+                logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+                data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+        except Exception as e:
+            logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
+            data_bridge.emit_task_error(task.unid, str(e))
+            raise e
+
+    def _consume_tokens_and_refresh(self, task: VideoFormatInfo, feature_key: 'FeatureKey'):
+        """
+        扣费并刷新使用记录（通用方法）
+
+        Args:
+            task: 任务对象
+            feature_key: 功能键
+        """
+        trans_task_manager = get_trans_task_manager()
+
+        if billing_success := trans_task_manager.consume_tokens_for_task(
+            task.unid, task.raw_noextname, feature_key
+        ):
+            # 任务完成后刷新使用记录
+            trans_task_manager.refresh_usage_records_after_task_completion(task.unid)
+        else:
+            data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
+            raise Exception(f"任务扣费失败: {task.unid}")
+
 
 class ASRTaskProcessor(TaskProcessor):
     """ASR任务处理器"""
@@ -33,9 +160,7 @@ class ASRTaskProcessor(TaskProcessor):
         logger.debug('处理ASR任务')
 
         # 音视频转wav格式
-        final_name = task.wav_dirname
-        logger.debug(f'准备音视频转wav格式:{final_name}')
-        FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+        self._convert_to_wav(task)
 
         # 处理音频转文本
         srt_orm = ToSrtOrm()
@@ -55,9 +180,7 @@ class CloudASRTaskProcessor(TaskProcessor):
         logger.debug('处理云ASR任务')
 
         # 音视频转wav格式
-        final_name = task.wav_dirname
-        logger.debug(f'准备音视频转wav格式:{final_name}')
-        FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+        final_name = self._convert_to_wav(task)
 
         # 获取任务管理器实例
         task_manager = get_gladia_task_manager()
@@ -80,29 +203,9 @@ class CloudASRTaskProcessor(TaskProcessor):
         # 是否等待任务完成
         if config.params.get("cloud_asr_wait_for_completion", False):
             logger.info(f'等待云ASR任务完成: {task.unid}')
-            self._wait_for_task_completion(task_manager, task.unid)
+            self._wait_for_cloud_asr_completion(task_manager, task.unid, raise_on_error=False)
         else:
             logger.debug('云ASR任务已提交，在后台处理中')
-
-    def _wait_for_task_completion(self, task_manager, task_id):
-        """等待任务完成"""
-        while True:
-            # 获取任务状态
-            asr_task = task_manager.get_task(task_id)
-
-            # 检查任务是否完成或失败
-            if asr_task.status == TaskStatus.COMPLETED:
-                logger.info(f'云ASR任务已完成: {task_id}')
-                break
-            elif asr_task.status == TaskStatus.FAILED:
-                logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
-                # 通知UI任务失败，而不是抛出异常
-                from nice_ui.ui.SingalBridge import data_bridge
-                data_bridge.emit_task_error(task_id, asr_task.error or "未知错误")
-                break
-
-            # 等待一段时间再检查
-            time.sleep(5)
 
 
 class TranslationTaskProcessor(TaskProcessor):
@@ -112,54 +215,13 @@ class TranslationTaskProcessor(TaskProcessor):
         """处理翻译任务"""
         logger.debug('处理翻译任务')
 
-        try:
-            agent_type = config.params['translate_channel']
-            final_name = task.srt_dirname  # 原始文件名_译文.srt
-            chunk_size_int = get_chunk_size()
-            max_entries_int = get_max_entries()  # 推荐值：8-12
-            sleep_time_int = get_sleep_time()  # API调用间隔
-            logger.trace(f'准备翻译任务:{final_name}')
-            logger.trace(
-                f'任务参数:{task.unid}, {task.raw_name}, {final_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
-
-            translate_document(
-                unid=task.unid,
-                in_document=task.raw_name,
-                out_document=final_name,
-                agent_name=agent_type,
-                chunk_size=chunk_size_int,  # 推荐值：600-800
-                max_entries=max_entries_int,  # 推荐值：8-12
-                sleep_time=sleep_time_int,  # API调用间隔
-                target_language=config.params["target_language"],  # 目标语言
-                source_language=config.params["source_language"]  # 源语言
-            )
-
-            logger.info('翻译任务执行完成')
-
-            # 翻译成功后扣费并刷新使用记录
-            trans_task_manager = get_trans_task_manager()
-            billing_success = trans_task_manager.consume_tokens_for_task(task.unid,task.raw_noextname, "cloud_trans")
-
-            if billing_success:
-                # 任务完成后刷新使用记录
-                trans_task_manager.refresh_usage_records_after_task_completion(task.unid)
-            else:
-                data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
-                raise Exception(f"翻译任务扣费失败: {task.unid}")
-
-        except ValueError as e:
-            # 检查是否是API密钥缺失的错误
-            if "请填写API密钥" in str(e):
-                logger.error(f"翻译任务失败 - API密钥缺失: {task.unid}")
-                data_bridge.emit_task_error(task.unid, "填写key")
-            else:
-                logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
-                data_bridge.emit_task_error(task.unid, str(e))
-            raise e
-        except Exception as e:
-            logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
-            data_bridge.emit_task_error(task.unid, str(e))
-            raise e
+        # 执行翻译并扣费
+        self._execute_translation(
+            task=task,
+            in_document=task.raw_name,
+            out_document=task.srt_dirname,
+            feature_key="cloud_trans"
+        )
 
 
 
@@ -179,9 +241,7 @@ class ASRTransTaskProcessor(TaskProcessor):
         trans_task_manager.setup_translation_tokens_estimate_if_needed(task.unid, video_duration)
 
         # 第一步: ASR 任务
-        final_name = task.wav_dirname
-        logger.debug(f'准备音视频转wav格式:{final_name}')
-        FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+        self._convert_to_wav(task)
 
         srt_orm = ToSrtOrm()
         db_obj = srt_orm.query_data_by_unid(task.unid)
@@ -192,11 +252,7 @@ class ASRTransTaskProcessor(TaskProcessor):
 
         # 第二步: 翻译任务
         new_task = change_job_format(task)
-
-        agent_type = config.params['translate_channel']
         srt_name = new_task.srt_dirname
-
-        logger.trace(f'准备翻译任务:{srt_name}')
 
         # 计算并设置翻译算力（基于ASR生成的SRT文件）
         trans_task_manager.calculate_and_set_translation_tokens_from_srt(new_task.unid, srt_name)
@@ -207,51 +263,16 @@ class ASRTransTaskProcessor(TaskProcessor):
             new_task.raw_name,
             new_task.model_dump_json()
         )
-        chunk_size_int = get_chunk_size()
-        max_entries_int = get_max_entries()  # 推荐值：8-12
-        sleep_time_int = get_sleep_time()  # API调用间隔
-        logger.trace(
-            f'任务参数:{task.unid}, {srt_name}, {srt_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
-        # 执行翻译
-        try:
-            translate_document(
-                unid=task.unid,
-                in_document=srt_name,
-                out_document=srt_name,
-                agent_name=agent_type,
-                chunk_size=chunk_size_int,  # 推荐值：600-800
-                max_entries=max_entries_int,  # 推荐值：8-12
-                sleep_time=sleep_time_int,  # API调用间隔
-                target_language=config.params["target_language"],  # 目标语言
-                source_language=config.params["source_language"]  # 源语言
-            )
+        # 执行翻译并扣费
+        self._execute_translation(
+            task=new_task,
+            in_document=srt_name,
+            out_document=srt_name,
+            feature_key="asr_trans"
+        )
 
-            logger.info(f'ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
-
-            if billing_success := trans_task_manager.consume_tokens_for_task(
-                new_task.unid, task.raw_noextname, "asr_trans"
-            ):
-                # 任务完成后刷新使用记录
-                trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
-            else:
-                data_bridge.emit_task_error(new_task.unid, "翻译完成但扣费失败")
-                raise Exception(f"ASR+翻译任务扣费失败: {new_task.unid}")
-
-            logger.debug('ASR_TRANS 任务全部完成')
-        except ValueError as e:
-            # 检查是否是API密钥缺失的错误
-            if "请填写API密钥" in str(e):
-                logger.error(f"ASR+翻译任务失败 - API密钥缺失: {task.unid}")
-                data_bridge.emit_task_error(task.unid, "填写key")
-            else:
-                logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
-                data_bridge.emit_task_error(task.unid, str(e))
-            raise e
-        except Exception as e:
-            logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
-            data_bridge.emit_task_error(task.unid, str(e))
-            raise e
+        logger.debug('ASR_TRANS 任务全部完成')
 
 
 
@@ -260,21 +281,17 @@ class CloudASRTransTaskProcessor(TaskProcessor):
     """云ASR+云翻译任务处理器"""
 
     def process(self, task: VideoFormatInfo):
-        """处理云ASR任务"""
+        """处理云ASR+云翻译任务"""
         logger.debug('处理云ASR+云翻译')
-        # 第一步: ASR 任务
 
-        # 音视频转wav格式
-        final_name = task.wav_dirname
-        logger.debug(f'准备音视频转wav格式:{final_name}')
-        FFmpegJobs.convert_mp4_to_wav(task.raw_name, final_name)
+        # 第一步: 云ASR 任务
+        final_name = self._convert_to_wav(task)
 
         # 使用Gladia ASR任务管理器
         asr_task_manager = get_gladia_task_manager()
 
         # 获取语言代码
         language_code = config.params["source_language_code"]
-
 
         # 创建ASR任务（组合任务，禁用自动扣费）
         logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}')
@@ -291,12 +308,10 @@ class CloudASRTransTaskProcessor(TaskProcessor):
 
         # 云ASR+翻译任务必须等待ASR完成，因为翻译需要SRT文件
         logger.info(f'等待云ASR任务完成: {task.unid}')
-        self._wait_for_task_completion(asr_task_manager, task.unid)
+        self._wait_for_cloud_asr_completion(asr_task_manager, task.unid, raise_on_error=True)
 
         # 第二步: 翻译任务
         new_task = change_job_format(task)
-
-        agent_type = config.params['translate_channel']
         srt_name = new_task.srt_dirname
 
         logger.trace(f'准备云翻译任务:{srt_name}')
@@ -313,68 +328,16 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             new_task.raw_name,
             new_task.model_dump_json()
         )
-        chunk_size_int = get_chunk_size()
-        max_entries_int = get_max_entries()  # 推荐值：8-12
-        sleep_time_int = get_sleep_time()  # API调用间隔
-        logger.trace(
-            f'任务参数:{task.unid}, {srt_name}, {srt_name}, {agent_type},{chunk_size_int},{max_entries_int},{sleep_time_int},{config.params["target_language"]},{config.params["source_language"]}')
 
-        # 执行翻译
-        try:
-            translate_document(
-                unid=task.unid,
-                in_document=srt_name,
-                out_document=srt_name,
-                agent_name=agent_type,
-                chunk_size=chunk_size_int,  # 推荐值：600-800
-                max_entries=max_entries_int,  # 推荐值：8-12
-                sleep_time=sleep_time_int,  # API调用间隔
-                target_language=config.params["target_language"],  # 目标语言
-                source_language=config.params["source_language"]  # 源语言
-            )
+        # 执行翻译并扣费
+        self._execute_translation(
+            task=new_task,
+            in_document=srt_name,
+            out_document=srt_name,
+            feature_key="cloud_asr_trans"
+        )
 
-            logger.info(f'云ASR+翻译任务执行完成，开始扣费流程，任务ID: {new_task.unid}')
-
-            if billing_success := trans_task_manager.consume_tokens_for_task(
-                new_task.unid, task.raw_noextname, "cloud_asr_trans"
-            ):
-                # 任务完成后刷新使用记录
-                trans_task_manager.refresh_usage_records_after_task_completion(new_task.unid)
-            else:
-                data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
-                raise Exception(f"云ASR+翻译任务扣费失败: {new_task.unid}")
-
-            logger.debug('CLOUD_ASR_TRANS 任务全部完成')
-        except ValueError as e:
-            # 检查是否是API密钥缺失的错误
-            if "请填写API密钥" in str(e):
-                logger.error(f"ASR+翻译任务失败 - API密钥缺失: {task.unid}")
-                data_bridge.emit_task_error(task.unid, "填写key")
-            else:
-                logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
-                data_bridge.emit_task_error(task.unid, str(e))
-            raise e
-        except Exception as e:
-            logger.error(f"ASR+翻译任务失败: {task.unid}, 错误: {e}")
-            data_bridge.emit_task_error(task.unid, str(e))
-            raise e
-
-    def _wait_for_task_completion(self, asr_task_manager, task_id):
-        """等待任务完成"""
-        while True:
-            # 获取任务状态
-            asr_task = asr_task_manager.get_task(task_id)
-
-            # 检查任务是否完成或失败
-            if asr_task.status == TaskStatus.COMPLETED:
-                logger.info(f'云ASR任务已完成: {task_id}')
-                break
-            elif asr_task.status == TaskStatus.FAILED:
-                logger.error(f'云ASR任务失败: {task_id}, 错误: {asr_task.error}')
-                raise Exception(f"云ASR任务失败: {asr_task.error}")
-
-            # 等待一段时间再检查
-            time.sleep(5)
+        logger.debug('CLOUD_ASR_TRANS 任务全部完成')
 
 
 

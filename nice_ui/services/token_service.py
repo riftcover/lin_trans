@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 
-from app.core.feature_types import FeatureKey
+if TYPE_CHECKING:
+    from app.core.feature_types import FeatureKey
 from app.core.api_client import api_client
 from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
 from nice_ui.services.simple_api_service import simple_api_service
@@ -504,7 +505,7 @@ class TokenService(TokenServiceInterface):
         """清空所有任务的代币消费量"""
         self.token_amount_manager.clear()
 
-    def consume_tokens(self, token_amount: int, feature_key: FeatureKey = "cloud_asr", file_name: str = "",
+    def consume_tokens(self, token_amount: int, feature_key: 'FeatureKey' = "cloud_asr", file_name: str = "",
                       callback_success=None, callback_error=None) -> bool:
         """
         消费代币（异步方式）

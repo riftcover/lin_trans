@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Optional
+from typing import TYPE_CHECKING
 
 from agent.srt_translator_adapter import SRTTranslatorAdapter
-from app.core.feature_types import FeatureKey
+if TYPE_CHECKING:
+    from app.core.feature_types import FeatureKey
 from nice_ui.configure import config
 from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
@@ -18,7 +20,7 @@ class TransTaskManager:
         self,
         task_id: str,
         file_name: str,
-        feature_key: FeatureKey = "cloud_trans"
+        feature_key: 'FeatureKey' = "cloud_trans"
     ) -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型

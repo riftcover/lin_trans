@@ -653,7 +653,7 @@ class APIClient:
 
 
 
-    async def consume_tokens(self, token_amount: int, file_name: str, feature_key: FeatureKey = "cloud_asr", user_id: Optional[str] = None) -> Dict:
+    async def consume_tokens(self, token_amount: int, file_name: str, feature_key: 'FeatureKey' = "cloud_asr", user_id: Optional[str] = None) -> Dict:
         """
         消费代币
 

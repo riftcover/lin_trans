@@ -14,8 +14,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+from typing import TYPE_CHECKING
 
-from app.core.feature_types import FeatureKey
+if TYPE_CHECKING:
+    from app.core.feature_types import FeatureKey
 from pydantic.json import pydantic_encoder
 
 from nice_ui.configure.signal import data_bridge
@@ -251,7 +253,7 @@ class BaseTaskManager(ABC):
     
     # ==================== 代币扣费（统一实现） ====================
     
-    def _consume_tokens_for_task(self, task: Any, feature_key: FeatureKey, file_name: str) -> None:
+    def _consume_tokens_for_task(self, task: Any, feature_key: 'FeatureKey', file_name: str) -> None:
         """
         为任务消费代币（统一回调机制）
 
