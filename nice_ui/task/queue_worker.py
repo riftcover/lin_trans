@@ -73,11 +73,11 @@ class TaskProcessor(ABC):
             time.sleep(5)
 
     def _execute_translation(
-        self,
-        task: VideoFormatInfo,
-        in_document: str,
-        out_document: str,
-        feature_key: 'FeatureKey'
+            self,
+            task: VideoFormatInfo,
+            in_document: str,
+            out_document: str,
+            feature_key: 'FeatureKey'
     ):
         """
         执行翻译任务（通用方法）
@@ -116,7 +116,8 @@ class TaskProcessor(ABC):
             logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task.unid}')
 
             # 扣费并刷新使用记录
-            self._consume_tokens_and_refresh(task, feature_key)
+            ttt = get_trans_task_manager()
+            ttt.consume_tokens_for_task(task, "cloud_trans", task.raw_noextname)
 
         except ValueError as e:
             # 检查是否是API密钥缺失的错误
@@ -131,25 +132,6 @@ class TaskProcessor(ABC):
             logger.error(f"翻译任务失败: {task.unid}, 错误: {e}")
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
-
-    def _consume_tokens_and_refresh(self, task: VideoFormatInfo, feature_key: 'FeatureKey'):
-        """
-        扣费并刷新使用记录（通用方法）
-
-        Args:
-            task: 任务对象
-            feature_key: 功能键
-        """
-        trans_task_manager = get_trans_task_manager()
-
-        if billing_success := trans_task_manager.consume_tokens_for_task(
-            task.unid, task.raw_noextname, feature_key
-        ):
-            # 任务完成后刷新使用记录
-            trans_task_manager.refresh_usage_records_after_task_completion(task.unid)
-        else:
-            data_bridge.emit_task_error(task.unid, "翻译完成但扣费失败")
-            raise Exception(f"任务扣费失败: {task.unid}")
 
 
 class ASRTaskProcessor(TaskProcessor):
@@ -224,8 +206,6 @@ class TranslationTaskProcessor(TaskProcessor):
         )
 
 
-
-
 class ASRTransTaskProcessor(TaskProcessor):
     """ASR+翻译组合任务处理器"""
 
@@ -269,8 +249,6 @@ class ASRTransTaskProcessor(TaskProcessor):
         )
 
         logger.debug('ASR_TRANS 任务全部完成')
-
-
 
 
 class CloudASRTransTaskProcessor(TaskProcessor):
@@ -334,8 +312,6 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         )
 
         logger.debug('CLOUD_ASR_TRANS 任务全部完成')
-
-
 
 
 class TaskProcessorFactory:

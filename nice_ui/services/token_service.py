@@ -525,7 +525,7 @@ class TokenService(TokenServiceInterface):
         """
         try:
             # 调用api_client中的方法消费代币（异步）
-            us_id = api_client.get_id()
+            user_id = api_client.get_id()
 
             def on_success(result):
                 logger.info(f"消费代币成功: {token_amount}")
@@ -540,7 +540,7 @@ class TokenService(TokenServiceInterface):
 
             simple_api_service.execute_async(
                 api_client.consume_tokens,
-                args=(token_amount, file_name, feature_key, us_id),
+                args=(token_amount, file_name, feature_key, user_id),
                 callback_success=on_success,
                 callback_error=on_error
             )

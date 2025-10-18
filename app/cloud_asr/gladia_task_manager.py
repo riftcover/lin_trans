@@ -34,7 +34,7 @@ class GladiaTaskManager(BaseTaskManager):
 
     def __init__(self):
         # 初始化基类
-        task_state_file = Path(f"{config.temp_path}/gladia_asr_tasks.json")
+        task_state_file = Path(f"{config.temp_path}/asr_tasks.json")
         super().__init__(task_state_file)
 
         # Gladia特定属性

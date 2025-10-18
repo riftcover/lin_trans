@@ -173,68 +173,73 @@ class BaseTaskManager(ABC):
                 data_bridge.emit_whisper_working(task_id, progress)
         except Exception as e:
             logger.error(f"通知任务进度失败: {str(e)}")
-    
+
+    @staticmethod
+    def _refresh_usage_records(task_id: str) -> None:
+        """
+        刷新用户余额和历史记录
+
+        Args:
+            task_id: 任务ID（用于日志）
+        """
+        # 更新个人中心的余额和历史记录
+        try:
+            # 更新余额（异步方式，确保获取扣费后的最新余额）
+            def on_balance_success(result):
+                if result and "data" in result:
+                    balance = result["data"].get("balance", 0)
+                    logger.info(f"获取扣费后余额成功: {balance}")
+                    data_bridge.emit_update_balance(balance)
+                else:
+                    logger.warning("获取余额失败或余额为0")
+
+            def on_balance_error(error):
+                logger.error(f"获取余额失败: {error}")
+
+            # 异步获取余额
+            from nice_ui.services.simple_api_service import simple_api_service
+
+            simple_api_service.get_balance(
+                callback_success=on_balance_success,
+                callback_error=on_balance_error,
+            )
+
+            # 更新历史记录（异步方式）
+            def on_history_success(result):
+                if result and "data" in result:
+                    transactions = result["data"].get("transactions", [])
+                    logger.info(
+                        f"获取历史记录成功，记录数: {len(transactions)}"
+                    )
+                    data_bridge.emit_update_history(transactions)
+                else:
+                    logger.warning("获取历史记录失败")
+
+            def on_history_error(error):
+                logger.error(f"获取历史记录失败: {error}")
+
+            # 异步获取历史记录
+            simple_api_service.get_history(
+                callback_success=on_history_success,
+                callback_error=on_history_error,
+            )
+
+        except Exception as e:
+            logger.error(f"更新个人中心信息失败: {str(e)}")
     def _notify_task_completed(self, task_id: str) -> None:
         """
         通知UI任务完成，更新个人中心余额和历史记录
-        
+
         注意：此方法应该在扣费成功后调用，确保余额是扣费后的最新值
-        
+
         Args:
             task_id: 任务ID
         """
-        try:
-            if task_id:
-                logger.info(f'更新任务完成状态，task_id: {task_id}')
-                data_bridge.emit_whisper_finished(task_id)
-                
-                # 更新个人中心的余额和历史记录
-                try:
-                    # 获取代币服务
-                    token_service = ServiceProvider().get_token_service()
-                    
-                    # 更新余额（异步方式，确保获取扣费后的最新余额）
-                    def on_balance_success(result):
-                        if result and 'data' in result:
-                            balance = result['data'].get('balance', 0)
-                            logger.info(f"获取扣费后余额成功: {balance}")
-                            data_bridge.emit_update_balance(balance)
-                        else:
-                            logger.warning("获取余额失败或余额为0")
-                    
-                    def on_balance_error(error):
-                        logger.error(f"获取余额失败: {error}")
-                    
-                    # 异步获取余额
-                    from nice_ui.services.simple_api_service import simple_api_service
-                    simple_api_service.get_balance(
-                        callback_success=on_balance_success,
-                        callback_error=on_balance_error
-                    )
-                    
-                    # 更新历史记录（异步方式）
-                    def on_history_success(result):
-                        if result and 'data' in result:
-                            transactions = result['data'].get('transactions', [])
-                            logger.info(f"获取历史记录成功，记录数: {len(transactions)}")
-                            data_bridge.emit_update_history(transactions)
-                        else:
-                            logger.warning("获取历史记录失败")
-                    
-                    def on_history_error(error):
-                        logger.error(f"获取历史记录失败: {error}")
-                    
-                    # 异步获取历史记录
-                    simple_api_service.get_history(
-                        callback_success=on_history_success,
-                        callback_error=on_history_error
-                    )
-                    
-                except Exception as e:
-                    logger.error(f"更新个人中心信息失败: {str(e)}")
-                    
-        except Exception as e:
-            logger.error(f"通知任务完成失败: {str(e)}")
+        # 通知任务完成
+        logger.info(f'更新任务完成状态，task_id: {task_id}')
+        data_bridge.emit_whisper_finished(task_id)
+        # 刷新余额和历史记录
+        self._refresh_usage_records(task_id)
     
     def _notify_task_failed(self, task_id: str, error_message: str) -> None:
         """
@@ -252,7 +257,7 @@ class BaseTaskManager(ABC):
             logger.error(f"通知任务失败失败: {str(e)}")
     
     # ==================== 代币扣费（统一实现） ====================
-    
+
     def _consume_tokens_for_task(self, task: Any, feature_key: 'FeatureKey', file_name: str) -> None:
         """
         为任务消费代币（统一回调机制）
@@ -266,26 +271,26 @@ class BaseTaskManager(ABC):
         try:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
-            
+
             # 从代币服务中获取代币消费量
             token_amount = token_service.get_task_token_amount(task.task_id, 10)
             logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.task_id}')
-            
+
             # 消费代币
             if token_amount > 0:
                 logger.info(f"为任务消费代币: {token_amount}")
-                
+
                 # 定义扣费成功回调：只有在扣费真正完成后才更新余额
                 def on_consume_success(result):
                     logger.info(f"代币消费成功: {token_amount}, 结果: {result}")
                     # 扣费成功后，更新个人中心余额和历史记录
                     self._notify_task_completed(task.task_id)
-                
+
                 def on_consume_error(error):
                     logger.warning(f"代币消费失败: {token_amount}, 错误: {error}")
                     # 即使扣费失败，也通知任务完成（但不更新余额）
                     data_bridge.emit_whisper_finished(task.task_id)
-                
+
                 # 异步消费代币，通过回调处理结果
                 token_service.consume_tokens(
                     token_amount, feature_key, file_name,
@@ -296,7 +301,7 @@ class BaseTaskManager(ABC):
                 logger.warning("代币数量为0，不消费代币")
                 # 无需扣费，直接通知完成
                 self._notify_task_completed(task.task_id)
-                
+
         except Exception as e:
             logger.error(f"消费代币时发生错误: {str(e)}")
             # 异常情况也要通知任务完成

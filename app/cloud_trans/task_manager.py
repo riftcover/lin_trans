@@ -1,57 +1,25 @@
 from pathlib import Path
-from typing import Optional
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from agent.srt_translator_adapter import SRTTranslatorAdapter
+from nice_ui.configure.signal import data_bridge
+
 if TYPE_CHECKING:
     from app.core.feature_types import FeatureKey
 from nice_ui.configure import config
-from nice_ui.configure.signal import data_bridge
 from nice_ui.services.service_provider import ServiceProvider
 from orm.queries import ToTranslationOrm
 from utils import logger
 
 
 class TransTaskManager:
-    """云翻译任务管理器"""
-    def consume_tokens_for_task(
-        self,
-        task_id: str,
-        file_name: str,
-        feature_key: 'FeatureKey' = "cloud_trans"
-    ) -> bool:
-        """
-        统一的任务扣费方法，适用于所有任务类型
+    """
+    云翻译任务管理器
 
-        Args:
-            task_id: 翻译任务ID
-            feature_key: 任务类型，用于确定正确的feature_key
-            可选值：   - "cloud_asr": 云ASR任务
-                      - "cloud_trans": 纯翻译任务
-                      - "asr_trans": ASR+云翻译任务
-                      - "cloud_asr_trans": 云ASR+翻译任务
-
-        Returns:
-            bool: 扣费是否成功
-        """
-        logger.info(f'开始统一任务扣费流程，任务ID: {task_id}, 任务类型: {feature_key}')
-        try:
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
-            if billing_success := token_service.consume_tokens_for_task(
-                task_id, feature_key, file_name
-            ):
-                logger.info(f"任务扣费成功 - 任务ID: {task_id}, 任务类型: {feature_key}")
-                # 注意：不在这里发送完成信号，应该在调用方确认翻译真正完成后再发送
-                return True
-            else:
-                logger.error(f"任务扣费失败 - 任务ID: {task_id}, 任务类型: {feature_key}")
-                return False
-
-        except Exception as e:
-            logger.error(f"任务扣费异常 - 任务ID: {task_id}, 任务类型: {feature_key}, 错误: {str(e)}")
-            return False
+    职责：
+    1. 计算翻译算力
+    2. 管理翻译任务数据库记录
+    """
 
 
 
@@ -124,65 +92,124 @@ class TransTaskManager:
             logger.error(f'添加翻译任务到数据库失败: {task_id}, 错误: {e}')
             raise e
 
-    def refresh_usage_records_after_task_completion(self, task_id: str) -> None:
+    def consume_tokens_for_task(self, task: Any, feature_key: 'FeatureKey', file_name: str) -> None:
         """
-        任务完成后刷新使用记录
+        为任务消费代币（统一回调机制）
 
         Args:
-            task_id: 任务ID
+            task: 任务对象
+            feature_key: 功能标识符（cloud_asr, cloud_trans等）
+            file_name: 文件名
         """
+        logger.info(task)
+        logger.info(f'消费代币 - 任务ID: {task.unid}, 功能: {feature_key}')
         try:
             # 获取代币服务
             token_service = ServiceProvider().get_token_service()
 
-            # 更新余额
-            if balance := token_service.get_user_balance():
-                logger.info(f"翻译任务完成后更新用户余额: {balance}")
-                data_bridge.emit_update_balance(balance)
+            # 从代币服务中获取代币消费量
+            token_amount = token_service.get_task_token_amount(task.unid)
+            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task.unid}')
+            token_amount =10
 
-            # 更新历史记录
-            if transactions := token_service.get_user_history():
-                logger.info(f"翻译任务完成后更新用户历史记录，记录数: {len(transactions)}")
-                data_bridge.emit_update_history(transactions)
+            # 消费代币
+            if token_amount > 0:
+                logger.info(f"为任务消费代币: {token_amount}")
+
+                # 定义扣费成功回调：只有在扣费真正完成后才更新余额
+                def on_consume_success(result):
+                    logger.info(f"代币消费成功: {token_amount}, 结果: {result}")
+                    # 扣费成功后，更新个人中心余额和历史记录
+                    self._notify_task_completed(task.unid)
+
+                def on_consume_error(error):
+                    logger.warning(f"代币消费失败: {token_amount}, 错误: {error}")
+                    # 即使扣费失败，也通知任务完成（但不更新余额）
+                    data_bridge.emit_whisper_finished(task.unid)
+
+                # 异步消费代币，通过回调处理结果
+                token_service.consume_tokens(
+                    token_amount, feature_key, file_name,
+                    callback_success=on_consume_success,
+                    callback_error=on_consume_error
+                )
+            else:
+                logger.warning("代币数量为0，不消费代币")
+                # 无需扣费，直接通知完成
+                self._notify_task_completed(task.unid)
 
         except Exception as e:
-            logger.error(f"翻译任务完成后刷新使用记录失败: {task_id}, 错误: {e}")
+            logger.error(f"消费代币时发生错误: {str(e)}")
+            # 异常情况也要通知任务完成
+            data_bridge.emit_whisper_finished(task.unid)
 
-    def _notify_task_completed(self, task_id: Optional[str]) -> None:
+    def _notify_task_completed(self, task_id: str) -> None:
         """
-        通知UI任务完成
+        通知UI任务完成，更新个人中心余额和历史记录
+
+        注意：此方法应该在扣费成功后调用，确保余额是扣费后的最新值
 
         Args:
-            task_id: 应用内唯一标识符（可选）
+            task_id: 任务ID
         """
+        # 通知任务完成
+        logger.info(f'更新任务完成状态，task_id: {task_id}')
+        data_bridge.emit_whisper_finished(task_id)
+        # 刷新余额和历史记录
+        self._refresh_usage_records(task_id)
+
+    @staticmethod
+    def _refresh_usage_records(task_id: str) -> None:
+        """
+        刷新用户余额和历史记录
+
+        Args:
+            task_id: 任务ID（用于日志）
+        """
+        # 更新个人中心的余额和历史记录
         try:
-            # 如果有task_id，使用数据桥通知UI
-            if task_id:
-                logger.info(f'更新任务完成状态，task_id: {task_id}')
-                data_bridge.emit_whisper_finished(task_id)
+            # 更新余额（异步方式，确保获取扣费后的最新余额）
+            def on_balance_success(result):
+                if result and "data" in result:
+                    balance = result["data"].get("balance", 0)
+                    logger.info(f"获取扣费后余额成功: {balance}")
+                    data_bridge.emit_update_balance(balance)
+                else:
+                    logger.warning("获取余额失败或余额为0")
 
-                # 更新个人中心的余额和历史记录
-                try:
-                    # 获取代币服务
-                    token_service = ServiceProvider().get_token_service()
+            def on_balance_error(error):
+                logger.error(f"获取余额失败: {error}")
 
-                    # 更新余额
-                    if balance := token_service.get_user_balance():
-                        logger.info(f"更新用户余额: {balance}")
-                        # 通知UI更新余额显示
-                        data_bridge.emit_update_balance(balance)
+            # 异步获取余额
+            from nice_ui.services.simple_api_service import simple_api_service
 
-                    # 更新历史记录
-                    if transactions := token_service.get_user_history():
-                        logger.info("更新用户历史记录")
-                        # 通知UI更新余额显示
-                        data_bridge.emit_update_history(transactions)
+            simple_api_service.get_balance(
+                callback_success=on_balance_success,
+                callback_error=on_balance_error,
+            )
 
-                except Exception as e:
-                    logger.error(f"更新个人中心信息失败: {str(e)}")
+            # 更新历史记录（异步方式）
+            def on_history_success(result):
+                if result and "data" in result:
+                    transactions = result["data"].get("transactions", [])
+                    logger.info(
+                        f"获取历史记录成功，记录数: {len(transactions)}"
+                    )
+                    data_bridge.emit_update_history(transactions)
+                else:
+                    logger.warning("获取历史记录失败")
+
+            def on_history_error(error):
+                logger.error(f"获取历史记录失败: {error}")
+
+            # 异步获取历史记录
+            simple_api_service.get_history(
+                callback_success=on_history_success,
+                callback_error=on_history_error,
+            )
 
         except Exception as e:
-            logger.error(f"通知任务完成失败: {str(e)}")
+            logger.error(f"更新个人中心信息失败: {str(e)}")
 
 
 # 单例模式
