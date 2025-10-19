@@ -288,12 +288,10 @@ class BaseTaskManager(ABC):
         """
         task_id = self._get_task_id(task)
         logger.info(f'消费代币 - 任务ID: {task_id}, 功能: {feature_key}')
+        token_service = ServiceProvider().get_token_service()
         try:
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-
             # 从代币服务中获取代币消费量
-            token_amount = token_service.get_task_token_amount(task_id, 10)
+            token_amount = token_service.get_task_token_info(task_id).total_tokens
             logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task_id}')
 
             # 消费代币
@@ -317,15 +315,15 @@ class BaseTaskManager(ABC):
                     callback_success=on_consume_success,
                     callback_error=on_consume_error
                 )
-            else:
-                logger.warning("代币数量为0，不消费代币")
-                # 无需扣费，直接通知完成
-                self._notify_task_completed(task_id)
-
         except Exception as e:
-            logger.error(f"消费代币时发生错误: {str(e)}")
-            # 异常情况也要通知任务完成
-            data_bridge.emit_whisper_finished(task_id)
+                logger.error(f"消费代币时发生错误: {str(e)}")
+                # 异常情况也要通知任务完成
+                data_bridge.emit_whisper_finished(task_id)
+        finally:
+            # 无论扣费成功或失败，都清理任务数据，释放内存
+            token_service.remove_task_data(task_id)
+            logger.info(f'已清理任务数据: {task_id}')
+
     
     # ==================== Segment数据处理（统一实现） ====================
     

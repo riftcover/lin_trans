@@ -130,8 +130,13 @@ class TranslationTaskProcessor(TaskProcessor):
         """处理翻译任务"""
         logger.debug('处理翻译任务')
 
-        # 获取翻译任务管理器并执行翻译
+        # 获取翻译任务管理器
         trans_task_manager = get_trans_task_manager()
+
+        # 计算并设置翻译代币（基于输入的SRT文件）
+        trans_task_manager.calculate_and_set_translation_tokens_from_srt(task.unid, task.raw_name)
+
+        # 执行翻译
         trans_task_manager.execute_translation(
             task=task,
             in_document=task.raw_name,

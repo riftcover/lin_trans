@@ -98,6 +98,20 @@ class GladiaTaskManager(BaseTaskManager):
             return
 
         try:
+            # 计算并设置 ASR 代币
+            try:
+                import av
+                with av.open(task.audio_file) as container:
+                    audio_duration = float(container.duration) / av.time_base  # 转换为秒
+
+                from nice_ui.services.service_provider import ServiceProvider
+                token_service = ServiceProvider().get_token_service()
+                asr_tokens = token_service.calculate_asr_tokens(audio_duration)
+                token_service.set_ast_tokens_for_task(task_id, asr_tokens)
+                logger.info(f"ASR任务代币已设置: task_id={task_id}, duration={audio_duration}s, tokens={asr_tokens}")
+            except Exception as e:
+                logger.warning(f"计算ASR代币失败，将在扣费时跳过: {str(e)}")
+
             # 创建Gladia客户端
             client = creat_gladia_asr_client()
 

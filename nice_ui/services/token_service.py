@@ -1,4 +1,5 @@
-from typing import List, Dict, TYPE_CHECKING
+from typing import List, Dict, Set, TYPE_CHECKING
+import threading
 
 if TYPE_CHECKING:
     from app.core.feature_types import FeatureKey
@@ -11,77 +12,29 @@ from utils import logger
 
 class TaskTokenInfo:
     """任务算力信息"""
-    def __init__(self):
-        self.asr_tokens: int = 0
-        self.trans_tokens: int = 0
-        self.trans_tokens_estimated: int = 0  # 翻译算力预估值
-        self.is_consumed: bool = False
+
+    def __init__(self, asr_tokens: int = 0, trans_tokens: int = 0):
+        self.asr_tokens: int = max(0, asr_tokens)  # 防御性编程，确保非负
+        self.trans_tokens: int = max(0, trans_tokens)
 
     @property
     def total_tokens(self) -> int:
         """获取总算力"""
         return self.asr_tokens + self.trans_tokens
 
-    @property
-    def estimated_total_tokens(self) -> int:
-        """获取预估总算力"""
-        return self.asr_tokens + self.trans_tokens_estimated
-
 
 class TokenAmountManager:
-    """代币消费量管理器，负责存储和获取任务的代币消费量"""
+    """代币消费量管理器，负责存储和获取任务的代币消费量
+    """
 
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(TokenAmountManager, cls).__new__(cls)
-            cls._instance._token_amounts = {}
-            cls._instance._task_token_info = {}  # 新增：存储任务的详细算力信息
+            cls._instance._task_token_info = {}  # 唯一数据源 Dict[str, TaskTokenInfo]
+            cls._instance._lock = threading.RLock()  # 并发保护
         return cls._instance
-
-    def set_token_amount(self, key: str, amount: int) -> None:
-        """设置任务的代币消费量（兼容旧接口，统一使用新系统）
-
-        Args:
-            key: 任务ID或文件路径
-            amount: 代币消费量
-        """
-        # 统一使用_task_token_info系统
-        if key not in self._task_token_info:
-            self._task_token_info[key] = TaskTokenInfo()
-
-        # 对于单一任务，将算力设置为翻译算力（保持向后兼容）
-        info = self._task_token_info[key]
-        info.trans_tokens = amount
-
-        # 同时更新旧系统以保持兼容性
-        self._token_amounts[key] = amount
-        logger.info(f"设置任务代币消费量: {amount}, 键: {key}")
-
-    def get_token_amount(self, key: str, default: int = 10) -> int:
-        """获取任务的代币消费量（统一从新系统获取）
-
-        Args:
-            key: 任务ID或文件路径
-            default: 默认代币消费量
-
-        Returns:
-            int: 代币消费量
-        """
-        # 优先从新系统获取
-        if key in self._task_token_info:
-            info = self._task_token_info[key]
-            # 如果是组合任务，返回总算力；否则返回翻译算力
-            amount = info.total_tokens if info.asr_tokens > 0 else info.trans_tokens
-            if amount > 0:
-                logger.info(f"从新系统获取任务代币消费量: {amount}, 键: {key}")
-                return amount
-
-        # 回退到旧系统
-        amount = self._token_amounts.get(key, default)
-        logger.info(f"从旧系统获取任务代币消费量: {amount}, 键: {key}")
-        return amount
 
     def set_asr_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
         """设置任务的ASR算力
@@ -90,12 +43,13 @@ class TokenAmountManager:
             task_id: 任务ID
             asr_tokens: ASR算力
         """
-        if task_id not in self._task_token_info:
-            self._task_token_info[task_id] = TaskTokenInfo()
+        with self._lock:
+            if task_id not in self._task_token_info:
+                self._task_token_info[task_id] = TaskTokenInfo()
 
-        info = self._task_token_info[task_id]
-        info.asr_tokens = asr_tokens
-        logger.info(f"设置任务ASR算力: {asr_tokens}, 任务ID: {task_id}")
+            info = self._task_token_info[task_id]
+            info.asr_tokens = max(0, asr_tokens)  # 确保非负
+            logger.info(f"设置任务ASR算力: {asr_tokens}, 任务ID: {task_id}")
 
     def set_actual_translation_tokens(self, task_id: str, trans_tokens: int) -> None:
         """设置任务的实际翻译算力
@@ -104,12 +58,13 @@ class TokenAmountManager:
             task_id: 任务ID
             trans_tokens: 实际翻译算力
         """
-        if task_id not in self._task_token_info:
-            self._task_token_info[task_id] = TaskTokenInfo()
+        with self._lock:
+            if task_id not in self._task_token_info:
+                self._task_token_info[task_id] = TaskTokenInfo()
 
-        info = self._task_token_info[task_id]
-        info.trans_tokens = trans_tokens
-        logger.info(f"设置实际翻译算力: {trans_tokens}, 任务ID: {task_id}")
+            info = self._task_token_info[task_id]
+            info.trans_tokens = max(0, trans_tokens)  # 确保非负
+            logger.info(f"设置实际翻译算力: {trans_tokens}, 任务ID: {task_id}")
 
     def get_task_token_info(self, task_id: str) -> TaskTokenInfo:
         """获取任务的算力信息
@@ -120,45 +75,39 @@ class TokenAmountManager:
         Returns:
             TaskTokenInfo: 任务算力信息
         """
-        if task_id not in self._task_token_info:
-            self._task_token_info[task_id] = TaskTokenInfo()
-        return self._task_token_info[task_id]
+        with self._lock:
+            return self._task_token_info.get(task_id, TaskTokenInfo())
 
-    def mark_task_consumed(self, task_id: str) -> None:
-        """标记任务已扣费
+    def remove_task(self, task_id: str) -> None:
+        """删除任务数据，释放内存
+
+        应在任务完成后调用，防止内存泄漏
 
         Args:
             task_id: 任务ID
         """
-        if task_id in self._task_token_info:
-            self._task_token_info[task_id].is_consumed = True
-            logger.info(f"标记任务已扣费: {task_id}")
-
-    def transfer_key(self, old_key: str, new_key: str) -> None:
-        """将旧键的代币消费量转移到新键
-
-        Args:
-            old_key: 旧键
-            new_key: 新键
-        """
-        if old_key in self._token_amounts:
-            amount = self._token_amounts[old_key]
-            self._token_amounts[new_key] = amount
-            del self._token_amounts[old_key]
-            logger.info(f"转移任务代币消费量: {old_key} -> {new_key}, 代币数量: {amount}")
+        with self._lock:
+            if task_id in self._task_token_info:
+                del self._task_token_info[task_id]
+                logger.info(f"删除任务数据: {task_id}")
 
     def clear(self) -> None:
         """清空所有代币消费量"""
-        self._token_amounts.clear()
-        logger.info("清空所有任务代币消费量")
+        with self._lock:
+            self._task_token_info.clear()
+            logger.info("清空所有任务代币消费量")
 
     def get_all(self) -> Dict[str, int]:
         """获取所有代币消费量
 
         Returns:
-            Dict[str, int]: 所有代币消费量
+            Dict[str, int]: 所有代币消费量（任务ID -> 总代币数）
         """
-        return self._token_amounts.copy()
+        with self._lock:
+            return {
+                task_id: info.total_tokens
+                for task_id, info in self._task_token_info.items()
+            }
 
 
 class TokenService(TokenServiceInterface):
@@ -199,6 +148,7 @@ class TokenService(TokenServiceInterface):
         Returns:
             bool: 更新是否成功
         """
+
         # 注意：此方法已修改为异步获取，避免阻塞主线程
         def on_success(result):
             try:
@@ -288,6 +238,7 @@ class TokenService(TokenServiceInterface):
         else:
             logger.warning("交易历史API返回数据格式不正确")
             return []
+
     def calculate_asr_tokens(self, video_duration: float) -> int:
         """
         计算ASR任务所需代币
@@ -300,8 +251,7 @@ class TokenService(TokenServiceInterface):
         """
         return int(video_duration * self.asr_qps) if video_duration else 0
 
-
-    def calculate_trans_tokens(self,word_counts:int,translate_engine=None) -> int:
+    def calculate_trans_tokens(self, word_counts: int, translate_engine=None) -> int:
         """
 
         Args:
@@ -312,7 +262,7 @@ class TokenService(TokenServiceInterface):
             int: 所需代币数量
         """
 
-        amount = round(word_counts * self.trans_qps/1000) if word_counts else 0
+        amount = round(word_counts * self.trans_qps / 1000) if word_counts else 0
         logger.trace(f'计算代币消耗,字：{word_counts},消耗:{amount}')
         return amount
 
@@ -451,7 +401,7 @@ class TokenService(TokenServiceInterface):
                 # 用户选择了"否"
                 return False
 
-    def get_recharge_packages(self) -> List[RechargePackage]:
+    def get_recharge_packages(self) -> list[dict[str, int] | dict[str, int] | dict[str, int] | dict[str, int] | dict[str, int] | dict[str, int]]:
         """
         获取充值套餐列表（使用预定义数据）
 
@@ -468,45 +418,22 @@ class TokenService(TokenServiceInterface):
             {'price': 150, 'token_amount': 36750}
         ]
 
-    def set_task_token_amount(self, key: str, amount: int) -> None:
-        """
-        设置任务的代币消费量
-
-        Args:
-            key: 任务ID或文件路径
-            amount: 代币消费量
-        """
-        self.token_amount_manager.set_token_amount(key, amount)
-
-    def get_task_token_amount(self, key: str, default: int = 10) -> int:
-        """
-        获取任务的代币消费量
-
-        Args:
-            key: 任务ID或文件路径
-            default: 默认代币消费量
-
-        Returns:
-            int: 代币消费量
-        """
-        return self.token_amount_manager.get_token_amount(key, default)
-
-    def transfer_task_key(self, old_key: str, new_key: str) -> None:
-        """
-        将旧键的代币消费量转移到新键
-
-        Args:
-            old_key: 旧键
-            new_key: 新键
-        """
-        self.token_amount_manager.transfer_key(old_key, new_key)
-
     def clear_task_tokens(self) -> None:
         """清空所有任务的代币消费量"""
         self.token_amount_manager.clear()
 
+    def remove_task_data(self, task_id: str) -> None:
+        """删除任务数据，释放内存
+
+        应在任务完成后调用，防止内存泄漏
+
+        Args:
+            task_id: 任务ID
+        """
+        self.token_amount_manager.remove_task(task_id)
+
     def consume_tokens(self, token_amount: int, feature_key: 'FeatureKey' = "cloud_asr", file_name: str = "",
-                      callback_success=None, callback_error=None) -> bool:
+                       callback_success=None, callback_error=None) -> bool:
         """
         消费代币（异步方式）
 
@@ -553,7 +480,7 @@ class TokenService(TokenServiceInterface):
                 callback_error(str(e))
             return False
 
-    def set_ast_tokens_for_task(self,task_id:str ,asr_tokens:int) -> None:
+    def set_ast_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
         """设置任务的ASR算力
 
         Args:
@@ -563,7 +490,7 @@ class TokenService(TokenServiceInterface):
         self.token_amount_manager.set_asr_tokens_for_task(task_id, asr_tokens)
 
     def set_translation_tokens_for_task(self, task_id: str, trans_tokens: int) -> None:
-        """设置任务的实际翻译算力
+        """设置任务的翻译算力
 
         Args:
             task_id: 任务ID
@@ -583,39 +510,30 @@ class TokenService(TokenServiceInterface):
         info = self.token_amount_manager.get_task_token_info(task_id)
         return info.total_tokens
 
-    def get_estimated_task_tokens(self, task_id: str) -> int:
-        """获取任务的预估总算力（ASR + 预估翻译）
+    def get_task_token_info(self, task_id: str) -> TaskTokenInfo:
+        """获取任务的算力信息
 
         Args:
             task_id: 任务ID
 
         Returns:
-            int: 预估总算力
+            TaskTokenInfo: 任务算力信息
         """
-        info = self.token_amount_manager.get_task_token_info(task_id)
-        return info.estimated_total_tokens
-
-    def estimate_translation_tokens_by_duration(self, video_duration: float) -> int:
-        """基于视频时长估算翻译算力
-
-        Args:
-            video_duration: 视频时长（秒）
-
-        Returns:
-            int: 预估翻译算力
-        """
-        # 经验公式：假设每分钟视频产生约100个字符的文本
-        estimated_chars = int(video_duration / 60 * 100)
-        return self.calculate_trans_tokens(estimated_chars)
-
+        return self.token_amount_manager.get_task_token_info(task_id)
 
     def consume_tokens_for_task(self, task_id: str, feature_key: 'FeatureKey', file_name: str) -> bool:
         """
         统一的任务扣费方法，适用于所有任务类型
 
+        重构说明：
+        - 同步扣费，避免异步带来的竞态条件
+        - 系统不支持重试，无需防重复扣费检查
+        - 扣费成功后由调用者负责清理任务数据
+
         Args:
             task_id: 任务ID
             feature_key: 功能标识符
+            file_name: 文件名
 
         Returns:
             bool: 扣费是否成功
@@ -623,40 +541,22 @@ class TokenService(TokenServiceInterface):
         try:
             # 获取任务算力信息
             info = self.token_amount_manager.get_task_token_info(task_id)
-
-            # 检查是否已扣费
-            if info.is_consumed:
-                logger.warning(f"任务已扣费，跳过: {task_id}")
-                return True
-
-            # 确定要扣费的算力数量
-            token_amount = 0
-            if info.asr_tokens > 0 or info.trans_tokens > 0:
-                # 如果有详细算力信息，使用总算力
-                token_amount = info.total_tokens
-                logger.info(f"使用详细算力信息扣费: ASR={info.asr_tokens}, 翻译={info.trans_tokens}, 总计={token_amount}")
-            else:
-                # 回退到旧系统
-                token_amount = self.token_amount_manager.get_token_amount(task_id, 0)
-                logger.info(f"使用旧系统算力信息扣费: {token_amount}")
+            token_amount = info.total_tokens
 
             # 检查算力是否为0
             if token_amount <= 0:
                 logger.warning(f"任务算力为0，跳过扣费: {task_id}")
                 return True
 
-            # 执行扣费
-            success = self.consume_tokens(token_amount, feature_key, file_name)
+            logger.info(f"开始同步扣费: 任务ID={task_id}, ASR={info.asr_tokens}, 翻译={info.trans_tokens}, 总计={token_amount}")
 
-            if success:
-                # 标记任务已扣费
-                self.token_amount_manager.mark_task_consumed(task_id)
-                logger.info(f"统一扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
-            else:
-                logger.error(f"统一扣费失败: {task_id}, 算力: {token_amount}, 类型: {feature_key}")
+            # 同步执行扣费
+            user_id = api_client.get_id()
+            result = api_client.consume_tokens_sync(token_amount, file_name, feature_key, user_id)
 
-            return success
+            logger.info(f"同步扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}, 结果: {result}")
+            return True
 
         except Exception as e:
-            logger.error(f"统一扣费异常: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
+            logger.error(f"同步扣费失败: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
             return False

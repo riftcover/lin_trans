@@ -541,14 +541,6 @@ class TableWindow:
             amount = asr_amount
             logger.info(f'ASR代币消耗: {asr_amount}')
 
-            # 判断是否勾选翻译
-            if self.main.check_fanyi.isChecked():
-                # 预估翻译算力
-                trans_amount_estimated = token_service.estimate_translation_tokens_by_duration(video_long)
-                amount += trans_amount_estimated
-                logger.info(f'翻译预估代币消耗: {trans_amount_estimated}')
-                logger.info(f'总预估代币消耗: {amount}')
-
         return amount
 
 

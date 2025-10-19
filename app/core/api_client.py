@@ -659,6 +659,7 @@ class APIClient:
 
         Args:
             token_amount: 消费的代币数量
+            file_name: 文件名
             feature_key: 功能标识符，默认为"cloud_asr"
             user_id: 用户ID，如果为None，则使用当前登录用户
 

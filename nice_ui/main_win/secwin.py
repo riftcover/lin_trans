@@ -332,7 +332,12 @@ class SecWindow:
             logger.error(f'WORK_TYPE;{WORK_TYPE} 未匹配')
 
     def _calculate_total_tokens(self) -> int:
-        # 计算任务所需总代币
+        """
+        计算任务所需总代币（仅用于余额检查）
+
+        注意：此方法只计算代币，不存储。
+        实际代币会在任务执行时由任务管理器设置。
+        """
         task_amount = 0
         # 遍历表格中的所有行，累加每个任务的代币消耗
         for row in range(self.main.media_table.rowCount()):
@@ -341,15 +346,6 @@ class SecWindow:
                     # 尝试将单个任务的代币消耗转换为整数并累加
                     task_token = int(token_item.text())
                     task_amount += task_token
-
-                    # 获取文件路径
-                    file_path_item = self.main.media_table.item(row, 4)
-                    if file_path_item and file_path_item.text():
-                        file_path = file_path_item.text()
-                        # 使用TokenService存储代币消费量
-                        token_service = ServiceProvider().get_token_service()
-                        token_service.set_task_token_amount(file_path, task_token)
-                        logger.info(f"保存任务代币消耗: {task_token}, 文件路径: {file_path}")
                 except (ValueError, TypeError) as e:
                     logger.warning(f"解析代币消耗失败: {str(e)}")
         return task_amount

@@ -108,10 +108,6 @@ class TransTaskHandler(TaskHandler):
             # 处理任务并获取格式化后的任务信息
             obj_format = self.process_task(item, WORK_TYPE.TRANS)
 
-            # 将文件路径与unid关联起来
-            token_service.transfer_task_key(item, obj_format.unid)
-            logger.info(f"将文件路径与unid关联: {item} -> {obj_format.unid}")
-
             # 设置输出文件名
             obj_format.srt_dirname = f"{obj_format.output}/{obj_format.raw_noextname}_译文.srt"
 
@@ -194,10 +190,6 @@ class CloudASRTaskHandler(TaskHandler):
             # 处理任务并获取格式化后的任务信息
             obj_format = self.process_task(item, WORK_TYPE.CLOUD_ASR)
 
-            # 将文件路径与unid关联起来
-            token_service.transfer_task_key(item, obj_format.unid)
-            logger.info(f"将文件路径与unid关联: {item} -> {obj_format.unid}")
-
             # 添加任务到数据库
             self._add_to_database(srt_orm, obj_format)
 
@@ -237,9 +229,6 @@ class CloudASRTransTaskHandler(TaskHandler):
             # 处理任务并获取格式化后的任务信息
             obj_format = self.process_task(item, WORK_TYPE.CLOUD_ASR_TRANS)
 
-            # 将文件路径与unid关联起来
-            token_service.transfer_task_key(item, obj_format.unid)
-            logger.info(f"将文件路径与unid关联: {item} -> {obj_format.unid}")
             # 添加任务到数据库
             self._add_to_database(srt_orm, obj_format)
 

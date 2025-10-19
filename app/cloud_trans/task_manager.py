@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 
@@ -119,7 +120,7 @@ class TransTaskManager(BaseTaskManager):
             logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task.unid}')
 
             # 扣费并刷新使用记录（使用 BaseTaskManager 的统一实现）
-            BaseTaskManager._consume_tokens_for_task(self, task, feature_key, task.raw_noextname)
+            self._consume_tokens_for_task(task, feature_key, task.raw_noextname)
 
         except ValueError as e:
             # 检查是否是API密钥缺失的错误
@@ -154,16 +155,18 @@ class TransTaskManager(BaseTaskManager):
             if not Path(srt_file_path).exists():
                 logger.warning("SRT文件不存在")
                 return
-
+            total_chars = 0
             # 使用SRT适配器解析内容并计算字数
             with open(srt_file_path, 'r', encoding='utf-8') as f:
-                srt_content = f.read()
-
-            adapter = SRTTranslatorAdapter()
-            entries = adapter.parse_srt_content(srt_content)
-
-            # 计算总字符数
-            total_chars = sum(len(entry.text) for entry in entries)
+                lines = f.readlines()
+                for line in lines:
+                    # 跳过序号和时间戳
+                    if re.match(r"^\d+$", line.strip()) or re.match(
+                            r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
+                            line.strip(),
+                    ):
+                        continue
+                    total_chars += len(line.strip())
 
             # 使用TokenService计算翻译算力
             token_service = ServiceProvider().get_token_service()
