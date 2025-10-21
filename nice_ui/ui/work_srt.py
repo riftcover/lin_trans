@@ -12,6 +12,7 @@ from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
 from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import LANGUAGE_WIDTH
+from nice_ui.util.token_calculator import calculate_srt_char_count, calculate_trans_tokens
 from orm.queries import PromptsOrm
 from utils import logger
 from utils.agent_dict import agent_settings
@@ -365,22 +366,8 @@ class LTableWindow:
     # 获取文件字符数
     def get_file_character_count(self, file_path: path) -> int | bool:
         # 输入srt格式的文件，获取里面的字符数量，不计算序号，不计算时间戳
-        character_count = 0
-        with open(file_path, "r", encoding="utf-8") as f:
-            try:
-                lines = f.readlines()
-            except UnicodeDecodeError:
-                logger.error(f"文件{file_path}编码错误，请检查文件编码格式")
-                return False
-            for line in lines:
-                # 跳过序号和时间戳
-                if re.match(r"^\d+$", line.strip()) or re.match(
-                        r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
-                        line.strip(),
-                ):
-                    continue
-                character_count += len(line.strip())
-        return character_count
+
+        return calculate_srt_char_count(file_path)
 
     @Slot()
     def delete_file(self, ui_table: QTableWidget, button):
@@ -420,11 +407,8 @@ class LTableWindow:
         translate_engine = self.main.translate_model.currentText()
         logger.info(translate_engine)
         if translate_engine =='云翻译':
-
-            token_service = ServiceProvider().get_token_service()
-
-            # 计算结果取整后再返回
-            return token_service.calculate_trans_tokens(file_character_count, translate_engine)
+            # 使用工具函数计算代币
+            return calculate_trans_tokens(file_character_count)
         else:
             return 0
 

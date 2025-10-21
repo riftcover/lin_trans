@@ -13,6 +13,7 @@ from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import LANGUAGE_WIDTH
 from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
+from nice_ui.util.token_calculator import calculate_video_duration, format_duration, calculate_asr_tokens
 from orm.queries import PromptsOrm
 from utils import logger
 from utils.agent_dict import agent_settings
@@ -491,15 +492,11 @@ class TableWindow:
 
     def get_video_duration(self, file: str):
         # Use ffprobe to get video duration
-        try:
-            with av.open(file) as container:
-                self.duration_seconds = float(container.duration) / av.time_base  # 转换为秒
-                hours, remainder = divmod(self.duration_seconds, 3600)
-                minutes, seconds = divmod(remainder, 60)
-                return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
-        except Exception as e:
-            logger.error(f"获取视频时长失败: {str(e)}")
-            return None
+
+            # 使用工具函数计算时长
+        self.duration_seconds = calculate_video_duration(file)
+        # 使用工具函数格式化
+        return format_duration(self.duration_seconds)
 
     def drag_enter_event(self, event: QDragEnterEvent):
         # 接受拖入
@@ -533,11 +530,8 @@ class TableWindow:
         amount = 0
         if model_status < 100:
             # 云模型，消耗算力
-            # 获取代币服务
-            token_service = ServiceProvider().get_token_service()
-            # 计算ASR代币消耗
-            logger.info('重新计算')
-            asr_amount = token_service.calculate_asr_tokens(video_long)
+            # 使用工具函数计算代币
+            asr_amount = calculate_asr_tokens(video_long)
             amount = asr_amount
             logger.info(f'ASR代币消耗: {asr_amount}')
 

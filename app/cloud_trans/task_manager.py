@@ -155,22 +155,14 @@ class TransTaskManager(BaseTaskManager):
             if not Path(srt_file_path).exists():
                 logger.warning("SRT文件不存在")
                 return
-            total_chars = 0
-            # 使用SRT适配器解析内容并计算字数
-            with open(srt_file_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                for line in lines:
-                    # 跳过序号和时间戳
-                    if re.match(r"^\d+$", line.strip()) or re.match(
-                            r"^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$",
-                            line.strip(),
-                    ):
-                        continue
-                    total_chars += len(line.strip())
 
-            # 使用TokenService计算翻译算力
-            token_service = ServiceProvider().get_token_service()
-            trans_tokens = token_service.calculate_trans_tokens(total_chars)
+            from nice_ui.util.token_calculator import calculate_srt_char_count, calculate_trans_tokens
+
+            # 使用工具函数计算字符数
+            total_chars = calculate_srt_char_count(srt_file_path)
+
+            # 使用工具函数计算代币
+            trans_tokens = calculate_trans_tokens(total_chars)
 
             # 设置实际翻译算力
             token_service.set_translation_tokens_for_task(task_id, trans_tokens)

@@ -100,13 +100,16 @@ class GladiaTaskManager(BaseTaskManager):
         try:
             # 计算并设置 ASR 代币
             try:
-                import av
-                with av.open(task.audio_file) as container:
-                    audio_duration = float(container.duration) / av.time_base  # 转换为秒
+                from nice_ui.util.token_calculator import calculate_video_duration, calculate_asr_tokens
+
+                # 使用工具函数计算时长
+                audio_duration = calculate_video_duration(task.audio_file)
+
+                # 使用工具函数计算代币
+                asr_tokens = calculate_asr_tokens(audio_duration)
 
                 from nice_ui.services.service_provider import ServiceProvider
                 token_service = ServiceProvider().get_token_service()
-                asr_tokens = token_service.calculate_asr_tokens(audio_duration)
                 token_service.set_ast_tokens_for_task(task_id, asr_tokens)
                 logger.info(f"ASR任务代币已设置: task_id={task_id}, duration={audio_duration}s, tokens={asr_tokens}")
             except Exception as e:
