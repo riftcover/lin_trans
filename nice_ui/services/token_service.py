@@ -1,117 +1,39 @@
-from typing import List, Dict, Set, TYPE_CHECKING
-import threading
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.core.feature_types import FeatureKey
 from app.core.api_client import api_client
-from nice_ui.interfaces.token import TokenServiceInterface, RechargePackage
+from nice_ui.interfaces.token import TokenServiceInterface
 from nice_ui.services.simple_api_service import simple_api_service
 from nice_ui.interfaces.ui_manager import UIManagerInterface
 from utils import logger
 
 
-class TaskTokenInfo:
-    """任务算力信息"""
-
-    def __init__(self, asr_tokens: int = 0, trans_tokens: int = 0):
-        self.asr_tokens: int = max(0, asr_tokens)  # 防御性编程，确保非负
-        self.trans_tokens: int = max(0, trans_tokens)
-
-    @property
-    def total_tokens(self) -> int:
-        """获取总算力"""
-        return self.asr_tokens + self.trans_tokens
-
-
-class TokenAmountManager:
-    """代币消费量管理器，负责存储和获取任务的代币消费量
-    """
-
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(TokenAmountManager, cls).__new__(cls)
-            cls._instance._task_token_info = {}  # 唯一数据源 Dict[str, TaskTokenInfo]
-            cls._instance._lock = threading.RLock()  # 并发保护
-        return cls._instance
-
-    def set_asr_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
-        """设置任务的ASR算力
-
-        Args:
-            task_id: 任务ID
-            asr_tokens: ASR算力
-        """
-        with self._lock:
-            if task_id not in self._task_token_info:
-                self._task_token_info[task_id] = TaskTokenInfo()
-
-            info = self._task_token_info[task_id]
-            info.asr_tokens = max(0, asr_tokens)  # 确保非负
-            logger.info(f"设置任务ASR算力: {asr_tokens}, 任务ID: {task_id}")
-
-    def set_actual_translation_tokens(self, task_id: str, trans_tokens: int) -> None:
-        """设置任务的实际翻译算力
-
-        Args:
-            task_id: 任务ID
-            trans_tokens: 实际翻译算力
-        """
-        with self._lock:
-            if task_id not in self._task_token_info:
-                self._task_token_info[task_id] = TaskTokenInfo()
-
-            info = self._task_token_info[task_id]
-            info.trans_tokens = max(0, trans_tokens)  # 确保非负
-            logger.info(f"设置实际翻译算力: {trans_tokens}, 任务ID: {task_id}")
-
-    def get_task_token_info(self, task_id: str) -> TaskTokenInfo:
-        """获取任务的算力信息
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            TaskTokenInfo: 任务算力信息
-        """
-        with self._lock:
-            return self._task_token_info.get(task_id, TaskTokenInfo())
-
-    def remove_task(self, task_id: str) -> None:
-        """删除任务数据，释放内存
-
-        应在任务完成后调用，防止内存泄漏
-
-        Args:
-            task_id: 任务ID
-        """
-        with self._lock:
-            if task_id in self._task_token_info:
-                del self._task_token_info[task_id]
-                logger.info(f"删除任务数据: {task_id}")
-
-    def clear(self) -> None:
-        """清空所有代币消费量"""
-        with self._lock:
-            self._task_token_info.clear()
-            logger.info("清空所有任务代币消费量")
-
-    def get_all(self) -> Dict[str, int]:
-        """获取所有代币消费量
-
-        Returns:
-            Dict[str, int]: 所有代币消费量（任务ID -> 总代币数）
-        """
-        with self._lock:
-            return {
-                task_id: info.total_tokens
-                for task_id, info in self._task_token_info.items()
-            }
+# ============================================
+# 注意：TaskTokenInfo 和 TokenAmountManager 已删除
+# 代币数据现在属于 Task 对象（app/core/task_models.py）
+# ============================================
 
 
 class TokenService(TokenServiceInterface):
-    """代币服务，处理代币余额查询、消耗计算等功能"""
+    """
+    代币服务（无状态服务）
+
+    职责：
+    1. 计算代币消耗
+    2. 执行扣费操作
+    3. 查询余额
+
+    不负责：
+    ✗ 存储代币数据（Task 对象负责）
+    ✗ 管理任务生命周期（TaskManager 负责）
+    ✗ 清理数据（TaskManager 负责）
+
+    重构说明：
+    - 删除了 TokenAmountManager（代币数据现在属于 Task 对象）
+    - 删除了所有数据管理方法（set_ast_tokens_for_task, get_task_token_info 等）
+    - 保留了计算和扣费服务
+    """
 
     _instance = None
 
@@ -132,7 +54,6 @@ class TokenService(TokenServiceInterface):
         if getattr(self, '_initialized', False):
             return
         self.ui_manager = ui_manager
-        self.token_amount_manager = TokenAmountManager()
 
         # 从配置中获取默认系数值
         # todo: 当前没有登录时，使用云任务代币消耗会为0，所以先写死默认值。等以后重构登录状态管理器再调整
@@ -262,7 +183,9 @@ class TokenService(TokenServiceInterface):
             int: 所需代币数量
         """
 
+        self.trans_qps = 160
         amount = round(word_counts * self.trans_qps / 1000) if word_counts else 0
+        logger.trace(self.trans_qps)
         logger.trace(f'计算代币消耗,字：{word_counts},消耗:{amount}')
         return amount
 
@@ -418,20 +341,6 @@ class TokenService(TokenServiceInterface):
             {'price': 150, 'token_amount': 36750}
         ]
 
-    def clear_task_tokens(self) -> None:
-        """清空所有任务的代币消费量"""
-        self.token_amount_manager.clear()
-
-    def remove_task_data(self, task_id: str) -> None:
-        """删除任务数据，释放内存
-
-        应在任务完成后调用，防止内存泄漏
-
-        Args:
-            task_id: 任务ID
-        """
-        self.token_amount_manager.remove_task(task_id)
-
     def consume_tokens(self, token_amount: int, feature_key: 'FeatureKey' = "cloud_asr", file_name: str = "",
                        callback_success=None, callback_error=None) -> bool:
         """
@@ -450,6 +359,12 @@ class TokenService(TokenServiceInterface):
         Returns:
             bool: 请求是否成功发起（不代表消费成功，实际结果通过回调返回）
         """
+        if token_amount <= 0:
+            logger.warning("代币数量为0，跳过扣费")
+            if callback_success:
+                callback_success({"success": True, "skipped": True})
+            return True
+
         try:
             # 调用api_client中的方法消费代币（异步）
             user_id = api_client.get_id()
@@ -478,85 +393,4 @@ class TokenService(TokenServiceInterface):
             logger.error(f"消费代币时发生错误: {str(e)}")
             if callback_error:
                 callback_error(str(e))
-            return False
-
-    def set_ast_tokens_for_task(self, task_id: str, asr_tokens: int) -> None:
-        """设置任务的ASR算力
-
-        Args:
-            task_id: 任务ID
-            asr_tokens: ASR算力
-        """
-        self.token_amount_manager.set_asr_tokens_for_task(task_id, asr_tokens)
-
-    def set_translation_tokens_for_task(self, task_id: str, trans_tokens: int) -> None:
-        """设置任务的翻译算力
-
-        Args:
-            task_id: 任务ID
-            trans_tokens: 实际翻译算力
-        """
-        self.token_amount_manager.set_actual_translation_tokens(task_id, trans_tokens)
-
-    def get_total_task_tokens(self, task_id: str) -> int:
-        """获取任务的总算力（ASR + 翻译）
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            int: 总算力
-        """
-        info = self.token_amount_manager.get_task_token_info(task_id)
-        return info.total_tokens
-
-    def get_task_token_info(self, task_id: str) -> TaskTokenInfo:
-        """获取任务的算力信息
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            TaskTokenInfo: 任务算力信息
-        """
-        return self.token_amount_manager.get_task_token_info(task_id)
-
-    def consume_tokens_for_task(self, task_id: str, feature_key: 'FeatureKey', file_name: str) -> bool:
-        """
-        统一的任务扣费方法，适用于所有任务类型
-
-        重构说明：
-        - 同步扣费，避免异步带来的竞态条件
-        - 系统不支持重试，无需防重复扣费检查
-        - 扣费成功后由调用者负责清理任务数据
-
-        Args:
-            task_id: 任务ID
-            feature_key: 功能标识符
-            file_name: 文件名
-
-        Returns:
-            bool: 扣费是否成功
-        """
-        try:
-            # 获取任务算力信息
-            info = self.token_amount_manager.get_task_token_info(task_id)
-            token_amount = info.total_tokens
-
-            # 检查算力是否为0
-            if token_amount <= 0:
-                logger.warning(f"任务算力为0，跳过扣费: {task_id}")
-                return True
-
-            logger.info(f"开始同步扣费: 任务ID={task_id}, ASR={info.asr_tokens}, 翻译={info.trans_tokens}, 总计={token_amount}")
-
-            # 同步执行扣费
-            user_id = api_client.get_id()
-            result = api_client.consume_tokens_sync(token_amount, file_name, feature_key, user_id)
-
-            logger.info(f"同步扣费成功: {task_id}, 算力: {token_amount}, 类型: {feature_key}, 结果: {result}")
-            return True
-
-        except Exception as e:
-            logger.error(f"同步扣费失败: {task_id}, 类型: {feature_key}, 错误: {str(e)}")
             return False

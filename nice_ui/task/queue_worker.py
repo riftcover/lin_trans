@@ -133,8 +133,8 @@ class TranslationTaskProcessor(TaskProcessor):
         # 获取翻译任务管理器
         trans_task_manager = get_trans_task_manager()
 
-        # 计算并设置翻译代币（基于输入的SRT文件）
-        trans_task_manager.calculate_and_set_translation_tokens_from_srt(task.unid, task.raw_name)
+        # 创建翻译任务（包含代币计算）
+        trans_task_manager.create_translation_task(task.unid, task.raw_name)
 
         # 执行翻译
         trans_task_manager.execute_translation(
@@ -169,8 +169,8 @@ class ASRTransTaskProcessor(TaskProcessor):
         new_task = change_job_format(task)
         srt_name = new_task.srt_dirname
 
-        # 计算并设置翻译算力（基于ASR生成的SRT文件）
-        trans_task_manager.calculate_and_set_translation_tokens_from_srt(new_task.unid, srt_name)
+        # 创建翻译任务（包含代币计算）
+        trans_task_manager.create_translation_task(new_task.unid, srt_name)
 
         # 添加翻译任务到数据库
         trans_task_manager.add_translation_task_to_database(
@@ -232,8 +232,8 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         # 获取翻译任务管理器
         trans_task_manager = get_trans_task_manager()
 
-        # 计算并设置翻译算力（基于云ASR生成的SRT文件）
-        trans_task_manager.calculate_and_set_translation_tokens_from_srt(new_task.unid, srt_name)
+        # 创建翻译任务（包含代币计算）
+        trans_task_manager.create_translation_task(new_task.unid, srt_name)
 
         # 添加翻译任务到数据库
         trans_task_manager.add_translation_task_to_database(

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from agent.enhanced_common_agent import translate_document
 from agent.srt_translator_adapter import SRTTranslatorAdapter
 from app.core.base_task_manager import BaseTaskManager
+from app.core.task_models import Task, TaskTokens
 from nice_ui.configure.signal import data_bridge
 from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
 
@@ -21,11 +22,15 @@ class TransTaskManager(BaseTaskManager):
     云翻译任务管理器
 
     职责：
-    1. 计算翻译算力
+    1. 计算翻译算力（使用基类方法 calculate_and_set_trans_tokens）
     2. 管理翻译任务数据库记录
     3. 执行翻译任务并扣费
 
     注意：翻译任务是即时执行的，不需要持久化，所以序列化方法提供空实现
+
+    重构说明：
+    - 代币数据现在属于 Task 对象（app/core/task_models.py）
+    - 使用基类的 calculate_and_set_trans_tokens() 方法
     """
 
     def __init__(self):
@@ -72,6 +77,39 @@ class TransTaskManager(BaseTaskManager):
 
     # ==================== 翻译任务特定方法 ====================
 
+    def create_translation_task(self, task_id: str, srt_file: str) -> str:
+        """
+        创建翻译任务
+
+        重构说明：
+        - 与 ASR 任务保持一致，先创建 Task 对象
+        - 然后计算并设置代币
+
+        Args:
+            task_id: 任务ID
+            srt_file: SRT文件路径
+
+        Returns:
+            str: 任务ID
+        """
+        # 创建 Task 对象
+        trans_task = Task(
+            task_id=task_id,
+            audio_file=srt_file,
+            language=config.params.get("source_language", "zh"),
+            tokens=TaskTokens()
+        )
+
+        with self.lock:
+            self.tasks[task_id] = trans_task
+
+        logger.info(f"创建翻译任务: task_id={task_id}, srt_file={srt_file}")
+
+        # 计算并设置翻译代币
+        self.calculate_and_set_trans_tokens(task_id, srt_file)
+
+        return task_id
+
     def execute_translation(
         self,
         task: Any,
@@ -86,8 +124,13 @@ class TransTaskManager(BaseTaskManager):
         1. 执行翻译
         2. 扣费并刷新使用记录
 
+        重构说明：
+        - task 参数是 VideoFormatInfo 对象（UI层数据）
+        - 使用 task.unid 获取已创建的 Task 对象
+        - 与 ASR 任务保持一致的流程
+
         Args:
-            task: 任务对象
+            task: VideoFormatInfo 对象（UI层数据，包含 unid, raw_noextname 等）
             in_document: 输入文档路径
             out_document: 输出文档路径
             feature_key: 功能键（用于扣费）
@@ -104,6 +147,14 @@ class TransTaskManager(BaseTaskManager):
             f'{config.params["target_language"]},{config.params["source_language"]}'
         )
 
+        # 获取已创建的 Task 对象
+        task_id = task.unid
+        trans_task = self.get_task(task_id)
+
+        if not trans_task:
+            logger.error(f"翻译任务不存在: {task_id}，请先调用 create_translation_task()")
+            raise ValueError(f"翻译任务不存在: {task_id}")
+
         try:
             translate_document(
                 unid=task.unid,
@@ -117,10 +168,10 @@ class TransTaskManager(BaseTaskManager):
                 source_language=config.params["source_language"]
             )
 
-            logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task.unid}')
+            logger.info(f'翻译任务执行完成，开始扣费流程，任务ID: {task_id}')
 
-            # 扣费并刷新使用记录（使用 BaseTaskManager 的统一实现）
-            self._consume_tokens_for_task(task, feature_key, task.raw_noextname)
+            # 扣费并刷新使用记录（使用 Task 对象）
+            self._consume_tokens_for_task(trans_task, feature_key, task.raw_noextname)
 
         except ValueError as e:
             # 检查是否是API密钥缺失的错误
@@ -136,41 +187,7 @@ class TransTaskManager(BaseTaskManager):
             data_bridge.emit_task_error(task.unid, str(e))
             raise e
 
-    def calculate_and_set_translation_tokens_from_srt(self, task_id: str, srt_file_path: str) -> None:
-        """
-        从SRT文件计算并设置翻译算力
 
-        Args:
-            task_id: 任务ID
-            srt_file_path: SRT文件路径
-        """
-        try:
-            # 检查翻译引擎是否为云翻译
-            translate_engine = config.params.get('translate_channel', '')
-            if translate_engine != 'qwen_cloud':
-                logger.info(f"非云翻译引擎({translate_engine})，跳过翻译算力计算")
-                return
-
-            # 检查SRT文件是否存在
-            if not Path(srt_file_path).exists():
-                logger.warning("SRT文件不存在")
-                return
-
-            from nice_ui.util.token_calculator import calculate_srt_char_count, calculate_trans_tokens
-
-            # 使用工具函数计算字符数
-            total_chars = calculate_srt_char_count(srt_file_path)
-
-            # 使用工具函数计算代币
-            trans_tokens = calculate_trans_tokens(total_chars)
-
-            # 设置实际翻译算力
-            token_service.set_translation_tokens_for_task(task_id, trans_tokens)
-
-            logger.info(f'翻译任务算力计算完成 - 字符数: {total_chars}, 算力: {trans_tokens}, 任务ID: {task_id}')
-
-        except Exception as e:
-            logger.error(f'计算翻译任务算力失败: {task_id}, 错误: {e}')
 
     def add_translation_task_to_database(self, task_id: str, raw_name: str, task_json: str) -> None:
         """

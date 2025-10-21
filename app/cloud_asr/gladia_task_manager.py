@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from app.cloud_asr.gladia_asr_client import GladiaASRClient, create_config, creat_gladia_asr_client
 from app.core.base_task_manager import BaseTaskManager
+from app.core.task_models import Task, TaskTokens
 from app.core.task_status import TaskStatus
 from nice_ui.configure import config
 from services.decorators import except_handler
@@ -12,21 +13,10 @@ from utils import logger
 from utils.file_utils import funasr_write_srt_file
 
 
-class ASRTask:
-    """ASR任务对象"""
-
-    def __init__(self, task_id: str, audio_file: str, language: str):
-        self.task_id = task_id
-        self.audio_file = audio_file
-        self.audio_url = None  # Gladia音频URL
-        self.result_url = None  # Gladia结果URL
-        self.language = language
-        self.status = TaskStatus.PENDING
-        self.error = None
-        self.progress = 0
-        self.created_at = time.time()
-        self.updated_at = time.time()
-        self.auto_billing = True
+# ============================================
+# 注意：ASRTask 已被 Task 替代（app/core/task_models.py）
+# 代币数据现在属于 Task 对象
+# ============================================
 
 
 class GladiaTaskManager(BaseTaskManager):
@@ -48,40 +38,37 @@ class GladiaTaskManager(BaseTaskManager):
 
     # ==================== 实现抽象方法 ====================
 
-    def _serialize_task(self, task: ASRTask) -> Dict[str, Any]:
-        """序列化任务对象为字典"""
-        return {
-            'task_id': task.task_id,
-            'audio_file': task.audio_file,
-            'audio_url': task.audio_url,
-            'result_url': task.result_url,
-            'language': task.language,
-            'status': task.status,
-            'error': task.error,
-            'progress': task.progress,
-            'created_at': task.created_at,
-            'updated_at': task.updated_at
-        }
+    def _serialize_task(self, task: Task) -> Dict[str, Any]:
+        """
+        序列化任务对象为字典
 
-    def _deserialize_task(self, task_data: Dict[str, Any]) -> ASRTask:
-        """从字典反序列化任务对象"""
-        task = ASRTask(
-            task_data['task_id'],
-            task_data['audio_file'],
-            task_data['language']
-        )
-        # 恢复任务状态
-        for key, value in task_data.items():
-            if hasattr(task, key):
-                setattr(task, key, value)
-        return task
+        使用 Task.to_dict() 方法（包含代币数据）
+        """
+        return task.to_dict()
+
+    def _deserialize_task(self, task_data: Dict[str, Any]) -> Task:
+        """
+        从字典反序列化任务对象
+
+        使用 Task.from_dict() 方法（包含代币数据）
+        """
+        return Task.from_dict(task_data)
 
     # ==================== Gladia特定方法 ====================
 
     def create_task(self, task_id: str, audio_file: str, language: str, auto_billing: bool = True) -> str:
-        """创建新的ASR任务"""
-        task = ASRTask(task_id, audio_file, language)
-        task.auto_billing = auto_billing
+        """
+        创建新的ASR任务
+
+        使用新的 Task 类（包含代币数据）
+        """
+        task = Task(
+            task_id=task_id,
+            audio_file=audio_file,
+            language=language,
+            status=TaskStatus.PENDING,
+            tokens=TaskTokens()  # 初始化代币数据
+        )
 
         with self.lock:
             self.tasks[task_id] = task
@@ -98,20 +85,10 @@ class GladiaTaskManager(BaseTaskManager):
             return
 
         try:
-            # 计算并设置 ASR 代币
+            # 计算并设置 ASR 代币（使用基类方法）
             try:
-                from nice_ui.util.token_calculator import calculate_video_duration, calculate_asr_tokens
-
-                # 使用工具函数计算时长
-                audio_duration = calculate_video_duration(task.audio_file)
-
-                # 使用工具函数计算代币
-                asr_tokens = calculate_asr_tokens(audio_duration)
-
-                from nice_ui.services.service_provider import ServiceProvider
-                token_service = ServiceProvider().get_token_service()
-                token_service.set_ast_tokens_for_task(task_id, asr_tokens)
-                logger.info(f"ASR任务代币已设置: task_id={task_id}, duration={audio_duration}s, tokens={asr_tokens}")
+                self.calculate_and_set_asr_tokens(task_id)
+                logger.info(f"ASR任务代币已设置: task_id={task_id}")
             except Exception as e:
                 logger.warning(f"计算ASR代币失败，将在扣费时跳过: {str(e)}")
 
@@ -205,7 +182,7 @@ class GladiaTaskManager(BaseTaskManager):
                 logger.error(f"轮询线程异常: {e}")
                 time.sleep(5)
 
-    def _handle_task_completion(self, task: ASRTask, result: Dict, client: GladiaASRClient):
+    def _handle_task_completion(self, task: Task, result: Dict, client: GladiaASRClient):
         """处理任务完成"""
         try:
             # 获取转录结果

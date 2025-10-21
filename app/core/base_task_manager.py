@@ -5,6 +5,12 @@
 1. 消除重复代码 - 所有共同功能在基类中实现一次
 2. 统一接口 - 所有任务管理器使用相同的通知和扣费逻辑
 3. 简化维护 - 修改一次，所有子类受益
+4. 数据属于任务 - Task 对象拥有代币数据
+
+重构说明：
+- 代币数据现在属于 Task 对象（app/core/task_models.py）
+- 删除任务自动删除代币（无内存泄漏）
+- 通过 Task 对象操作代币，不再使用 TokenAmountManager
 """
 
 import json
@@ -29,25 +35,29 @@ from utils.file_utils import write_segment_data_file
 class BaseTaskManager(ABC):
     """
     任务管理器抽象基类
-    
+
     提供所有任务管理器的共同功能：
     - 任务持久化（加载/保存）
-    - 任务基本操作（创建/获取/更新）
+    - 任务基本操作（创建/获取/更新/删除）
+    - 代币操作（计算并设置代币）
     - UI通知（进度/完成/失败）
     - 代币扣费（统一回调机制）
     - Segment数据处理
+
+    注意：代币数据属于 Task 对象，删除任务自动删除代币
     """
-    
+
     def __init__(self, task_state_file: Path):
         """
         初始化基类
-        
+
         Args:
             task_state_file: 任务状态文件路径
         """
         self.tasks: Dict[str, Any] = {}
         self.lock = threading.Lock()
         self.task_state_file = task_state_file
+        self.token_service = ServiceProvider().get_token_service()
         
     # ==================== 任务持久化 ====================
     
@@ -143,7 +153,7 @@ class BaseTaskManager(ABC):
     def update_task(self, task_id: str, **kwargs) -> None:
         """
         更新任务
-        
+
         Args:
             task_id: 任务ID
             **kwargs: 要更新的字段
@@ -154,8 +164,97 @@ class BaseTaskManager(ABC):
                     if hasattr(task, key):
                         setattr(task, key, value)
                 task.updated_at = time.time()
-        
+
         self._save_tasks()
+
+    def delete_task(self, task_id: str) -> None:
+        """
+        删除任务（包括代币数据）
+
+        注意：代币数据在任务对象中，删除任务自动删除代币
+
+        Args:
+            task_id: 任务ID
+        """
+        with self.lock:
+            if task_id in self.tasks:
+                del self.tasks[task_id]
+                logger.info(f"删除任务（包括代币数据）: {task_id}")
+
+        self._save_tasks()
+
+    # ==================== 代币操作（通过任务对象） ====================
+
+    def calculate_and_set_asr_tokens(self, task_id: str) -> int:
+        """
+        计算并设置 ASR 代币
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            代币数量
+        """
+        task = self.get_task(task_id)
+        if not task:
+            logger.error(f"任务不存在: {task_id}")
+            return 0
+
+        try:
+            # 使用工具函数计算时长
+            from nice_ui.util.token_calculator import calculate_video_duration
+            duration = calculate_video_duration(task.audio_file)
+
+            # 使用服务计算代币
+            tokens = self.token_service.calculate_asr_tokens(duration)
+
+            # 设置到任务对象
+            task.set_asr_tokens(tokens)
+
+            logger.info(f"ASR 代币已设置: task_id={task_id}, tokens={tokens}")
+            self._save_tasks()
+
+            return tokens
+
+        except Exception as e:
+            logger.error(f"计算 ASR 代币失败: {e}")
+            return 0
+
+    def calculate_and_set_trans_tokens(self, task_id: str, srt_file: str) -> int:
+        """
+        计算并设置翻译代币
+
+        Args:
+            task_id: 任务ID
+            srt_file: SRT 文件路径
+
+        Returns:
+            代币数量
+        """
+        task = self.get_task(task_id)
+        if not task:
+            logger.error(f"任务不存在: {task_id}")
+            return 0
+
+        try:
+            # 使用工具函数计算字符数
+            from nice_ui.util.token_calculator import calculate_srt_char_count
+            char_count = calculate_srt_char_count(srt_file)
+
+            # 使用服务计算代币
+            tokens = self.token_service.calculate_trans_tokens(char_count)
+
+            # 设置到任务对象
+            task.set_trans_tokens(tokens)
+
+            logger.info(f"翻译代币已设置: task_id={task_id}, tokens={tokens}")
+            self._save_tasks()
+
+            return tokens
+
+        except Exception as e:
+            logger.error(f"计算翻译代币失败: {e}")
+            return 0
     
     # ==================== UI通知（统一实现） ====================
     
@@ -281,6 +380,10 @@ class BaseTaskManager(ABC):
         """
         为任务消费代币（统一回调机制）
 
+        重构说明：
+        - 从任务对象获取代币（不再使用 TokenAmountManager）
+        - 扣费成功后删除任务（包括代币数据）
+
         Args:
             task: 任务对象（支持 task_id 或 unid 属性）
             feature_key: 功能标识符（cloud_asr, cloud_trans等）
@@ -288,41 +391,59 @@ class BaseTaskManager(ABC):
         """
         task_id = self._get_task_id(task)
         logger.info(f'消费代币 - 任务ID: {task_id}, 功能: {feature_key}')
-        token_service = ServiceProvider().get_token_service()
+
         try:
-            # 从代币服务中获取代币消费量
-            token_amount = token_service.get_task_token_info(task_id).total_tokens
-            logger.info(f'从代币服务中获取代币消费量: {token_amount}, 任务ID: {task_id}')
+            # 从任务对象获取代币（使用新的 Task 对象）
+            total_tokens = task.get_total_tokens()
+            asr_tokens = task.get_asr_tokens()
+            trans_tokens = task.get_trans_tokens()
+
+            logger.info(
+                f'任务代币: task_id={task_id}, '
+                f'ASR={asr_tokens}, 翻译={trans_tokens}, 总计={total_tokens}'
+            )
 
             # 消费代币
-            if token_amount > 0:
-                logger.info(f"为任务消费代币: {token_amount}")
+            if total_tokens > 0:
+                logger.info(f"开始扣费: {total_tokens} 代币")
 
                 # 定义扣费成功回调：只有在扣费真正完成后才更新余额
                 def on_consume_success(result):
-                    logger.info(f"代币消费成功: {token_amount}, 结果: {result}")
+                    logger.info(f"扣费成功: {total_tokens} 代币, 结果: {result}")
                     # 扣费成功后，更新个人中心余额和历史记录
                     self._notify_task_completed(task_id)
+                    # 删除任务（包括代币数据）
+                    self.delete_task(task_id)
 
                 def on_consume_error(error):
-                    logger.warning(f"代币消费失败: {token_amount}, 错误: {error}")
+                    logger.warning(f"扣费失败: {total_tokens} 代币, 错误: {error}")
                     # 即使扣费失败，也通知任务完成（但不更新余额）
                     data_bridge.emit_whisper_finished(task_id)
+                    # 删除任务（包括代币数据）
+                    self.delete_task(task_id)
 
                 # 异步消费代币，通过回调处理结果
-                token_service.consume_tokens(
-                    token_amount, feature_key, file_name,
+                self.token_service.consume_tokens(
+                    total_tokens, feature_key, file_name,
                     callback_success=on_consume_success,
                     callback_error=on_consume_error
                 )
-        except Exception as e:
-                logger.error(f"消费代币时发生错误: {str(e)}")
-                # 异常情况也要通知任务完成
+            else:
+                logger.warning(f"任务代币为0，跳过扣费: {task_id}")
+                # 通知任务完成
                 data_bridge.emit_whisper_finished(task_id)
-        finally:
-            # 无论扣费成功或失败，都清理任务数据，释放内存
-            token_service.remove_task_data(task_id)
-            logger.info(f'已清理任务数据: {task_id}')
+                # 删除任务
+                self.delete_task(task_id)
+
+        except Exception as e:
+            logger.error(f"消费代币时发生错误: {str(e)}")
+            # 异常情况也要通知任务完成
+            data_bridge.emit_whisper_finished(task_id)
+            # 删除任务
+            try:
+                self.delete_task(task_id)
+            except Exception as delete_error:
+                logger.error(f"删除任务失败: {delete_error}")
 
     
     # ==================== Segment数据处理（统一实现） ====================

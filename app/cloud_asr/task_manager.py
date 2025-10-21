@@ -307,20 +307,10 @@ class ASRTaskManager:
             # 使用本地文件路径
             audio_file = task.audio_file
 
-            # 计算并设置 ASR 代币
+            # 计算并设置 ASR 代币（使用基类方法）
             try:
-                from nice_ui.util.token_calculator import calculate_video_duration, calculate_asr_tokens
-
-                # 使用工具函数计算时长
-                audio_duration = calculate_video_duration(audio_file)
-
-                # 使用工具函数计算代币
-                asr_tokens = calculate_asr_tokens(audio_duration)
-
-                from nice_ui.services.service_provider import ServiceProvider
-                token_service = ServiceProvider().get_token_service()
-                token_service.set_ast_tokens_for_task(task_id, asr_tokens)
-                logger.info(f"ASR任务代币已设置: task_id={task_id}, duration={audio_duration}s, tokens={asr_tokens}")
+                self.calculate_and_set_asr_tokens(task_id)
+                logger.info(f"ASR任务代币已设置: task_id={task_id}")
             except Exception as e:
                 logger.warning(f"计算ASR代币失败，将在扣费时跳过: {str(e)}")
 
@@ -572,7 +562,7 @@ class ASRTaskManager:
                                 from app.core.base_task_manager import BaseTaskManager
                                 raw_pathlib = Path(task.audio_file)
                                 file_name = raw_pathlib.stem
-                                BaseTaskManager._consume_tokens_for_task(self, task, "cloud_asr", file_name)
+                                self._consume_tokens_for_task(task, "cloud_asr", file_name)
                             else:
                                 logger.info(f'ASR任务非自动扣费模式，跳过扣费: {task.task_id}')
 
