@@ -19,7 +19,7 @@ class TransactionTableWidget(PaginatedTableWidget):
         """
         # 设置表头和列宽
         headers = ['时间','任务','算力', '订单号']
-        column_widths = [220,200, 100, 250]  # -1表示自适应
+        column_widths = [200,200, 80, 310]  # -1表示自适应
 
         super().__init__(
             parent=parent,

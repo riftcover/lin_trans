@@ -300,7 +300,7 @@ class ReferralCenterInterface(QFrame):
         self._load_stats()
         
         # 加载推荐明细
-        self._load_history()
+        # self._load_history()
 
     def _load_referral_code(self):
         """加载推荐码"""
