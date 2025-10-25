@@ -280,11 +280,44 @@ class SimpleApiService(QObject):
             callback_error=callback_error
         )
     
-    def get_token_coefficients(self, callback_success: Callable = None, 
+    def get_token_coefficients(self, callback_success: Callable = None,
                               callback_error: Callable = None) -> str:
         """获取算力消耗系数"""
         return self.execute_async(
             api_client.get_token_coefficients,
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    # ============================================
+    # 推荐系统相关API
+    # ============================================
+
+    def get_referral_code(self, callback_success: Callable = None,
+                         callback_error: Callable = None) -> str:
+        """获取我的推荐码"""
+        return self.execute_async(
+            api_client.get_referral_code,
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    def get_referral_stats(self, callback_success: Callable = None,
+                          callback_error: Callable = None) -> str:
+        """获取推荐统计数据"""
+        return self.execute_async(
+            api_client.get_referral_stats,
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    def get_referral_history(self, page: int = 1, page_size: int = 10,
+                            callback_success: Callable = None,
+                            callback_error: Callable = None) -> str:
+        """获取推荐明细"""
+        return self.execute_async(
+            api_client.get_referral_history,
+            args=(page, page_size),
             callback_success=callback_success,
             callback_error=callback_error
         )

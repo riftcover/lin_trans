@@ -13,7 +13,6 @@ from packaging import version
 
 from app.core.api_client import api_client
 from app.core.auth_manager import AuthManager
-from nice_ui.services.api_service import api_service
 from nice_ui.services.simple_api_service import simple_api_service
 from nice_ui.configure import config
 from nice_ui.configure.setting_cache import get_setting_cache
@@ -27,6 +26,7 @@ from nice_ui.ui.profile import ProfileInterface
 from nice_ui.ui.setting_ui import SettingInterface
 from nice_ui.ui.video2srt import Video2SRT
 from nice_ui.ui.work_srt import WorkSrt
+from nice_ui.ui.referral_center import ReferralCenterInterface
 from utils import logger
 from vendor.qfluentwidgets import FluentIcon as FIF, NavigationItemPosition
 from vendor.qfluentwidgets import (MessageBox, FluentWindow, MacFluentWindow, FluentBackgroundTheme, setThemeColor, )
@@ -83,6 +83,7 @@ class Window(_create_smart_window_class()):
         self.my_story = TableApp("我的创作", self, self.settings)
         self.settingInterface = SettingInterface("设置", self, self.settings)
         self.loginInterface = ProfileInterface("个人中心", self, self.settings)
+        self.referralInterface = ReferralCenterInterface('推荐中心', self, self.settings)
 
         self.initNavigation()
         # 连接信号
@@ -105,7 +106,12 @@ class Window(_create_smart_window_class()):
         self.addSubInterface(self.vide2srt, FIF.VIDEO, "音视频转字幕")
         self.addSubInterface(self.translate_srt, FIF.BOOK_SHELF, "字幕翻译")
         self.addSubInterface(self.my_story, FIF.PALETTE, "我的创作")
-
+        self.addSubInterface(
+            self.referralInterface,
+            FIF.SHARE,
+            '推荐中心',
+            NavigationItemPosition.SCROLL
+        )
         self.addSubInterface(self.settingInterface, FIF.SETTING, "设置", NavigationItemPosition.BOTTOM)
 
         # 创建头像按钮
@@ -226,6 +232,10 @@ class Window(_create_smart_window_class()):
 
                     logger.info("自动登录成功")
 
+                    # 加载推荐中心数据
+                    logger.info("自动登录成功，开始加载推荐中心数据")
+                    self.referralInterface.load_data()
+
                     # 更新算力消耗系数
                     from nice_ui.services.service_provider import ServiceProvider
                     token_service = ServiceProvider().get_token_service()
@@ -306,6 +316,10 @@ class Window(_create_smart_window_class()):
 
         # 更新个人中心页面的信息
         self.loginInterface.updateUserInfo(user_info)
+
+        # 加载推荐中心数据
+        logger.info("登录成功，开始加载推荐中心数据")
+        self.referralInterface.load_data()
 
         # 延迟获取算力消耗系数，避免与其他API调用冲突
         QTimer.singleShot(500, self._delayed_update_token_coefficients)

@@ -770,6 +770,110 @@ class APIClient:
             response.raise_for_status()
             return response.json()
 
+    # ============================================
+    # 推荐系统相关API
+    # ============================================
+
+    async def get_referral_code(self) -> Dict:
+        """
+        获取我的推荐码
+
+        Returns:
+            Dict: 包含推荐码的响应数据
+            {
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "referral_code": "A1B2C3D4"
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='GET',
+                url='/referrals/my-code'
+            )
+        except Exception as e:
+            logger.error(f"获取推荐码失败: {e}")
+            raise
+
+    async def get_referral_stats(self) -> Dict:
+        """
+        获取推荐统计数据
+
+        Returns:
+            Dict: 包含推荐统计的响应数据
+            {
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "total_referrals": 10,
+                    "rewarded_referrals": 8,
+                    "pending_referrals": 2,
+                    "total_rewards": 8000
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='GET',
+                url='/referrals/stats'
+            )
+        except Exception as e:
+            logger.error(f"获取推荐统计失败: {e}")
+            raise
+
+    async def get_referral_history(self, page: int = 1, page_size: int = 10) -> Dict:
+        """
+        获取推荐明细（分页）
+
+        Args:
+            page: 页码（从1开始）
+            page_size: 每页记录数
+
+        Returns:
+            Dict: 包含推荐明细的响应数据
+            {
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "referrals": [
+                        {
+                            "referee_id": "user-id-123",
+                            "reward_amount": 1000,
+                            "reward_status": 1,
+                            "created_at": 1704096000000,
+                            "rewarded_at": 1704096100000
+                        }
+                    ],
+                    "total": 10,
+                    "page": 1,
+                    "page_size": 10
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='GET',
+                url='/referrals/history',
+                params={'page': page, 'page_size': page_size}
+            )
+        except Exception as e:
+            logger.error(f"获取推荐明细失败: {e}")
+            raise
+
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
