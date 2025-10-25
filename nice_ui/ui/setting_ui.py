@@ -243,9 +243,8 @@ class LocalModelPage(QWidget):
         根据当前 models_path 检查模型安装状态，并更新第三列的按钮/状态。
         """
         faster_models = [
-            # ("多语言模型", "940 MB"),
-            ("本地模型", "2.3 GB"),
-            # ("多语言模型", "880 MB"),
+            ("中文模型", "2.3 GB"),
+            ("多语言模型", "2.33 GB"),
         ]
         model_list = config.model_list
 

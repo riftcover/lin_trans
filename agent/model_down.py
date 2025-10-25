@@ -49,7 +49,6 @@ def download_model(model_name: str, progress_callback=None):
     spk_model_path = os.path.join(config.funasr_model_path, 'speech_campplus_sv_zh-cn_16k-common')
     fa_zh_path = f'{config.funasr_model_path}/speech_timestamp_prediction-v1-16k-offline'
     # 进度监控由调用方（DownloadThread）负责
-    # start_time = time.time()
     logger.info(f"开始下载模型: {model_name}")
 
     if os.path.exists(vad_model_path):

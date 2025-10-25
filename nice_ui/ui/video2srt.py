@@ -335,9 +335,15 @@ class Video2SRT(QWidget):
             # 云模型 - 支持所有语言
             self.source_language.addItem("自动检测")
             self.source_language.addItems(config.langnamelist)
-        else:
+        elif model_status == 302:
             # 中文模型 - 仅支持中文和英语
             supported_languages = ["中文", "英语"]
+            for lang_name in config.langnamelist:
+                if lang_name in supported_languages:
+                    self.source_language.addItem(lang_name)
+
+        elif model_status ==301:
+            supported_languages = ["中文", "英语","日语","韩语"]
             for lang_name in config.langnamelist:
                 if lang_name in supported_languages:
                     self.source_language.addItem(lang_name)
