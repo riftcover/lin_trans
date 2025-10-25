@@ -4,6 +4,7 @@ import sys
 import shutil
 import glob
 
+
 def move_compiled_files(target_dir):
     """将编译生成的.pyd文件移动到目标目录"""
     # 确保目标目录存在
@@ -25,6 +26,7 @@ def move_compiled_files(target_dir):
             print(f"成功移动 {pyd_file} 到 {target_path}")
         except Exception as e:
             print(f"移动文件 {pyd_file} 时出错: {e}")
+
 
 def convert_py_to_pyd(script_folder):
     # 确保script文件夹存在
