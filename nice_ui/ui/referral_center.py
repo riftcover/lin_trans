@@ -7,9 +7,9 @@
 3. 分享推荐链接（复制链接、生成二维码）
 4. 推荐明细列表（分页展示）
 """
-
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPixmap, QClipboard
+# import qrcode
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, 
     QDialog, QApplication, QTableWidget, QTableWidgetItem,
@@ -24,12 +24,6 @@ from vendor.qfluentwidgets import (
     InfoBar, InfoBarPosition, TransparentToolButton, StrongBodyLabel
 )
 
-try:
-    import qrcode
-    QRCODE_AVAILABLE = True
-except ImportError:
-    QRCODE_AVAILABLE = False
-    logger.warning("qrcode 库未安装，二维码功能将不可用。请运行: pip install qrcode[pil]")
 
 
 class ReferralCenterInterface(QFrame):

@@ -46,6 +46,12 @@ jobs:
       run: uv run python -c "import orm.inint"
       shell: bash
 
+    - name: Install Inno Setup (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install innosetup -y
+      shell: powershell
+
     - name: Build with PyInstaller
       run: uv run python install_build.py
       shell: bash
