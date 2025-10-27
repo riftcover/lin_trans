@@ -24,12 +24,7 @@ from vendor.qfluentwidgets import (
     InfoBar, InfoBarPosition, TransparentToolButton, StrongBodyLabel
 )
 
-try:
-    import qrcode
-    QRCODE_AVAILABLE = True
-except ImportError:
-    QRCODE_AVAILABLE = False
-    logger.warning("qrcode 库未安装，二维码功能将不可用。请运行: pip install qrcode[pil]")
+# import qrcode
 
 
 class ReferralCenterInterface(QFrame):
@@ -111,8 +106,7 @@ class ReferralCenterInterface(QFrame):
         """连接信号和槽"""
         self.copyCodeButton.clicked.connect(self.copy_referral_code)
         self.copyLinkButton.clicked.connect(self.copy_referral_link)
-        # if QRCODE_AVAILABLE:
-        #     self.qrcodeButton.clicked.connect(self.show_qrcode_dialog)
+        # self.qrcodeButton.clicked.connect(self.show_qrcode_dialog)
         self.refreshButton.clicked.connect(self.load_data)
 
     def _init_title_bar(self):
@@ -171,11 +165,11 @@ class ReferralCenterInterface(QFrame):
         buttonLayout.addWidget(self.copyCodeButton)
         buttonLayout.addWidget(self.copyLinkButton)
         
-        # if QRCODE_AVAILABLE:
-        #     self.qrcodeButton = PushButton('生成二维码', self)
-        #     self.qrcodeButton.setIcon(FIF.QRCODE)
-        #     self.qrcodeButton.setFixedHeight(36)
-        #     buttonLayout.addWidget(self.qrcodeButton)
+
+        # self.qrcodeButton = PushButton('生成二维码', self)
+        # self.qrcodeButton.setIcon(FIF.QRCODE)
+        # self.qrcodeButton.setFixedHeight(36)
+        # buttonLayout.addWidget(self.qrcodeButton)
         
         buttonLayout.addStretch()
         self.codeLayout.addLayout(buttonLayout)
@@ -454,10 +448,6 @@ class ReferralCenterInterface(QFrame):
         """显示二维码对话框"""
         if not self.referral_code:
             self._show_info_bar('warning', '提示', '推荐码未加载', 2000)
-            return
-        
-        if not QRCODE_AVAILABLE:
-            self._show_info_bar('warning', '提示', '二维码功能不可用，请安装 qrcode 库', 3000)
             return
         
         # 生成推荐链接
