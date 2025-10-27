@@ -40,8 +40,11 @@ class SmartSentenceProcessor:
                 metadata = json.load(f)
             
             segment_data_path = metadata.get('segment_data_path')
-            if not segment_data_path or not os.path.exists(segment_data_path):
-                return False, "segment_data文件不存在，智能分句功能不可用"
+            segment_language = metadata.get('language')
+            # 检查语言是否支持且segment_data文件是否存在
+            if (segment_language not in ('zh', 'en', 'ja', 'ko', 'de', 'ru', 'fr') or
+                not segment_data_path or not os.path.exists(segment_data_path)):
+                return False, "智能分句功能不可用"
             
             return True, segment_data_path
             
