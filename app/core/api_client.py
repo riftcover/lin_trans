@@ -478,28 +478,7 @@ class APIClient:
         except httpx.HTTPStatusError as e:
             logger.error(f"Get user ID failed: {e}")
             if e.response.status_code == 401:
-                logger.warning("Authentication failed (401), attempting to refresh token")
-                # 尝试刷新token（同步方式）
-                if self._refresh_session_sync():
-                    # 刷新成功，重试请求
-                    logger.info('Token refreshed, retrying request')
-                    try:
-                        with httpx.Client(base_url=self.base_url, timeout=15.0) as retry_client:
-                            response = retry_client.get("/users/profile", headers=self.headers)
-                            response.raise_for_status()
-                            data = response.json()
-
-                            if "data" in data and "user" in data["data"] and "id" in data["data"]["user"]:
-                                return data["data"]["user"]["id"]
-                            logger.error(f"User ID not found in response: {data}")
-                            raise ValueError("\u65e0\u6cd5\u83b7\u53d6\u7528\u6237ID\uff1a\u54cd\u5e94\u6570\u636e\u683c\u5f0f\u4e0d\u6b63\u786e")
-                    except Exception as retry_error:
-                        logger.error(f'Retry after token refresh failed: {retry_error}')
-                        raise AuthenticationError("Token刷新后请求仍然失败，需要重新登录")
-                else:
-                    # 刷新失败
-                    logger.warning('Token refresh failed')
-                    raise AuthenticationError("Token已过期，需要重新登录")
+                raise AuthenticationError("Token已过期，需要重新登录")
             raise ValueError(f"获取用户ID失败: {str(e)}")
         except Exception as e:
             logger.error(f"Unexpected error in get_id_sync: {e}")
