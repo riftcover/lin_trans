@@ -480,7 +480,27 @@ def create_windows_installer():
         print(f"⚠ 警告: 未找到图标文件 {icon_path}")
         icon_path = None
 
+    # 检查中文语言文件是否存在
+    chinese_lang_available = False
+    inno_lang_paths = [
+        r"C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl",
+        r"C:\Program Files\Inno Setup 6\Languages\ChineseSimplified.isl",
+    ]
+    for lang_path in inno_lang_paths:
+        if Path(lang_path).exists():
+            chinese_lang_available = True
+            print(f"✓ 找到中文语言文件: {lang_path}")
+            break
+
+    if not chinese_lang_available:
+        print("⚠ 未找到中文语言文件，将只使用英文界面")
+
     # 创建 Inno Setup 脚本
+    languages_section = '[Languages]\n'
+    if chinese_lang_available:
+        languages_section += 'Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"\n'
+    languages_section += 'Name: "english"; MessagesFile: "compiler:Default.isl"'
+
     iss_script = f"""
 ; Lapped 安装脚本
 ; 由 install_build.py 自动生成
@@ -511,9 +531,7 @@ ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=lowest
 SetupIconFile={PROJECT_ROOT / "components/assets/lapped.ico"}
 
-[Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"
-Name: "english"; MessagesFile: "compiler:Default.isl"
+{languages_section}
 
 [Tasks]
 Name: "desktopicon"; Description: "{{cm:CreateDesktopIcon}}"; GroupDescription: "{{cm:AdditionalIcons}}"; Flags: unchecked
