@@ -519,13 +519,19 @@ Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#Stri
             r"C:\Program Files\Inno Setup 6\ISCC.exe",
             r"C:\Program Files (x86)\Inno Setup 5\ISCC.exe",
             r"C:\Program Files\Inno Setup 5\ISCC.exe",
+            r"C:\ProgramData\chocolatey\lib\innosetup\tools\ISCC.exe",  # Chocolatey 安装路径
         ]
 
         iscc_exe = None
+        print("查找 Inno Setup 编译器...")
         for path in iscc_paths:
+            print(f"  检查: {path}")
             if Path(path).exists():
                 iscc_exe = path
+                print(f"  ✓ 找到!")
                 break
+            else:
+                print(f"  ✗ 不存在")
 
         if not iscc_exe:
             print("\n" + "!" * 60)
@@ -592,12 +598,25 @@ if not args.no_installer:
     print("开始创建安装包...")
     print("=" * 60)
 
+    installer_success = False
     if platform.system() == "Darwin":  # macOS
         if not args.installer_only:
-            create_macos_dmg()
+            installer_success = create_macos_dmg()
     elif platform.system() == "Windows":
         if not args.dmg_only:
-            create_windows_installer()
+            installer_success = create_windows_installer()
     else:
         print(f"✗ 不支持的平台: {platform.system()}")
         print("  仅支持 macOS 和 Windows")
+        sys.exit(1)
+
+    # 检查安装包创建是否成功
+    if not installer_success:
+        print("\n" + "!" * 60)
+        print("✗ 错误: 安装包创建失败")
+        print("!" * 60)
+        sys.exit(1)
+
+    print("\n" + "=" * 60)
+    print("✓ 所有构建步骤完成！")
+    print("=" * 60)

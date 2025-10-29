@@ -2,7 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [ "master", "feat/*" ]
+    branches:
+      - 'build/**'
     tags:
       - 'v*'
 
@@ -38,7 +39,7 @@ jobs:
       run: uv sync --frozen
         
     - name: Create necessary directories
-      run: mkdir -p models result logs
+      run: mkdir -p models result logs .credentials
       shell: bash
 
     - name: Initialize database
@@ -62,8 +63,33 @@ jobs:
         choco install innosetup -y
       shell: powershell
 
+    - name: Verify Inno Setup installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "=== Searching for Inno Setup ==="
+        $paths = @(
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+          "C:\Program Files\Inno Setup 6\ISCC.exe",
+          "C:\ProgramData\chocolatey\lib\innosetup\tools\ISCC.exe"
+        )
+        foreach ($path in $paths) {
+          if (Test-Path $path) {
+            Write-Host "✓ Found: $path"
+            & $path /? | Select-Object -First 5
+          } else {
+            Write-Host "✗ Not found: $path"
+          }
+        }
+      shell: powershell
+
     - name: Build with PyInstaller
-      run: uv run python install_build.py --clean
+      run: |
+        echo "=== Starting build process ==="
+        echo "Platform: ${{ runner.os }}"
+        echo "Python version: $(python --version)"
+        echo "Working directory: $(pwd)"
+        echo ""
+        uv run python install_build.py --clean
       shell: bash
       env:
         PYTHONIOENCODING: utf-8
@@ -73,7 +99,27 @@ jobs:
     - name: Verify build output
       run: |
         echo "=== Checking dist directory ==="
-        ls -lah dist/ || dir dist\
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          dir dist\ || echo "dist directory not found"
+          if [ -f "dist/Lapped AI setup.exe" ]; then
+            echo "✓ Found: Lapped AI setup.exe"
+            ls -lh "dist/Lapped AI setup.exe"
+          else
+            echo "✗ Missing: Lapped AI setup.exe"
+            echo "Contents of dist/:"
+            ls -lah dist/ || dir dist\
+          fi
+        else
+          ls -lah dist/ || echo "dist directory not found"
+          if [ -f "dist/Lapped AI setup.dmg" ]; then
+            echo "✓ Found: Lapped AI setup.dmg"
+            ls -lh "dist/Lapped AI setup.dmg"
+          else
+            echo "✗ Missing: Lapped AI setup.dmg"
+            echo "Contents of dist/:"
+            ls -lah dist/
+          fi
+        fi
       shell: bash
       if: always()
 
