@@ -357,32 +357,38 @@ def create_macos_dmg():
         ], check=True)
 
         # 6. 设置 DMG 窗口属性（可选，需要 AppleScript）
-        print(f"设置 DMG 外观...")
-        applescript = f'''
-        tell application "Finder"
-            tell disk "{volume_name}"
-                open
-                set current view of container window to icon view
-                set toolbar visible of container window to false
-                set statusbar visible of container window to false
-                set the bounds of container window to {{100, 100, 600, 400}}
-                set viewOptions to the icon view options of container window
-                set arrangement of viewOptions to not arranged
-                set icon size of viewOptions to 128
-                set position of item "Lapped.app" of container window to {{150, 150}}
-                set position of item "Applications" of container window to {{350, 150}}
-                close
-                open
-                update without registering applications
-                delay 2
-            end tell
-        end tell
-        '''
+        # 检测是否在 CI 环境中（没有 GUI）
+        is_ci = os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true'
 
-        try:
-            subprocess.run(["osascript", "-e", applescript], check=False)
-        except Exception as e:
-            print(f"  警告: 设置 DMG 外观失败: {e}")
+        if not is_ci:
+            print(f"设置 DMG 外观...")
+            applescript = f'''
+            tell application "Finder"
+                tell disk "{volume_name}"
+                    open
+                    set current view of container window to icon view
+                    set toolbar visible of container window to false
+                    set statusbar visible of container window to false
+                    set the bounds of container window to {{100, 100, 600, 400}}
+                    set viewOptions to the icon view options of container window
+                    set arrangement of viewOptions to not arranged
+                    set icon size of viewOptions to 128
+                    set position of item "Lapped.app" of container window to {{150, 150}}
+                    set position of item "Applications" of container window to {{350, 150}}
+                    close
+                    open
+                    update without registering applications
+                    delay 2
+                end tell
+            end tell
+            '''
+
+            try:
+                subprocess.run(["osascript", "-e", applescript], check=False)
+            except Exception as e:
+                print(f"  警告: 设置 DMG 外观失败: {e}")
+        else:
+            print(f"跳过 DMG 外观设置（CI 环境）")
 
         # 7. 卸载 DMG
         print(f"卸载 DMG...")
