@@ -2,8 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - 'build/**'
+    branches: [ "master", "feat/*" ]
     tags:
       - 'v*'
 
