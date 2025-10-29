@@ -322,6 +322,75 @@ class SimpleApiService(QObject):
             callback_error=callback_error
         )
 
+    # ============================================
+    # NLP 相关 API
+    # ============================================
+
+    def submit_nlp_task(self, file_url: str, language: str = 'zh', task_type: str = 'sentence_split',
+                       callback_success: Callable = None,
+                       callback_error: Callable = None) -> str:
+        """
+        提交 NLP 处理任务
+
+        Args:
+            file_url: 文件 URL（OSS 地址）
+            language: 语言代码，默认为 'zh'
+            task_type: 任务类型，默认为 'sentence_split'
+            callback_success: 成功回调函数
+            callback_error: 失败回调函数
+
+        Returns:
+            str: 请求 ID
+        """
+        return self.execute_async(
+            api_client.submit_nlp_task,
+            args=(file_url, language, task_type),
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    def check_nlp_task_status(self, task_id: str,
+                             callback_success: Callable = None,
+                             callback_error: Callable = None) -> str:
+        """
+        检查 NLP 任务状态
+
+        Args:
+            task_id: 任务 ID
+            callback_success: 成功回调函数
+            callback_error: 失败回调函数
+
+        Returns:
+            str: 请求 ID
+        """
+        return self.execute_async(
+            api_client.check_nlp_task_status,
+            args=(task_id,),
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    def get_nlp_task_result(self, task_id: str,
+                           callback_success: Callable = None,
+                           callback_error: Callable = None) -> str:
+        """
+        获取 NLP 任务结果
+
+        Args:
+            task_id: 任务 ID
+            callback_success: 成功回调函数
+            callback_error: 失败回调函数
+
+        Returns:
+            str: 请求 ID
+        """
+        return self.execute_async(
+            api_client.get_nlp_task_result,
+            args=(task_id,),
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
 
 # 全局简化API服务实例
 simple_api_service = SimpleApiService()

@@ -10,7 +10,7 @@ from nice_ui.util.tools import get_default_documents_path
 from utils import logger
 from vendor.qfluentwidgets import (CardWidget, ToolTipFilter, ToolTipPosition, TransparentToolButton, FluentIcon, PushButton, InfoBar, InfoBarPosition, )
 from vendor.qfluentwidgets.multimedia import LinVideoWidget
-from app.smart_sentence_processor import check_smart_sentence_available, process_smart_sentence
+from app.smart_sentence_processor import check_smart_sentence_available, SmartSentenceProcessor
 from components.widget import SubtitleTable
 
 
@@ -25,11 +25,15 @@ class SmartSentenceWorker(QThread):
 
     def run(self):
         """执行智能分句处理"""
-
         def progress_callback(progress: int, message: str):
             self.progress_updated.emit(progress, message)
 
-        success, message = process_smart_sentence(self.srt_file_path, progress_callback)
+        # 直接调用同步方法（内部使用 QEventLoop 等待异步结果）
+        processor = SmartSentenceProcessor()
+        success, message = processor.process_smart_sentence(
+            self.srt_file_path,
+            progress_callback
+        )
         self.finished.emit(success, message)
 
 
@@ -321,8 +325,8 @@ class SubtitleEditPage(QWidget):
         todo: 先屏蔽智能分句按钮，等待本地语言和服务端分句支持保证一致再打开
         （auto|不支持的语言：服务端无法处理，分句后时间轴可能还有问题）        
         """
-        # if 1 == 2:
-        if check_smart_sentence_available(self.patt):
+        if 1 == 2:
+        # if check_smart_sentence_available(self.patt):
             smart_sentence_btn = TransparentToolButton(FluentIcon.ROBOT)
             smart_sentence_btn.setIconSize(QSize(20, 20))
             smart_sentence_btn.setFixedSize(QSize(30, 30))

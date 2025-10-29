@@ -853,6 +853,109 @@ class APIClient:
             logger.error(f"获取推荐明细失败: {e}")
             raise
 
+    # ============================================
+    # NLP处理相关API
+    # ============================================
+
+    async def submit_nlp_task(self, file_url: str, language: str = 'zh', task_type: str = 'sentence_split') -> Dict:
+        """
+        提交NLP处理任务
+
+        Args:
+            file_url: OSS文件URL
+            language: 语言代码（zh, en, ja, ko, de, ru, fr等）
+            task_type: 任务类型，默认为'sentence_split'
+
+        Returns:
+            Dict: 包含任务ID的响应数据
+            {
+                "code": 200,
+                "message": "任务创建成功",
+                "data": {
+                    "task_id": "xxx"
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='POST',
+                url='/nlp/process',
+                json={
+                    'file_url': file_url,
+                    'language': language,
+                    'task_type': task_type
+                }
+            )
+        except Exception as e:
+            logger.error(f"提交NLP任务失败: {e}")
+            raise
+
+    async def check_nlp_task_status(self, task_id: str) -> Dict:
+        """
+        检查NLP任务状态
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            Dict: 包含任务状态的响应数据
+            {
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "status": "pending|processing|completed|failed",
+                    "progress": 50,
+                    "error_message": "错误信息（如果失败）"
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='GET',
+                url=f'/nlp/status/{task_id}'
+            )
+        except Exception as e:
+            logger.error(f"检查NLP任务状态失败: {e}")
+            raise
+
+    async def get_nlp_task_result(self, task_id: str) -> Dict:
+        """
+        获取NLP任务结果
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            Dict: 包含结果URL的响应数据
+            {
+                "code": 200,
+                "message": "success",
+                "data": {
+                    "result_url": "https://..."
+                }
+            }
+
+        Raises:
+            AuthenticationError: 当认证失败时抛出
+            Exception: 当其他错误发生时抛出
+        """
+        try:
+            return await self._request_with_auto_retry(
+                method='GET',
+                url=f'/nlp/result/{task_id}'
+            )
+        except Exception as e:
+            logger.error(f"获取NLP任务结果失败: {e}")
+            raise
+
     async def close(self):
         """关闭HTTP客户端"""
         await self.client.aclose()
@@ -861,7 +964,3 @@ class APIClient:
 # 创建全局API客户端实例
 # 使用配置管理器中的设置创建API客户端
 api_client = APIClient()
-
-if __name__ == '__main__':
-    # 测试代码已移除，请使用异步版本的API方法
-    pass
