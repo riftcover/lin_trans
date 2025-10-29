@@ -2,7 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [ "master", "feat/*" ]
+    branches:
+      - 'build/**'
     tags:
       - 'v*'
 
@@ -19,7 +20,7 @@ jobs:
             artifact_name: macos
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -36,135 +37,44 @@ jobs:
 
     - name: Install dependencies
       run: uv sync --frozen
-        
+
     - name: Create necessary directories
-      run: mkdir -p models result logs .credentials
+      run: mkdir -p models result logs
       shell: bash
 
     - name: Initialize database
-      run: uv run python orm/inint.py
+      run: uv run python -c "import orm.inint"
       shell: bash
-
-    - name: Verify database file
-      run: |
-        if [ -f "orm/linlin.db" ]; then
-          echo "✓ Database file created: orm/linlin.db"
-          ls -lh orm/linlin.db
-        else
-          echo "✗ Error: Database file not created"
-          exit 1
-        fi
-      shell: bash
-
-    - name: Install Inno Setup (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        choco install innosetup -y
-      shell: powershell
-
-    - name: Verify Inno Setup installation (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        Write-Host "=== Searching for Inno Setup ==="
-        $paths = @(
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
-          "C:\Program Files\Inno Setup 6\ISCC.exe",
-          "C:\ProgramData\chocolatey\lib\innosetup\tools\ISCC.exe"
-        )
-        foreach ($path in $paths) {
-          if (Test-Path $path) {
-            Write-Host "[OK] Found: $path"
-            & $path /? | Select-Object -First 5
-          } else {
-            Write-Host "[NOT FOUND] $path"
-          }
-        }
-      shell: powershell
 
     - name: Build with PyInstaller
-      run: |
-        echo "=== Starting build process ==="
-        echo "Platform: ${{ runner.os }}"
-        echo "Python version: $(python --version)"
-        echo "Working directory: $(pwd)"
-        echo ""
-        uv run python install_build.py --clean
+      run: uv run python install_build.py
       shell: bash
       env:
         PYTHONIOENCODING: utf-8
-        PYTHONUNBUFFERED: '1'
-      timeout-minutes: 60
 
-    - name: Verify build output
+    - name: Package artifacts
       run: |
-        echo "=== Checking dist directory ==="
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          dir dist\ || echo "dist directory not found"
-          if [ -f "dist/Lapped AI setup.exe" ]; then
-            echo "[OK] Found: Lapped AI setup.exe"
-            ls -lh "dist/Lapped AI setup.exe"
-          else
-            echo "[ERROR] Missing: Lapped AI setup.exe"
-            echo "Contents of dist/:"
-            ls -lah dist/ || dir dist\
-          fi
+        cd dist
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          7z a -tzip Lapped-${{ matrix.artifact_name }}.zip Lapped/
         else
-          ls -lah dist/ || echo "dist directory not found"
-          if [ -f "dist/Lapped AI setup.dmg" ]; then
-            echo "[OK] Found: Lapped AI setup.dmg"
-            ls -lh "dist/Lapped AI setup.dmg"
-          else
-            echo "[ERROR] Missing: Lapped AI setup.dmg"
-            echo "Contents of dist/:"
-            ls -lah dist/
-          fi
+          zip -r Lapped-${{ matrix.artifact_name }}.zip Lapped/
         fi
       shell: bash
-      if: always()
 
-    - name: Upload artifacts (Windows)
-      if: runner.os == 'Windows'
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: Lapped-${{ matrix.artifact_name }}
-        path: dist/Lapped AI setup.exe
-        if-no-files-found: error
+        path: dist/Lapped-${{ matrix.artifact_name }}.zip
 
-    - name: Upload artifacts (macOS)
-      if: runner.os == 'macOS'
-      uses: actions/upload-artifact@v4
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
       with:
-        name: Lapped-${{ matrix.artifact_name }}
-        path: dist/Lapped AI setup.dmg
-        if-no-files-found: error
-
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Display downloaded files
-        run: |
-          echo "=== Downloaded artifacts ==="
-          ls -R artifacts/
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/Lapped-macos/Lapped AI setup.dmg
-            artifacts/Lapped-windows/Lapped AI setup.exe
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        files: dist/Lapped-${{ matrix.artifact_name }}.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
