@@ -292,10 +292,29 @@ def create_macos_dmg():
     temp_dmg = PROJECT_ROOT / "dist" / "temp.dmg"
     volume_name = f"Lapped {your_version}"
 
+    # 调试：列出 dist 目录内容
+    print(f"\n调试信息：dist/ 目录内容：")
+    dist_dir = PROJECT_ROOT / "dist"
+    if dist_dir.exists():
+        for item in dist_dir.iterdir():
+            print(f"  - {item.name} ({'目录' if item.is_dir() else '文件'})")
+    else:
+        print(f"  ✗ dist/ 目录不存在！")
+
     # 检查 .app 是否存在
     if not app_path.exists():
-        print(f"✗ 错误: 未找到 {app_path}")
+        print(f"\n✗ 错误: 未找到 {app_path}")
         print("  请先运行 PyInstaller 打包")
+
+        # 尝试查找可能的 .app 位置
+        possible_paths = [
+            PROJECT_ROOT / "dist" / "Lapped" / "Lapped.app",
+            PROJECT_ROOT / "dist" / "Lapped.app",
+        ]
+        print("\n尝试查找 .app 文件：")
+        for p in possible_paths:
+            print(f"  - {p}: {'✓ 存在' if p.exists() else '✗ 不存在'}")
+
         return False
 
     print(f"✓ 找到应用: {app_path}")
@@ -598,12 +617,20 @@ if not args.no_installer:
     print("开始创建安装包...")
     print("=" * 60)
 
+    success = False
     if platform.system() == "Darwin":  # macOS
         if not args.installer_only:
-            create_macos_dmg()
+            success = create_macos_dmg()
+            if not success:
+                print("\n❌ DMG 创建失败！")
+                sys.exit(1)
     elif platform.system() == "Windows":
         if not args.dmg_only:
-            create_windows_installer()
+            success = create_windows_installer()
+            if not success:
+                print("\n❌ Windows 安装程序创建失败！")
+                sys.exit(1)
     else:
         print(f"✗ 不支持的平台: {platform.system()}")
         print("  仅支持 macOS 和 Windows")
+        sys.exit(1)

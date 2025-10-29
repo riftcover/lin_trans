@@ -65,22 +65,38 @@ jobs:
         ls -lah dist/
       shell: bash
 
-    - name: Upload artifacts
+    - name: Upload artifacts (Windows)
+      if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
         name: Lapped-${{ matrix.artifact_name }}
-        path: |
-          dist/*.dmg
-          dist/*.exe
+        path: dist/*.exe
         if-no-files-found: error
 
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Upload artifacts (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Lapped-${{ matrix.artifact_name }}
+        path: dist/*.dmg
+        if-no-files-found: error
+
+    - name: Create Release (Windows)
+      if: startsWith(github.ref, 'refs/tags/v') && runner.os == 'Windows'
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          dist/*.dmg
-          dist/*.exe
+        files: dist/*.exe
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Release (macOS)
+      if: startsWith(github.ref, 'refs/tags/v') && runner.os == 'macOS'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*.dmg
         draft: false
         prerelease: false
         generate_release_notes: true
