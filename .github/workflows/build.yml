@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'build/**'
+      - 'feat/**'
     tags:
       - 'v*'
 
