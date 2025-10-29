@@ -68,6 +68,22 @@ jobs:
           mkdir -p logs result models
         shell: bash
 
+      - name: 生成数据库文件
+        run: |
+          python orm/inint.py
+        shell: bash
+
+      - name: 验证数据库文件
+        run: |
+          if [ -f "orm/linlin.db" ]; then
+            echo "✓ 数据库文件已生成: orm/linlin.db"
+            ls -lh orm/linlin.db
+          else
+            echo "✗ 错误: 数据库文件未生成"
+            exit 1
+          fi
+        shell: bash
+
       - name: 构建应用程序
         run: |
           python install_build.py --clean
