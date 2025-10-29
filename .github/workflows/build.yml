@@ -1,0 +1,126 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - 'build/**'
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            python-version: '3.11'
+            artifact_name: windows
+          - os: macos-latest
+            python-version: '3.11'
+            artifact_name: macos
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: uv sync --frozen
+        
+    - name: Create necessary directories
+      run: mkdir -p models result logs
+      shell: bash
+
+    - name: Initialize database
+      run: uv run python orm/inint.py
+      shell: bash
+
+    - name: Verify database file
+      run: |
+        if [ -f "orm/linlin.db" ]; then
+          echo "✓ Database file created: orm/linlin.db"
+          ls -lh orm/linlin.db
+        else
+          echo "✗ Error: Database file not created"
+          exit 1
+        fi
+      shell: bash
+
+    - name: Install Inno Setup (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install innosetup -y
+      shell: powershell
+
+    - name: Build with PyInstaller
+      run: uv run python install_build.py --clean
+      shell: bash
+      env:
+        PYTHONIOENCODING: utf-8
+        PYTHONUNBUFFERED: '1'
+      timeout-minutes: 60
+
+    - name: Verify build output
+      run: |
+        echo "=== Checking dist directory ==="
+        ls -lah dist/ || dir dist\
+      shell: bash
+      if: always()
+
+    - name: Upload artifacts (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Lapped-${{ matrix.artifact_name }}
+        path: dist/Lapped AI setup.exe
+        if-no-files-found: error
+
+    - name: Upload artifacts (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Lapped-${{ matrix.artifact_name }}
+        path: dist/Lapped AI setup.dmg
+        if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display downloaded files
+        run: |
+          echo "=== Downloaded artifacts ==="
+          ls -R artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/Lapped-macos/Lapped AI setup.dmg
+            artifacts/Lapped-windows/Lapped AI setup.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
