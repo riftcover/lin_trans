@@ -1,0 +1,136 @@
+name: 构建安装包
+
+on:
+  push:
+    branches: [ "master", "feat/*" ]
+    tags:
+      - 'v*'  # 当推送 v* 标签时触发（如 v0.3.3）
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      version:
+        description: '版本号（如 0.3.3）'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: 构建 ${{ matrix.os }} 安装包
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macOS
+            artifact_name: Lapped AI setup.dmg
+            python_version: '3.11'
+          - os: windows-latest
+            platform: Windows
+            artifact_name: Lapped AI setup.exe
+            python_version: '3.11'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: 缓存 Python 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/Library/Caches/pip
+            ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: 安装 uv（包管理器）
+        run: |
+          pip install uv
+
+      - name: 安装项目依赖
+        run: |
+          uv pip install --system . || pip install .
+        timeout-minutes: 30
+
+      - name: 安装 Inno Setup（仅 Windows）
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install innosetup -y
+
+      - name: 创建必要的目录
+        run: |
+          mkdir -p logs result models
+        shell: bash
+
+      - name: 构建应用程序
+        run: |
+          python install_build.py --clean
+        env:
+          PYTHONUNBUFFERED: '1'
+        timeout-minutes: 60
+
+      - name: 验证构建产物
+        run: |
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+            echo "检查 macOS DMG 文件..."
+            ls -lh "dist/${{ matrix.artifact_name }}"
+            file "dist/${{ matrix.artifact_name }}"
+          else
+            echo "检查 Windows 安装程序..."
+            dir "dist\${{ matrix.artifact_name }}"
+          fi
+        shell: bash
+
+      - name: 显示构建目录内容
+        if: always()
+        run: |
+          echo "=== dist 目录内容 ==="
+          ls -lah dist/ || dir dist\
+        shell: bash
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-installer
+          path: dist/${{ matrix.artifact_name }}
+          retention-days: 7
+
+  release:
+    name: 创建 GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 显示下载的文件
+        run: |
+          ls -R artifacts/
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/macOS-installer/Lapped AI setup.dmg
+            artifacts/Windows-installer/Lapped AI setup.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
