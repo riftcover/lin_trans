@@ -65,7 +65,7 @@ jobs:
     - name: Verify Inno Setup installation (Windows)
       if: runner.os == 'Windows'
       run: |
-        echo "=== Searching for Inno Setup ==="
+        Write-Host "=== Searching for Inno Setup ==="
         $paths = @(
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
           "C:\Program Files\Inno Setup 6\ISCC.exe",
@@ -73,10 +73,10 @@ jobs:
         )
         foreach ($path in $paths) {
           if (Test-Path $path) {
-            Write-Host "✓ Found: $path"
+            Write-Host "[OK] Found: $path"
             & $path /? | Select-Object -First 5
           } else {
-            Write-Host "✗ Not found: $path"
+            Write-Host "[NOT FOUND] $path"
           }
         }
       shell: powershell
@@ -101,20 +101,20 @@ jobs:
         if [ "${{ runner.os }}" == "Windows" ]; then
           dir dist\ || echo "dist directory not found"
           if [ -f "dist/Lapped AI setup.exe" ]; then
-            echo "✓ Found: Lapped AI setup.exe"
+            echo "[OK] Found: Lapped AI setup.exe"
             ls -lh "dist/Lapped AI setup.exe"
           else
-            echo "✗ Missing: Lapped AI setup.exe"
+            echo "[ERROR] Missing: Lapped AI setup.exe"
             echo "Contents of dist/:"
             ls -lah dist/ || dir dist\
           fi
         else
           ls -lah dist/ || echo "dist directory not found"
           if [ -f "dist/Lapped AI setup.dmg" ]; then
-            echo "✓ Found: Lapped AI setup.dmg"
+            echo "[OK] Found: Lapped AI setup.dmg"
             ls -lh "dist/Lapped AI setup.dmg"
           else
-            echo "✗ Missing: Lapped AI setup.dmg"
+            echo "[ERROR] Missing: Lapped AI setup.dmg"
             echo "Contents of dist/:"
             ls -lah dist/
           fi
