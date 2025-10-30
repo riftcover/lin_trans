@@ -208,55 +208,52 @@ def copy_models():
     for model in model_lists:
         # 获取库的路径
         model_path = pkgutil.get_loader(model).path
-        if not model_path:
-            print(f"无法找到 {model} 库路径")
-            continue
-        try:
-            # 获取包的根目录
-            model_root = Path(model_path).parent
-            print(f"{model} 库路径: {model_root}")
 
-            # 目标路径 (_internal 目录)
-            target_path = Path("dist") / "Lapped" / "_internal" / model
+        # 获取包的根目录
+        model_root = Path(model_path).parent
+        print(f"{model} 库路径: {model_root}")
 
-            # 确保目标目录存在
-            target_path.mkdir(parents=True, exist_ok=True)
+        # 目标路径 (_internal 目录)
+        target_path = Path("dist") / "Lapped" / "_internal" / model
+        mac_app_path = Path("dist") / "Lapped.app"/"Contents"/"Resources" / model
 
-            # 复制库目录，排除不必要的文件
-            def custom_ignore(src, names):
-                ignored_names = []
+        # 确保目标目录存在
+        target_path.mkdir(parents=True, exist_ok=True)
 
-                # 检查是否在排除目录列表中
-                for name in names:
-                    full_path = Path(src) / name
-                    # 排除目录
-                    if full_path.is_dir():
-                        if any(exclude in name for exclude in exclude_dirs):
-                            ignored_names.append(name)
-                            continue
+        # 复制库目录，排除不必要的文件
+        def custom_ignore(src, names):
+            ignored_names = []
 
-                        # 检查特定库的排除目录
-                        for lib, excludes in specific_excludes.items():
-                            if lib in src:
-                                rel_path = full_path.relative_to(model_root)
-                                for exclude in excludes:
-                                    if exclude in str(rel_path):
-                                        ignored_names.append(name)
-                                        break
-                    # 排除文件
-                    elif full_path.is_file():
-                        if any(fnmatch.fnmatch(name, pattern) for pattern in exclude_files):
-                            ignored_names.append(name)
+            # 检查是否在排除目录列表中
+            for name in names:
+                full_path = Path(src) / name
+                # 排除目录
+                if full_path.is_dir():
+                    if any(exclude in name for exclude in exclude_dirs):
+                        ignored_names.append(name)
+                        continue
 
-                return ignored_names
+                    # 检查特定库的排除目录
+                    for lib, excludes in specific_excludes.items():
+                        if lib in src:
+                            rel_path = full_path.relative_to(model_root)
+                            for exclude in excludes:
+                                if exclude in str(rel_path):
+                                    ignored_names.append(name)
+                                    break
+                # 排除文件
+                elif full_path.is_file():
+                    if any(fnmatch.fnmatch(name, pattern) for pattern in exclude_files):
+                        ignored_names.append(name)
 
-            # 使用自定义忽略函数复制文件
-            shutil.copytree(model_root, target_path, ignore=custom_ignore, dirs_exist_ok=True)
+            return ignored_names
 
-            print(f"{model} 库已复制到: {target_path} (排除了不必要的文件)")
+        # 使用自定义忽略函数复制文件
+        shutil.copytree(model_root, target_path, ignore=custom_ignore, dirs_exist_ok=True)
+        print(f"{model} 库已复制到: {target_path} (排除了不必要的文件)")
+        if platform.system() == "Darwin":
+            shutil.copytree(model_root, mac_app_path, ignore=custom_ignore, dirs_exist_ok=True)
 
-        except Exception as e:
-            print(f"复制 {model} 库时出错: {e}")
 
 
 # 复制 funasr 库
