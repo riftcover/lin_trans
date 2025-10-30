@@ -183,7 +183,6 @@ class TokenService(TokenServiceInterface):
             int: 所需代币数量
         """
 
-        self.trans_qps = 160
         amount = round(word_counts * self.trans_qps / 1000) if word_counts else 0
         logger.trace(self.trans_qps)
         logger.trace(f'计算代币消耗,字：{word_counts},消耗:{amount}')

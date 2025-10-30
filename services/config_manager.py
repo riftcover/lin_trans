@@ -18,15 +18,6 @@ logger = logging.getLogger(__name__)
 class ConfigManager:
     """配置管理器类"""
 
-    _instance = None  # 单例实例
-
-    def __new__(cls, *args, **kwargs):
-        """实现单例模式"""
-        if cls._instance is None:
-            cls._instance = super(ConfigManager, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self, config_dir: str = None, env: str = None):
         """初始化配置管理器
 
@@ -124,6 +115,10 @@ class ConfigManager:
                 api_config['web_urls'] = web_urls
 
             self.configs['api'] = api_config
+
+            # 保存 translator 配置（顶层独立配置）
+            self.configs['translator'] = config_data.get('translator', {})
+
             return api_config
 
         except Exception as e:
@@ -289,91 +284,24 @@ class ConfigManager:
         logger.info("已重新加载所有配置")
 
     def get_translator_config(self) -> Dict[str, Any]:
-        """获取高级翻译相关配置
+        """获取翻译器配置
 
         Returns:
             Dict[str, Any]: 翻译配置字典
         """
-        api_config = self.get_api_config()
-        return api_config.get('translator', {})
-    
-    def get_summary_length(self) -> int:
-        """获取术语上下文最大长度
+        return self.configs.get('translator', {})
+
+    def get_translator_value(self, key: str, default: Any = None) -> Any:
+        """获取翻译器配置值（通用方法）
+
+        Args:
+            key: 配置键名
+            default: 默认值
 
         Returns:
-            int: 最大长度，默认8000
+            Any: 配置值
         """
-        translator_config = self.get_translator_config()
-        return translator_config.get('summary_length', 8000)
-    
-    def get_max_split_length(self) -> int:
-        """获取最大分割长度
-
-        Returns:
-            int: 最大分割长度，默认20
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('max_split_length', 20)
-    
-    def get_reflect_translate(self) -> bool:
-        """获取是否启用二次优化翻译
-
-        Returns:
-            bool: 是否启用二次优化，默认True
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('reflect_translate', True)
-    
-    def get_subtitle_max_length(self) -> int:
-        """获取字幕行最大长度
-
-        Returns:
-            int: 字幕行最大长度，默认75
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('subtitle_max_length', 75)
-    
-    def get_target_multiplier(self) -> float:
-        """获取目标语言文本长度乘数
-
-        Returns:
-            float: 目标语言乘数，默认1.2
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('target_multiplier', 1.2)
-    
-    def get_min_subtitle_duration(self) -> float:
-        """获取最小字幕持续时间
-
-        Returns:
-            float: 最小字幕持续时间（秒），默认2.5
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('min_subtitle_duration', 2.5)
-    
-    def get_min_trim_duration(self) -> float:
-        """获取最小修剪持续时间
-
-        Returns:
-            float: 最小修剪持续时间（秒），默认3.5
-        """
-        translator_config = self.get_translator_config()
-        return translator_config.get('min_trim_duration', 3.5)
-
-    def get_chunk_size(self):
-        """获取每个块的字符数限制"""
-        translator_config = self.get_translator_config()
-        return translator_config.get('chunk_size', 600)
-
-    def get_max_entries(self):
-        """获取每个块的最大条目数"""
-        translator_config = self.get_translator_config()
-        return translator_config.get('max_entries', 10)
-    
-    def get_sleep_time(self):
-        """翻译API调用间隔"""
-        translator_config = self.get_translator_config()
-        return translator_config.get('sleep_time', 1)
+        return self.get_translator_config().get(key, default)
         
 
 
@@ -413,61 +341,81 @@ def reload_configs() -> None:
     config_manager.reload_configs()
 
 
-# translator相关配置的便捷函数
+# translator 配置访问
+def get_translator_config() -> Dict[str, Any]:
+    """获取翻译器配置字典"""
+    return config_manager.get_translator_config()
+
+
+def get_translator_value(key: str, default: Any = None) -> Any:
+    """获取翻译器配置值（通用方法）
+
+    Args:
+        key: 配置键名（如 'chunk_size', 'sleep_time'）
+        default: 默认值
+
+    Returns:
+        配置值或默认值
+
+    Example:
+        >>> get_translator_value('chunk_size', 5600)
+        5600
+    """
+    return config_manager.get_translator_value(key, default)
+
+
+# 向后兼容的便捷函数（保留旧接口）
 def get_summary_length() -> int:
     """获取术语上下文最大长度"""
-    return config_manager.get_summary_length()
+    return get_translator_value('summary_length', 8000)
 
 
 def get_max_split_length() -> int:
     """获取最大分割长度"""
-    return config_manager.get_max_split_length()
+    return get_translator_value('max_split_length', 20)
 
 
 def get_reflect_translate() -> bool:
-    """获取是否反思翻译结果"""
-    return config_manager.get_reflect_translate()
+    """获取是否启用二次优化翻译"""
+    return get_translator_value('reflect_translate', True)
 
 
 def get_subtitle_max_length() -> int:
-    """获取字幕最大长度"""
-    return config_manager.get_subtitle_max_length()
+    """获取字幕行最大长度"""
+    return get_translator_value('subtitle_max_length', 75)
 
 
 def get_target_multiplier() -> float:
-    """获取目标语言乘数"""
-    return config_manager.get_target_multiplier()
+    """获取目标语言文本长度乘数"""
+    return get_translator_value('target_multiplier', 1.2)
 
 
 def get_min_subtitle_duration() -> float:
     """获取最小字幕持续时间"""
-    return config_manager.get_min_subtitle_duration()
+    return get_translator_value('min_subtitle_duration', 2.5)
 
 
 def get_min_trim_duration() -> float:
     """获取最小修剪持续时间"""
-    return config_manager.get_min_trim_duration()
-
-
-def get_translator_config() -> Dict[str, Any]:
-    """获取高级翻译相关配置"""
-    return config_manager.get_translator_config()
+    return get_translator_value('min_trim_duration', 3.5)
 
 
 def get_chunk_size() -> int:
     """获取每个块的字符数限制"""
-    return config_manager.get_chunk_size()
+    return get_translator_value('chunk_size' )
 
 
 def get_max_entries() -> int:
     """获取每个块的最大条目数"""
-    return config_manager.get_max_entries()
+    return get_translator_value('max_entries' )
+
 
 def get_sleep_time() -> int:
     """翻译API调用间隔"""
-    return config_manager.get_sleep_time()
+    return get_translator_value('sleep_time', 1)
+
 
 if __name__ == '__main__':
-    print(get_chunk_size())
-    print(get_max_entries())
-    print(get_sleep_time())
+    print(f"chunk_size: {get_chunk_size()}")
+    print(f"max_entries: {get_max_entries()}")
+    print(f"sleep_time: {get_sleep_time()}")

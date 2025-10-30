@@ -25,12 +25,12 @@ translator:
   # 最小修剪持续时间（秒）
   min_trim_duration: 3.5
   # 翻译块字数
-  chunk_size: 600
+  chunk_size: 5600
   # 翻译块句子行数
-  max_entries: 10
+  max_entries: 30
   # 翻译API调用间隔
   sleep_time: 1
-default: development
+default: production
 development:
   api_base_url: http://127.0.0.1:8000/api
   web_base_url: http://127.0.0.1:3000
