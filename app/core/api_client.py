@@ -305,7 +305,7 @@ class APIClient:
 
     def get_balance_sync(self) -> Dict:
         """
-        同步获取用户余额
+        同步获取用户余额，超时时自动重试（最多5次）
 
         Returns:
             Dict: 包含用户余额信息的响应数据
@@ -314,31 +314,40 @@ class APIClient:
             AuthenticationError: 当认证失败时抛出
             Exception: 当其他错误发生时抛出
         """
-        try:
+        # 检查是否有有效token
+        if not self._token:
+            raise AuthenticationError("No valid token")
 
+        # 简单的重试循环 - 只针对超时异常
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                # 使用同步HTTP客户端
+                with httpx.Client(base_url=self.base_url) as client:
+                    response = client.get(
+                        "/transactions/get_balance",
+                        headers=self.headers
+                    )
+                    response.raise_for_status()
+                    return response.json()
 
-            # 检查是否有有效token
-            if not self._token:
-                raise AuthenticationError("No valid token")
+            except httpx.TimeoutException:
+                if attempt < max_retries - 1:  # 不是最后一次尝试
+                    logger.warning(f"获取余额超时，重试 {attempt + 1}/{max_retries - 1}")
+                    continue
+                else:  # 最后一次也失败了
+                    raise Exception("获取余额超时（已重试5次）")
 
-            # 使用同步HTTP客户端
-            with httpx.Client(base_url=self.base_url) as client:
-                response = client.get(
-                    "/transactions/get_balance",
-                    headers=self.headers
-                )
-                response.raise_for_status()
-                return response.json()
+            except httpx.HTTPStatusError as e:
+                # HTTP错误不重试，直接抛出
+                if e.response.status_code == 401:
+                    raise AuthenticationError("Token已过期")
+                else:
+                    raise Exception(f"获取余额HTTP错误: {e}")
 
-        except httpx.TimeoutException:
-            raise Exception("获取余额超时")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
-                raise AuthenticationError("Token已过期")
-            else:
-                raise Exception(f"获取余额HTTP错误: {e}")
-        except Exception as e:
-            raise Exception(f"同步获取余额失败: {e}")
+            except Exception as e:
+                # 其他异常不重试
+                raise Exception(f"同步获取余额失败: {e}")
 
 
     def get_history_sync(self, page: int = 1, page_size: int = 10, transaction_type: Optional[int] = None,
