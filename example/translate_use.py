@@ -23,7 +23,7 @@ def quick_translation_example():
         agent_name="qwen_cloud",  # AI模型（确保在agent_dict中已配置）
         chunk_size=600,  # 推荐值：600-800
         max_entries=10,  # 推荐值：8-12
-        sleep_time=1,  # API调用间隔
+        max_workers=5,  # 最大并发翻译数（替代原来的sleep_time）
         target_language="中文",  # 目标语言
         source_language="English"  # 源语言
     )

@@ -7,7 +7,7 @@ from agent.srt_translator_adapter import SRTTranslatorAdapter
 from app.core.base_task_manager import BaseTaskManager
 from app.core.task_models import Task, TaskTokens
 from nice_ui.configure.signal import data_bridge
-from services.config_manager import get_chunk_size, get_max_entries, get_sleep_time
+from services.config_manager import get_chunk_size, get_max_entries, get_max_workers
 
 if TYPE_CHECKING:
     from app.core.feature_types import FeatureKey
@@ -138,12 +138,12 @@ class TransTaskManager(BaseTaskManager):
         agent_type = config.params['translate_channel']
         chunk_size_int = get_chunk_size()
         max_entries_int = get_max_entries()
-        sleep_time_int = get_sleep_time()
+        max_workers_int = get_max_workers()
 
         logger.trace(f'准备翻译任务:{out_document}')
         logger.trace(
             f'任务参数:{task.unid}, {in_document}, {out_document}, {agent_type},'
-            f'{chunk_size_int},{max_entries_int},{sleep_time_int},'
+            f'{chunk_size_int},{max_entries_int},{max_workers_int},'
             f'{config.params["target_language"]},{config.params["source_language"]}'
         )
 
@@ -163,7 +163,7 @@ class TransTaskManager(BaseTaskManager):
                 agent_name=agent_type,
                 chunk_size=chunk_size_int,
                 max_entries=max_entries_int,
-                sleep_time=sleep_time_int,
+                max_workers=max_workers_int,
                 target_language=config.params["target_language"],
                 source_language=config.params["source_language"]
             )

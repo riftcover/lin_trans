@@ -28,8 +28,8 @@ translator:
   chunk_size: 5600
   # 翻译块句子行数
   max_entries: 30
-  # 翻译API调用间隔
-  sleep_time: 1
+  # 翻译API调用并发数
+  max_workers: 5
 default: production
 development:
   api_base_url: http://127.0.0.1:8000/api

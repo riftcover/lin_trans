@@ -410,9 +410,9 @@ def get_max_entries() -> int:
     return get_translator_value('max_entries' )
 
 
-def get_sleep_time() -> int:
-    """翻译API调用间隔"""
-    return get_translator_value('sleep_time', 1)
+def get_max_workers() -> int:
+    """获取最大并发翻译数"""
+    return get_translator_value('max_workers', 5)
 
 
 if __name__ == '__main__':
