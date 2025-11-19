@@ -67,7 +67,8 @@ cmd = [
     "--onedir",
     "--noconsole",
     "--windowed",  # 注释掉 --windowed 参数，允许显示控制台
-    f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
+    # 注意：数据库文件不再打包，运行时会在用户数据目录自动创建
+    # f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",  # ← 已移除
     # 注意：models 目录不再打包到 .app 内部，而是使用 ~/Library/Application Support/Lapped/models/
     # f"--add-data=models{os.pathsep}models",  # ← 已移除
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
@@ -102,8 +103,6 @@ elif not args.reuse_analysis:
 for pattern in exclude_patterns:
     cmd.append(f"--exclude={pattern}")
 
-# todo: 打包前重新生成orm/linlin.db文件
-#todo: console不输出内容
 
 # modelscope_path = pkgutil.get_loader("modelscope").path
 # for _, name, _ in pkgutil.walk_packages([modelscope_path]):
@@ -178,7 +177,7 @@ print(f"PyInstaller 命令: {' '.join(cmd)}")
 # 执行 PyInstaller 命令，捕获输出以便调试
 result = subprocess.run(cmd, capture_output=False, text=True)
 if result.returncode != 0:
-    print(f"❌ PyInstaller 失败，退出码: {result.returncode}")
+    print(f"PyInstaller 失败，退出码: {result.returncode}")
     sys.exit(1)
 
 print("打包完成!")

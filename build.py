@@ -82,10 +82,11 @@ cmd = [
     "--output-dir=build",
     f"--windows-product-version={your_version}",
     f"--windows-file-version={your_version}",
-    "--include-data-files=orm/linlin.db=orm/linlin.db",  # 包含linlin.db文件
-    "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含linlin.db文件
+    # 注意：数据库文件不再打包，运行时会在用户数据目录自动创建
+    # "--include-data-files=orm/linlin.db=orm/linlin.db",  # ← 已移除
+    "--include-data-dir=nice_ui/language=nice_ui/language",  # 包含语言文件
     "--include-data-dir=logs=logs",  # 包含logs文件夹
-    "--include-data-dir=result=result",  # 包含logs文件夹
+    "--include-data-dir=result=result",  # 包含result文件夹
 ]
 
 if args.debug:
@@ -122,34 +123,38 @@ elif platform.system() == "Darwin":  # macOS
 cmd.append("run.py")
 
 
-# 复制 models 文件夹到打包目录
+# 注意：以下代码已废弃
+# 1. models 文件夹不再打包到应用内部，改为使用用户数据目录
+# 2. 数据库文件不再打包，运行时会在用户数据目录自动创建
+#    这样可以避免应用更新时覆盖用户数据
+#
 # if platform.system() == "Darwin":  # macOS
-#     app_name = "run.app"  # 替换为您的应用程序名称
+#     app_name = "run.app"
 #     models_src = "models"
 #     models_dst = os.path.join("build", app_name, "Contents", "Resources", "models")
 #     if os.path.exists(models_src):
 #         shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
 #
-#     # 确保 orm 目录存在，并复制 linlin.db
-#     orm_dir = os.path.join("build", app_name, "Contents", "Resources", "orm")
-#     os.makedirs(orm_dir, exist_ok=True)
-#     linlin_db_src = "orm/linlin.db"
-#     linlin_db_dst = os.path.join(orm_dir, "linlin.db")
-#     if os.path.exists(linlin_db_src):
-#         shutil.copy2(linlin_db_src, linlin_db_dst)
+#     # 数据库文件已改为运行时在用户数据目录创建，不再需要复制
+#     # orm_dir = os.path.join("build", app_name, "Contents", "Resources", "orm")
+#     # os.makedirs(orm_dir, exist_ok=True)
+#     # linlin_db_src = "orm/linlin.db"
+#     # linlin_db_dst = os.path.join(orm_dir, "linlin.db")
+#     # if os.path.exists(linlin_db_src):
+#     #     shutil.copy2(linlin_db_src, linlin_db_dst)
 # else:
 #     models_src = "models"
 #     models_dst = os.path.join("build", "models")
 #     if os.path.exists(models_src):
 #         shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
 #
-#     # 确保 orm 目录存在，并复制 linlin.db
-#     orm_dir = os.path.join("build", "orm")
-#     os.makedirs(orm_dir, exist_ok=True)
-#     linlin_db_src = "orm/linlin.db"
-#     linlin_db_dst = os.path.join(orm_dir, "linlin.db")
-#     if os.path.exists(linlin_db_src):
-#         shutil.copy2(linlin_db_src, linlin_db_dst)
+#     # 数据库文件已改为运行时在用户数据目录创建，不再需要复制
+#     # orm_dir = os.path.join("build", "orm")
+#     # os.makedirs(orm_dir, exist_ok=True)
+#     # linlin_db_src = "orm/linlin.db"
+#     # linlin_db_dst = os.path.join(orm_dir, "linlin.db")
+#     # if os.path.exists(linlin_db_src):
+#     #     shutil.copy2(linlin_db_src, linlin_db_dst)
 
 
 # 在打包完成后，复制 modelscope 库
