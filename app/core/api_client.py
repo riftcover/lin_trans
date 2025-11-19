@@ -137,6 +137,52 @@ class APIClient:
             else:
                 raise Exception(f"Login failed with status {e.response.status_code}: {e.response.text}")
 
+    async def phone_send_code(self, phone: str) -> Dict:
+        """
+        发送手机验证码
+
+        Args:
+            phone: 手机号
+
+        Returns:
+            Dict: 响应数据
+        """
+        try:
+            response = await self.client.post("/auth/phone/send-code", json={"phone": phone}, headers=self.headers)
+            response.raise_for_status()
+            return response.json().get('data')
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Send code HTTP error: {e.response.status_code}")
+            logger.trace(f"Response text: {e.response.text}")
+            raise Exception(f"Send code failed with status {e.response.status_code}: {e.response.text}")
+
+    async def phone_login(self, phone: str, password: str) -> Dict:
+        """
+        手机号登录
+
+        Args:
+            phone: 手机号
+            password: 密码
+
+        Returns:
+            Dict: 包含用户信息和token的响应数据
+        """
+        try:
+            response = await self.client.post("/auth/phone/login", json={"phone": phone, "password": password}, headers=self.headers)
+            response.raise_for_status()
+            data = response.json().get('data')
+            self._update_token(data)
+            return data
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Phone login HTTP error: {e.response.status_code}")
+            logger.trace(f"Response text: {e.response.text}")
+
+            # 只处理 401（账号密码错误），其他错误让 error_handler 解析
+            if e.response.status_code == 401:
+                raise InvalidCredentialsError(detail=e.response.text)
+            else:
+                raise Exception(f"Phone login failed with status {e.response.status_code}: {e.response.text}")
+
     def _update_token(self, response_data: Dict) -> None:
         """更新token和refresh_token的辅助方法
 
@@ -158,14 +204,30 @@ class APIClient:
 
             # 自动保存到 QSettings（通过 AuthManager）
             if self._auth_manager and self._token and self._refresh_token and self._token_expires_at:
-                # 尝试从响应中获取邮箱，如果没有则使用已保存的邮箱
-                email = response_data.get('user', {}).get('email', '') or self._auth_manager.get_email()
+                # 从响应中获取账号信息
+                user_data = response_data.get('user', {})
+
+                # 判断登录方式并获取账号
+                account = ''
+                login_type = ''
+
+                if user_data.get('phone'):
+                    account = user_data['phone']
+                    login_type = 'phone'
+                elif user_data.get('email'):
+                    account = user_data['email']
+                    login_type = 'email'
+                else:
+                    # 如果响应中没有账号信息，使用已保存的值
+                    account = self._auth_manager.get_account()
+                    login_type = self._auth_manager.get_login_type()
 
                 self._auth_manager.save_auth_state(
                     token=self._token,
                     refresh_token=self._refresh_token,
                     expires_at=self._token_expires_at,
-                    email=email
+                    account=account,
+                    login_type=login_type
                 )
         else:
             logger.warning('No session data found in response')

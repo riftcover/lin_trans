@@ -1,11 +1,11 @@
 import asyncio
 
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, Property, Signal, QTimer
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLineEdit, QApplication, QStackedWidget
 
 from vendor.qfluentwidgets import (LineEdit, PrimaryPushButton, BodyLabel, TitleLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, TransparentToolButton,
-                                   CheckBox)
+                                   CheckBox, SegmentedWidget, PushButton)
 from nice_ui.services.simple_api_service import simple_api_service
 
 
@@ -17,9 +17,15 @@ class LoginWindow(QFrame):
         super().__init__(parent=parent)
         self.setObjectName("loginWindow")
         self.settings = settings
+
+        # 倒计时相关
+        self.countdown_timer = QTimer(self)
+        self.countdown_seconds = 0
+        self.countdown_timer.timeout.connect(self._update_countdown)
+
         self.setup_ui()
         self.setup_animation()
-        self.load_saved_email()
+        self.load_saved_credentials()
 
         # 移除事件循环引用，使用ApiService管理异步调用
 
@@ -80,6 +86,12 @@ class LoginWindow(QFrame):
         self.subtitleLabel.setAlignment(Qt.AlignCenter)
         self.subtitleLabel.setStyleSheet('color: rgb(100, 100, 100)')
 
+        # 登录方式切换
+        self.loginTypeSegmented = SegmentedWidget(self)
+        self.loginTypeSegmented.addItem('email', '邮箱登录', lambda: self.switch_login_type(0))
+        self.loginTypeSegmented.addItem('phone', '手机登录', lambda: self.switch_login_type(1))
+        self.loginTypeSegmented.setCurrentItem('email')
+
         # 登录表单卡片
         self.loginCard = QFrame()
         self.loginCard.setObjectName('loginCard')
@@ -87,22 +99,63 @@ class LoginWindow(QFrame):
         self.loginLayout.setSpacing(20)
         self.loginLayout.setContentsMargins(20, 20, 20, 20)
 
+        # 创建堆叠窗口用于切换邮箱/手机登录
+        self.loginStack = QStackedWidget(self)
+
+        # === 邮箱登录页面 ===
+        self.emailLoginWidget = QFrame()
+        self.emailLoginLayout = QVBoxLayout(self.emailLoginWidget)
+        self.emailLoginLayout.setSpacing(15)
+        self.emailLoginLayout.setContentsMargins(0, 0, 0, 0)
+
         # 邮箱输入框
         self.emailInput = LineEdit(self)
         self.emailInput.setPlaceholderText('请输入邮箱')
-        # self.emailInput.setIcon(FIF.MAIL)
         self.emailInput.setClearButtonEnabled(True)
 
         # 密码输入框
         self.passwordInput = LineEdit(self)
         self.passwordInput.setPlaceholderText('请输入密码')
-        # self.passwordInput.setIcon(FIF.PASSWORD)
         self.passwordInput.setEchoMode(QLineEdit.Password)
         self.passwordInput.setClearButtonEnabled(True)
 
         # 记住账号复选框
         self.rememberCheckBox = CheckBox('记住账号', self)
         self.rememberCheckBox.setChecked(bool(self.settings.value('remember_email', False)))
+
+        self.emailLoginLayout.addWidget(self.emailInput)
+        self.emailLoginLayout.addWidget(self.passwordInput)
+        self.emailLoginLayout.addWidget(self.rememberCheckBox)
+
+        # === 手机登录页面 ===
+        self.phoneLoginWidget = QFrame()
+        self.phoneLoginLayout = QVBoxLayout(self.phoneLoginWidget)
+        self.phoneLoginLayout.setSpacing(15)
+        self.phoneLoginLayout.setContentsMargins(0, 0, 0, 0)
+
+        # 手机号输入框
+        self.phoneInput = LineEdit(self)
+        self.phoneInput.setPlaceholderText('请输入手机号')
+        self.phoneInput.setClearButtonEnabled(True)
+
+        # 密码输入框（手机登录）
+        self.phonePasswordInput = LineEdit(self)
+        self.phonePasswordInput.setPlaceholderText('请输入密码')
+        self.phonePasswordInput.setEchoMode(QLineEdit.Password)
+        self.phonePasswordInput.setClearButtonEnabled(True)
+
+        # 记住手机号复选框
+        self.rememberPhoneCheckBox = CheckBox('记住手机号', self)
+        self.rememberPhoneCheckBox.setChecked(bool(self.settings.value('remember_phone', False)))
+
+        self.phoneLoginLayout.addWidget(self.phoneInput)
+        self.phoneLoginLayout.addWidget(self.phonePasswordInput)
+        self.phoneLoginLayout.addWidget(self.rememberPhoneCheckBox)
+
+        # 添加到堆叠窗口
+        self.loginStack.addWidget(self.emailLoginWidget)
+        self.loginStack.addWidget(self.phoneLoginWidget)
+        self.loginStack.setCurrentIndex(0)
 
         # 登录按钮
         self.loginButton = PrimaryPushButton('登录', self)
@@ -142,11 +195,11 @@ class LoginWindow(QFrame):
         self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignCenter)
         self.vBoxLayout.addSpacing(10)
         self.vBoxLayout.addWidget(self.subtitleLabel, 0, Qt.AlignCenter)
-        self.vBoxLayout.addSpacing(30)
+        self.vBoxLayout.addSpacing(20)
+        self.vBoxLayout.addWidget(self.loginTypeSegmented, 0, Qt.AlignCenter)
+        self.vBoxLayout.addSpacing(20)
 
-        self.loginLayout.addWidget(self.emailInput)
-        self.loginLayout.addWidget(self.passwordInput)
-        self.loginLayout.addWidget(self.rememberCheckBox)
+        self.loginLayout.addWidget(self.loginStack)
         self.loginLayout.addWidget(self.loginButton)
 
         # 创建水平布局放置忘记密码和注册按钮
@@ -188,11 +241,24 @@ class LoginWindow(QFrame):
             self.loginButton.setEnabled(True)
             self.loginButton.setText('登录')
 
-    def load_saved_email(self):
-        """加载保存的邮箱账号"""
+    def switch_login_type(self, index):
+        """切换登录方式"""
+        self.loginStack.setCurrentIndex(index)
+        # 重置按钮状态
+        self.loginButton.setEnabled(True)
+        self.loginButton.setText('登录')
+
+    def load_saved_credentials(self):
+        """加载保存的账号信息"""
+        # 加载邮箱
         if bool(self.settings.value('remember_email', False)):
             if saved_email := self.settings.value('email', ''):
                 self.emailInput.setText(saved_email)
+
+        # 加载手机号
+        if bool(self.settings.value('remember_phone', False)):
+            if saved_phone := self.settings.value('phone', ''):
+                self.phoneInput.setText(saved_phone)
 
     def save_email(self, email):
         """保存邮箱账号"""
@@ -204,9 +270,41 @@ class LoginWindow(QFrame):
             self.settings.remove('email')
         self.settings.sync()
 
+    def save_phone(self, phone):
+        """保存手机号"""
+        if self.rememberPhoneCheckBox.isChecked():
+            self.settings.setValue('remember_phone', True)
+            self.settings.setValue('phone', phone)
+        else:
+            self.settings.setValue('remember_phone', False)
+            self.settings.remove('phone')
+        self.settings.sync()
+
+    def _update_countdown(self):
+        """更新倒计时"""
+        self.countdown_seconds -= 1
+        if self.countdown_seconds <= 0:
+            self.countdown_timer.stop()
+            self.sendCodeButton.setEnabled(True)
+            self.sendCodeButton.setText('获取验证码')
+        else:
+            self.sendCodeButton.setText(f'{self.countdown_seconds}秒后重试')
+
 
 
     def handle_login(self):
+        """处理登录"""
+        current_index = self.loginStack.currentIndex()
+
+        if current_index == 0:
+            # 邮箱登录
+            self._handle_email_login()
+        else:
+            # 手机号登录
+            self._handle_phone_login()
+
+    def _handle_email_login(self):
+        """处理邮箱登录"""
         email = self.emailInput.text()
         password = self.passwordInput.text()
 
@@ -227,7 +325,44 @@ class LoginWindow(QFrame):
         self.loginButton.setText('登录中...')
 
         # 异步登录
-        self._perform_async_login(email, password)
+        self._perform_async_email_login(email, password)
+
+    def _handle_phone_login(self):
+        """处理手机号登录"""
+        phone = self.phoneInput.text()
+        password = self.phonePasswordInput.text()
+
+        if not phone or not password:
+            InfoBar.error(
+                title='错误',
+                content='请填写完整的登录信息',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        # 验证手机号格式
+        if len(phone) != 11 or not phone.isdigit():
+            InfoBar.error(
+                title='错误',
+                content='请输入正确的手机号',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        # 临时禁用按钮防止重复点击
+        self.loginButton.setEnabled(False)
+        self.loginButton.setText('登录中...')
+
+        # 异步登录
+        self._perform_async_phone_login(phone, password)
 
     def handle_forgot_password(self):
         # 使用QDesktopServices打开浏览器并跳转到忘记密码页面
@@ -293,18 +428,12 @@ class LoginWindow(QFrame):
             QApplication.quit()
         super().closeEvent(event)
 
-    def _perform_async_login(self, email, password):
-        """执行异步登录 - 简化版本
-
-        Token 保存由 api_client._update_token() 自动完成，不需要手动保存
-        """
+    def _perform_async_email_login(self, email, password):
+        """执行异步邮箱登录"""
         def on_success(result):
             if result:
                 # 保存邮箱账号（记住账号功能）
                 self.save_email(email)
-
-                # Token 已经由 api_client._update_token() 自动保存到 QSettings
-                # 不需要手动调用 save_login_state()
 
                 user_info = {'email': result['user']['email']}
                 # 发送登录成功信号
@@ -326,30 +455,7 @@ class LoginWindow(QFrame):
             self.loginButton.setText('登录')
 
         def on_error(error):
-            # 使用简化的错误处理器
-            from app.core.error_handler import get_error_message
-            from utils import logger
-
-            # 获取用户友好的消息（支持多语言）
-            # TODO: 从设置中读取用户选择的语言
-            lang = "zh"  # 默认中文，未来可以改为 settings.value('language', 'zh')
-            user_message = get_error_message(error, lang)
-
-            # 在日志中保留原始错误信息
-            logger.warning(f"登录失败: {error}")
-
-            InfoBar.error(
-                title='登录失败',
-                content=user_message,
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
-            # 重新启用按钮
-            self.loginButton.setEnabled(True)
-            self.loginButton.setText('登录')
+            self._handle_login_error(error)
 
         # 使用简化的API服务
         simple_api_service.login(
@@ -357,3 +463,67 @@ class LoginWindow(QFrame):
             callback_success=on_success,
             callback_error=on_error
         )
+
+    def _perform_async_phone_login(self, phone, password):
+        """执行异步手机号登录"""
+        def on_success(result):
+            if result:
+                # 保存手机号（记住账号功能）
+                self.save_phone(phone)
+
+                # 获取用户信息（手机号登录返回的是phone字段）
+                user_phone = result['user'].get('phone', phone)
+                user_info = {'phone': user_phone}
+
+                # 发送登录成功信号
+                self.loginSuccessful.emit(user_info)
+
+                # 显示登录成功提示
+                InfoBar.success(
+                    title='成功',
+                    content='登录成功',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self
+                )
+
+            # 重新启用按钮
+            self.loginButton.setEnabled(True)
+            self.loginButton.setText('登录')
+
+        def on_error(error):
+            self._handle_login_error(error)
+
+        # 使用简化的API服务
+        simple_api_service.phone_login(
+            phone, password,
+            callback_success=on_success,
+            callback_error=on_error
+        )
+
+    def _handle_login_error(self, error):
+        """处理登录错误"""
+        from app.core.error_handler import get_error_message
+        from utils import logger
+
+        # 获取用户友好的消息（支持多语言）
+        lang = "zh"  # 默认中文
+        user_message = get_error_message(error, lang)
+
+        # 在日志中保留原始错误信息
+        logger.warning(f"登录失败: {error}")
+
+        InfoBar.error(
+            title='登录失败',
+            content=user_message,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self
+        )
+        # 重新启用按钮
+        self.loginButton.setEnabled(True)
+        self.loginButton.setText('登录')

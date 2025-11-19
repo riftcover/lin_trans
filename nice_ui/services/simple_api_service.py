@@ -244,7 +244,7 @@ class SimpleApiService(QObject):
         self._request_counter = 0
     
     # 便捷方法
-    def login(self, email: str, password: str, callback_success: Callable = None, 
+    def login(self, email: str, password: str, callback_success: Callable = None,
              callback_error: Callable = None) -> str:
         """用户登录"""
         return self.execute_async(
@@ -253,7 +253,27 @@ class SimpleApiService(QObject):
             callback_success=callback_success,
             callback_error=callback_error
         )
-    
+
+    def phone_send_code(self, phone: str, callback_success: Callable = None,
+                       callback_error: Callable = None) -> str:
+        """发送手机验证码"""
+        return self.execute_async(
+            api_client.phone_send_code,
+            args=(phone,),
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
+    def phone_login(self, phone: str, password: str, callback_success: Callable = None,
+                   callback_error: Callable = None) -> str:
+        """手机号登录"""
+        return self.execute_async(
+            api_client.phone_login,
+            args=(phone, password),
+            callback_success=callback_success,
+            callback_error=callback_error
+        )
+
     def refresh_token(self, callback_success: Callable = None, callback_error: Callable = None) -> str:
         """刷新token"""
         return self.execute_async(

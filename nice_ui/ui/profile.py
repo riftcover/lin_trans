@@ -13,6 +13,20 @@ from vendor.qfluentwidgets import (SimpleCardWidget, PushButton, FluentIcon as F
                                    InfoBarPosition, TransparentToolButton)
 
 
+def mask_phone(phone: str) -> str:
+    """手机号脱敏处理
+
+    Args:
+        phone: 手机号字符串
+
+    Returns:
+        str: 脱敏后的手机号，格式为 138****5678
+    """
+    if phone and len(phone) == 11 and phone.isdigit():
+        return f"{phone[:3]}****{phone[-4:]}"
+    return phone
+
+
 class ProfileInterface(QFrame):
     # 样式常量
     LABEL_STYLE = 'color: #666666;'
@@ -133,7 +147,7 @@ class ProfileInterface(QFrame):
         self.emailLayout = QHBoxLayout()
         self.emailIcon = IconWidget(FIF.MAIL, self)
         self.emailIcon.setFixedSize(13, 13)
-        self.emailLabel = BodyLabel('邮箱地址', self)
+        self.emailLabel = BodyLabel('登录账号', self)
         self.emailLabel.setStyleSheet(self.LABEL_STYLE)
 
         self.emailLayout.addWidget(self.emailIcon)
@@ -233,11 +247,22 @@ class ProfileInterface(QFrame):
         """更新用户信息
 
         Args:
-            user_info: 用户信息字典
+            user_info: 用户信息字典，支持以下格式：
+                - {'email': 'user@example.com'}  # 邮箱登录
+                - {'phone': '13800138000'}       # 手机号登录
         """
-        # 更新邮箱地址
-        email = user_info.get('email', '未登录')
-        self.emailValue.setText(email)
+        # 优先显示邮箱，其次显示手机号（脱敏）
+        logger.info(f'user_info:{user_info}')
+        if 'email' in user_info and user_info['email']:
+            # 邮箱登录
+            self.emailValue.setText(user_info['email'])
+        elif 'phone' in user_info and user_info['phone']:
+            # 手机号登录，进行脱敏处理
+            masked_phone = mask_phone(user_info['phone'])
+            self.emailValue.setText(masked_phone)
+        else:
+            # 未登录或数据异常
+            self.emailValue.setText('未登录')
 
         try:
             # 更新算力额度

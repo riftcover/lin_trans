@@ -221,16 +221,34 @@ class Window(_create_smart_window_class()):
             # 使用 AuthManager 加载认证状态
             if self.auth_manager.load_to_api_client(api_client):
                 try:
-                    # 获取用户信息
-                    user_info = {'email': self.auth_manager.get_email()}
+                    # 获取账号信息
+                    account = self.auth_manager.get_account()
+                    login_type = self.auth_manager.get_login_type()
+
+                    # 打印 AuthManager 中所有保存的数据（敏感信息已脱敏）
+                    logger.info(f'AuthManager 数据: {self.auth_manager.get_all_data()}')
+
+                    # 根据登录方式构建 user_info
+                    if login_type == 'email':
+                        user_info = {'email': account}
+                        display_name = account
+                    elif login_type == 'phone':
+                        user_info = {'phone': account}
+                        # 手机号脱敏显示
+                        from nice_ui.ui.profile import mask_phone
+                        display_name = mask_phone(account)
+                    else:
+                        # 默认情况（向后兼容）
+                        user_info = {'email': account if account else '已登录'}
+                        display_name = account if account else '已登录'
 
                     # 更新 UI
                     self.loginInterface.updateUserInfo(user_info)
                     self.is_logged_in = True
-                    self.avatarWidget.setName(user_info['email'])
+                    self.avatarWidget.setName(display_name)
                     self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
 
-                    logger.info("自动登录成功")
+                    logger.info(f"自动登录成功: {user_info}")
 
                     # 加载推荐中心数据
                     logger.info("自动登录成功，开始加载推荐中心数据")
@@ -301,11 +319,24 @@ class Window(_create_smart_window_class()):
         处理登录成功的回调
 
         Args:
-            user_info: 用户信息
+            user_info: 用户信息，支持邮箱或手机号登录
+                - {'email': 'user@example.com'}  # 邮箱登录
+                - {'phone': '13800138000'}       # 手机号登录
             switch_to_profile: 是否切换到个人中心页面，默认为False
         """
         self.is_logged_in = True
-        self.avatarWidget.setName(user_info.get('email', '已登录'))
+
+        # 根据登录方式显示不同的账号信息
+        if 'email' in user_info and user_info['email']:
+            display_name = user_info['email']
+        elif 'phone' in user_info and user_info['phone']:
+            # 手机号脱敏显示
+            from nice_ui.ui.profile import mask_phone
+            display_name = mask_phone(user_info['phone'])
+        else:
+            display_name = '已登录'
+
+        self.avatarWidget.setName(display_name)
 
         # 登录成功后使用设置图标作为头像
         self.avatarWidget.setAvatar(':icon/assets/MdiAccount.png')
