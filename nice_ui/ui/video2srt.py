@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import av
 from PySide6.QtCore import Qt, Slot, QSize
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QColor, QPalette
 from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QTableWidget, QVBoxLayout, QWidget, QAbstractItemView, QTableWidgetItem, QHeaderView, QStyle, )
@@ -9,7 +8,6 @@ from agent import get_translate_code, translate_api_name
 from components.widget import DeleteButton, SearchableComboBox, TransComboBox
 from nice_ui.configure import config
 from nice_ui.main_win.secwin import SecWindow
-from nice_ui.services.service_provider import ServiceProvider
 from nice_ui.ui import LANGUAGE_WIDTH
 from nice_ui.util.code_tools import language_code
 from nice_ui.util.tools import start_tools
@@ -69,12 +67,7 @@ class Video2SRT(QWidget):
 
         self.source_language = SearchableComboBox()
         self.source_language.addItem("自动检测")
-        # todo:添加云图标
         for lang_name in config.langnamelist:
-            if lang_name in ["法语", "French", "俄语"]:
-                # 使用专业云服务图标
-                self.source_language.addItem(f'{lang_name} (云)')
-            else:
                 self.source_language.addItem(lang_name, )
 
         self.source_language.setFixedWidth(LANGUAGE_WIDTH)

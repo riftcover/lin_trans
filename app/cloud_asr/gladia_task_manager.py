@@ -61,13 +61,20 @@ class GladiaTaskManager(BaseTaskManager):
         创建新的ASR任务
 
         使用新的 Task 类（包含代币数据）
+
+        Args:
+            task_id: 任务ID
+            audio_file: 音频文件路径
+            language: 语言代码
+            auto_billing: 是否自动扣费（组合任务应设为False）
         """
         task = Task(
             task_id=task_id,
             audio_file=audio_file,
             language=language,
             status=TaskStatus.PENDING,
-            tokens=TaskTokens()  # 初始化代币数据
+            tokens=TaskTokens(),  # 初始化代币数据
+            auto_billing=auto_billing  # 保存自动扣费标志
         )
 
         with self.lock:
@@ -220,10 +227,15 @@ class GladiaTaskManager(BaseTaskManager):
                 # 更新任务状态为完成
                 self.update_task(task.task_id, status=TaskStatus.COMPLETED, progress=100)
 
-                # 扣费（使用基类方法）
-                logger.info(f'ASR任务自动扣费模式，开始扣费: {task.task_id}')
-                file_name = Path(task.audio_file).stem
-                self._consume_tokens_for_task(task, "cloud_asr", file_name)
+                # 只有在自动扣费模式下才消费代币
+                if task.auto_billing:
+                    logger.info(f'ASR任务自动扣费模式，开始扣费: {task.task_id}')
+                    file_name = Path(task.audio_file).stem
+                    self._consume_tokens_for_task(task, "cloud_asr", file_name)
+                else:
+                    logger.info(f'ASR任务非自动扣费模式，跳过扣费: {task.task_id}')
+                    # 非自动扣费模式，只通知任务完成，不删除任务
+                    self._notify_task_completed(task.task_id)
 
                 logger.info(f"任务完成 - ID: {task.task_id}, SRT文件: {srt_file_path}")
             else:

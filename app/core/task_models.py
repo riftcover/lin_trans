@@ -105,6 +105,7 @@ class Task:
     result_url: Optional[str] = None
     error: Optional[str] = None
     progress: int = 0
+    auto_billing: bool = True  # 是否自动扣费（组合任务中ASR应设为False）
     
     def set_asr_tokens(self, tokens: int) -> None:
         """
@@ -156,7 +157,7 @@ class Task:
     def to_dict(self) -> Dict[str, Any]:
         """
         序列化为字典
-        
+
         Returns:
             任务数据字典
         """
@@ -171,17 +172,18 @@ class Task:
             'audio_url': self.audio_url,
             'result_url': self.result_url,
             'error': self.error,
-            'progress': self.progress
+            'progress': self.progress,
+            'auto_billing': self.auto_billing
         }
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Task':
         """
         从字典反序列化
-        
+
         Args:
             data: 任务数据字典
-            
+
         Returns:
             Task 对象
         """
@@ -197,6 +199,7 @@ class Task:
             audio_url=data.get('audio_url'),
             result_url=data.get('result_url'),
             error=data.get('error'),
-            progress=data.get('progress', 0)
+            progress=data.get('progress', 0),
+            auto_billing=data.get('auto_billing', True)
         )
 

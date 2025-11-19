@@ -2,6 +2,7 @@ import time
 from abc import ABC, abstractmethod
 
 from app.cloud_asr.gladia_task_manager import get_gladia_task_manager, TaskStatus
+from app.cloud_asr.task_manager import get_task_manager as get_aliyun_task_manager
 from app.cloud_trans.task_manager import get_trans_task_manager
 from app.listen import SrtWriter
 from app.video_tools import FFmpegJobs
@@ -97,11 +98,16 @@ class CloudASRTaskProcessor(TaskProcessor):
         # 音视频转wav格式
         final_name = self._convert_to_wav(task)
 
-        # 获取任务管理器实例
-        task_manager = get_gladia_task_manager()
-
         # 获取语言代码
         language_code = config.params["source_language_code"]
+
+        # 根据语言选择ASR服务：中文、英文使用阿里云，其他语言使用Gladia
+        if language_code in ['zh', 'en']:
+            task_manager = get_aliyun_task_manager()
+            logger.info(f'使用阿里云ASR服务，语言: {language_code}')
+        else:
+            task_manager = get_gladia_task_manager()
+            logger.info(f'使用Gladia ASR服务，语言: {language_code}')
 
         # 创建ASR任务
         logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}')
@@ -111,7 +117,7 @@ class CloudASRTaskProcessor(TaskProcessor):
             language=language_code
         )
 
-        # 提交任务到Gladia
+        # 提交任务到云
         logger.info(f'提交ASR任务到云: {task.unid}')
         task_manager.submit_task(task.unid)
 
@@ -200,11 +206,16 @@ class CloudASRTransTaskProcessor(TaskProcessor):
         # 第一步: 云ASR 任务
         final_name = self._convert_to_wav(task)
 
-        # 使用Gladia ASR任务管理器
-        asr_task_manager = get_gladia_task_manager()
-
         # 获取语言代码
         language_code = config.params["source_language_code"]
+
+        # 根据语言选择ASR服务：中文、英文使用阿里云，其他语言使用Gladia
+        if language_code in ['zh', 'en']:
+            asr_task_manager = get_aliyun_task_manager()
+            logger.info(f'使用阿里云ASR服务，语言: {language_code}')
+        else:
+            asr_task_manager = get_gladia_task_manager()
+            logger.info(f'使用Gladia ASR服务，语言: {language_code}')
 
         # 创建ASR任务（组合任务，禁用自动扣费）
         logger.info(f'创建ASR任务: {final_name}, 语言: {language_code}, task_id: {task.unid}')
@@ -215,7 +226,7 @@ class CloudASRTransTaskProcessor(TaskProcessor):
             auto_billing=False  # 组合任务禁用ASR自动扣费
         )
 
-        # 提交任务到Gladia
+        # 提交任务到云
         logger.trace(f'提交ASR任务到云: {task.unid}')
         asr_task_manager.submit_task(task.unid)
 

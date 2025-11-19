@@ -7,9 +7,6 @@ from .decorators import except_handler
 from utils import logger
 
 
-
-
-
 def get_proxy_from_settings():
     """
     从设置中获取代理配置
@@ -19,7 +16,7 @@ def get_proxy_from_settings():
     try:
         # 尝试从nice_ui设置中获取代理配置
         from nice_ui.ui import SettingsManager
-        
+
         settings = SettingsManager.get_instance()
         use_proxy = settings.value("use_proxy", False, type=bool)
         if not use_proxy:
@@ -60,8 +57,8 @@ def create_openai_client(api_key: str, base_url: str) -> OpenAI:
 
 
 @except_handler("GPT request failed", retry=5, delay=1)
-def ask_gpt(model_api:AgentConfig, prompt: str, resp_type: Optional[str] = None,
-           valid_def: Optional[callable] = None, log_title: str = "default") -> Any:
+def ask_gpt(model_api: AgentConfig, prompt: str, resp_type: Optional[str] = None,
+            valid_def: Optional[callable] = None, log_title: str = "default") -> Any:
     """
     通用的GPT API调用函数
     
