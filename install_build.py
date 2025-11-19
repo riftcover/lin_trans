@@ -67,8 +67,7 @@ cmd = [
     "--onedir",
     "--noconsole",
     "--windowed",  # 注释掉 --windowed 参数，允许显示控制台
-    # 注意：数据库文件不再打包，运行时会在用户数据目录自动创建
-    # f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",  # ← 已移除
+    f"--add-data={os.path.join('orm', 'linlin.db')}{os.pathsep}orm",
     # 注意：models 目录不再打包到 .app 内部，而是使用 ~/Library/Application Support/Lapped/models/
     # f"--add-data=models{os.pathsep}models",  # ← 已移除
     f"--add-data={os.path.join('nice_ui', 'language')}{os.pathsep}{os.path.join('nice_ui', 'language')}",
@@ -533,7 +532,10 @@ SetupIconFile={PROJECT_ROOT / "components/assets/lapped.ico"}
 Name: "desktopicon"; Description: "{{cm:CreateDesktopIcon}}"; GroupDescription: "{{cm:AdditionalIcons}}"; Flags: unchecked
 
 [Files]
-Source: "{exe_dir}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; 数据库文件：仅在不存在时复制（保护用户数据）
+Source: "{exe_dir}\\orm\\linlin.db"; DestDir: "{{app}}\\orm"; Flags: onlyifdoesntexist uninsneveruninstall
+; 其他所有文件：正常覆盖更新
+Source: "{exe_dir}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "orm\\linlin.db"
 
 [Icons]
 Name: "{{group}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"
