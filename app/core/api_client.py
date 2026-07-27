@@ -782,6 +782,36 @@ class APIClient:
             logger.error(f'Get token coefficients failed: {e}')
             raise Exception(f"获取代币消耗系数失败: {str(e)}")
 
+    def get_dashscope_temp_token_sync(self) -> Dict:
+        """获取 DashScope 临时 API Key（同步版本）。
+
+        供 ASR worker 线程（同步流程）调用：后端持长期 key（KMS），本接口下发限时临时
+        token。带登录鉴权（self.headers 内含 Bearer）。
+
+        Returns:
+            Dict: {"token": str, "expires_at": int}
+
+        Raises:
+            AuthenticationError: 未登录/登录失效（401）
+            Exception: 其他请求错误
+        """
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=15.0) as client:
+                response = client.get("/asr/dashscope-token", headers=self.headers)
+                response.raise_for_status()
+                payload = response.json()
+                # 后端统一 ResponseJson 包装：{code, message, data:{token, expires_at}}
+                data = payload.get("data") if isinstance(payload, dict) else None
+                if not data or "token" not in data or "expires_at" not in data:
+                    raise Exception(f"临时 token 响应结构异常: {payload}")
+                return data
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.warning('获取 DashScope 临时 token 失败：未登录或登录失效 (401)')
+                raise AuthenticationError("登录已失效，请重新登录") from e
+            logger.error(f'获取 DashScope 临时 token 失败: {e}')
+            raise Exception(f"获取 DashScope 临时 token 失败: {str(e)}") from e
+
 
 
     async def check_version(self, platform: str, current_version: str):

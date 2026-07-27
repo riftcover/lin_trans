@@ -1,9 +1,9 @@
+import threading
 import time
 from http import HTTPStatus
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Callable
 
-import dashscope
 import requests
 from dashscope.audio.asr import Transcription
 from pydantic import BaseModel, Field, field_validator
@@ -13,7 +13,7 @@ from utils import logger
 
 
 class ASRRequestError(Exception):
-    """ASR请求错误"""
+    """阿里云ASR请求错误"""
     pass
 
 
@@ -30,49 +30,74 @@ class LanguageLiteral(BaseModel):
         return v
 
 
-class ASRRequestError(Exception):
-    """阿里云ASR请求错误"""
-    pass
+class DashScopeTokenProvider:
+    """临时 DashScope API Key 提供者。
 
+    向后端申请有时限的临时 token（后端持长期 key，存 KMS）。缓存 token，临近过期自动
+    刷新。线程安全（ASR 任务在 worker 线程中运行，可能并发）。
+
+    客户端不再持有任何长期 DashScope key。
+    """
+
+    def __init__(self, fetch_token: Callable[[], Dict[str, Any]], refresh_margin: int = 60):
+        """
+        Args:
+            fetch_token: 调后端换临时 token 的函数，返回 {"token": str, "expires_at": int(unix秒)}
+            refresh_margin: 过期前多少秒就提前刷新，避免请求中途失效
+        """
+        self._fetch_token = fetch_token
+        self._refresh_margin = refresh_margin
+        self._token: str = ""
+        self._expires_at: int = 0
+        self._lock = threading.Lock()
+
+    def get(self) -> str:
+        """获取有效临时 token，过期/缺失则刷新"""
+        with self._lock:
+            now = int(time.time())
+            if not self._token or now >= (self._expires_at - self._refresh_margin):
+                logger.trace("临时 DashScope token 过期/缺失，向后端申请")
+                data = self._fetch_token()
+                self._token = data["token"]
+                self._expires_at = int(data["expires_at"])
+                logger.info(f"获取临时 DashScope token 成功，过期时间: {self._expires_at}")
+            return self._token
 
 
 class AliyunASRClient:
-    """阿里云语音识别客户端，使用DashScope SDK实现异步提交任务和异步查询结果"""
+    """阿里云语音识别客户端。
 
-    def __init__(self, api_key: str):
+    用后端签发的临时 DashScope API Key 调用 DashScope SDK：临时 key 按调用传入
+    （api_key=），不写全局 dashscope.api_key —— 临时 key 会过期，长任务轮询期间
+    每次调用都取新鲜 key；且全局变量并发不安全。
+    """
+
+    def __init__(self, token_provider: DashScopeTokenProvider):
         """
-        初始化阿里云ASR客户端
-
         Args:
-            api_key: 阿里云DashScope API Key
+            token_provider: 临时 token 提供者
         """
-        self.api_key = api_key
-        # 设置DashScope API Key
-        dashscope.api_key = api_key
+        self._token_provider = token_provider
 
     def submit_task(self, audio_file: str, language: str = "zh") -> Any:
         """
         提交语音识别任务
 
         Args:
-            audio_file: 音频文件的URL或本地文件路径
-            language: 语音识别的语言，支持多种语言代码，默认为中文 'zh'
+            audio_file: 音频文件的URL（OSS/http(s)），不支持本地文件
+            language: 语音识别的语言，默认为中文 'zh'
 
         Returns:
             Any: 包含任务ID的响应对象
         """
-        transcribe_response = None
         try:
             # 使用Pydantic验证language参数
-            language_model = LanguageLiteral(code=language)
-            language_hint = language_model.code
+            language_hint = LanguageLiteral(code=language).code
 
             logger.info(f"提交ASR任务，文件: {audio_file}, 语言: {language_hint}")
 
             # 判断是否为URL
-            is_url = audio_file.startswith('http://') or audio_file.startswith('https://') or audio_file.startswith('oss://')
-
-            # 如果不是URL，直接抛出异常并停止后续操作
+            is_url = audio_file.startswith(('http://', 'https://', 'oss://'))
             if not is_url:
                 error_msg = "不支持本地文件，请提供有效的URL地址"
                 logger.error(error_msg)
@@ -90,21 +115,22 @@ class AliyunASRClient:
                 "X-DashScope-OssResourceResolve": "enable"
             }
 
-            # 使用DashScope SDK提交异步转写任务
-            logger.trace(f'aliyun_sdk:{cloud_sdk}')
+            # 使用DashScope SDK提交异步转写任务（临时 key 按调用传入）
             transcribe_response = Transcription.async_call(
-                model=cloud_sdk.asr_model,  # 使用最新的模型
-                file_urls=[audio_file],  # URL地址
-                language_hints=[language_hint],  # 语言提示
-                headers=custom_headers  # 添加自定义请求头
+                model=cloud_sdk.asr_model,
+                file_urls=[audio_file],
+                language_hints=[language_hint],
+                headers=custom_headers,
+                api_key=self._token_provider.get(),
             )
 
             if transcribe_response.status_code == HTTPStatus.OK:
                 task_id = transcribe_response.output.task_id
                 logger.info(f"成功提交ASR任务 - 阿里云ID: {task_id}")
                 return transcribe_response
-            else:
-                logger.error(f"提交ASR任务失败: {transcribe_response.code}, {transcribe_response.message}")
+
+            logger.error(f"提交ASR任务失败: {transcribe_response.code}, {transcribe_response.message}")
+            raise ASRRequestError(f"提交ASR任务失败: {transcribe_response.message}")
 
         except Exception as e:
             logger.error(f"提交ASR任务时发生错误: {str(e)}")
@@ -113,6 +139,8 @@ class AliyunASRClient:
     def query_task(self, task_response: Any) -> Any:
         """
         查询语音识别任务的状态和结果
+
+        每次都用新鲜临时 key —— 长任务轮询可能跨过 key 有效期。
 
         Args:
             task_response: 任务响应对象或任务ID
@@ -131,18 +159,17 @@ class AliyunASRClient:
 
             # 准备自定义请求头
             custom_headers = {
-                "X-DashScope-Custom-Header": "custom-value",  # 自定义请求头示例
                 "X-DashScope-Client-Info": "lin_trans-app"  # 客户端信息
             }
 
-            # 使用DashScope SDK查询任务状态
-            try:
-                transcribe_response = Transcription.fetch(task=task_id, headers=custom_headers)
-                logger.info(f"查询ASR任务状态成功 - 阿里云ID: {task_id}, 状态: {transcribe_response.output.task_status}")
-                return transcribe_response
-            except Exception as api_error:
-                logger.error(f"DashScope API调用失败: {str(api_error)}")
-                raise
+            # 使用DashScope SDK查询任务状态（每次取新鲜 key）
+            transcribe_response = Transcription.fetch(
+                task=task_id,
+                headers=custom_headers,
+                api_key=self._token_provider.get(),
+            )
+            logger.info(f"查询ASR任务状态成功 - 阿里云ID: {task_id}, 状态: {transcribe_response.output.task_status}")
+            return transcribe_response
 
         except Exception as e:
             logger.error(f"查询ASR任务时发生错误: {str(e)}")
@@ -150,7 +177,7 @@ class AliyunASRClient:
 
     def wait_for_completion(self, transcribe_response: Any, interval: int = 5) -> Any:
         """
-        等待任务完成并返回结果
+        等待任务完成并返回结果（key 刷新发生在 query_task 内部）
 
         Args:
             transcribe_response: 任务响应对象
@@ -171,9 +198,6 @@ class AliyunASRClient:
 
             # 查询任务状态
             transcribe_response = self.query_task(transcribe_response)
-
-            # 更新进度信息
-            logger.info("ASR任务进度: 处理完成")
 
         if transcribe_response.output.task_status == 'SUCCEEDED':
             return transcribe_response
@@ -483,22 +507,14 @@ class AliyunASRClient:
 # 创建客户端实例的工厂函数
 def create_aliyun_asr_client() -> AliyunASRClient:
     """
-    从配置中创建阿里云ASR客户端实例
+    创建阿里云ASR客户端实例。
+
+    临时 token 来自后端签发（后端持长期 key，存 KMS）；客户端不再持有任何长期 ASR key。
 
     Returns:
         AliyunASRClient: 阿里云ASR客户端实例
     """
-    if api_key := cloud_sdk.asr_api_key:
-        return AliyunASRClient(api_key)
-    else:
-        raise ValueError("阿里云ASR配置不完整，请检查配置中的阿里云DashScope API Key")
+    from app.core.api_client import api_client
 
-if __name__ == '__main__':
-    client = create_aliyun_asr_client()
-
-    # 示例：提交语音识别任务并等待完成
-    audio_file = "oss://dashscope-instant/6ce1b910bd8d28d46d97822fa04e1721/2025-04-22/5f723bc3-1015-94a7-819b-d6a666ba4c2d/tt.war"
-    task = client.submit_task(audio_file)
-    response = client.wait_for_completion(task)
-
-    parsed_results = client.parse_result(response)
+    provider = DashScopeTokenProvider(fetch_token=api_client.get_dashscope_temp_token_sync)
+    return AliyunASRClient(provider)
